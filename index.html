@@ -6,6 +6,10 @@
 <meta name="apple-mobile-web-app-capable" content="yes"/>
 <meta name="apple-mobile-web-app-status-bar-style" content="default"/>
 <meta name="theme-color" content="#2d5016"/>
+<meta name="application-name" content="زمزم"/>
+<meta name="apple-mobile-web-app-title" content="زمزم"/>
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+<link rel="manifest" href="data:application/json;charset=utf-8,%7B%22name%22%3A%22Zamzam%20Restaurant%20%26%20Cafe%22%2C%22short_name%22%3A%22%D8%B2%D9%85%D8%B2%D9%85%22%2C%22start_url%22%3A%22.%2F%22%2C%22display%22%3A%22standalone%22%2C%22background_color%22%3A%22%232d5016%22%2C%22theme_color%22%3A%22%232d5016%22%2C%22orientation%22%3A%22portrait%22%2C%22icons%22%3A%5B%7B%22src%22%3A%22https%3A%2F%2Fres.cloudinary.com%2Fdk3xw0x5v%2Fimage%2Fupload%2Fv1778698476%2FGemini_Generated_Image_1%25D8%25BA%25D8%25BAix4ur1ix4ur1ix4_x2fzvd_zgujcf.png%22%2C%22sizes%22%3A%22192x192%22%2C%22type%22%3A%22image%2Fpng%22%7D%5D%7D"/>
 <title>Zamzam Restaurant & Cafe</title>
 <link rel="icon" type="image/png" sizes="32x32" href="https://res.cloudinary.com/dk3xw0x5v/image/upload/v1778698476/Gemini_Generated_Image_1%D8%BA%D8%BAix4ur1ix4ur1ix4_x2fzvd_zgujcf.png">
 <link rel="shortcut icon" href="https://res.cloudinary.com/dk3xw0x5v/image/upload/v1778698476/Gemini_Generated_Image_1%D8%BA%D8%BAix4ur1ix4ur1ix4_x2fzvd_zgujcf.png">
@@ -30,14 +34,68 @@
 
 /* ===== RESET ===== */
 *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
-html{font-size:15px;}
+html{font-size:15px;scroll-behavior:smooth;}
 body{font-family:'Cairo',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden;direction:rtl;}
+* {-webkit-overflow-scrolling:touch;}
 button{font-family:inherit;cursor:pointer;border:none;background:none;}
 input,select,textarea{font-family:inherit;}
 
 /* ===== SCREENS ===== */
 .screen{display:none;min-height:100vh;}
 .screen.active{display:flex;flex-direction:column;}
+
+/* ===== DELIVERY CONFIRM BUTTON ===== */
+.delivery-confirm-btn{width:100%;padding:15px;background:linear-gradient(135deg,var(--olive),var(--olive-light));color:#fff;border-radius:14px;font-size:16px;font-weight:800;display:none;margin-bottom:10px;cursor:pointer;border:none;transition:.2s;}
+.delivery-confirm-btn.visible{display:block;animation:pulse 1.5s infinite;}
+
+/* ===== PICKUP GRID LAYOUT ===== */
+.pickup-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+@media(max-width:480px){.pickup-grid{grid-template-columns:1fr;}}
+@media(min-width:900px){.pickup-grid{grid-template-columns:1fr 1fr 1fr;}}
+.pickup-order-card{background:var(--white);border-radius:18px;border:2px solid var(--border);padding:16px;position:relative;transition:.3s;overflow:hidden;}
+.pickup-order-card::before{content:'';position:absolute;top:0;left:0;right:0;height:4px;background:linear-gradient(90deg,#D4651A,#e8a800);}
+.pickup-order-card.all-done{border-color:#22c55e;background:linear-gradient(135deg,#f0fdf4,#dcfce7);}
+.pickup-order-card.all-done::before{background:linear-gradient(90deg,#16a34a,#22c55e);}
+.pickup-order-card.status-ready{border-color:#22c55e;background:linear-gradient(135deg,#f0fdf4,#dcfce7);opacity:.85;}
+.pickup-order-num{font-size:15px;font-weight:900;color:var(--olive-dark);font-family:'Playfair Display',serif;}
+.pickup-badge{font-size:10px;font-weight:800;padding:4px 10px;border-radius:100px;background:#fff3d0;color:#92400e;}
+.pickup-badge.done-badge{background:#dcfce7;color:#16a34a;}
+.pickup-timer{font-size:22px;font-weight:900;color:var(--olive-dark);font-family:monospace;background:var(--cream);border-radius:8px;padding:4px 10px;min-width:56px;text-align:center;display:inline-block;}
+.pickup-timer.urgent{color:var(--red);animation:pulse 1s infinite;}
+.pickup-item-row{display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--border);cursor:pointer;transition:.15s;}
+.pickup-item-row:last-child{border-bottom:none;}
+.pickup-item-row:active{background:var(--olive-pale);border-radius:8px;margin:0 -4px;padding:10px 4px;}
+.pickup-check{width:28px;height:28px;border-radius:8px;border:2.5px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:800;flex-shrink:0;transition:.2s;}
+.pickup-check.done{background:#22c55e;border-color:#16a34a;color:#fff;}
+.pickup-complete-btn{width:100%;padding:14px;background:linear-gradient(135deg,var(--olive),var(--olive-light));color:#fff;border-radius:14px;font-size:14px;font-weight:800;margin-top:12px;display:none;cursor:pointer;border:none;transition:.2s;box-shadow:0 4px 16px rgba(74,124,31,.3);}
+.pickup-complete-btn.visible{display:block;animation:pulse 1.5s infinite;}
+.pickup-complete-btn:active{transform:scale(.97);}
+.pickup-done-stamp{text-align:center;padding:12px;font-size:24px;font-weight:900;color:#16a34a;margin-top:8px;}
+.pickup-client-info{background:var(--cream);border-radius:10px;padding:8px 12px;margin-bottom:12px;font-size:12px;}
+.pickup-client-info div{display:flex;justify-content:space-between;padding:2px 0;}
+.pickup-client-info strong{color:var(--dark);}
+
+/* ===== LIVE SEARCH (Cashier) ===== */
+.cashier-search-bar{padding:10px 16px;background:var(--cream);border-bottom:1px solid var(--border);display:flex;gap:8px;align-items:center;position:sticky;top:0;z-index:10;}
+.cashier-search-bar input{flex:1;padding:10px 14px;background:var(--white);border:1.5px solid var(--border);border-radius:10px;font-size:14px;color:var(--text);outline:none;}
+.cashier-search-bar input:focus{border-color:var(--olive);}
+.cashier-filter-chips{display:flex;gap:6px;padding:8px 16px;overflow-x:auto;scrollbar-width:none;flex-shrink:0;}
+.cashier-filter-chips::-webkit-scrollbar{display:none;}
+.cashier-chip{flex-shrink:0;padding:6px 14px;border-radius:100px;background:var(--white);border:1.5px solid var(--border);font-size:12px;font-weight:700;color:var(--text-muted);cursor:pointer;white-space:nowrap;transition:.2s;}
+.cashier-chip.active{background:var(--olive);border-color:var(--olive);color:#fff;}
+
+/* ===== SMART ORDER REVIEW ===== */
+.order-review-overlay{position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:500;display:none;align-items:center;justify-content:center;padding:20px;}
+.order-review-overlay.open{display:flex;}
+.order-review-card{background:var(--white);border-radius:24px;padding:28px 20px;width:100%;max-width:400px;animation:popIn .35s ease;text-align:center;}
+.review-countdown{width:64px;height:64px;border-radius:50%;background:linear-gradient(135deg,var(--gold),var(--gold-light));display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:900;color:#fff;margin:0 auto 16px;box-shadow:0 4px 16px rgba(200,151,58,.35);}
+
+/* ===== PWA INSTALL BANNER ===== */
+.pwa-install-bar{background:linear-gradient(135deg,var(--olive-dark),var(--olive));padding:10px 16px;display:flex;align-items:center;gap:10px;cursor:pointer;}
+.pwa-install-bar.hidden{display:none;}
+
+/* ===== SEARCH HIGHLIGHT ===== */
+.search-hl{background:var(--gold-light);border-radius:3px;padding:0 2px;}
 
 /* ===== SPLASH ===== */
 #splash{background:linear-gradient(160deg,var(--olive-dark) 0%,var(--olive) 60%,var(--olive-light) 100%);align-items:center;justify-content:center;gap:24px;}
@@ -415,6 +473,48 @@ input,select,textarea{font-family:inherit;}
 @keyframes pulse{0%,100%{opacity:.5}50%{opacity:1}}
 @keyframes shimmer{0%{background-position:200% 0}100%{background-position:-200% 0}}
 @keyframes popIn{0%{transform:scale(.8);opacity:0}100%{transform:scale(1);opacity:1}}
+@keyframes glow{0%,100%{box-shadow:0 0 8px rgba(224,48,48,.6)}50%{box-shadow:0 0 20px rgba(224,48,48,.9)}}
+@keyframes newBadgePulse{0%,100%{transform:scale(1)}50%{transform:scale(1.08)}}
+
+/* ===== OFFERS BUTTON (Red CTA) ===== */
+.offers-nav-btn{background:linear-gradient(135deg,var(--red),#ff5252) !important;color:#fff !important;border-radius:12px !important;padding:11px !important;animation:glow 2s infinite;}
+.offers-nav-btn .nav-badge{position:absolute;top:-4px;right:-4px;background:#fff;color:var(--red);font-size:9px;font-weight:900;min-width:16px;height:16px;border-radius:8px;display:flex;align-items:center;justify-content:center;padding:0 3px;animation:newBadgePulse 1s infinite;}
+
+/* ===== PICKUP / KITCHEN SCREEN ===== */
+.pickup-order-card{background:var(--white);border-radius:16px;border:2px solid var(--border);padding:16px;margin-bottom:14px;transition:.2s;}
+.pickup-order-card.all-done{border-color:var(--olive);background:var(--olive-ultra);}
+.pickup-item-row{display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--border);cursor:pointer;}
+.pickup-item-row:last-child{border-bottom:none;}
+.pickup-check{width:28px;height:28px;border-radius:8px;border:2.5px solid var(--border);background:var(--white);flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:16px;transition:.2s;}
+.pickup-check.done{background:var(--olive);border-color:var(--olive);color:#fff;}
+.pickup-complete-btn{width:100%;padding:14px;background:var(--olive);color:#fff;border-radius:12px;font-size:15px;font-weight:800;margin-top:12px;display:none;}
+.pickup-complete-btn.visible{display:block;}
+.pickup-order-num{font-size:17px;font-weight:900;color:var(--olive-dark);}
+.pickup-badge{display:inline-block;padding:3px 10px;border-radius:100px;font-size:11px;font-weight:800;background:#fff3d0;color:#b07000;}
+.pickup-badge.done-badge{background:var(--olive-pale);color:var(--olive-dark);}
+
+/* ===== OTP SCREEN ===== */
+.otp-inputs{display:flex;gap:10px;justify-content:center;margin:20px 0;}
+.otp-inputs input{width:46px;height:56px;text-align:center;font-size:24px;font-weight:800;border:2px solid var(--border);border-radius:12px;background:var(--white);color:var(--text);outline:none;font-family:monospace;transition:.2s;}
+.otp-inputs input:focus{border-color:var(--olive);box-shadow:0 0 0 3px var(--olive-pale);}
+.otp-timer{text-align:center;font-size:13px;font-weight:700;color:var(--text-muted);margin-bottom:12px;}
+.otp-resend{color:var(--olive);font-weight:800;cursor:pointer;}
+
+/* ===== DELIVERY CONFIRM BTN ===== */
+.delivery-confirm-btn{width:100%;padding:16px;background:linear-gradient(135deg,var(--olive-dark),var(--olive));color:#fff;border-radius:14px;font-size:16px;font-weight:800;margin-top:12px;display:none;animation:glow 2s infinite;}
+.delivery-confirm-btn.visible{display:block;}
+
+/* ===== LAST ORDER BLOCK (client) ===== */
+.last-order-block-overlay{position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:500;display:none;align-items:center;justify-content:center;padding:24px;}
+.last-order-block-overlay.show{display:flex;}
+.last-order-block-card{background:var(--white);border-radius:20px;padding:32px 24px;text-align:center;max-width:340px;width:100%;}
+
+/* ===== PICKUP LOGIN ===== */
+#pickupLogin{background:var(--olive-ultra);align-items:center;justify-content:center;padding:24px;}
+.pickup-login-card{background:var(--white);border-radius:20px;padding:32px 24px;border:1px solid var(--border);width:100%;max-width:400px;}
+
+/* ===== STICKY ORDER BTN ===== */
+.sticky-order-btn{position:sticky;bottom:0;background:var(--white);padding:12px 16px;border-top:1px solid var(--border);z-index:10;}
 </style>
 </head>
 <body>
@@ -427,7 +527,7 @@ input,select,textarea{font-family:inherit;}
     <div class="sub">Restaurant & Café</div>
   </div>
   <div class="splash-dots"><span></span><span></span><span></span></div>
-  <div class="splash-credit">v5.0 — Designed by Mahmoud Gamal Eldeen</div>
+  <div class="splash-credit">v10.0 — Designed by Mahmoud Gamal Eldeen</div>
 </div>
 
 <!-- ===== AUTH ===== -->
@@ -466,6 +566,12 @@ input,select,textarea{font-family:inherit;}
 <!-- ===== MAIN APP ===== -->
 <div id="app" class="screen">
   <div class="notif" id="notif"></div>
+  <!-- PWA Install Banner -->
+  <div class="pwa-install-bar hidden" id="pwaInstallBar" onclick="triggerPWAInstall()">
+    <span style="font-size:20px">📲</span>
+    <div style="flex:1;color:#fff"><div style="font-size:13px;font-weight:800">ثبّت التطبيق على هاتفك</div><div style="font-size:11px;opacity:.8">أضف زمزم للشاشة الرئيسية</div></div>
+    <button onclick="event.stopPropagation();document.getElementById('pwaInstallBar').classList.add('hidden')" style="color:rgba(255,255,255,.7);font-size:18px;background:none;border:none;cursor:pointer">✕</button>
+  </div>
   <div class="topbar">
     <div>
       <div class="topbar-brand">Zamzam</div>
@@ -495,6 +601,7 @@ input,select,textarea{font-family:inherit;}
     <div class="offer-strip hidden" id="offerStrip"></div>
     <div style="padding:0 16px 8px;display:flex;gap:8px">
       <button onclick="openScreen('booking')" style="flex:1;padding:11px;background:linear-gradient(135deg,var(--gold),var(--gold-light));color:#fff;border-radius:12px;font-size:13px;font-weight:800;text-align:center">☕ احجز ترابيزة</button>
+      <button onclick="openOffersSheet()" id="offersMainBtn" style="flex:1;padding:11px;background:linear-gradient(135deg,var(--red),#ff5252);color:#fff;border-radius:12px;font-size:13px;font-weight:800;text-align:center;position:relative">🎁 العروض<span id="offersBtnBadge" style="position:absolute;top:-4px;left:-4px;background:#fff;color:var(--red);font-size:9px;font-weight:900;min-width:16px;height:16px;border-radius:8px;display:none;align-items:center;justify-content:center;padding:0 3px">جديد</span></button>
     </div>
     <div class="search-wrap">
       <input placeholder="ابحث عن صنف..." id="searchInput" oninput="doSearch(this.value)"/>
@@ -524,10 +631,7 @@ input,select,textarea{font-family:inherit;}
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>
       <span>تتبع</span>
     </button>
-    <button class="nav-btn" onclick="openAdminLogin()">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-      <span>إدارة</span>
-    </button>
+    <!-- Admin button hidden from client — access via #admin #cashier #pickup hash only -->
   </div>
 </div>
 
@@ -554,6 +658,7 @@ input,select,textarea{font-family:inherit;}
         <div class="d-opt" onclick="selectDelivery('cafe',this)">☕ كافيه</div>
       </div>
       <div id="tableRow" style="display:none" class="table-input">
+        <div style="font-size:12px;font-weight:700;color:var(--text-muted);margin-bottom:4px">🪑 معلومات الترابيزة</div>
         <input id="tableNum" placeholder="رقم الترابيزة" type="number"/>
       </div>
       <div id="gpsDeliverySection">
@@ -571,13 +676,10 @@ input,select,textarea{font-family:inherit;}
       <div style="font-size:12px;font-weight:800;color:var(--text-muted);margin-bottom:8px;text-transform:uppercase">طريقة الدفع</div>
       <div class="payment-row" id="paymentRow">
         <div class="pay-opt active" onclick="selectPay(this,'cash')">💵 كاش</div>
-        <div class="pay-opt" onclick="selectPay(this,'visa')" id="payVisa">💳 Visa</div>
-        <div class="pay-opt" onclick="selectPay(this,'vodafone')" id="payVoda">📱 فودافون</div>
-        <div class="pay-opt" onclick="selectPay(this,'instapay')" id="payInsta">⚡ InstaPay</div>
       </div>
       <div id="paymentDetails" style="display:none;margin-bottom:10px"></div>
       <div class="cart-summary" id="cartSummary"></div>
-      <button class="btn-primary" onclick="placeOrder()">✓ تأكيد الطلب وإرسال للواتساب</button>
+      <button class="btn-primary" onclick="placeOrder()" style="position:sticky;bottom:0;z-index:5;box-shadow:0 -4px 16px rgba(45,80,22,.2)">✓ تأكيد الطلب وإرسال للواتساب</button>
     </div>
   </div>
 </div>
@@ -633,11 +735,17 @@ input,select,textarea{font-family:inherit;}
       <div style="font-size:16px;font-weight:800;margin-bottom:6px">⏳ إشعار مهم</div>
       <div id="delayMsgText" style="font-size:13px;opacity:.9;line-height:1.6"></div>
     </div>
+    <div id="paymentPendingBox" style="display:none;background:linear-gradient(135deg,#f59e0b,#d97706);border-radius:14px;padding:16px;color:#fff;margin-bottom:16px;animation:pulse 2s infinite">
+      <div style="font-size:18px;font-weight:900;margin-bottom:6px">⏳ في انتظار تأكيد الدفع</div>
+      <div style="font-size:13px;opacity:.95;line-height:1.7">تم استلام طلبك — يجري التحقق من وصول المبلغ من قِبل المسؤول. سيبدأ التجهيز فور تأكيد الدفع.</div>
+    </div>
     <div style="background:var(--white);border-radius:14px;padding:16px;border:1px solid var(--border);margin-bottom:12px">
       <div style="font-size:14px;font-weight:800;margin-bottom:4px">⏱️ وقت التوصيل المتوقع</div>
       <div style="font-size:28px;font-weight:800;color:var(--olive-dark)" id="etaDisplay">~30 دقيقة</div>
     </div>
-    <button class="btn-primary" onclick="openWhatsapp('order')" style="margin-bottom:10px">تواصل عبر واتساب 💬</button>
+    <button class="delivery-confirm-btn" id="deliveryConfirmBtn" onclick="confirmDeliveryReceived()">✅ تم استلام الطلب</button>
+    <div id="deliveryConfirmedMsg" style="display:none;background:var(--olive-pale);border-radius:12px;padding:14px;text-align:center;margin-top:10px;font-weight:800;color:var(--olive-dark)">✅ شكراً! تم تسجيل استلامك للطلب</div>
+    <button class="btn-primary" onclick="openWhatsapp('order')" style="margin-bottom:10px;margin-top:10px">تواصل عبر واتساب 💬</button>
     <button class="btn-primary btn-secondary" onclick="openScreen('app')">العودة للمنيو</button>
   </div>
 </div>
@@ -665,16 +773,17 @@ input,select,textarea{font-family:inherit;}
     <div id="bookingFormView">
       <div style="background:var(--white);border-radius:16px;padding:20px;border:1px solid var(--border);margin-bottom:16px">
         <div style="font-size:16px;font-weight:800;margin-bottom:16px;color:var(--olive-dark)">📋 بيانات الحجز</div>
-        <div class="field"><label>التاريخ</label><input type="date" id="bookDate" min="" style=""/></div>
-        <div class="field"><label>الوقت</label><input type="time" id="bookTime" value="12:00"/></div>
+        <div class="field"><label>التاريخ</label><input type="date" id="bookDate" min="" onchange="renderTablesGrid()"/></div>
+        <div class="field"><label>الوقت</label><input type="time" id="bookTime" value="12:00" onchange="renderTablesGrid()"/></div>
         <div class="field"><label>عدد الأشخاص</label>
-          <select id="bookPersons" style="width:100%;padding:13px 16px;border:1.5px solid var(--border);border-radius:12px;font-size:15px;background:var(--white)">
+          <select id="bookPersons" style="width:100%;padding:13px 16px;border:1.5px solid var(--border);border-radius:12px;font-size:15px;background:var(--white)" onchange="renderTablesGrid()">
             <option value="1">شخص واحد</option>
             <option value="2">شخصان</option>
             <option value="3">3 أشخاص</option>
             <option value="4">4 أشخاص</option>
             <option value="5">5 أشخاص</option>
             <option value="6">6 أشخاص</option>
+            <option value="7">7 أشخاص</option>
           </select>
         </div>
       </div>
@@ -735,9 +844,97 @@ input,select,textarea{font-family:inherit;}
     </div>
     <div style="text-align:center;padding:24px;color:var(--text-muted);font-size:11px">
       <div style="font-weight:800;font-size:14px;color:var(--olive-dark);margin-bottom:4px">Zamzam Restaurant & Café</div>
-      <div>نسخة 9.0.0 • Firebase Realtime • Designed by <strong style="color:var(--dark)">Mahmoud Gamal Eldeen</strong></div>
+      <div>نسخة 11.0.0 • PWA + Smart Review + Live Search + Pickup • Designed by <strong style="color:var(--dark)">Mahmoud Gamal Eldeen</strong></div>
       <div style="margin-top:4px">📱 01508613866</div>
     </div>
+  </div>
+</div>
+
+<!-- ===== OTP VERIFICATION SCREEN ===== -->
+<div id="otpScreen" class="screen" style="background:var(--cream)">
+  <div class="auth-hero">
+    <div class="brand">Zamzam</div>
+    <div class="sub">تحقق من رقمك</div>
+  </div>
+  <div class="auth-body">
+    <div style="text-align:center;margin-bottom:20px">
+      <div style="font-size:48px;margin-bottom:12px">📱</div>
+      <div style="font-size:16px;font-weight:800;color:var(--dark)">أدخل رمز التحقق</div>
+      <div style="font-size:13px;color:var(--text-muted);margin-top:6px" id="otpSentTo">تم إرسال رمز من 4 أرقام على واتساب</div>
+    </div>
+    <div class="otp-inputs" id="otpInputs">
+      <input type="tel" maxlength="1" inputmode="numeric" oninput="otpNext(this,0)"/>
+      <input type="tel" maxlength="1" inputmode="numeric" oninput="otpNext(this,1)"/>
+      <input type="tel" maxlength="1" inputmode="numeric" oninput="otpNext(this,2)"/>
+      <input type="tel" maxlength="1" inputmode="numeric" oninput="otpNext(this,3)"/>
+    </div>
+    <div class="otp-timer" id="otpTimerEl">⏳ إعادة الإرسال بعد <span id="otpCountdown">60</span> ثانية</div>
+    <button class="btn-primary" onclick="verifyOTP()">✓ تحقق وأكمل التسجيل</button>
+    <button style="width:100%;padding:14px;margin-top:10px;color:var(--text-muted);font-size:14px" onclick="showScreen('auth')">← رجوع</button>
+    <div style="margin-top:16px;text-align:center">
+      <div style="font-size:12px;color:var(--text-muted);margin-bottom:6px">لم يصلك الرمز؟</div>
+      <span class="otp-resend" id="otpResendBtn" onclick="resendOTP()" style="pointer-events:none;color:var(--text-muted)">إعادة الإرسال</span>
+    </div>
+  </div>
+</div>
+
+<!-- ===== PICKUP LOGIN ===== -->
+<div id="pickupLogin" class="screen">
+  <div class="pickup-login-card">
+    <h2 style="font-size:22px;font-weight:800;margin-bottom:4px;color:var(--olive-dark)">🍳 لوحة التجهيز</h2>
+    <p style="font-size:13px;color:var(--text-muted);margin-bottom:24px">أدخل كلمة سر Pickup للدخول</p>
+    <div class="field"><label>كلمة السر</label><input type="password" id="pickupPass" placeholder="أدخل كلمة سر الـ Pickup"/></div>
+    <button class="btn-primary" onclick="doPickupLogin()">دخول</button>
+    <button style="width:100%;padding:14px;margin-top:10px;color:var(--text-muted);font-size:14px" onclick="openScreen('app')">إلغاء</button>
+  </div>
+</div>
+
+<!-- ===== PICKUP / KITCHEN PANEL ===== -->
+<div id="pickupPanel" class="screen" style="background:var(--bg)">
+  <div class="admin-header" style="background:linear-gradient(135deg,#8B4513,#D4651A);padding:16px 20px">
+    <div style="display:flex;align-items:center;justify-content:space-between">
+      <div>
+        <h1 style="font-size:18px;font-weight:900;color:#fff;margin:0">🍳 لوحة التجهيز</h1>
+        <p style="font-size:11px;color:rgba(255,255,255,.8);margin:3px 0 0">🔥 Firebase: <span id="pickupFbStatus" style="font-weight:800">جارى الاتصال...</span></p>
+      </div>
+      <div style="display:flex;gap:8px">
+        <div style="background:rgba(255,255,255,.15);border-radius:12px;padding:10px 14px;text-align:center;min-width:60px">
+          <div style="font-size:22px;font-weight:900;color:#fff" id="pickupPendingCount">0</div>
+          <div style="font-size:9px;color:rgba(255,255,255,.8);font-weight:700">للتجهيز</div>
+        </div>
+        <div style="background:rgba(255,255,255,.15);border-radius:12px;padding:10px 14px;text-align:center;min-width:60px">
+          <div style="font-size:22px;font-weight:900;color:#4ade80" id="pickupDoneCount">0</div>
+          <div style="font-size:9px;color:rgba(255,255,255,.8);font-weight:700">تم</div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <!-- Cashier notification banner -->
+  <div id="pickupCashierNotif" style="display:none;background:linear-gradient(135deg,#1a5fc8,#2176e0);padding:12px 16px;color:#fff;font-size:13px;font-weight:800;border-bottom:2px solid #0e4aad;animation:pulse 1s infinite">
+    <div id="pickupCashierNotifText">🔔 إشعار للكاشير</div>
+  </div>
+  <div style="overflow-y:auto;flex:1;padding:12px 12px 90px">
+    <div id="pickupOrdersList">
+      <div style="text-align:center;padding:60px;color:var(--text-muted)">
+        <div style="font-size:60px">🍳</div>
+        <div style="font-weight:700;margin-top:12px;font-size:16px">لا توجد طلبات للتجهيز</div>
+        <div style="font-size:13px;margin-top:6px;opacity:.7">الطلبات الجديدة ستظهر هنا تلقائياً</div>
+      </div>
+    </div>
+  </div>
+  <div class="bottom-nav">
+    <button class="nav-btn active" style="flex:2;color:var(--olive)">🍳 لوحة التجهيز</button>
+    <button class="nav-btn" onclick="doPickupLogout()" style="color:var(--red)">🚪 خروج</button>
+  </div>
+</div>
+
+<!-- ===== LAST ORDER BLOCK OVERLAY (client) ===== -->
+<div class="last-order-block-overlay" id="lastOrderBlockOverlay">
+  <div class="last-order-block-card">
+    <div style="font-size:56px;margin-bottom:12px">⏸️</div>
+    <div style="font-size:18px;font-weight:800;color:var(--dark);margin-bottom:8px">الطلبات متوقفة مؤقتاً</div>
+    <div style="font-size:14px;color:var(--text-muted);line-height:1.7;margin-bottom:20px">نعتذر، الطلبات متوقفة حالياً بسبب ضغط الطلبات، يرجى المحاولة مرة أخرى بعد قليل.</div>
+    <button class="btn-primary" onclick="document.getElementById('lastOrderBlockOverlay').classList.remove('show')">حسناً ✓</button>
   </div>
 </div>
 
@@ -751,6 +948,7 @@ input,select,textarea{font-family:inherit;}
       <select id="adminRole" style="width:100%;padding:13px 16px;border:1.5px solid var(--border);border-radius:12px;font-size:15px;background:var(--white);color:var(--text);outline:none">
         <option value="admin">🔑 مدير النظام</option>
         <option value="cashier">💳 كاشير</option>
+        <option value="pickup">🍳 Pickup / التجهيز</option>
       </select>
     </div>
     <div class="field"><label>كلمة السر</label><input type="password" id="adminPass" placeholder="أدخل كلمة السر"/></div>
@@ -799,6 +997,7 @@ input,select,textarea{font-family:inherit;}
       <div style="padding:0 16px 8px;display:flex;gap:8px">
         <select id="orderFilterStatus" onchange="renderAdminOrders()" style="flex:1;padding:8px 12px;border:1.5px solid var(--border);border-radius:10px;font-size:13px;background:var(--white)">
           <option value="all">كل الطلبات</option>
+          <option value="payment_pending">⏳ انتظار تأكيد الدفع</option>
           <option value="new">جديد</option>
           <option value="prep">تجهيز</option>
           <option value="ready">جاهز</option>
@@ -816,6 +1015,19 @@ input,select,textarea{font-family:inherit;}
 
     <!-- CASHIER SHEET TAB -->
     <div id="tab-cashier" style="display:none">
+      <div class="cashier-search-bar">
+        <input type="search" id="cashierSearch" placeholder="🔍 ابحث بالاسم أو الهاتف أو كود الطلب..." oninput="filterCashierLive(this.value)" inputmode="search"/>
+      </div>
+      <div class="cashier-filter-chips">
+        <span class="cashier-chip active" onclick="setCashierFilter('all',this)">الكل</span>
+        <span class="cashier-chip" onclick="setCashierFilter('payment_pending',this)">💳 دفع معلق</span>
+        <span class="cashier-chip" onclick="setCashierFilter('new',this)">🟡 جديد</span>
+        <span class="cashier-chip" onclick="setCashierFilter('prep',this)">🍳 تجهيز</span>
+        <span class="cashier-chip" onclick="setCashierFilter('ready',this)">✅ جاهز</span>
+        <span class="cashier-chip" onclick="setCashierFilter('out',this)">🛵 خرج</span>
+        <span class="cashier-chip" onclick="setCashierFilter('delivered',this)">🎉 تسليم</span>
+        <span class="cashier-chip" onclick="setCashierFilter('cancelled',this)">❌ ملغى</span>
+      </div>
       <div style="padding:0 16px 8px;display:flex;gap:8px;align-items:center">
         <div style="flex:1;font-size:13px;font-weight:800;color:var(--dark)">📊 جدول الطلبات — الأقدم أولاً</div>
         <button onclick="renderCashierSheet()" style="padding:8px 14px;background:var(--olive);color:#fff;border-radius:10px;font-size:13px;font-weight:700">↻ تحديث</button>
@@ -928,9 +1140,39 @@ input,select,textarea{font-family:inherit;}
         <div class="settings-row"><div class="info"><strong>رقم InstaPay</strong><span>للعملاء</span></div><input class="settings-input" id="instapayNum" type="tel" style="direction:ltr" onchange="saveSettings()"/></div>
         <div class="settings-row"><div class="info"><strong>تفاصيل Visa</strong><span>اسم البنك</span></div><input class="settings-input" id="visaDetails" type="text" onchange="saveSettings()"/></div>
       </div>
+      <div style="padding:0 16px 8px;font-size:15px;font-weight:800;color:var(--dark)" data-admin-only>🏦 إدارة المحافظ الإلكترونية</div>
+      <div class="settings-section" data-admin-only>
+        <div style="padding:12px 16px">
+          <div style="font-size:12px;color:var(--text-muted);margin-bottom:10px;line-height:1.6">الأدمن فقط يضيف أو يعدّل المحافظ وأرقام مسؤولي استلام التحويلات. الكاشير لا يملك صلاحية التعديل.</div>
+          <div id="ewalletsAdminList" style="margin-bottom:12px"></div>
+          <div style="background:var(--cream);border-radius:12px;padding:14px;border:1px solid var(--border)">
+            <div style="font-size:13px;font-weight:800;color:var(--olive-dark);margin-bottom:10px">+ إضافة محفظة جديدة</div>
+            <div style="display:flex;gap:6px;margin-bottom:8px">
+              <input id="newWalletEmoji" type="text" placeholder="💳" style="width:52px;padding:8px;border:1.5px solid var(--border);border-radius:8px;font-size:18px;text-align:center;background:var(--white);outline:none"/>
+              <input id="newWalletName" type="text" placeholder="اسم المحفظة" style="flex:1;padding:8px 10px;border:1.5px solid var(--border);border-radius:8px;font-size:13px;background:var(--white);outline:none"/>
+            </div>
+            <div style="display:flex;gap:6px;margin-bottom:8px">
+              <input id="newWalletNum" type="tel" placeholder="رقم المحفظة (للعملاء)" style="flex:1;padding:8px 10px;border:1.5px solid var(--border);border-radius:8px;font-size:13px;background:var(--white);outline:none;direction:ltr"/>
+            </div>
+            <div style="display:flex;gap:6px;margin-bottom:8px">
+              <input id="newWalletManager" type="tel" placeholder="رقم واتساب مسؤول الاستلام" style="flex:1;padding:8px 10px;border:1.5px solid var(--border);border-radius:8px;font-size:13px;background:var(--white);outline:none;direction:ltr"/>
+            </div>
+            <button onclick="addEwallet()" style="width:100%;padding:10px;background:var(--olive);color:#fff;border-radius:9px;font-size:13px;font-weight:800">+ إضافة المحفظة</button>
+          </div>
+        </div>
+      </div>
       <div style="padding:0 16px 8px;font-size:15px;font-weight:800;color:var(--dark)">☕ إعدادات الكافيه</div>
       <div class="settings-section">
-        <div class="settings-row"><div class="info"><strong>عدد الترابيزات</strong><span>يحدد عرض الحجوزات</span></div><input class="settings-input" id="tablesCount" type="number" value="10" min="1" max="50" onchange="saveSettings()"/></div>
+        <div class="settings-row"><div class="info"><strong>عدد الترابيزات الكلى</strong><span>يحدد عرض الحجوزات</span></div><input class="settings-input" id="tablesCount" type="number" value="16" min="1" max="50" onchange="saveSettings()"/></div>
+        <div style="padding:12px 16px">
+          <div style="font-size:13px;font-weight:800;color:var(--olive-dark);margin-bottom:8px">📋 قواعد السعة الحالية</div>
+          <div style="font-size:12px;line-height:1.9;color:var(--text-muted);background:var(--cream);border-radius:8px;padding:10px">
+            🪑 ترابيزات 1→9: حتى 4 أشخاص<br/>
+            🪑 ترابيزة 10 و11: من 5 إلى 7 أشخاص<br/>
+            🪑 ترابيزة 12: شخصان فقط<br/>
+            🪑 ترابيزات 13→16: فرد أو فردين
+          </div>
+        </div>
       </div>
       <div style="padding:0 16px 8px;font-size:15px;font-weight:800;color:var(--dark)">🗺️ موقع المطعم</div>
       <div class="settings-section">
@@ -940,8 +1182,8 @@ input,select,textarea{font-family:inherit;}
           <a href="https://maps.app.goo.gl/fC55jgZLQoTpqksz6" target="_blank" style="display:block;margin-top:8px;text-align:center;color:var(--olive);font-size:13px;font-weight:700">📍 فتح في خرائط جوجل</a>
         </div>
       </div>
-      <div style="padding:0 16px 8px;font-size:15px;font-weight:800;color:var(--dark)">🔐 كلمات المرور</div>
-      <div class="settings-section">
+      <div style="padding:0 16px 8px;font-size:15px;font-weight:800;color:var(--dark)" data-admin-only>🔐 كلمات المرور</div>
+      <div class="settings-section" data-admin-only>
         <div class="settings-row"><div class="info"><strong>باسورد المدير</strong><span>Admin Password</span></div><input class="settings-input" type="password" id="newAdminPass" placeholder="تغيير الباسورد"/></div>
         <div class="settings-row"><div class="info"><strong>باسورد الكاشير 1</strong></div><input class="settings-input" type="password" id="newCashier1" placeholder="باسورد 1"/></div>
         <div class="settings-row"><div class="info"><strong>باسورد الكاشير 2</strong></div><input class="settings-input" type="password" id="newCashier2" placeholder="باسورد 2"/></div>
@@ -1149,8 +1391,10 @@ input,select,textarea{font-family:inherit;}
 const _AUTH_TABLE = [
   {r:'admin',   h:'YWRtaW46TUcjMTQ1NkA='},
   {r:'cashier', h:'Y2FzaGllcjp6YW0jMTk5MA=='},
-  {r:'cashier', h:'Y2FzaGllcjp6YW0yIzIwMjU='}
+  {r:'cashier', h:'Y2FzaGllcjp6YW0yIzIwMjU='},
+  {r:'pickup',  h:'cGlja3VwOnBpY2t1cCMxMjM0'}
 ];
+// pickup default pass: pickup#1234
 function _verifyAuth(role, pass) {
   return _AUTH_TABLE.some(e => e.r === role && atob(e.h) === role + ':' + pass);
 }
@@ -1252,6 +1496,12 @@ let SETTINGS = loadData('zz_settings', {
     {id:'z1', name:'الشابة', fee:15},
     {id:'z2', name:'زفتى', fee:20},
     {id:'z3', name:'صومباط', fee:25}
+  ],
+  // محافظ إلكترونية (يضيفها الأدمن)
+  ewallets: [
+    {id:'ew1', name:'Vodafone Cash', emoji:'💳', number:'', managerPhone:''},
+    {id:'ew2', name:'WE Cash', emoji:'💰', number:'', managerPhone:''},
+    {id:'ew3', name:'InstaPay', emoji:'🏦', number:'', managerPhone:''}
   ]
 });
 let usedOffers   = loadData('zz_used_offers', {});
@@ -1271,6 +1521,12 @@ let appliedDiscount=0, appliedCouponId=null;
 let priceTypeMode='single';
 let selectedTableNum=null;
 let selectedDeliveryZone=null;
+// Cashier live search state
+let cashierSearchQuery='', cashierStatusFilter='all';
+// Order review state
+let _orderReviewTimer=null, _pendingOrderForReview=null;
+// PWA install prompt
+let _pwaInstallPrompt=null;
 
 // ============================================================
 // INIT
@@ -1280,11 +1536,77 @@ window.onload = () => {
   const bookDateEl = document.getElementById('bookDate');
   if (bookDateEl) bookDateEl.min = new Date().toISOString().split('T')[0];
 
+  // ===== PWA Install Prompt =====
+  window.addEventListener('beforeinstallprompt', e => {
+    e.preventDefault();
+    _pwaInstallPrompt = e;
+    const bar = document.getElementById('pwaInstallBar');
+    if (bar) bar.classList.remove('hidden');
+  });
+
+  // ===== Restore cart from localStorage =====
+  const savedCart = loadData('zz_current_cart', []);
+  if (savedCart && savedCart.length) {
+    cart = savedCart;
+    updateCartUI();
+  }
+  // Restore delivery type
+  const savedDelivery = loadData('zz_delivery_type', 'delivery');
+  deliveryType = savedDelivery;
+
   setTimeout(() => {
+    // ============================================================
+    // SECURE ROLE-BASED ACCESS — Hash routing with pre-render guard
+    // Admin/Cashier/Pickup screens are NOT rendered until verified
+    // ============================================================
+    const hash = window.location.hash.replace('#','').toLowerCase();
+    const PROTECTED_ROLES = ['admin', 'cashier', 'pickup'];
+
+    if (PROTECTED_ROLES.includes(hash)) {
+      // Block client view completely — show admin login only
+      // Admin/Cashier/Pickup panels are NOT injected into DOM yet
+      showScreen('adminLogin');
+      const roleEl = document.getElementById('adminRole');
+      if (roleEl) {
+        if (hash === 'cashier') roleEl.value = 'cashier';
+        else if (hash === 'pickup') roleEl.value = 'pickup';
+        else roleEl.value = 'admin';
+      }
+      // Guard: any navigation attempt from client side is blocked
+      _hashAccessRole = hash;
+      return;
+    }
+
+    // Clear any stale admin session if accessing without hash
+    if (!PROTECTED_ROLES.includes(hash) && adminRoleType) {
+      adminRoleType = null;
+      saveData('zz_admin_role', null);
+    }
+
     const saved = loadData('zamzam_user', null);
     if (saved) { currentUser = saved; openScreen('app'); }
     else showScreen('auth');
   }, 2000);
+
+  // Listen for hash changes — block unauthorized access
+  window.addEventListener('hashchange', () => {
+    const hash = window.location.hash.replace('#','').toLowerCase();
+    const PROTECTED_ROLES = ['admin', 'cashier', 'pickup'];
+    if (PROTECTED_ROLES.includes(hash)) {
+      // If not authenticated as admin/cashier/pickup — redirect to login
+      const storedRole = loadData('zz_admin_role', null);
+      if (!storedRole || storedRole !== hash) {
+        showScreen('adminLogin');
+        const roleEl = document.getElementById('adminRole');
+        if (roleEl) {
+          if (hash === 'cashier') roleEl.value = 'cashier';
+          else if (hash === 'pickup') roleEl.value = 'pickup';
+          else roleEl.value = 'admin';
+        }
+        _hashAccessRole = hash;
+      }
+    }
+  });
 };
 
 // ============================================================
@@ -1296,10 +1618,11 @@ function showScreen(id) {
 }
 function openScreen(id) {
   showScreen(id);
-  if (id === 'app') { renderMenu(); }
+  if (id === 'app') { renderMenu(); updateOffersBadge(); }
   if (id === 'adminPanel') { renderAdminOrders(); renderMenuManage(); renderOffersAdmin(); renderCatSelects(); loadSettingsUI(); applyRoleRestrictions(); }
   if (id === 'history') renderHistory();
   if (id === 'booking') { renderTablesGrid(); document.getElementById('bookingFormView').style.display='block'; document.getElementById('bookingConfirmView').style.display='none'; }
+  if (id === 'pickupPanel') { setupPickupPanel(); }
   if (id === 'settings') {
     if (currentUser) {
       const el1 = document.getElementById('settingsUserName');
@@ -1319,14 +1642,25 @@ function switchAuthTab(t) {
   document.querySelectorAll('.auth-tabs button').forEach((b, i) =>
     b.classList.toggle('active', (t === 'login' && i === 0) || (t === 'register' && i === 1)));
 }
+// ===== OTP SYSTEM =====
+let _otpPending = null; // {code, user, isLogin, timer}
+
+function generateOTP() { return Math.floor(1000 + Math.random() * 9000).toString(); }
+
 function doLogin() {
   const phone = document.getElementById('loginPhone').value.trim();
-  if (!phone) { showNotif('أدخل رقم الهاتف'); return; }
-  currentUser = { name: 'عميل', phone, whatsapp: phone, address: '' };
-  if (document.getElementById('rememberToggle').classList.contains('on'))
-    saveData('zamzam_user', currentUser);
-  openScreen('app'); getGPS();
+  if (!phone || phone.length < 10) { showNotif('أدخل رقم هاتف صحيح'); return; }
+  // Check if already verified
+  const savedVerified = loadData('zz_verified_phones', {});
+  if (savedVerified[phone]) {
+    currentUser = { name: 'عميل', phone, whatsapp: phone, address: '', verified: true };
+    if (document.getElementById('rememberToggle').classList.contains('on'))
+      saveData('zamzam_user', currentUser);
+    openScreen('app'); getGPS(); return;
+  }
+  startOTP(phone, 'login', { name: 'عميل', phone, whatsapp: phone, address: '' });
 }
+
 function doRegister() {
   const name = document.getElementById('regName').value.trim();
   const phone = document.getElementById('regPhone').value.trim();
@@ -1334,11 +1668,86 @@ function doRegister() {
   const addr = document.getElementById('regAddress').value.trim();
   if (!name || !phone) { showNotif('يرجى ملء الاسم ورقم الهاتف'); return; }
   if (!wa) { showNotif('⚠️ رقم الواتساب إجبارى'); return; }
-  currentUser = { name, phone, whatsapp: wa, address: addr };
-  if (document.getElementById('rememberToggle2').classList.contains('on'))
-    saveData('zamzam_user', currentUser);
+  const user = { name, phone, whatsapp: wa, address: addr, verified: false };
+  startOTP(wa, 'register', user);
+}
+
+function startOTP(waNumber, type, userData) {
+  const code = generateOTP();
+  _otpPending = { code, user: userData, isLogin: type === 'login', waNum: waNumber };
+  // Send via WhatsApp
+  const msg = `🔐 *رمز التحقق لمطعم زمزم*\n\nرمزك هو: *${code}*\n\nصالح لمدة 5 دقائق فقط.\n_لا تشارك هذا الرمز مع أحد_`;
+  const cleanWa = waNumber.replace(/[^0-9]/g,'');
+  const waFull = cleanWa.startsWith('0') ? '2' + cleanWa : cleanWa;
+  window.open('https://wa.me/' + waFull + '?text=' + encodeURIComponent(msg), '_blank');
+  // Go to OTP screen
+  document.getElementById('otpSentTo').textContent = 'تم إرسال رمز 4 أرقام على واتساب: ' + waNumber;
+  // Clear inputs
+  document.querySelectorAll('#otpInputs input').forEach(inp => inp.value = '');
+  document.querySelectorAll('#otpInputs input')[0].focus();
+  showScreen('otpScreen');
+  startOTPCountdown();
+  // Auto-expire after 5 min
+  if (_otpPending._expireTimer) clearTimeout(_otpPending._expireTimer);
+  _otpPending._expireTimer = setTimeout(() => { _otpPending = null; }, 300000);
+}
+
+function otpNext(input, idx) {
+  input.value = input.value.replace(/[^0-9]/g,'');
+  const inputs = document.querySelectorAll('#otpInputs input');
+  if (input.value && idx < 3) inputs[idx + 1].focus();
+  if (idx === 3 && input.value) verifyOTP();
+}
+
+function verifyOTP() {
+  if (!_otpPending) { showNotif('انتهت صلاحية الرمز — أعد المحاولة'); showScreen('auth'); return; }
+  const inputs = document.querySelectorAll('#otpInputs input');
+  const entered = Array.from(inputs).map(i => i.value).join('');
+  if (entered.length < 4) { showNotif('أدخل الرمز المكون من 4 أرقام'); return; }
+  if (entered !== _otpPending.code) { showNotif('❌ الرمز غير صحيح'); return; }
+  // Verified!
+  currentUser = { ..._otpPending.user, verified: true };
+  const savedVerified = loadData('zz_verified_phones', {});
+  savedVerified[currentUser.phone] = true;
+  saveData('zz_verified_phones', savedVerified);
+  // Save user
+  const remember = document.getElementById(_otpPending.isLogin ? 'rememberToggle' : 'rememberToggle2');
+  if (remember && remember.classList.contains('on')) saveData('zamzam_user', currentUser);
+  // Register to users list
+  const users = loadData('zz_users', []);
+  if (!users.find(u => u.phone === currentUser.phone)) {
+    users.push({ ...currentUser, registeredAt: new Date().toLocaleDateString('ar-EG') });
+    saveData('zz_users', users);
+    fbSet('users/' + currentUser.phone.replace(/[^0-9]/g,''), currentUser);
+  }
+  _otpPending = null;
+  showNotif('✅ تم التحقق بنجاح');
   openScreen('app'); getGPS();
 }
+
+let _otpCountdownTimer = null;
+function startOTPCountdown() {
+  let secs = 60;
+  const btn = document.getElementById('otpResendBtn');
+  const countdown = document.getElementById('otpCountdown');
+  if (btn) { btn.style.pointerEvents = 'none'; btn.style.color = 'var(--text-muted)'; }
+  clearInterval(_otpCountdownTimer);
+  _otpCountdownTimer = setInterval(() => {
+    secs--;
+    if (countdown) countdown.textContent = secs;
+    if (secs <= 0) {
+      clearInterval(_otpCountdownTimer);
+      if (btn) { btn.style.pointerEvents = 'auto'; btn.style.color = 'var(--olive)'; }
+    }
+  }, 1000);
+}
+
+function resendOTP() {
+  if (!_otpPending) { showScreen('auth'); return; }
+  startOTP(_otpPending.waNum, _otpPending.isLogin ? 'login' : 'register', _otpPending.user);
+  showNotif('✓ تم إعادة إرسال الرمز');
+}
+
 function doClientLogout() {
   currentUser = null;
   localStorage.removeItem('zamzam_user');
@@ -1548,6 +1957,9 @@ function updateCartUI() {
   const finalTotal = Math.max(0, subtotal - totalDisc) + deliveryFee;
   document.getElementById('fcTotal').textContent = finalTotal + ' ج';
   document.getElementById('floatingCart').classList.toggle('hidden', count === 0);
+  // Persist cart
+  saveData('zz_current_cart', cart);
+  saveData('zz_delivery_type', deliveryType);
   const sumEl = document.getElementById('cartSummary');
   if (sumEl) {
     let sumHtml = `<div class="cart-summary-row"><span>المجموع الفرعى</span><span>${subtotal} ج.م</span></div>`;
@@ -1605,7 +2017,7 @@ function renderCartSheet() {
   if (noteEl && active.length) { noteEl.style.display = 'block'; noteEl.textContent = '🎉 عروض مفعّلة: ' + active.map(o => o.name).join(', '); }
   else if (noteEl) noteEl.style.display = 'none';
 }
-function openSheet(id) { document.getElementById(id).classList.add('open'); if (id === 'cartSheet') { renderCartSheet(); renderZoneChips(); } }
+function openSheet(id) { document.getElementById(id).classList.add('open'); if (id === 'cartSheet') { renderCartSheet(); renderZoneChips(); renderPaymentOptions(); } }
 function closeSheet(id, e) { if (e && e.target !== document.getElementById(id)) return; document.getElementById(id).classList.remove('open'); }
 function selectDelivery(t, el) {
   deliveryType = t;
@@ -1616,45 +2028,63 @@ function selectDelivery(t, el) {
   if (gpsSection) gpsSection.style.display = t === 'delivery' ? 'block' : 'none';
   appliedDiscount = 0; appliedCouponId = null; updateCartUI();
 }
-function selectPay(el, type) {
-  paymentType = type; paymentTypeLabel = el.textContent.trim();
+// ============================================================
+// DYNAMIC PAYMENT OPTIONS
+// ============================================================
+function renderPaymentOptions() {
+  const row = document.getElementById('paymentRow');
+  if (!row) return;
+  const wallets = SETTINGS.ewallets || [];
+  let html = `<div class="pay-opt active" onclick="selectPay(this,'cash')">💵 كاش</div>`;
+  wallets.forEach(w => {
+    if (w.number) {
+      html += `<div class="pay-opt" onclick="selectPay(this,'ewallet_${w.id}','${w.name}','${w.emoji}')">${w.emoji} ${w.name}</div>`;
+    }
+  });
+  row.innerHTML = html;
+}
+
+function selectPay(el, type, walletName, walletEmoji) {
+  paymentType = type;
+  if (type === 'cash') {
+    paymentTypeLabel = '💵 كاش';
+  } else if (type.startsWith('ewallet_')) {
+    const wid = type.replace('ewallet_','');
+    const w = (SETTINGS.ewallets||[]).find(x => x.id === wid);
+    paymentTypeLabel = w ? `${w.emoji} ${w.name}` : (walletEmoji + ' ' + walletName);
+    _selectedWallet = w || null;
+  } else {
+    paymentTypeLabel = el.textContent.trim();
+    _selectedWallet = null;
+  }
   document.querySelectorAll('.pay-opt').forEach(p => p.classList.remove('active')); el.classList.add('active');
   const detEl = document.getElementById('paymentDetails');
   if (!detEl) return;
   detEl.innerHTML = '';
   detEl.style.display = 'none';
-  if (type === 'vodafone' && SETTINGS.vodafoneNum) {
+  if (type === 'cash') return;
+  if (type.startsWith('ewallet_')) {
+    const wid = type.replace('ewallet_','');
+    const w = (SETTINGS.ewallets||[]).find(x => x.id === wid);
+    if (!w) return;
     detEl.style.display = 'block';
     detEl.innerHTML = `<div class="pay-info-box">
-      <div style="font-size:13px;font-weight:800;margin-bottom:4px">📱 فودافون كاش</div>
-      <div style="font-size:20px;font-weight:800;letter-spacing:2px;direction:ltr">${SETTINGS.vodafoneNum}</div>
-      <button class="copy-btn" onclick="copyPayNum('${SETTINGS.vodafoneNum}')">📋 نسخ الرقم</button>
-      <div style="margin-top:10px;padding:8px 10px;background:rgba(255,100,0,.12);border-radius:8px;font-size:12px;font-weight:700;color:#c84000">
-        📸 بعد الدفع برجاء إرسال Screenshot لتأكيد الدفع على واتساب الإدارة
-        <br/><button onclick="openWhatsapp('payment')" style="margin-top:6px;background:#25d366;color:#fff;border:none;border-radius:6px;padding:5px 10px;font-size:11px;font-weight:800;cursor:pointer">💬 إرسال Screenshot الآن</button>
+      <div style="font-size:14px;font-weight:800;margin-bottom:6px">${w.emoji} ${w.name}</div>
+      ${w.number ? `<div style="font-size:20px;font-weight:800;letter-spacing:2px;direction:ltr;margin-bottom:8px">${w.number}</div>
+      <button class="copy-btn" onclick="copyPayNum('${w.number}')">📋 نسخ الرقم</button>` : ''}
+      <div style="margin-top:10px;padding:10px 12px;background:rgba(255,100,0,.1);border-radius:10px;font-size:12px;font-weight:700;color:#c84000;line-height:1.7">
+        📲 بعد إرسال المبلغ — سيقوم الكاشير بالتحقق من وصوله وتأكيد طلبك.
+        <br/>🕐 طلبك سيبدأ تجهيزه بعد تأكيد الدفع فقط.
       </div>
-    </div>`;
-  } else if (type === 'instapay' && SETTINGS.instapayNum) {
-    detEl.style.display = 'block';
-    detEl.innerHTML = `<div class="pay-info-box">
-      <div style="font-size:13px;font-weight:800;margin-bottom:4px">⚡ InstaPay</div>
-      <div style="font-size:20px;font-weight:800;letter-spacing:2px;direction:ltr">${SETTINGS.instapayNum}</div>
-      <button class="copy-btn" onclick="copyPayNum('${SETTINGS.instapayNum}')">📋 نسخ الرقم</button>
-      <div style="margin-top:10px;padding:8px 10px;background:rgba(255,100,0,.12);border-radius:8px;font-size:12px;font-weight:700;color:#c84000">
-        📸 بعد الدفع برجاء إرسال Screenshot لتأكيد الدفع على واتساب الإدارة
-        <br/><button onclick="openWhatsapp('payment')" style="margin-top:6px;background:#25d366;color:#fff;border:none;border-radius:6px;padding:5px 10px;font-size:11px;font-weight:800;cursor:pointer">💬 إرسال Screenshot الآن</button>
-      </div>
-    </div>`;
-  } else if (type === 'visa' && SETTINGS.visaDetails) {
-    detEl.style.display = 'block';
-    detEl.innerHTML = `<div class="pay-info-box">💳 ${SETTINGS.visaDetails}
-      <div style="margin-top:10px;padding:8px 10px;background:rgba(255,100,0,.12);border-radius:8px;font-size:12px;font-weight:700;color:#c84000">
-        📸 بعد الدفع برجاء إرسال Screenshot لتأكيد الدفع على واتساب الإدارة
-        <br/><button onclick="openWhatsapp('payment')" style="margin-top:6px;background:#25d366;color:#fff;border:none;border-radius:6px;padding:5px 10px;font-size:11px;font-weight:800;cursor:pointer">💬 إرسال Screenshot الآن</button>
+      <div style="margin-top:8px">
+        <div style="font-size:12px;font-weight:700;color:var(--text-muted);margin-bottom:4px">رقم محفظتك الخاصة (اختياري)</div>
+        <input type="tel" id="clientWalletNum" placeholder="رقم محفظتك للتواصل" style="width:100%;padding:9px 12px;border:1.5px solid var(--border);border-radius:9px;font-size:14px;direction:ltr;background:var(--white);outline:none;box-sizing:border-box"/>
       </div>
     </div>`;
   }
 }
+
+let _selectedWallet = null;
 function copyPayNum(num) {
   navigator.clipboard?.writeText(num).then(() => showNotif('✓ تم نسخ الرقم'));
 }
@@ -1681,6 +2111,11 @@ function applyCoupon() {
 // ============================================================
 function placeOrder() {
   if (!cart.length) { showNotif('السلة فارغة!'); return; }
+  // Block if Last Order active
+  if (lastOrderActive) {
+    document.getElementById('lastOrderBlockOverlay').classList.add('show');
+    return;
+  }
   const orderNum = 'ZZ-' + String(Date.now()).slice(-6);
   currentOrderNum = orderNum;
   const subtotal = cartSubtotal();
@@ -1733,10 +2168,12 @@ ${totalDisc > 0 ? `🏷️ الخصم: - ${totalDisc} ج.م\n` : ''}${deliveryFe
   if (appliedCouponId && currentUser?.phone) usedOffers[currentUser.phone + '_' + appliedCouponId] = true;
   saveData('zz_used_offers', usedOffers);
   const now = new Date();
+  const isElectronicPayment = paymentType !== 'cash';
+  const clientWalletNum = isElectronicPayment ? (document.getElementById('clientWalletNum')?.value?.trim() || '') : '';
   const newOrder = {
     id: orderNum, name: currentUser?.name || 'عميل', phone: currentUser?.phone || '—',
     whatsapp: currentUser?.whatsapp || currentUser?.phone || '',
-    type: deliveryType, status: 'new',
+    type: deliveryType, status: isElectronicPayment ? 'payment_pending' : 'new',
     items: cart.map(c => ({ ...c })),
     subtotal, disc: totalDisc, deliveryFee, total: finalTotal,
     gps: gpsCoords ? { lat: gpsCoords.lat, lng: gpsCoords.lng, accuracy: gpsCoords.accuracy } : null,
@@ -1746,7 +2183,11 @@ ${totalDisc > 0 ? `🏷️ الخصم: - ${totalDisc} ج.م\n` : ''}${deliveryFe
     date: now.toLocaleDateString('ar-EG'),
     tableNum, payment: payMethodDetails, eta,
     timestamp: Date.now(),
-    isAfterLastOrder: lastOrderActive
+    isAfterLastOrder: lastOrderActive,
+    isElectronicPayment,
+    selectedWalletId: _selectedWallet?.id || null,
+    selectedWalletName: _selectedWallet?.name || null,
+    clientWalletNum
   };
   ordersData.unshift(newOrder);
   saveData('zz_orders', ordersData);
@@ -1774,10 +2215,13 @@ ${totalDisc > 0 ? `🏷️ الخصم: - ${totalDisc} ج.م\n` : ''}${deliveryFe
     setTimeout(() => window.open(`https://wa.me/${waLO}?text=${encodeURIComponent(loMsg)}`, '_blank'), 1500);
   }
   cart = []; appliedDiscount = 0; appliedCouponId = null; selectedDeliveryZone = null;
+  saveData('zz_current_cart', []);
   updateCartUI(); renderCartSheet(); closeSheet('cartSheet', null);
   const waNum = SETTINGS.waNum || RESTAURANT.waNum;
   window.open(`https://wa.me/${waNum}?text=${encodeURIComponent(msg)}`, '_blank');
   openScreen('tracking');
+  // Smart order review — allow 90 seconds to cancel
+  setTimeout(() => openOrderReview(newOrder), 400);
 }
 
 // ============================================================
@@ -1796,12 +2240,24 @@ function resetTracking() {
 function updateTrackingStatus(status) {
   const steps = { new: 1, prep: 2, ready: 3, out: 4, delivered: 5 };
   const idx = steps[status] || 1;
+  checkDeliveryConfirmBtn(status);
+
+  // Handle payment pending special display
+  const payPendingBox = document.getElementById('paymentPendingBox');
+  if (payPendingBox) {
+    payPendingBox.style.display = status === 'payment_pending' ? 'block' : 'none';
+  }
+
   for (let i = 1; i <= 5; i++) {
     const dot = document.getElementById('track' + i);
     if (!dot) continue;
-    if (i < idx) dot.className = 'step-dot done';
-    else if (i === idx) dot.className = 'step-dot active';
-    else dot.className = 'step-dot';
+    if (status === 'payment_pending') {
+      dot.className = i === 1 ? 'step-dot active' : 'step-dot';
+    } else {
+      if (i < idx) dot.className = 'step-dot done';
+      else if (i === idx) dot.className = 'step-dot active';
+      else dot.className = 'step-dot';
+    }
   }
 }
 
@@ -1921,12 +2377,35 @@ function doAdminLogin() {
   const pass = document.getElementById('adminPass').value;
   const role = document.getElementById('adminRole').value;
   if (!_verifyAuth(role, pass)) { showNotif('❌ كلمة السر غير صحيحة'); return; }
+  document.getElementById('adminPass').value = '';
+  // ✅ Mark authenticated role — required for hash guard
+  saveData('zz_admin_role', role);
+  if (role === 'pickup') {
+    showScreen('pickupPanel');
+    setupPickupPanel();
+    return;
+  }
   adminRoleType = role;
   document.getElementById('adminRoleLabel').textContent = role === 'admin' ? '🔑 مدير النظام' : '💳 كاشير';
-  document.getElementById('adminPass').value = '';
   openScreen('adminPanel');
 }
-function doLogout() { adminRoleType = null; openScreen('app'); }
+function doLogout() {
+  adminRoleType = null;
+  saveData('zz_admin_role', null);
+  // Remove hash to prevent auto-redirect loop
+  if (window.location.hash) history.replaceState(null, '', window.location.pathname);
+  // Return to client view
+  const saved = loadData('zamzam_user', null);
+  if (saved) { currentUser = saved; openScreen('app'); }
+  else showScreen('auth');
+}
+function doPickupLogout() {
+  saveData('zz_admin_role', null);
+  if (window.location.hash) history.replaceState(null, '', window.location.pathname);
+  const saved = loadData('zamzam_user', null);
+  if (saved) { currentUser = saved; openScreen('app'); }
+  else showScreen('auth');
+}
 
 function applyRoleRestrictions() {
   const isAdmin = adminRoleType === 'admin';
@@ -1948,10 +2427,12 @@ function applyRoleRestrictions() {
     ['vodafoneNum','instapayNum','visaDetails','waNumSetting',
      'newAdminPass','newCashier1','newCashier2',
      'adminPhoneSetting','complaintPhoneSetting',
-     'deliveryFee','freeDeliveryMin'].forEach(id => {
+     'deliveryFee','freeDeliveryMin','tablesCount'].forEach(id => {
       const el = document.getElementById(id);
-      if (el) { el.disabled = true; el.style.filter = 'blur(4px)'; el.style.pointerEvents = 'none'; }
+      if (el) { el.disabled = true; el.style.opacity = '0.4'; el.style.pointerEvents = 'none'; }
     });
+    // Hide admin-only settings sections (including ewallets management)
+    document.querySelectorAll('[data-admin-only]').forEach(el => el.style.display = 'none');
   }
 }
 
@@ -1979,8 +2460,8 @@ function switchAdminTab(tab, el) {
 // ============================================================
 function renderAdminOrders() {
   const filter = document.getElementById('orderFilterStatus').value;
-  const statusLabels = { new: 'جديد', prep: 'تجهيز', ready: 'جاهز', out: 'خرج للتوصيل', delivered: 'تم التسليم', cancelled: 'ملغى' };
-  const statusCls = { new: 's-new', prep: 's-prep', ready: 's-ready', out: 's-ready', delivered: 's-delivered', cancelled: 's-cancelled' };
+  const statusLabels = { new: 'جديد', prep: 'تجهيز', ready: 'جاهز', out: 'خرج للتوصيل', delivered: 'تم التسليم', cancelled: 'ملغى', payment_pending: '⏳ انتظار تأكيد الدفع' };
+  const statusCls = { new: 's-new', prep: 's-prep', ready: 's-ready', out: 's-ready', delivered: 's-delivered', cancelled: 's-cancelled', payment_pending: 's-new' };
 
   let filtered = filter === 'all' ? [...ordersData] : ordersData.filter(o => o.status === filter);
   filtered.sort((a, b) => (a.timestamp || 0) - (b.timestamp || 0));
@@ -2017,7 +2498,10 @@ function renderAdminOrders() {
       </div>
       <div class="action-btns">
         <button class="action-btn btn-expand" onclick="toggleOrderDetail('${o.id}')">📋 التفاصيل</button>
-        ${canManage ? `
+        ${o.status === 'payment_pending' && canManage ? `
+          <button class="action-btn" style="background:#fef3c7;color:#92400e;font-weight:900;animation:pulse 1.5s infinite" onclick="confirmOrderPayment('${o.id}')">💳 تأكيد الدفع</button>
+        ` : ''}
+        ${canManage && o.status !== 'payment_pending' ? `
           <button class="action-btn btn-prep" onclick="updateOrderStatus('${o.id}','prep')" title="جارى التجهيز">🍳 تجهيز</button>
           <button class="action-btn btn-ready" onclick="updateOrderStatus('${o.id}','ready')" title="اكتمل التجهيز">✅ جاهز</button>
           <button class="action-btn btn-deliver" onclick="updateOrderStatus('${o.id}','out')" title="خرج للتوصيل">🛵 خرج</button>
@@ -2036,6 +2520,7 @@ function renderAdminOrders() {
         ${o.gps ? `<div style="margin-bottom:4px">📍 <a href="https://www.google.com/maps?q=${o.gps.lat},${o.gps.lng}" target="_blank" style="color:var(--blue)">عرض الموقع</a></div>` : ''}
         <div style="font-size:15px;font-weight:800;color:var(--olive-dark)">الإجمالى: ${o.total} ج.م</div>
         ${o.isAfterLastOrder ? '<div style="color:var(--red);font-size:12px;font-weight:700;margin-top:4px">⚠️ بعد Last Order</div>' : ''}
+        ${o.clientConfirmedAt ? `<div style="color:var(--olive);font-size:12px;font-weight:800;margin-top:4px">✅ استلم العميل الطلب — ${o.clientReceivedTime||''} ${o.clientReceivedDate||''}</div>` : ''}
       </div>
     </div>
   `).join('');
@@ -2064,14 +2549,10 @@ function updateOrderStatus(id, status) {
 function sendStatusWhatsapp(order, status) {
   const wa = (order.whatsapp || order.phone || '').replace(/[^0-9]/g, '');
   if (!wa) return;
-  const msgs = {
-    prep: `السلام عليكم عزيزنا *${order.name}* 🌹\n\nنقوم الآن بتجهيز طلبكم بعناية ❤️\nوسيتم الانتهاء منه في أقرب وقت.\n\n*${RESTAURANT.name}*`,
-    ready: `السلام عليكم عزيزنا *${order.name}* 🌹\n\nتم الانتهاء من تجهيز طلبكم بالكامل ✅\nويتم الآن تجهيزه للخروج للتوصيل.\n\n*${RESTAURANT.name}*`,
-    out: `السلام عليكم عزيزنا *${order.name}* 🌹\n\nطلبكم الآن في الطريق إليكم 🚚\nنتمنى لكم تجربة ممتعة.\n\n*${RESTAURANT.name}*`,
-    delivered: `السلام عليكم عزيزنا *${order.name}* 🌹\n\nتم تسليم الطلب بنجاح ❤️\nشكراً لثقتكم بنا ونتمنى خدمتكم دائماً.\n\n*${RESTAURANT.name}*`
-  };
-  const msg = msgs[status];
-  if (msg) window.open(`https://wa.me/${wa}?text=${encodeURIComponent(msg)}`, '_blank');
+  // ✅ WhatsApp ONLY for 'out' (خرج للتوصيل) — all other stages = internal only
+  if (status !== 'out') return;
+  const msg = `السلام عليكم عزيزنا *${order.name}* 🌹\n\nطلبكم الآن في الطريق إليكم 🚚\nنتمنى لكم تجربة ممتعة.\n\n*${RESTAURANT.name}*`;
+  window.open(`https://wa.me/${wa}?text=${encodeURIComponent(msg)}`, '_blank');
 }
 
 function sendDelayMsg(id) {
@@ -2111,23 +2592,36 @@ function clearOldOrders() {
 }
 
 // ============================================================
-// CASHIER SHEET VIEW (Google Sheets style)
+// CASHIER SHEET VIEW (Google Sheets style) — with Live Search
 // ============================================================
 function renderCashierSheet() {
-  const statusLabels = { new: 'جديد', prep: 'تجهيز', ready: 'جاهز', out: 'في الطريق', delivered: 'تم التسليم', cancelled: 'ملغى' };
-  const statusColors = { new: '#e3f0ff', prep: '#fff3d0', ready: '#e0f7e0', out: '#d4edda', delivered: '#e8f5d0', cancelled: '#ffe3e3' };
-  const sorted = [...ordersData].sort((a, b) => (a.timestamp || 0) - (b.timestamp || 0));
+  const statusLabels = { new: 'جديد', prep: 'تجهيز', ready: 'جاهز', out: 'في الطريق', delivered: 'تم التسليم', cancelled: 'ملغى', payment_pending: '⏳ دفع معلق' };
+  const statusColors = { new: '#e3f0ff', prep: '#fff3d0', ready: '#e0f7e0', out: '#d4edda', delivered: '#e8f5d0', cancelled: '#ffe3e3', payment_pending: '#fef3c7' };
+  let sorted = [...ordersData].sort((a, b) => (a.timestamp || 0) - (b.timestamp || 0));
+  if (cashierStatusFilter && cashierStatusFilter !== 'all') {
+    sorted = sorted.filter(o => o.status === cashierStatusFilter);
+  }
+  const q = cashierSearchQuery;
+  if (q) {
+    sorted = sorted.filter(o =>
+      (o.name || '').toLowerCase().includes(q) ||
+      (o.phone || '').includes(q) ||
+      (o.whatsapp || '').includes(q) ||
+      (o.id || '').toLowerCase().includes(q)
+    );
+  }
   const canManage = (adminRoleType === 'admin' || adminRoleType === 'cashier');
   const tbody = document.getElementById('cashierTableBody');
   if (!sorted.length) {
-    tbody.innerHTML = `<tr><td colspan="11" style="text-align:center;padding:30px;color:var(--text-muted);font-weight:700">لا توجد طلبات</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="11" style="text-align:center;padding:30px;color:var(--text-muted);font-weight:700">${q ? '🔍 لا نتائج للبحث' : 'لا توجد طلبات'}</td></tr>`;
     return;
   }
   tbody.innerHTML = sorted.map((o, idx) => {
     const itemsStr = (o.items||[]).map(i => `${i.emoji}${i.name}×${i.qty}`).join(' | ');
     const discStr = o.disc > 0 ? `<span style="color:var(--red);font-weight:800">- ${o.disc} ج</span>` : '—';
     const statusBg = statusColors[o.status] || '#fff';
-    return `<tr class="${o.status === 'new' ? 'priority-row' : ''}" id="crow_${o.id}">
+    const isPending = o.status === 'payment_pending';
+    return `<tr class="${isPending ? 'priority-row' : o.status === 'new' ? 'priority-row' : ''}" id="crow_${o.id}">
       <td style="font-weight:800;color:var(--olive)">${idx + 1}</td>
       <td style="font-weight:700;white-space:nowrap">${o.name}</td>
       <td>${o.whatsapp ? `<a href="https://wa.me/${(o.whatsapp||'').replace(/[^0-9]/g,'')}" target="_blank" style="color:var(--olive);font-weight:700">📱 ${o.phone}</a>` : o.phone}</td>
@@ -2135,16 +2629,21 @@ function renderCashierSheet() {
       <td style="max-width:180px;font-size:11px">${itemsStr}</td>
       <td style="font-weight:800;color:var(--olive-dark)">${o.total} ج</td>
       <td>${discStr}</td>
-      <td><span style="background:${statusBg};padding:3px 8px;border-radius:6px;font-size:10px;font-weight:800">${statusLabels[o.status]||o.status}</span></td>
+      <td><span style="background:${statusBg};padding:3px 8px;border-radius:6px;font-size:10px;font-weight:800">${statusLabels[o.status]||o.status}</span>
+        ${isPending ? `<br/><span style="font-size:9px;color:#92400e">${o.payment||''}</span>` : ''}
+      </td>
       <td style="white-space:nowrap">${o.time}</td>
       <td style="white-space:nowrap">${o.date || '—'}</td>
       <td>
         ${canManage ? `<div class="track-btns">
+          ${isPending ? `<button class="track-btn" style="background:#fef3c7;color:#92400e;font-weight:900;padding:4px 8px;font-size:10px" onclick="confirmOrderPayment('${o.id}')">💳 تأكيد</button>` : ''}
+          ${!isPending ? `
           <button class="track-btn tb-prep ${o.status==='prep'?'active-state':''}" onclick="updateOrderStatus('${o.id}','prep')" title="جارى التجهيز">🍳</button>
           <button class="track-btn tb-ready ${o.status==='ready'?'active-state':''}" onclick="updateOrderStatus('${o.id}','ready')" title="اكتمل">✅</button>
           <button class="track-btn tb-out ${o.status==='out'?'active-state':''}" onclick="updateOrderStatus('${o.id}','out')" title="خرج">🛵</button>
           <button class="track-btn tb-done ${o.status==='delivered'?'active-state':''}" onclick="updateOrderStatus('${o.id}','delivered')" title="تسليم">🎉</button>
           <button class="track-btn tb-delay" onclick="sendDelayMsg('${o.id}')" title="تأخير">⏳</button>
+          ` : ''}
           ${o.whatsapp ? `<button class="track-btn tb-wa" onclick="window.open('https://wa.me/${(o.whatsapp||'').replace(/[^0-9]/g,'')}','_blank')" title="واتساب">💬</button>` : ''}
         </div>` : '—'}
       </td>
@@ -2186,20 +2685,46 @@ function toggleLastOrder() {
 // ============================================================
 // BOOKING SYSTEM
 // ============================================================
+// Table capacity rules
+const TABLE_CAPACITY = {
+  default: { min:1, max:4 },   // tables 1-9
+  large: { min:5, max:7 },     // tables 10,11
+  couple: { min:1, max:2 },    // table 12
+  single: { min:1, max:2 }     // tables 13-16
+};
+function getTableCapacity(tableNum) {
+  if (tableNum >= 1 && tableNum <= 9) return TABLE_CAPACITY.default;
+  if (tableNum === 10 || tableNum === 11) return TABLE_CAPACITY.large;
+  if (tableNum === 12) return TABLE_CAPACITY.couple;
+  if (tableNum >= 13 && tableNum <= 16) return TABLE_CAPACITY.single;
+  return TABLE_CAPACITY.default;
+}
+function getTableCapacityLabel(tableNum) {
+  const c = getTableCapacity(tableNum);
+  if (c.min === c.max) return c.min + ' شخص';
+  return c.min + '-' + c.max + ' أشخاص';
+}
+
 function renderTablesGrid() {
-  const tablesCount = Number(SETTINGS.tablesCount) || 10;
+  const tablesCount = Number(SETTINGS.tablesCount) || 16;
   const today = document.getElementById('bookDate')?.value || new Date().toISOString().split('T')[0];
   const time = document.getElementById('bookTime')?.value || '12:00';
+  const persons = Number(document.getElementById('bookPersons')?.value) || 1;
   const grid = document.getElementById('tablesGrid');
   if (!grid) return;
   let html = '';
   for (let t = 1; t <= tablesCount; t++) {
+    const cap = getTableCapacity(t);
+    const fitsPersons = persons >= cap.min && persons <= cap.max;
     const isBooked = bookingsData.some(b => b.tableNum === t && b.date === today && b.status !== 'cancelled' &&
       Math.abs(timeToMin(b.time) - timeToMin(time)) < 90);
     const isSelected = selectedTableNum === t;
-    html += `<div class="table-card ${isBooked ? 'booked' : isSelected ? 'selected' : 'available'}" onclick="${isBooked ? '' : `selectTable(${t})`}">
+    const canSelect = !isBooked && fitsPersons;
+    let cls = isBooked ? 'booked' : !fitsPersons ? 'booked' : isSelected ? 'selected' : 'available';
+    let capLabel = isBooked ? '🔴 محجوزة' : !fitsPersons ? '⚠️ ' + getTableCapacityLabel(t) : isSelected ? '✓ محددة' : '🟢 ' + getTableCapacityLabel(t);
+    html += `<div class="table-card ${cls}" onclick="${canSelect ? `selectTable(${t})` : ''}">
       <div class="t-num">${t}</div>
-      <div class="t-cap">${isBooked ? '🔴 محجوزة' : isSelected ? '✓ محددة' : '🟢 متاحة'}</div>
+      <div class="t-cap" style="font-size:10px">${capLabel}</div>
     </div>`;
   }
   grid.innerHTML = html;
@@ -2248,6 +2773,8 @@ function confirmBooking() {
   // Show confirm screen
   showBookingConfirm(booking);
   selectedTableNum = null;
+  // Start late alert timer
+  startBookingAlertTimer(booking);
 }
 function showBookingConfirm(b) {
   document.getElementById('bookingFormView').style.display = 'none';
@@ -2256,18 +2783,69 @@ function showBookingConfirm(b) {
     <div class="booking-confirm" style="animation:popIn .4s ease">
       <div style="font-size:28px;margin-bottom:8px">☕</div>
       <div style="font-size:18px;font-weight:800;margin-bottom:4px">تم تأكيد الحجز!</div>
-      <div style="font-size:13px;opacity:.8;margin-bottom:16px">يرجى الاحتفاظ بهذه الشاشة وإظهارها عند الحضور</div>
+      <div style="font-size:13px;opacity:.8;margin-bottom:12px">يرجى الاحتفاظ بهذه الشاشة وإظهارها عند الحضور</div>
+      
+      <div style="background:linear-gradient(135deg,#fff3cd,#ffe69c);border-radius:12px;padding:12px 14px;margin-bottom:14px;font-size:12px;font-weight:700;color:#856404;text-align:right;line-height:1.7;border:1.5px solid #ffc107">
+        ⚠️ يرجى الالتزام بموعد الحجز المحدد، حيث أن الأولوية للعملاء المتواجدين فعلياً داخل الكافيه، وفي حالة التأخير قد يتم إلغاء الحجز تلقائياً.
+      </div>
+
       <div class="booking-code">${b.id}</div>
-      <div class="booking-detail"><span>👤 الاسم</span><span>${b.name}</span></div>
-      <div class="booking-detail"><span>🪑 رقم الترابيزة</span><span>${b.tableNum}</span></div>
-      <div class="booking-detail"><span>📅 التاريخ</span><span>${b.date}</span></div>
-      <div class="booking-detail"><span>⏰ الوقت</span><span>${b.time}</span></div>
-      <div class="booking-detail"><span>👥 عدد الأشخاص</span><span>${b.persons}</span></div>
+      
+      <div style="background:var(--cream);border-radius:12px;padding:10px 14px;margin-bottom:12px">
+        <div class="booking-detail"><span>👤 الاسم</span><span>${b.name}</span></div>
+        <div class="booking-detail"><span>🪑 رقم الترابيزة</span><span>${b.tableNum}</span></div>
+        <div class="booking-detail"><span>📅 التاريخ</span><span>${b.date}</span></div>
+        <div class="booking-detail"><span>⏰ الوقت</span><span>${b.time}</span></div>
+        <div class="booking-detail"><span>👥 عدد الأشخاص</span><span>${b.persons}</span></div>
+        <div class="booking-detail"><span>📋 الحالة</span><span id="bookingStatusBadge_${b.id}">${getBookingStatusBadge(b.status)}</span></div>
+      </div>
+
+      <div style="background:var(--white);border-radius:12px;padding:12px 14px;margin-bottom:14px;border:1.5px solid var(--olive)">
+        <div style="font-size:12px;font-weight:800;color:var(--text-muted);margin-bottom:6px;text-align:center">⏱️ الوقت المتبقي للموعد</div>
+        <div id="bookingCountdownDisplay_${b.id}" style="text-align:center;font-size:26px;font-weight:900;color:var(--olive-dark);font-family:monospace">--:--</div>
+      </div>
+
       <div class="screenshot-note">📸 قم بأخذ Screenshot للحجز الآن</div>
     </div>
     <button class="btn-primary" onclick="openScreen('app')" style="margin-bottom:10px">العودة للمنيو 🏠</button>
     <button class="btn-primary btn-secondary" onclick="document.getElementById('bookingFormView').style.display='block';document.getElementById('bookingConfirmView').style.display='none'">حجز آخر ☕</button>
   `;
+  startBookingCountdown(b);
+}
+
+function getBookingStatusBadge(status) {
+  const map = {
+    'confirmed':  '<span style="background:#d1fae5;color:#065f46;padding:3px 10px;border-radius:100px;font-size:12px;font-weight:800">✅ مؤكد</span>',
+    'waiting':    '<span style="background:#fef3c7;color:#92400e;padding:3px 10px;border-radius:100px;font-size:12px;font-weight:800">⏳ قيد الانتظار</span>',
+    'cancelled':  '<span style="background:#fee2e2;color:#991b1b;padding:3px 10px;border-radius:100px;font-size:12px;font-weight:800">❌ ملغي</span>',
+    'arrived':    '<span style="background:#dbeafe;color:#1e40af;padding:3px 10px;border-radius:100px;font-size:12px;font-weight:800">🙋 حضر العميل</span>'
+  };
+  return map[status] || map['confirmed'];
+}
+
+let _bookingCountdownIntervals = {};
+function startBookingCountdown(b) {
+  const key = b.id;
+  clearInterval(_bookingCountdownIntervals[key]);
+  function tick() {
+    const el = document.getElementById('bookingCountdownDisplay_' + key);
+    if (!el) { clearInterval(_bookingCountdownIntervals[key]); return; }
+    const target = new Date(b.date + 'T' + b.time).getTime();
+    const now = Date.now();
+    const diff = target - now;
+    if (diff <= 0) {
+      el.textContent = '⏰ حان الموعد!';
+      el.style.color = 'var(--red)';
+      clearInterval(_bookingCountdownIntervals[key]);
+      return;
+    }
+    const h = Math.floor(diff / 3600000);
+    const m = Math.floor((diff % 3600000) / 60000);
+    const s = Math.floor((diff % 60000) / 1000);
+    el.textContent = (h > 0 ? String(h).padStart(2,'0') + ':' : '') + String(m).padStart(2,'0') + ':' + String(s).padStart(2,'0');
+  }
+  tick();
+  _bookingCountdownIntervals[key] = setInterval(tick, 1000);
 }
 
 // ============================================================
@@ -2283,20 +2861,41 @@ function renderAdminBookings() {
     el.innerHTML = '<div style="text-align:center;padding:30px;color:var(--text-muted);font-weight:700">لا توجد حجوزات</div>';
     return;
   }
-  el.innerHTML = sorted.map(b => `
-    <div class="booking-row ${b.status === 'cancelled' ? '' : ''}">
+  el.innerHTML = sorted.map(b => {
+    const now = Date.now();
+    const bookingMs = new Date(b.date + 'T' + b.time).getTime();
+    const diffMin = (now - bookingMs) / 60000;
+    const isLate = diffMin > 5 && b.status === 'confirmed';
+    const statusBadge = getBookingStatusBadge(b.status || 'confirmed');
+    return `
+    <div class="booking-row" style="border-radius:16px;padding:16px;background:var(--white);border:1.5px solid ${b.status==='cancelled'?'var(--red)':b.status==='arrived'?'#1d4ed8':isLate?'#f59e0b':'var(--border)'};margin-bottom:12px">
       <div class="br-header">
         <div class="br-code">${b.id}</div>
         <div class="br-time">${b.date} — ${b.time}</div>
       </div>
       <div style="font-size:13px;font-weight:700;margin-bottom:4px">${b.name} &nbsp;•&nbsp; ترابيزة ${b.tableNum} &nbsp;•&nbsp; ${b.persons} أشخاص</div>
-      <div style="font-size:11px;color:var(--text-muted);margin-bottom:8px">📱 ${b.whatsapp || b.phone}</div>
-      <div style="display:flex;gap:8px;flex-wrap:wrap">
-        ${b.whatsapp ? `<button class="action-btn btn-wa" onclick="sendBookingEntryMsg('${b.id}')">💬 إذن الدخول</button>` : ''}
-        <button class="action-btn btn-cancel" onclick="cancelBooking('${b.id}')">❌ إلغاء الحجز</button>
+      <div style="font-size:11px;color:var(--text-muted);margin-bottom:6px">📱 ${b.whatsapp || b.phone}</div>
+      <div style="margin-bottom:8px;display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+        ${statusBadge}
+        ${isLate ? '<span style="background:#fef3c7;color:#92400e;padding:3px 10px;border-radius:100px;font-size:11px;font-weight:800">⚠️ تأخر +5 دقائق</span>' : ''}
       </div>
-    </div>
-  `).join('');
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        ${b.status !== 'arrived' && b.status !== 'cancelled' ? `<button class="action-btn" style="background:#dbeafe;color:#1e40af" onclick="markBookingArrived('${b.id}')">🙋 حضر العميل</button>` : ''}
+        ${b.whatsapp ? `<button class="action-btn btn-wa" onclick="sendBookingEntryMsg('${b.id}')">💬 إذن الدخول</button>` : ''}
+        ${b.status !== 'cancelled' ? `<button class="action-btn btn-cancel" onclick="cancelBooking('${b.id}')">❌ إلغاء الحجز</button>` : ''}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function markBookingArrived(id) {
+  const b = bookingsData.find(x => x.id === id);
+  if (!b) return;
+  b.status = 'arrived';
+  fbUpdate('bookings/' + id, { status: 'arrived' });
+  saveData('zz_bookings', bookingsData);
+  renderAdminBookings();
+  showNotif('✓ تم تسجيل حضور العميل');
 }
 function sendBookingEntryMsg(id) {
   const b = bookingsData.find(x => x.id === id);
@@ -2648,10 +3247,11 @@ function loadSettingsUI() {
   if (el('vodafoneNum')) el('vodafoneNum').value = SETTINGS.vodafoneNum || '';
   if (el('instapayNum')) el('instapayNum').value = SETTINGS.instapayNum || '';
   if (el('visaDetails')) el('visaDetails').value = SETTINGS.visaDetails || '';
-  if (el('tablesCount')) el('tablesCount').value = SETTINGS.tablesCount || 10;
+  if (el('tablesCount')) el('tablesCount').value = SETTINGS.tablesCount || 16;
   if (el('adminPhoneSetting')) el('adminPhoneSetting').value = SETTINGS.adminPhone || SETTINGS.waNum || '';
   if (el('complaintPhoneSetting')) el('complaintPhoneSetting').value = SETTINGS.complaintPhone || '';
   renderZonesAdmin();
+  renderEwalletsAdmin();
 }
 function saveSettings() {
   const g = id => { const el = document.getElementById(id); return el ? el.value : ''; };
@@ -2661,7 +3261,7 @@ function saveSettings() {
   SETTINGS.vodafoneNum = g('vodafoneNum');
   SETTINGS.instapayNum = g('instapayNum');
   SETTINGS.visaDetails = g('visaDetails');
-  SETTINGS.tablesCount = Number(g('tablesCount')) || 10;
+  SETTINGS.tablesCount = Number(g('tablesCount')) || 16;
   SETTINGS.adminPhone = g('adminPhoneSetting') || SETTINGS.waNum;
   SETTINGS.complaintPhone = g('complaintPhoneSetting') || SETTINGS.waNum;
   saveData('zz_settings', SETTINGS);
@@ -3070,6 +3670,452 @@ function toggleDark() {
 function changeFontSize(s) { document.documentElement.style.fontSize = s + 'px'; }
 function showTab(tab, el) { document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active')); el.classList.add('active'); }
 
+
+// ============================================================
+// PICKUP / KITCHEN PANEL — FIFO Grid with Timers
+// ============================================================
+let pickupItemsDone = {}; // {orderId: Set of item indices done}
+let _hashAccessRole = null; // tracks which role was requested via hash
+let _pickupTimers = {}; // {orderId: startTimestamp}
+let _pickupTimerInterval = null;
+
+function setupPickupPanel() {
+  pickupItemsDone = {};
+  renderPickupOrders();
+  // Start timer tick
+  clearInterval(_pickupTimerInterval);
+  _pickupTimerInterval = setInterval(updatePickupTimers, 1000);
+  // Update Firebase status
+  const statusEl = document.getElementById('pickupFbStatus');
+  if (statusEl && db) {
+    db.ref('.info/connected').on('value', snap => {
+      statusEl.textContent = snap.val() ? '🟢 متصل' : '🔴 غير متصل';
+      statusEl.style.color = snap.val() ? '#4ade80' : '#f87171';
+    });
+  }
+}
+
+function updatePickupTimers() {
+  const now = Date.now();
+  Object.keys(_pickupTimers).forEach(oid => {
+    const startMs = _pickupTimers[oid];
+    const elapsed = Math.floor((now - startMs) / 1000);
+    const mins = Math.floor(elapsed / 60);
+    const secs = elapsed % 60;
+    const el = document.getElementById('ptimer_' + oid);
+    if (el) {
+      el.textContent = (mins > 0 ? mins + 'د ' : '') + secs + 'ث';
+      el.classList.toggle('urgent', elapsed > 600);
+    }
+  });
+}
+
+function renderPickupOrders() {
+  const el = document.getElementById('pickupOrdersList');
+  if (!el) return;
+  // FIFO: sort oldest first
+  const activeOrders = [...ordersData]
+    .filter(o => ['new','prep','ready'].includes(o.status))
+    .sort((a, b) => (a.timestamp || 0) - (b.timestamp || 0));
+  const pendingOrders = activeOrders.filter(o => ['new','prep'].includes(o.status));
+  const doneOrders = activeOrders.filter(o => o.status === 'ready');
+  const pEl = document.getElementById('pickupPendingCount');
+  const dEl = document.getElementById('pickupDoneCount');
+  if (pEl) pEl.textContent = pendingOrders.length;
+  if (dEl) dEl.textContent = doneOrders.length;
+  if (!activeOrders.length) {
+    el.innerHTML = `<div style="text-align:center;padding:60px;color:var(--text-muted)">
+      <div style="font-size:60px">🍳</div>
+      <div style="font-weight:700;margin-top:12px;font-size:16px">لا توجد طلبات للتجهيز</div>
+      <div style="font-size:13px;margin-top:6px;opacity:.7">الطلبات الجديدة ستظهر هنا تلقائياً</div>
+    </div>`;
+    return;
+  }
+  // Initialize timers
+  activeOrders.forEach(order => {
+    if (!_pickupTimers[order.id] && ['new','prep'].includes(order.status)) {
+      _pickupTimers[order.id] = order.timestamp || Date.now();
+    }
+    if (!pickupItemsDone[order.id]) pickupItemsDone[order.id] = new Set();
+  });
+  el.innerHTML = `<div class="pickup-grid">${activeOrders.map((order, globalIdx) => {
+    const done = pickupItemsDone[order.id];
+    const allDone = order.items && order.items.length > 0 && done.size >= order.items.length;
+    const isReady = order.status === 'ready';
+    const statusLabel = isReady ? 'جاهز ✅' : allDone ? 'اكتمل 🔥' : 'قيد التجهيز 🍳';
+    const typeLabel = order.type === 'delivery' ? '🛵 دليفرى' : order.type === 'cafe' ? '☕ كافيه' : '🏪 استلام';
+    const fifoRank = pendingOrders.findIndex(o => o.id === order.id) + 1;
+    return `<div class="pickup-order-card ${(allDone || isReady) ? 'all-done' : ''} ${isReady ? 'status-ready' : ''}" id="pcard_${order.id}">
+      ${!isReady && fifoRank > 0 ? `<div style="position:absolute;top:10px;left:10px;background:${fifoRank===1?'var(--red)':'var(--gold)'};color:#fff;font-size:10px;font-weight:900;padding:3px 8px;border-radius:100px;z-index:2">الترتيب ${fifoRank}</div>` : ''}
+      <div style="margin-bottom:10px;padding-top:${!isReady && fifoRank>0?'22px':'0'}">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:4px">
+          <div class="pickup-order-num">#${order.id}</div>
+          <span class="pickup-badge ${isReady ? 'done-badge' : ''}">${statusLabel}</span>
+        </div>
+        <div style="font-size:11px;color:var(--text-muted);margin-top:4px">${typeLabel} • ${order.time || ''}</div>
+      </div>
+      <div class="pickup-client-info">
+        <div><strong>👤</strong><span>${order.name}</span></div>
+        <div><strong>📱</strong><span dir="ltr">${order.phone || '—'}</span></div>
+        ${order.tableNum ? `<div><strong>🪑</strong><span>ترابيزة ${order.tableNum}</span></div>` : ''}
+      </div>
+      ${!isReady ? `<div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">
+        <span style="font-size:11px;font-weight:700;color:var(--text-muted)">⏱️</span>
+        <span class="pickup-timer" id="ptimer_${order.id}">0ث</span>
+      </div>` : ''}
+      <div style="margin-bottom:8px">
+        <div style="font-size:11px;font-weight:800;color:var(--text-muted);text-transform:uppercase;margin-bottom:6px">الطلب (${(order.items||[]).length} صنف)</div>
+        ${(order.items || []).map((item, idx) => `
+          <div class="pickup-item-row" onclick="togglePickupItem('${order.id}',${idx})">
+            <div class="pickup-check ${done.has(idx) ? 'done' : ''}" id="pcheck_${order.id}_${idx}">${done.has(idx) ? '✓' : ''}</div>
+            <div style="flex:1">
+              <div style="font-size:13px;font-weight:700">${item.emoji || '🍽️'} ${item.name}${item.size ? ` <span style="font-size:10px;background:var(--olive-pale);color:var(--olive-dark);padding:1px 5px;border-radius:4px">${item.size}</span>` : ''}</div>
+              ${item.extras && item.extras.length ? `<div style="font-size:11px;color:var(--text-muted)">+ ${item.extras.join(', ')}</div>` : ''}
+              <div style="font-size:12px;font-weight:800;color:var(--olive-dark)">× ${item.qty}</div>
+            </div>
+          </div>`).join('')}
+      </div>
+      ${isReady
+        ? `<div class="pickup-done-stamp">✅ تم تسليمه للكاشير</div>`
+        : `<button class="pickup-complete-btn ${allDone ? 'visible' : ''}" id="pcomplete_${order.id}" onclick="pickupCompleteOrder('${order.id}')">✅ تم تجهيز الطلب — إخطار الكاشير</button>`
+      }
+    </div>`;
+  }).join('')}</div>`;
+}
+
+function togglePickupItem(orderId, idx) {
+  if (!pickupItemsDone[orderId]) pickupItemsDone[orderId] = new Set();
+  const done = pickupItemsDone[orderId];
+  if (done.has(idx)) done.delete(idx); else done.add(idx);
+  const checkEl = document.getElementById('pcheck_' + orderId + '_' + idx);
+  if (checkEl) { checkEl.classList.toggle('done', done.has(idx)); checkEl.textContent = done.has(idx) ? '✓' : ''; }
+  const order = ordersData.find(o => o.id === orderId);
+  if (!order) return;
+  const allDone = order.items && done.size >= order.items.length;
+  const btn = document.getElementById('pcomplete_' + orderId);
+  const card = document.getElementById('pcard_' + orderId);
+  if (btn) btn.classList.toggle('visible', allDone);
+  if (card) card.classList.toggle('all-done', allDone);
+}
+
+function pickupCompleteOrder(orderId) {
+  const order = ordersData.find(o => o.id === orderId);
+  if (!order) return;
+  order.status = 'ready';
+  saveData('zz_orders', ordersData);
+  fbUpdateOrderStatus(orderId, 'ready');
+  // ✅ NO WHATSAPP — Internal cashier notification only
+  notifyCashier(order);
+  delete _pickupTimers[orderId];
+  showNotif('✅ تم إخطار الكاشير — الطلب جاهز');
+  renderPickupOrders();
+}
+
+function notifyCashier(order) {
+  playPickupSound();
+  // Show banner in pickup panel
+  const banner = document.getElementById('pickupCashierNotif');
+  const textEl = document.getElementById('pickupCashierNotifText');
+  if (banner && textEl) {
+    textEl.textContent = `🔔 للكاشير: طلب #${order.id} — ${order.name} — ${order.phone || ''} — جاهز للاستلام`;
+    banner.style.display = 'block';
+    setTimeout(() => { if(banner) banner.style.display = 'none'; }, 10000);
+  }
+  // Firebase notification node — cashier panel reads this
+  if (db) {
+    db.ref('cashier_notifications/' + order.id).set({
+      orderId: order.id,
+      name: order.name,
+      phone: order.phone || '',
+      timestamp: Date.now(),
+      msg: `🔔 طلب #${order.id} جاهز — ${order.name} — ${order.phone || ''}`,
+      read: false
+    }).catch(() => {});
+  }
+}
+
+function playPickupSound() {
+  try {
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    [880, 1100, 1320].forEach((freq, i) => {
+      const osc = ctx.createOscillator();
+      const g = ctx.createGain();
+      osc.connect(g); g.connect(ctx.destination);
+      osc.frequency.value = freq; g.gain.value = 0.1;
+      osc.start(ctx.currentTime + i * 0.15);
+      osc.stop(ctx.currentTime + i * 0.15 + 0.12);
+    });
+  } catch(e) {}
+}
+
+// ============================================================
+// CONFIRM ELECTRONIC PAYMENT (Cashier)
+// ============================================================
+function confirmOrderPayment(orderId) {
+  const order = ordersData.find(o => o.id === orderId);
+  if (!order) return;
+
+  // إرسال واتساب لمسؤول التحويلات
+  const wallets = SETTINGS.ewallets || [];
+  const wallet = wallets.find(w => w.id === order.selectedWalletId);
+  const managerPhone = wallet?.managerPhone ? wallet.managerPhone.replace(/[^0-9]/g,'') : null;
+
+  if (managerPhone) {
+    const waFull = managerPhone.startsWith('0') ? '2' + managerPhone : managerPhone;
+    const msg = `💳 *تأكيد دفع إلكتروني*\n━━━━━━━━━━━━━\n👤 *العميل:* ${order.name}\n📱 *الهاتف:* ${order.phone}\n💳 *وسيلة الدفع:* ${wallet?.emoji || ''} ${wallet?.name || order.payment}\n${order.clientWalletNum ? `📲 *رقم محفظة العميل:* ${order.clientWalletNum}\n` : ''}💰 *قيمة الطلب:* ${order.total} ج.م\n━━━━━━━━━━━━━\nيرجى التحقق من وصول المبلغ لتأكيد الطلب.`;
+    window.open('https://wa.me/' + waFull + '?text=' + encodeURIComponent(msg), '_blank');
+  }
+
+  // تحديث حالة الطلب لـ new وإشعار العميل
+  order.status = 'new';
+  order.paymentConfirmedAt = new Date().toISOString();
+  saveData('zz_orders', ordersData);
+  fbUpdate('orders/' + orderId, { status: 'new', paymentConfirmedAt: order.paymentConfirmedAt });
+
+  showNotif('✅ تم تأكيد الدفع — الطلب ينتقل للتجهيز');
+  renderAdminOrders();
+  renderCashierSheet();
+}
+
+// ============================================================
+// EWALLET MANAGEMENT (Admin Only)
+// ============================================================
+function renderEwalletsAdmin() {
+  const el = document.getElementById('ewalletsAdminList');
+  if (!el) return;
+  const wallets = SETTINGS.ewallets || [];
+  if (!wallets.length) {
+    el.innerHTML = '<div style="font-size:12px;color:var(--text-muted);padding:4px 0">لا توجد محافظ — أضف محفظة أدناه</div>';
+    return;
+  }
+  el.innerHTML = wallets.map(w => `
+    <div style="background:var(--white);border-radius:10px;padding:10px 12px;margin-bottom:8px;border:1px solid var(--border)">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
+        <span style="font-size:22px">${w.emoji}</span>
+        <span style="font-weight:800;font-size:14px">${w.name}</span>
+        <button onclick="deleteEwallet('${w.id}')" style="margin-right:auto;background:var(--red);color:#fff;border:none;border-radius:6px;padding:3px 10px;font-size:11px;font-weight:800;cursor:pointer">🗑️</button>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px">
+        <div>
+          <div style="font-size:10px;font-weight:700;color:var(--text-muted);margin-bottom:2px">رقم المحفظة (للعملاء)</div>
+          <input type="tel" value="${w.number||''}" onchange="updateEwallet('${w.id}','number',this.value)" style="width:100%;padding:6px 8px;border:1.5px solid var(--border);border-radius:7px;font-size:12px;direction:ltr;background:var(--cream);outline:none"/>
+        </div>
+        <div>
+          <div style="font-size:10px;font-weight:700;color:var(--text-muted);margin-bottom:2px">واتساب مسؤول الاستلام</div>
+          <input type="tel" value="${w.managerPhone||''}" onchange="updateEwallet('${w.id}','managerPhone',this.value)" style="width:100%;padding:6px 8px;border:1.5px solid var(--border);border-radius:7px;font-size:12px;direction:ltr;background:var(--cream);outline:none"/>
+        </div>
+      </div>
+    </div>`).join('');
+}
+
+function addEwallet() {
+  const emoji = document.getElementById('newWalletEmoji')?.value.trim() || '💳';
+  const name = document.getElementById('newWalletName')?.value.trim();
+  const num = document.getElementById('newWalletNum')?.value.trim();
+  const manager = document.getElementById('newWalletManager')?.value.trim();
+  if (!name) { showNotif('أدخل اسم المحفظة'); return; }
+  if (!SETTINGS.ewallets) SETTINGS.ewallets = [];
+  SETTINGS.ewallets.push({ id: 'ew_' + Date.now(), name, emoji, number: num, managerPhone: manager });
+  saveData('zz_settings', SETTINGS);
+  fbSaveSettings();
+  document.getElementById('newWalletEmoji').value = '';
+  document.getElementById('newWalletName').value = '';
+  document.getElementById('newWalletNum').value = '';
+  document.getElementById('newWalletManager').value = '';
+  renderEwalletsAdmin();
+  showNotif('✓ تمت إضافة المحفظة');
+}
+
+function updateEwallet(id, field, val) {
+  if (!SETTINGS.ewallets) return;
+  const w = SETTINGS.ewallets.find(x => x.id === id);
+  if (w) { w[field] = val; saveData('zz_settings', SETTINGS); fbSaveSettings(); }
+}
+
+function deleteEwallet(id) {
+  if (!confirm('حذف هذه المحفظة؟')) return;
+  SETTINGS.ewallets = (SETTINGS.ewallets||[]).filter(w => w.id !== id);
+  saveData('zz_settings', SETTINGS);
+  fbSaveSettings();
+  renderEwalletsAdmin();
+  showNotif('✓ تم حذف المحفظة');
+}
+function confirmDeliveryReceived() {
+  if (!currentOrderNum) return;
+  const order = ordersData.find(o => o.id === currentOrderNum);
+  const now = new Date();
+  const receivedAt = now.toLocaleTimeString('ar-EG', {hour:'2-digit',minute:'2-digit'});
+  // Update Firebase with received timestamp
+  fbUpdate('orders/' + currentOrderNum, {
+    clientConfirmedAt: now.toISOString(),
+    clientReceivedTime: receivedAt,
+    clientReceivedDate: now.toLocaleDateString('ar-EG')
+  });
+  if (order) {
+    order.clientConfirmedAt = now.toISOString();
+    order.clientReceivedTime = receivedAt;
+    saveData('zz_orders', ordersData);
+  }
+  document.getElementById('deliveryConfirmBtn').style.display = 'none';
+  document.getElementById('deliveryConfirmedMsg').style.display = 'block';
+  showNotif('✅ شكراً! تم تسجيل استلامك');
+}
+
+// Show delivery confirm button when status is 'out'
+function checkDeliveryConfirmBtn(status) {
+  const btn = document.getElementById('deliveryConfirmBtn');
+  const confirmedMsg = document.getElementById('deliveryConfirmedMsg');
+  if (!btn) return;
+  if (status === 'out' || status === 'delivered') {
+    const order = ordersData.find(o => o.id === currentOrderNum);
+    if (order && order.clientConfirmedAt) {
+      btn.style.display = 'none';
+      if (confirmedMsg) confirmedMsg.style.display = 'block';
+    } else {
+      btn.classList.add('visible');
+    }
+  } else {
+    btn.classList.remove('visible');
+  }
+}
+
+// ============================================================
+// OFFERS SHEET
+// ============================================================
+function openOffersSheet() {
+  const activeOffers = OFFERS.filter(o => o.active && isOfferValid(o));
+  const typeLabels = { coupon: '🎟️ كوبون', percent: '📊 نسبة %', partial: '💰 مبلغ ثابت', free_delivery: '🛵 توصيل مجانى', duration: '⏰ لمدة محددة', custom: '✨ مخصص' };
+  let html = '';
+  if (!activeOffers.length) {
+    html = '<div style="text-align:center;padding:40px;color:var(--text-muted)"><div style="font-size:48px">🎁</div><div style="font-weight:700;margin-top:12px">لا توجد عروض نشطة حالياً</div></div>';
+  } else {
+    html = activeOffers.map(o => `
+      <div style="background:var(--white);border-radius:14px;border:2px solid var(--olive);padding:16px;margin-bottom:12px">
+        <span style="background:var(--olive);color:#fff;font-size:11px;font-weight:800;padding:3px 10px;border-radius:100px;display:inline-block;margin-bottom:8px">${typeLabels[o.type]||o.type}</span>
+        <div style="font-size:16px;font-weight:800;margin-bottom:4px">${o.name}</div>
+        ${o.desc ? `<div style="font-size:13px;color:var(--text-muted);margin-bottom:8px">${o.desc}</div>` : ''}
+        ${o.type === 'coupon' && o.coupon ? `<div style="font-family:monospace;font-size:20px;font-weight:900;color:var(--red);letter-spacing:3px;background:var(--cream);padding:8px 12px;border-radius:8px;display:inline-block">${o.coupon}</div>` : ''}
+        ${o.value ? `<div style="font-size:14px;font-weight:700;color:var(--olive-dark);margin-top:6px">الخصم: ${o.value}${o.type==='percent'?'%':' ج.م'}</div>` : ''}
+      </div>`).join('');
+  }
+  // Use a sheet overlay
+  let sheet = document.getElementById('offersClientSheet');
+  if (!sheet) {
+    sheet = document.createElement('div');
+    sheet.id = 'offersClientSheet';
+    sheet.className = 'sheet-overlay';
+    sheet.onclick = function(e) { if (e.target === sheet) sheet.classList.remove('open'); };
+    sheet.innerHTML = `<div class="sheet"><div class="sheet-handle"></div>
+      <div class="sheet-header"><h2>🎁 العروض والخصومات</h2><button class="close-btn" onclick="document.getElementById('offersClientSheet').classList.remove('open')">✕</button></div>
+      <div class="sheet-body" id="offersClientSheetBody"></div></div>`;
+    document.body.appendChild(sheet);
+  }
+  document.getElementById('offersClientSheetBody').innerHTML = html;
+  sheet.classList.add('open');
+}
+
+// Update offers badge
+function updateOffersBadge() {
+  const badge = document.getElementById('offersBtnBadge');
+  const activeOffers = OFFERS.filter(o => o.active && isOfferValid(o));
+  if (badge) {
+    badge.style.display = activeOffers.length ? 'flex' : 'none';
+    badge.textContent = activeOffers.length;
+  }
+}
+
+// ============================================================
+// PWA INSTALL
+// ============================================================
+function triggerPWAInstall() {
+  if (_pwaInstallPrompt) {
+    _pwaInstallPrompt.prompt();
+    _pwaInstallPrompt.userChoice.then(r => {
+      if (r.outcome === 'accepted') document.getElementById('pwaInstallBar')?.classList.add('hidden');
+      _pwaInstallPrompt = null;
+    });
+  } else {
+    // iOS instructions
+    showNotif('iOS: اضغط مشاركة ← أضف إلى الشاشة الرئيسية');
+  }
+}
+
+// ============================================================
+// SMART ORDER REVIEW SYSTEM
+// ============================================================
+let _reviewSecs = 60;
+function openOrderReview(orderObj) {
+  _pendingOrderForReview = orderObj;
+  _reviewSecs = 90;
+  document.getElementById('orderReviewOverlay').classList.add('open');
+  const numEl = document.getElementById('reviewCountdownNum');
+  if (numEl) numEl.textContent = _reviewSecs;
+  clearInterval(_orderReviewTimer);
+  _orderReviewTimer = setInterval(() => {
+    _reviewSecs--;
+    if (numEl) numEl.textContent = _reviewSecs;
+    if (_reviewSecs <= 0) {
+      clearInterval(_orderReviewTimer);
+      closeOrderReview();
+    }
+  }, 1000);
+}
+function closeOrderReview() {
+  clearInterval(_orderReviewTimer);
+  document.getElementById('orderReviewOverlay').classList.remove('open');
+  _pendingOrderForReview = null;
+}
+function cancelOrderFromReview() {
+  if (!_pendingOrderForReview) { closeOrderReview(); return; }
+  const orderId = _pendingOrderForReview.id;
+  // Remove from ordersData
+  ordersData = ordersData.filter(o => o.id !== orderId);
+  orderHistory = orderHistory.filter(o => o.id !== orderId);
+  saveData('zz_orders', ordersData);
+  saveData('zz_order_history', orderHistory);
+  fbRemove('orders/' + orderId);
+  currentOrderNum = null;
+  closeOrderReview();
+  openScreen('app');
+  showNotif('✓ تم إلغاء الطلب بنجاح');
+}
+
+// ============================================================
+// CASHIER LIVE SEARCH
+// ============================================================
+function filterCashierLive(q) {
+  cashierSearchQuery = q.trim().toLowerCase();
+  renderCashierSheet();
+}
+function setCashierFilter(status, el) {
+  cashierStatusFilter = status;
+  document.querySelectorAll('.cashier-chip').forEach(c => c.classList.remove('active'));
+  if (el) el.classList.add('active');
+  renderCashierSheet();
+}
+
+// ============================================================
+// BOOKING LATE ALERT SYSTEM
+// ============================================================
+let _bookingAlertTimer = null;
+function startBookingAlertTimer(booking) {
+  clearTimeout(_bookingAlertTimer);
+  const bookingTime = new Date(booking.date + 'T' + booking.time).getTime();
+  const alertTime = bookingTime + 5 * 60 * 1000; // +5 minutes
+  const delay = alertTime - Date.now();
+  if (delay > 0) {
+    _bookingAlertTimer = setTimeout(() => {
+      showNotif('⚠️ ' + booking.name + ' تأخر 5 دقائق — قد يُلغى الحجز');
+      // Notify admin via WA
+      const wa = (booking.whatsapp || booking.phone || '').replace(/[^0-9]/g,'');
+      if (wa) {
+        const msg = `تنبيه لعزيزنا *${booking.name}* 🌹\n\nيرجى الالتزام بموعد الحجز المحدد.\n⏰ التأخر 5 دقائق — قد يتم إلغاء الحجز لعدم التواجد في الوقت المحدد.\n\nشكراً لتفهمكم 💚\n*${RESTAURANT.name}*`;
+        window.open('https://wa.me/' + wa + '?text=' + encodeURIComponent(msg), '_blank');
+      }
+    }, delay);
+  }
+}
+
 // ============================================================
 // FIREBASE — يتهيأ بعد تحميل الصفحة كاملاً
 // ============================================================
@@ -3142,6 +4188,7 @@ function setupFirebaseListeners() {
     if (fbOrders.length > 0 || fbConnected) {
       fbOrders.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
       const oldCount = ordersData.length;
+      const oldPendingIds = ordersData.filter(o => o.status === 'payment_pending').map(o => o.id);
       ordersData = fbOrders;
       saveData('zz_orders', ordersData);
       if (document.getElementById('adminPanel')?.classList.contains('active')) {
@@ -3149,10 +4196,26 @@ function setupFirebaseListeners() {
         if (activeTab.includes('الطلبات')) renderAdminOrders();
         if (activeTab.includes('الكاشير')) renderCashierSheet();
         if (fbOrders.length > oldCount && oldCount > 0) { playSound(); showNotif('🔔 طلب جديد وصل!'); }
+        // إشعار بطلب دفع إلكتروني جديد
+        const newPending = fbOrders.filter(o => o.status === 'payment_pending' && !oldPendingIds.includes(o.id));
+        newPending.forEach(o => {
+          playSound();
+          showNotif(`💳 طلب دفع إلكتروني جديد — ${o.name} — ${o.payment || ''}`);
+        });
       }
+      if (document.getElementById('pickupPanel')?.classList.contains('active')) {
+        renderPickupOrders();
+        if (fbOrders.length > oldCount && oldCount > 0) { playSound(); showNotif('🔔 طلب جديد للتجهيز!'); }
+      }
+      updateOffersBadge();
       if (currentOrderNum) {
         const myOrder = fbOrders.find(o => o.id === currentOrderNum);
-        if (myOrder) updateTrackingStatus(myOrder.status);
+        if (myOrder) {
+          updateTrackingStatus(myOrder.status);
+          if (myOrder.status === 'cancelled' && _pendingOrderForReview?.id === currentOrderNum) {
+            closeOrderReview();
+          }
+        }
       }
     }
   });
@@ -3184,7 +4247,20 @@ function setupFirebaseListeners() {
   // --------- SETTINGS ---------
   db.ref('settings').on('value', snap => {
     if (snap.exists() && fbConnected) {
-      SETTINGS = { ...SETTINGS, ...snap.val() };
+      const fbSettings = snap.val();
+      // دمج المحافظ بحيث لا تُحذف الـ defaults
+      if (fbSettings.ewallets) {
+        SETTINGS = { ...SETTINGS, ...fbSettings };
+      } else {
+        SETTINGS = { ...SETTINGS, ...fbSettings };
+        if (!SETTINGS.ewallets || !SETTINGS.ewallets.length) {
+          SETTINGS.ewallets = [
+            {id:'ew1', name:'Vodafone Cash', emoji:'💳', number:'', managerPhone:''},
+            {id:'ew2', name:'WE Cash', emoji:'💰', number:'', managerPhone:''},
+            {id:'ew3', name:'InstaPay', emoji:'🏦', number:'', managerPhone:''}
+          ];
+        }
+      }
       saveData('zz_settings', SETTINGS);
     }
   });
@@ -3203,7 +4279,25 @@ function setupFirebaseListeners() {
       OFFERS = snap.val();
       saveData('zz_offers', OFFERS);
       renderActiveOfferStrip();
+      updateOffersBadge();
     }
+  });
+
+  // --------- CASHIER NOTIFICATIONS (from Pickup) ---------
+  db.ref('cashier_notifications').on('value', snap => {
+    if (!fbConnected) return;
+    snap.forEach(child => {
+      const notif = child.val();
+      if (!notif || notif.read) return;
+      // Show to cashier if admin/cashier panel is open
+      const adminActive = document.getElementById('adminPanel')?.classList.contains('active');
+      if (adminActive && (adminRoleType === 'admin' || adminRoleType === 'cashier')) {
+        playSound();
+        showNotif('🔔 ' + notif.msg);
+        // Mark as read
+        db.ref('cashier_notifications/' + notif.orderId).update({ read: true }).catch(() => {});
+      }
+    });
   });
 
   // --------- LAST ORDER MODE ---------
@@ -3227,7 +4321,10 @@ function setupFirebaseListeners() {
 }
 
 // Firebase save helpers
-async function fbSaveOrder(order) { await fbSet('orders/' + order.id, order); }
+async function fbSaveOrder(order) { 
+  const enriched = { ...order, createdAt: new Date().toISOString() };
+  await fbSet('orders/' + order.id, enriched); 
+}
 async function fbUpdateOrderStatus(orderId, status) { await fbUpdate('orders/' + orderId, { status }); }
 async function fbSaveBooking(booking) { await fbSet('bookings/' + booking.id, booking); }
 async function fbSaveMenu() { await fbSet('menu', MENU); }
@@ -3236,6 +4333,21 @@ async function fbSaveAddons() { await fbSet('addons', ADDONS); }
 async function fbSaveOffers() { await fbSet('offers', OFFERS); }
 async function fbSetLastOrder(val) { await fbUpdate('config', { lastOrderActive: val }); }
 </script>
+<!-- ===== SMART ORDER REVIEW OVERLAY ===== -->
+<div class="order-review-overlay" id="orderReviewOverlay">
+  <div class="order-review-card">
+    <div style="font-size:36px;margin-bottom:8px">⏳</div>
+    <div style="font-size:18px;font-weight:800;color:var(--dark);margin-bottom:6px">جاري مراجعة طلبك</div>
+    <div style="font-size:13px;color:var(--text-muted);margin-bottom:20px;line-height:1.6">لديك وقت لتعديل أو إلغاء طلبك قبل بدء التجهيز</div>
+    <div class="review-countdown" id="reviewCountdownNum">60</div>
+    <div style="font-size:12px;color:var(--text-muted);margin-bottom:20px">ثانية متبقية لإمكانية التعديل</div>
+    <div style="display:flex;gap:10px">
+      <button onclick="cancelOrderFromReview()" style="flex:1;padding:13px;background:var(--cream);color:var(--red);border-radius:12px;font-size:14px;font-weight:800;border:2px solid var(--red);cursor:pointer">❌ إلغاء الطلب</button>
+      <button onclick="closeOrderReview()" style="flex:1;padding:13px;background:var(--olive);color:#fff;border-radius:12px;font-size:14px;font-weight:800;cursor:pointer;border:none">✓ تأكيد</button>
+    </div>
+  </div>
+</div>
+
 <!-- Firebase SDK في آخر الـ body عشان يتحمل صح -->
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
