@@ -458,6 +458,37 @@ input,select,textarea{font-family:inherit;}
 .emoji-btn:hover{background:var(--olive-pale);}
 .emoji-btn.selected{background:var(--olive-pale);border-color:var(--olive);}
 
+/* ===== FAVORITES ===== */
+.fav-btn{position:absolute;top:8px;right:8px;width:32px;height:32px;border-radius:50%;background:rgba(255,255,255,.92);display:flex;align-items:center;justify-content:center;font-size:14px;border:none;cursor:pointer;transition:.2s;flex-direction:column;gap:0;}
+.fav-btn:active{transform:scale(.85);}
+.fav-count{font-size:8px;font-weight:800;color:var(--red);line-height:1;margin-top:1px;}
+.fav-card{background:var(--white);border-radius:16px;border:1px solid var(--border);padding:14px;display:flex;align-items:center;gap:12px;margin-bottom:10px;}
+.fav-card-img{width:56px;height:56px;border-radius:12px;background:linear-gradient(135deg,var(--olive-pale),var(--cream));display:flex;align-items:center;justify-content:center;font-size:28px;flex-shrink:0;}
+.fav-card-info{flex:1;}
+.fav-card-name{font-size:14px;font-weight:800;color:var(--dark);margin-bottom:3px;}
+.fav-card-price{font-size:13px;font-weight:800;color:var(--olive-dark);}
+.fav-card-badge{font-size:10px;font-weight:800;padding:2px 8px;border-radius:100px;display:inline-block;margin-top:3px;}
+.fav-available{background:var(--olive-pale);color:var(--olive-dark);}
+.fav-unavailable{background:#ffe3e3;color:var(--red);}
+
+/* ===== VIP CUSTOMER ===== */
+.vip-badge{display:inline-flex;align-items:center;gap:4px;background:linear-gradient(135deg,#f59e0b,#d97706);color:#fff;font-size:10px;font-weight:900;padding:3px 10px;border-radius:100px;letter-spacing:.5px;}
+.vip-row{background:linear-gradient(135deg,#fffbeb,#fef3c7);border:1.5px solid #f59e0b;border-radius:14px;padding:14px;margin-bottom:10px;}
+.customer-rank-card{background:var(--white);border-radius:14px;border:1px solid var(--border);padding:14px;margin-bottom:10px;position:relative;}
+.customer-rank-card .rank-badge{position:absolute;top:10px;left:10px;font-size:18px;}
+.cust-chart-bar{display:flex;align-items:center;gap:8px;margin-bottom:8px;}
+.cust-bar-fill{height:20px;border-radius:6px;background:linear-gradient(90deg,var(--olive-light),var(--olive));min-width:4px;transition:.5s;}
+.cust-bar-label{font-size:11px;font-weight:700;min-width:80px;text-align:right;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.cust-bar-val{font-size:11px;font-weight:800;color:var(--olive-dark);white-space:nowrap;}
+
+/* ===== CART REDESIGN ===== */
+.cart-section-title{font-size:12px;font-weight:800;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px;padding:8px 0 4px;border-bottom:1px solid var(--border);margin-bottom:10px;}
+.delivery-compact{background:var(--cream);border-radius:12px;padding:10px 12px;margin-bottom:10px;}
+.gps-compact-btn{display:flex;align-items:center;gap:8px;padding:9px 12px;background:var(--white);border:1.5px solid var(--border);border-radius:10px;font-size:13px;font-weight:600;color:var(--olive-dark);cursor:pointer;width:100%;margin-bottom:8px;transition:.2s;}
+.gps-compact-btn:active{background:var(--olive-pale);}
+.cart-confirm-btn{width:100%;padding:16px;background:linear-gradient(135deg,var(--olive-dark),var(--olive));color:#fff;border-radius:16px;font-size:16px;font-weight:800;border:none;cursor:pointer;box-shadow:0 6px 20px rgba(45,80,22,.25);transition:.2s;margin-top:4px;}
+.cart-confirm-btn:active{transform:scale(.98);}
+
 [data-theme="dark"] .food-img{background:var(--olive-ultra);}
 [data-theme="dark"] .admin-header{background:#1a2510;}
 [data-theme="dark"] .auth-hero{background:linear-gradient(160deg,#1a2510,#2d5016);}
@@ -494,8 +525,8 @@ input,select,textarea{font-family:inherit;}
 .pickup-badge.done-badge{background:var(--olive-pale);color:var(--olive-dark);}
 
 /* ===== OTP SCREEN ===== */
-.otp-inputs{display:flex;gap:10px;justify-content:center;margin:20px 0;}
-.otp-inputs input{width:46px;height:56px;text-align:center;font-size:24px;font-weight:800;border:2px solid var(--border);border-radius:12px;background:var(--white);color:var(--text);outline:none;font-family:monospace;transition:.2s;}
+.otp-inputs{display:flex;gap:10px;justify-content:center;margin:20px 0;direction:ltr;}
+.otp-inputs input{width:46px;height:56px;text-align:center;font-size:24px;font-weight:800;border:2px solid var(--border);border-radius:12px;background:var(--white);color:var(--text);outline:none;font-family:monospace;transition:.2s;direction:ltr;unicode-bidi:plaintext;}
 .otp-inputs input:focus{border-color:var(--olive);box-shadow:0 0 0 3px var(--olive-pale);}
 .otp-timer{text-align:center;font-size:13px;font-weight:700;color:var(--text-muted);margin-bottom:12px;}
 .otp-resend{color:var(--olive);font-weight:800;cursor:pointer;}
@@ -515,6 +546,76 @@ input,select,textarea{font-family:inherit;}
 
 /* ===== STICKY ORDER BTN ===== */
 .sticky-order-btn{position:sticky;bottom:0;background:var(--white);padding:12px 16px;border-top:1px solid var(--border);z-index:10;}
+
+/* ===== SPICY/NORMAL SELECTOR ===== */
+.spicy-selector{display:flex;gap:8px;margin-bottom:16px;}
+.spicy-opt{flex:1;padding:10px 8px;border-radius:12px;border:2px solid var(--border);text-align:center;font-size:13px;font-weight:700;color:var(--text-muted);cursor:pointer;transition:.2s;}
+.spicy-opt.normal-opt.active{border-color:var(--olive);background:var(--olive-pale);color:var(--olive-dark);}
+.spicy-opt.hot-opt.active{border-color:#e03030;background:#ffe8e8;color:#c00;}
+
+/* ===== CASHIER POPUP NOTIFICATION ===== */
+.cashier-popup-overlay{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:9999;display:none;align-items:flex-start;justify-content:center;padding-top:20px;}
+.cashier-popup-overlay.show{display:flex;}
+.cashier-popup-card{background:var(--white);border-radius:20px;width:calc(100% - 32px);max-width:420px;overflow:hidden;animation:popIn .35s ease;box-shadow:0 20px 60px rgba(0,0,0,.4);}
+.cashier-popup-header{padding:16px 20px;display:flex;align-items:center;gap:12px;}
+.cashier-popup-header.new-order{background:linear-gradient(135deg,#1a5fc8,#2176e0);}
+.cashier-popup-header.ready-order{background:linear-gradient(135deg,#16a34a,#22c55e);}
+.cashier-popup-icon{width:48px;height:48px;border-radius:50%;background:rgba(255,255,255,.2);display:flex;align-items:center;justify-content:center;font-size:24px;flex-shrink:0;animation:pulse 1s infinite;}
+.cashier-popup-title{color:#fff;font-size:16px;font-weight:900;}
+.cashier-popup-subtitle{color:rgba(255,255,255,.85);font-size:12px;margin-top:2px;}
+.cashier-popup-body{padding:16px 20px;}
+.cashier-popup-row{display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border);font-size:13px;}
+.cashier-popup-row:last-child{border-bottom:none;}
+.cashier-popup-row strong{color:var(--dark);}
+.cashier-popup-row span{color:var(--olive-dark);font-weight:700;}
+.cashier-popup-btn{width:100%;padding:15px;font-size:15px;font-weight:800;color:#fff;border:none;cursor:pointer;transition:.15s;}
+.cashier-popup-btn.btn-blue{background:linear-gradient(135deg,#1a5fc8,#2176e0);}
+.cashier-popup-btn.btn-green{background:linear-gradient(135deg,#16a34a,#22c55e);}
+.cashier-popup-btn:active{opacity:.9;transform:scale(.99);}
+@keyframes cashierSlideIn{from{transform:translateY(-40px);opacity:0}to{transform:translateY(0);opacity:1}}
+.cashier-popup-card{animation:cashierSlideIn .35s ease;}
+
+/* ===== DELIVERY AGENT POPUP ===== */
+.agent-popup-overlay{position:fixed;inset:0;background:rgba(0,0,0,.65);z-index:600;display:none;align-items:center;justify-content:center;padding:20px;}
+.agent-popup-overlay.open{display:flex;}
+.agent-popup-card{background:var(--white);border-radius:24px;padding:24px 20px;width:100%;max-width:380px;animation:popIn .3s ease;}
+.agent-popup-title{font-size:17px;font-weight:900;color:var(--dark);margin-bottom:4px;text-align:center;}
+.agent-popup-sub{font-size:12px;color:var(--text-muted);text-align:center;margin-bottom:16px;}
+.agent-list{display:flex;flex-direction:column;gap:8px;max-height:280px;overflow-y:auto;margin-bottom:16px;}
+.agent-item{display:flex;align-items:center;gap:12px;padding:12px 14px;border-radius:12px;border:1.5px solid var(--border);cursor:pointer;transition:.15s;}
+.agent-item:active,.agent-item.selected{background:var(--olive-pale);border-color:var(--olive);}
+.agent-icon{width:40px;height:40px;border-radius:50%;background:linear-gradient(135deg,var(--olive),var(--olive-light));display:flex;align-items:center;justify-content:center;font-size:18px;color:#fff;flex-shrink:0;}
+.agent-name{font-size:14px;font-weight:800;color:var(--dark);}
+.agent-phone{font-size:12px;color:var(--text-muted);direction:ltr;}
+.agent-confirm-btn{width:100%;padding:14px;background:linear-gradient(135deg,var(--olive),var(--olive-light));color:#fff;border-radius:14px;font-size:15px;font-weight:800;cursor:pointer;border:none;transition:.2s;}
+.agent-confirm-btn:disabled{background:var(--border);color:var(--text-muted);cursor:not-allowed;}
+.agent-cancel-btn{width:100%;padding:12px;background:none;color:var(--text-muted);font-size:13px;font-weight:700;cursor:pointer;border:none;margin-top:6px;}
+
+/* ===== MAIN GROUP CHIPS ===== */
+.main-groups-wrap{display:flex;gap:8px;padding:8px 16px 4px;overflow-x:auto;scrollbar-width:none;}
+.main-groups-wrap::-webkit-scrollbar{display:none;}
+.main-group-chip{flex-shrink:0;display:flex;flex-direction:column;align-items:center;gap:2px;padding:8px 14px;border-radius:14px;background:var(--white);border:1.5px solid var(--border);cursor:pointer;transition:.2s;min-width:72px;}
+.main-group-chip.active{background:linear-gradient(135deg,var(--olive-dark),var(--olive));border-color:var(--olive);color:#fff;}
+
+/* ===== ADS SLIDER (Client) ===== */
+.ads-slider-wrap{margin:8px 16px 4px;border-radius:16px;overflow:hidden;position:relative;}
+.ads-slider{display:flex;transition:transform .4s ease;will-change:transform;}
+.ad-slide{min-width:100%;position:relative;border-radius:16px;overflow:hidden;background:var(--white);}
+.ad-slide img{width:100%;height:180px;object-fit:cover;display:block;}
+.ad-slide video{width:100%;height:180px;object-fit:cover;display:block;}
+.ad-slide-body{padding:10px 14px 12px;}
+.ad-slide-title{font-size:16px;font-weight:900;color:var(--dark);margin-bottom:4px;}
+.ad-slide-caption{font-size:12px;color:var(--text-muted);line-height:1.5;margin-bottom:10px;}
+.ad-cta-btn{display:inline-block;padding:8px 20px;background:linear-gradient(135deg,var(--olive),var(--olive-light));color:#fff;border-radius:100px;font-size:13px;font-weight:800;border:none;cursor:pointer;}
+.ads-dots{display:flex;justify-content:center;gap:6px;padding:6px 0;}
+.ad-dot{width:6px;height:6px;border-radius:50%;background:var(--border);transition:.2s;cursor:pointer;}
+.ad-dot.active{background:var(--olive);width:18px;border-radius:3px;}
+.ads-nav-btn{position:absolute;top:80px;background:rgba(0,0,0,.35);color:#fff;border:none;border-radius:50%;width:32px;height:32px;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:14px;z-index:5;}
+.ads-nav-btn.prev{right:8px;}.ads-nav-btn.next{left:8px;}
+@keyframes orderHighlight{0%{box-shadow:0 0 0 0 rgba(26,95,200,.6)}50%{box-shadow:0 0 0 8px rgba(26,95,200,.2)}100%{box-shadow:0 0 0 0 rgba(26,95,200,0)}}
+.order-highlight-new{animation:orderHighlight 1.5s ease 3;border:2px solid #1a5fc8 !important;background:linear-gradient(135deg,#e8f0ff,#f0f5ff) !important;}
+@keyframes orderHighlightGreen{0%{box-shadow:0 0 0 0 rgba(22,163,74,.6)}50%{box-shadow:0 0 0 8px rgba(22,163,74,.2)}100%{box-shadow:0 0 0 0 rgba(22,163,74,0)}}
+.order-highlight-ready{animation:orderHighlightGreen 1.5s ease 3;border:2px solid #16a34a !important;background:linear-gradient(135deg,#e8fff0,#f0fff5) !important;}
 </style>
 </head>
 <body>
@@ -598,6 +699,15 @@ input,select,textarea{font-family:inherit;}
       </div>
       <div class="hero-emoji">🍽️</div>
     </div>
+    <!-- ADS SLIDER -->
+    <div id="adsSliderSection" style="display:none">
+      <div class="ads-slider-wrap">
+        <button class="ads-nav-btn prev" onclick="adsSlideNav(-1)">›</button>
+        <button class="ads-nav-btn next" onclick="adsSlideNav(1)">‹</button>
+        <div class="ads-slider" id="adsSlider"></div>
+      </div>
+      <div class="ads-dots" id="adsDots"></div>
+    </div>
     <div class="offer-strip hidden" id="offerStrip"></div>
     <div style="padding:0 16px 8px;display:flex;gap:8px">
       <button onclick="openScreen('booking')" style="flex:1;padding:11px;background:linear-gradient(135deg,var(--gold),var(--gold-light));color:#fff;border-radius:12px;font-size:13px;font-weight:800;text-align:center">☕ احجز ترابيزة</button>
@@ -607,6 +717,7 @@ input,select,textarea{font-family:inherit;}
       <input placeholder="ابحث عن صنف..." id="searchInput" oninput="doSearch(this.value)"/>
       <div class="search-icon">🔍</div>
     </div>
+    <div class="main-groups-wrap" id="mainGroupsWrap" style="display:none"></div>
     <div class="cats-scroll" id="cats"></div>
     <div id="menuContent"></div>
   </div>
@@ -662,16 +773,19 @@ input,select,textarea{font-family:inherit;}
         <input id="tableNum" placeholder="رقم الترابيزة" type="number"/>
       </div>
       <div id="gpsDeliverySection">
-        <!-- Zone Selector -->
-        <div id="zoneSelector" style="margin-bottom:10px">
-          <div style="font-size:12px;font-weight:800;color:var(--text-muted);margin-bottom:6px;text-transform:uppercase">المنطقة (اختيارى)</div>
-          <div id="zoneChips"></div>
+        <!-- Zone Selector compact -->
+        <div class="delivery-compact">
+          <div style="font-size:11px;font-weight:800;color:var(--text-muted);margin-bottom:6px;text-transform:uppercase">📍 موقع التوصيل</div>
+          <div id="zoneSelector" style="margin-bottom:8px">
+            <div style="font-size:11px;font-weight:700;color:var(--text-muted);margin-bottom:4px">المنطقة (اختيارى)</div>
+            <div id="zoneChips" style="display:flex;flex-wrap:wrap;gap:4px"></div>
+          </div>
+          <button class="gps-compact-btn" onclick="getGPS()">
+            <div class="gps-dot"></div>
+            <span id="gpsText" style="flex:1">📍 تحديد الموقع تلقائياً</span>
+          </button>
+          <textarea class="address-field" id="addressField" placeholder="أو أكتب عنوانك هنا..." style="height:52px;margin-bottom:0"></textarea>
         </div>
-        <button class="gps-btn" onclick="getGPS()">
-          <div class="gps-dot"></div>
-          <span id="gpsText">📍 تحديد الموقع تلقائياً</span>
-        </button>
-        <textarea class="address-field" id="addressField" placeholder="أو أكتب عنوانك هنا..."></textarea>
       </div>
       <div style="font-size:12px;font-weight:800;color:var(--text-muted);margin-bottom:8px;text-transform:uppercase">طريقة الدفع</div>
       <div class="payment-row" id="paymentRow">
@@ -679,7 +793,7 @@ input,select,textarea{font-family:inherit;}
       </div>
       <div id="paymentDetails" style="display:none;margin-bottom:10px"></div>
       <div class="cart-summary" id="cartSummary"></div>
-      <button class="btn-primary" onclick="placeOrder()" style="position:sticky;bottom:0;z-index:5;box-shadow:0 -4px 16px rgba(45,80,22,.2)">✓ تأكيد الطلب وإرسال للواتساب</button>
+      <button class="cart-confirm-btn" onclick="placeOrder()">✓ تأكيد الطلب وإرسال للواتساب</button>
     </div>
   </div>
 </div>
@@ -698,6 +812,13 @@ input,select,textarea{font-family:inherit;}
       <div class="pm-section" id="pmAddonsSection">
         <h4 id="pmAddonsLabel">الإضافات (اختيارى)</h4>
         <div class="extras-grid" id="pmExtras"></div>
+      </div>
+      <div class="pm-section" id="pmSpicySection" style="display:none">
+        <h4>الحدة</h4>
+        <div class="spicy-selector">
+          <div class="spicy-opt normal-opt active" id="pmSpicyNormal" onclick="selectSpicy('normal')">🍃 عادي</div>
+          <div class="spicy-opt hot-opt" id="pmSpicyHot" onclick="selectSpicy('spicy')">🌶️ حار Spicy</div>
+        </div>
       </div>
     </div>
     <div class="pm-footer">
@@ -759,6 +880,18 @@ input,select,textarea{font-family:inherit;}
   </div>
   <div style="overflow-y:auto;flex:1;padding:16px 16px 80px">
     <div id="historyContent"></div>
+  </div>
+</div>
+
+<!-- ===== FAVORITES SCREEN ===== -->
+<div id="favScreen" class="screen" style="background:var(--bg)">
+  <div class="topbar">
+    <button onclick="openScreen('app')" style="font-size:22px;padding:4px">←</button>
+    <div style="font-weight:800;font-size:16px">❤️ المفضلة</div>
+    <div style="width:30px"></div>
+  </div>
+  <div style="overflow-y:auto;flex:1;padding:16px 16px 80px">
+    <div id="favContent"></div>
   </div>
 </div>
 
@@ -833,6 +966,7 @@ input,select,textarea{font-family:inherit;}
     </div>
     <div style="padding:12px 16px 6px;font-size:14px;font-weight:800;color:var(--text-muted)">التواصل</div>
     <div class="settings-section">
+      <div class="settings-row" style="cursor:pointer" onclick="openScreen('favScreen')"><div class="info"><strong>❤️ المفضلة</strong><span>المنتجات المحفوظة</span></div><span style="color:var(--red)">←</span></div>
       <div class="settings-row" style="cursor:pointer" onclick="openWhatsapp('rating')"><div class="info"><strong>تقييم الخدمة ⭐</strong><span>إرسال تقييم للإدارة</span></div><span style="color:var(--olive)">←</span></div>
       <div class="settings-row" style="cursor:pointer" onclick="openWhatsapp('complaint')"><div class="info"><strong>شكوى / اقتراح 📋</strong><span>إبلاغ عن مشكلة أو اقتراح</span></div><span style="color:var(--olive)">←</span></div>
       <div class="settings-row" style="cursor:pointer" onclick="shareApp()"><div class="info"><strong>مشاركة التطبيق</strong><span>أرسل لصديق</span></div><span style="color:var(--olive)">←</span></div>
@@ -844,7 +978,7 @@ input,select,textarea{font-family:inherit;}
     </div>
     <div style="text-align:center;padding:24px;color:var(--text-muted);font-size:11px">
       <div style="font-weight:800;font-size:14px;color:var(--olive-dark);margin-bottom:4px">Zamzam Restaurant & Café</div>
-      <div>نسخة 11.0.0 • PWA + Smart Review + Live Search + Pickup • Designed by <strong style="color:var(--dark)">Mahmoud Gamal Eldeen</strong></div>
+      <div>نسخة 16.0.0 • Favorites + Fav Counter + Customers Report + VIP + Cart UX + Report Tabs • Designed by <strong style="color:var(--dark)">Mahmoud Gamal Eldeen</strong></div>
       <div style="margin-top:4px">📱 01508613866</div>
     </div>
   </div>
@@ -932,8 +1066,8 @@ input,select,textarea{font-family:inherit;}
 <div class="last-order-block-overlay" id="lastOrderBlockOverlay">
   <div class="last-order-block-card">
     <div style="font-size:56px;margin-bottom:12px">⏸️</div>
-    <div style="font-size:18px;font-weight:800;color:var(--dark);margin-bottom:8px">الطلبات متوقفة مؤقتاً</div>
-    <div style="font-size:14px;color:var(--text-muted);line-height:1.7;margin-bottom:20px">نعتذر، الطلبات متوقفة حالياً بسبب ضغط الطلبات، يرجى المحاولة مرة أخرى بعد قليل.</div>
+    <div style="font-size:18px;font-weight:800;color:var(--dark);margin-bottom:8px">تم إيقاف استقبال الطلبات</div>
+    <div style="font-size:14px;color:var(--text-muted);line-height:1.9;margin-bottom:20px">نعتذر، تم إيقاف استقبال الطلبات حالياً بسبب بدء فترة الـ Last Order ❤️<br/><br/>سيتم إعادة فتح الطلبات مرة أخرى قريباً.<br/>شكراً لتفهمكم ونتشرف بخدمتكم دائماً 🙏</div>
     <button class="btn-primary" onclick="document.getElementById('lastOrderBlockOverlay').classList.remove('show')">حسناً ✓</button>
   </div>
 </div>
@@ -990,6 +1124,8 @@ input,select,textarea{font-family:inherit;}
       <button id="tabOffersBtn" onclick="switchAdminTab('offers',this)">🎁 العروض</button>
       <button id="tabSettingsBtn" onclick="switchAdminTab('settings',this)">⚙️ الإعدادات</button>
       <button id="tabNotifyBtn" onclick="switchAdminTab('notify',this)">📢 إشعارات</button>
+      <button id="tabAdsBtn" onclick="switchAdminTab('ads',this)">🎯 الإعلانات</button>
+      <button id="tabAgentsBtn" onclick="switchAdminTab('agents',this)">🛵 المندوبين</button>
     </div>
 
     <!-- ORDERS TAB (Card View) -->
@@ -1110,6 +1246,33 @@ input,select,textarea{font-family:inherit;}
       <div id="offersAdminList"></div>
     </div>
 
+    <!-- ADS TAB (Admin Only) -->
+    <div id="tab-ads" style="display:none;padding:0 16px 16px">
+      <div style="background:var(--olive-ultra);border-radius:10px;padding:10px 14px;margin-bottom:14px;font-size:12px;color:var(--olive-dark);line-height:1.7">
+        🎯 الإعلانات تظهر في الواجهة الرئيسية للعميل بشكل Slider احترافي — يمكنك إضافة صورة أو فيديو مع عنوان وكابشن وزر CTA.
+      </div>
+      <button onclick="openAddAdModal()" style="width:100%;padding:13px;background:linear-gradient(135deg,var(--gold),var(--gold-light));color:#fff;border-radius:12px;font-size:14px;font-weight:800;margin-bottom:16px">🎯 + إضافة إعلان جديد</button>
+      <div id="adsAdminList"></div>
+    </div>
+
+    <!-- AGENTS TAB (Admin Only) -->
+    <div id="tab-agents" style="display:none;padding:0 16px 16px">
+      <div style="background:var(--olive-ultra);border-radius:10px;padding:10px 14px;margin-bottom:14px;font-size:12px;color:var(--olive-dark);line-height:1.7">
+        🛵 المندوبون يظهرون عند ضغط "خرج للتوصيل" — الأدمن فقط يستطيع إضافة أو تعديل أو حذف المندوبين.
+      </div>
+      <div style="background:var(--cream);border-radius:14px;padding:16px;border:1px solid var(--border);margin-bottom:14px">
+        <div style="font-size:13px;font-weight:800;color:var(--olive-dark);margin-bottom:10px">+ إضافة مندوب جديد</div>
+        <div style="display:flex;gap:8px;margin-bottom:8px">
+          <input id="newAgentName" type="text" placeholder="اسم المندوب" style="flex:1;padding:9px 12px;border:1.5px solid var(--border);border-radius:9px;font-size:13px;background:var(--white);outline:none"/>
+        </div>
+        <div style="display:flex;gap:8px;margin-bottom:10px">
+          <input id="newAgentPhone" type="tel" placeholder="رقم الهاتف" style="flex:1;padding:9px 12px;border:1.5px solid var(--border);border-radius:9px;font-size:13px;background:var(--white);outline:none;direction:ltr"/>
+        </div>
+        <button onclick="addAgent()" style="width:100%;padding:10px;background:var(--olive);color:#fff;border-radius:9px;font-size:13px;font-weight:800">+ إضافة المندوب</button>
+      </div>
+      <div id="agentsAdminList"></div>
+    </div>
+
     <!-- SETTINGS TAB - ADMIN ONLY -->
     <div id="tab-settings" style="display:none">
       <div style="padding:0 16px 8px;font-size:15px;font-weight:800;color:var(--dark)">🗺️ مناطق التوصيل</div>
@@ -1200,23 +1363,48 @@ input,select,textarea{font-family:inherit;}
 <div class="modal-overlay" id="salesReportModal" style="align-items:flex-start;padding-top:20px">
   <div class="modal-box" style="max-height:90vh;overflow-y:auto;width:100%;max-width:600px">
     <button class="modal-close" onclick="closeModal('salesReportModal')">✕</button>
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:8px">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:8px">
       <h3 style="margin:0">📊 تقرير المبيعات</h3>
-      <button onclick="exportSalesReport()" style="padding:8px 14px;background:var(--olive);color:#fff;border-radius:10px;font-size:12px;font-weight:800">⬇️ تصدير CSV</button>
+      <button onclick="exportSalesReport()" style="padding:7px 12px;background:var(--olive);color:#fff;border-radius:10px;font-size:12px;font-weight:800">⬇️ CSV</button>
     </div>
-    <div style="display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap">
-      <select id="reportPeriod" onchange="renderSalesReport()" style="flex:1;padding:8px 12px;border:1.5px solid var(--border);border-radius:10px;font-size:13px;background:var(--white);color:var(--text);outline:none">
-        <option value="today">اليوم</option>
-        <option value="week">آخر 7 أيام</option>
-        <option value="month">آخر 30 يوم</option>
-        <option value="all">كل الوقت</option>
-      </select>
-      <select id="reportStatus" onchange="renderSalesReport()" style="flex:1;padding:8px 12px;border:1.5px solid var(--border);border-radius:10px;font-size:13px;background:var(--white);color:var(--text);outline:none">
-        <option value="delivered">المكتملة فقط</option>
-        <option value="all">كل الطلبات</option>
-      </select>
+    <!-- Report Tabs -->
+    <div style="display:flex;background:var(--border);border-radius:10px;padding:3px;margin-bottom:12px">
+      <button id="rTabSales" onclick="switchReportTab('sales')" style="flex:1;padding:8px;border-radius:8px;font-size:13px;font-weight:700;background:var(--white);color:var(--olive-dark);box-shadow:0 2px 6px rgba(0,0,0,.08)">📊 المبيعات</button>
+      <button id="rTabCustomers" onclick="switchReportTab('customers')" style="flex:1;padding:8px;border-radius:8px;font-size:13px;font-weight:700;color:var(--text-muted)">👥 العملاء</button>
     </div>
-    <div id="salesReportContent"></div>
+    <!-- Sales Tab -->
+    <div id="reportTabSales">
+      <div style="display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap">
+        <select id="reportPeriod" onchange="renderSalesReport()" style="flex:1;padding:8px 12px;border:1.5px solid var(--border);border-radius:10px;font-size:13px;background:var(--white);color:var(--text);outline:none">
+          <option value="today">اليوم</option>
+          <option value="week">آخر 7 أيام</option>
+          <option value="month">آخر 30 يوم</option>
+          <option value="all">كل الوقت</option>
+        </select>
+        <select id="reportStatus" onchange="renderSalesReport()" style="flex:1;padding:8px 12px;border:1.5px solid var(--border);border-radius:10px;font-size:13px;background:var(--white);color:var(--text);outline:none">
+          <option value="delivered">المكتملة فقط</option>
+          <option value="all">كل الطلبات</option>
+        </select>
+      </div>
+      <div id="salesReportContent"></div>
+    </div>
+    <!-- Customers Tab -->
+    <div id="reportTabCustomers" style="display:none">
+      <div style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap">
+        <select id="custReportPeriod" onchange="renderCustomersReport()" style="flex:1;padding:8px 12px;border:1.5px solid var(--border);border-radius:10px;font-size:13px;background:var(--white);color:var(--text);outline:none">
+          <option value="today">اليوم</option>
+          <option value="week">آخر 7 أيام</option>
+          <option value="month">آخر 30 يوم</option>
+          <option value="all">كل الوقت</option>
+        </select>
+        <select id="custReportSort" onchange="renderCustomersReport()" style="flex:1;padding:8px 12px;border:1.5px solid var(--border);border-radius:10px;font-size:13px;background:var(--white);color:var(--text);outline:none">
+          <option value="total">الأعلى مدفوعاً</option>
+          <option value="count">الأكثر طلباً</option>
+          <option value="avg">أعلى متوسط</option>
+        </select>
+      </div>
+      <div id="customersReportContent"></div>
+    </div>
   </div>
 </div>
 
@@ -1478,6 +1666,12 @@ let ADDONS = loadData('zz_addons', [
 // أقسام الطعام التي تظهر فيها الإضافات (يتم تحديثها تلقائياً حسب label القسم)
 const FOOD_CAT_KEYWORDS = ['برجر','بيتزا','كريب','شاورما','وجبة','ساندوتش','مأكولات','أكل','فراخ','لحم','سريع'];
 const NO_ADDON_KEYWORDS = ['مشروب','حلويات','عصير','كوكتيل','قهوة','شاي','كيك'];
+const SPICY_CAT_KEYWORDS = ['بيتزا','كريب','شاورما','ساندوتش'];
+function catHasSpicy(catKey) {
+  const sec = MENU[catKey]; if (!sec) return false;
+  const label = (sec.label || '').toLowerCase();
+  return SPICY_CAT_KEYWORDS.some(k => label.includes(k));
+}
 function catHasAddons(catKey) {
   const sec = MENU[catKey]; if (!sec) return false;
   const label = (sec.label || '').toLowerCase();
@@ -1513,8 +1707,10 @@ let bookingsData = loadData('zz_bookings', []);
 // STATE
 // ============================================================
 let cart=[], currentUser=null, favs=new Set(loadData('zz_favs',[]));
+let favCounts = loadData('zz_fav_counts', {}); // {itemId: globalCount}
+let VIP_CUSTOMERS = loadData('zz_vip_customers', {}); // {phone: {discount, since}}
 let deliveryType='delivery', paymentType='cash', paymentTypeLabel='💵 كاش';
-let currentPM=null, pmQtyVal=1, pmSelectedSize=null, pmSelectedExtras=new Set();
+let currentPM=null, pmQtyVal=1, pmSelectedSize=null, pmSelectedExtras=new Set(), pmSpicy='normal';
 let gpsCoords=null, lastOrderActive=false, currentFilter='all', searchQuery='';
 let adminRoleType=null, currentOrderNum=null;
 let appliedDiscount=0, appliedCouponId=null;
@@ -1618,9 +1814,10 @@ function showScreen(id) {
 }
 function openScreen(id) {
   showScreen(id);
-  if (id === 'app') { renderMenu(); updateOffersBadge(); }
+  if (id === 'app') { renderMenu(); updateOffersBadge(); renderAdsSlider(); }
   if (id === 'adminPanel') { renderAdminOrders(); renderMenuManage(); renderOffersAdmin(); renderCatSelects(); loadSettingsUI(); applyRoleRestrictions(); }
   if (id === 'history') renderHistory();
+  if (id === 'favScreen') renderFavScreen();
   if (id === 'booking') { renderTablesGrid(); document.getElementById('bookingFormView').style.display='block'; document.getElementById('bookingConfirmView').style.display='none'; }
   if (id === 'pickupPanel') { setupPickupPanel(); }
   if (id === 'settings') {
@@ -1702,7 +1899,8 @@ function otpNext(input, idx) {
 function verifyOTP() {
   if (!_otpPending) { showNotif('انتهت صلاحية الرمز — أعد المحاولة'); showScreen('auth'); return; }
   const inputs = document.querySelectorAll('#otpInputs input');
-  const entered = Array.from(inputs).map(i => i.value).join('');
+  // Read inputs in DOM order (left-to-right since direction:ltr)
+  const entered = Array.from(inputs).map(i => i.value.replace(/[^0-9]/g,'')).join('');
   if (entered.length < 4) { showNotif('أدخل الرمز المكون من 4 أرقام'); return; }
   if (entered !== _otpPending.code) { showNotif('❌ الرمز غير صحيح'); return; }
   // Verified!
@@ -1759,10 +1957,13 @@ function doClientLogout() {
 // ============================================================
 function renderMenu() {
   if (currentUser) document.getElementById('greetUser').textContent = 'أهلاً ' + currentUser.name + ' 👋';
+  renderMainGroups();
   renderCategories();
+  renderAdsSlider();
   const wrap = document.getElementById('menuContent');
   let html = '';
-  const cats = currentFilter === 'all' ? Object.keys(MENU) : [currentFilter];
+  let availableCats = currentMainGroup ? getFilteredCatsByGroup() : Object.keys(MENU);
+  const cats = currentFilter === 'all' ? availableCats : [currentFilter];
   const q = searchQuery.toLowerCase();
   cats.forEach(cat => {
     const sec = MENU[cat];
@@ -1779,7 +1980,10 @@ function renderMenu() {
         <div class="food-img">${item.emoji}</div>
         ${notAvail ? '<div class="unavail-overlay">غير متاح</div>' : ''}
         ${item.new && !notAvail ? '<div class="badge-new">جديد</div>' : ''}
-        <button class="fav-btn" onclick="toggleFav(event,'${item.id}')">${isFav ? '❤️' : '🤍'}</button>
+        <button class="fav-btn" onclick="toggleFav(event,'${item.id}')">
+          <span>${isFav ? '❤️' : '🤍'}</span>
+          ${getFavCount(item.id) > 0 ? `<span class="fav-count">${getFavCount(item.id)}</span>` : ''}
+        </button>
         <div class="food-info">
           ${item.prices ? `<div class="size-pills"><span class="size-pill active">S</span><span class="size-pill">M</span><span class="size-pill">L</span></div>` : ''}
           <div class="food-name">${item.name}</div>
@@ -1799,9 +2003,10 @@ function renderMenu() {
 }
 
 function renderCategories() {
+  const availableCats = currentMainGroup ? getFilteredCatsByGroup() : Object.keys(MENU);
   document.getElementById('cats').innerHTML =
     `<div class="cat-chip ${currentFilter === 'all' ? 'active' : ''}" onclick="filterCat('all',this)">الكل</div>` +
-    Object.keys(MENU).map(k => `<div class="cat-chip ${currentFilter === k ? 'active' : ''}" onclick="filterCat('${k}',this)">${MENU[k].emoji} ${MENU[k].label.replace(/^[^ ]+ /,'')}</div>`).join('');
+    availableCats.filter(k => MENU[k]).map(k => `<div class="cat-chip ${currentFilter === k ? 'active' : ''}" onclick="filterCat('${k}',this)">${MENU[k].emoji} ${MENU[k].label.replace(/^[^ ]+ /,'')}</div>`).join('');
 }
 function filterCat(cat, el) {
   currentFilter = cat;
@@ -1844,7 +2049,7 @@ function isOfferValid(o) {
 function openProduct(cat, id) {
   const item = MENU[cat].items.find(i => i.id === id);
   if (!item) return;
-  currentPM = { cat, item }; pmQtyVal = 1;
+  currentPM = { cat, item }; pmQtyVal = 1; pmSpicy = 'normal';
   pmSelectedSize = item.prices ? 'S' : null; pmSelectedExtras = new Set();
   document.getElementById('pmImg').textContent = item.emoji;
   document.getElementById('pmName').textContent = item.name;
@@ -1856,6 +2061,17 @@ function openProduct(cat, id) {
       `<span class="size-pill ${s === 'S' ? 'active' : ''}" onclick="selectPMSize('${s}',this)">${s} — ${item.prices[s]} ج</span>`
     ).join('');
   } else ss.style.display = 'none';
+  // Spicy selector
+  const spicySec = document.getElementById('pmSpicySection');
+  if (spicySec) {
+    if (catHasSpicy(cat)) {
+      spicySec.style.display = 'block';
+      document.getElementById('pmSpicyNormal').classList.add('active');
+      document.getElementById('pmSpicyHot').classList.remove('active');
+    } else {
+      spicySec.style.display = 'none';
+    }
+  }
   // Add-ons: عرضها فقط للأقسام المسموح لها
   const addonsSection = document.getElementById('pmAddonsSection');
   const extrasEl = document.getElementById('pmExtras');
@@ -1875,6 +2091,11 @@ function openProduct(cat, id) {
   document.getElementById('productModal').classList.add('open');
 }
 function closePM(e) { if (e && e.target !== document.getElementById('productModal')) return; document.getElementById('productModal').classList.remove('open'); }
+function selectSpicy(val) {
+  pmSpicy = val;
+  document.getElementById('pmSpicyNormal').classList.toggle('active', val === 'normal');
+  document.getElementById('pmSpicyHot').classList.toggle('active', val === 'spicy');
+}
 function selectPMSize(s, el) { pmSelectedSize = s; document.querySelectorAll('#pmSizes .size-pill').forEach(p => p.classList.remove('active')); el.classList.add('active'); updatePMTotal(); }
 function toggleExtra(id, el) { if (pmSelectedExtras.has(id)) pmSelectedExtras.delete(id); else pmSelectedExtras.add(id); el.classList.toggle('selected'); updatePMTotal(); }
 function pmQtyChange(d) { pmQtyVal = Math.max(1, pmQtyVal + d); updatePMTotal(); }
@@ -1898,7 +2119,9 @@ function addToCartFromPM() {
     const e = ADDONS.find(x => x.id === id);
     if (e) { extras.push(e.name); extPrice += e.price; }
   });
-  addToCart({ id: item.id + '_' + (pmSelectedSize||'') + '_' + Date.now(), name: item.name, size: pmSelectedSize, emoji: item.emoji, price: base + extPrice, basePrice: base, extras, qty: pmQtyVal });
+  const spicyLabel = pmSpicy === 'spicy' ? '🌶️ حار' : '🍃 عادي';
+  const hasSpicy = catHasSpicy(currentPM.cat);
+  addToCart({ id: item.id + '_' + (pmSelectedSize||'') + '_' + Date.now(), name: item.name, size: pmSelectedSize, emoji: item.emoji, price: base + extPrice, basePrice: base, extras, qty: pmQtyVal, spicy: hasSpicy ? pmSpicy : null, spicyLabel: hasSpicy ? spicyLabel : null });
   document.getElementById('productModal').classList.remove('open');
 }
 
@@ -1934,6 +2157,8 @@ function calcAutoDiscount() {
     else if (o.type === 'partial') disc += Number(o.value);
     else if (o.type === 'free_delivery') disc += Number(SETTINGS.deliveryFee) || 0;
   });
+  // VIP customer discount
+  disc += getVIPDiscount();
   return disc;
 }
 function calcDeliveryFee() {
@@ -1997,20 +2222,30 @@ function renderCartSheet() {
     body.innerHTML = '<div style="text-align:center;padding:40px;color:var(--text-muted)"><div style="font-size:48px;margin-bottom:12px">🛒</div><div style="font-weight:700">السلة فارغة</div></div>';
     updateCartUI(); return;
   }
-  body.innerHTML = cart.map(c => `<div class="cart-item">
-    <div class="cart-item-img">${c.emoji}</div>
-    <div class="cart-item-info">
-      <div class="cart-item-name">${c.name}${c.size ? ' <span style="font-size:11px;background:var(--olive-pale);color:var(--olive-dark);padding:2px 6px;border-radius:6px">'+c.size+'</span>' : ''}</div>
-      ${c.extras && c.extras.length ? `<div class="cart-item-sub">+ ${c.extras.join(', ')}</div>` : ''}
-      <div class="cart-item-price">${c.price * c.qty} ج.م</div>
-      <div class="qty-ctrl">
-        <button class="qty-btn" onclick="changeQty('${c.id}',-1)">−</button>
-        <span class="qty-num">${c.qty}</span>
-        <button class="qty-btn" onclick="changeQty('${c.id}',1)">+</button>
-        <button onclick="removeFromCart('${c.id}')" style="margin-right:auto;color:var(--red);font-size:12px;font-weight:700">حذف</button>
+  body.innerHTML = cart.map(c => `
+    <div class="cart-item" id="citem_${c.id}" style="background:var(--white);border-radius:16px;border:1.5px solid var(--border);padding:12px;margin-bottom:10px;display:flex;gap:12px;align-items:flex-start;box-shadow:0 2px 8px rgba(0,0,0,.04)">
+      <div class="cart-item-img" style="width:60px;height:60px;border-radius:12px;background:linear-gradient(135deg,var(--olive-pale),var(--cream));display:flex;align-items:center;justify-content:center;font-size:28px;flex-shrink:0">${c.emoji}</div>
+      <div style="flex:1;min-width:0">
+        <div style="font-size:14px;font-weight:800;color:var(--dark);margin-bottom:4px">${c.name}</div>
+        <div style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:6px">
+          ${c.size ? `<span style="font-size:10px;background:var(--olive-pale);color:var(--olive-dark);padding:2px 8px;border-radius:100px;font-weight:800">📐 ${c.size}</span>` : ''}
+          ${c.spicyLabel ? `<span style="font-size:10px;background:${c.spicy==='spicy'?'#ffe8e8':'#e8f5e9'};color:${c.spicy==='spicy'?'#c00':'#16a34a'};padding:2px 8px;border-radius:100px;font-weight:800">${c.spicyLabel}</span>` : ''}
+          ${c.extras && c.extras.length ? c.extras.map(e => `<span style="font-size:10px;background:var(--cream);color:var(--text-muted);padding:2px 8px;border-radius:100px;font-weight:700">+ ${e}</span>`).join('') : ''}
+        </div>
+        <div style="display:flex;align-items:center;justify-content:space-between">
+          <div class="qty-ctrl" style="display:flex;align-items:center;gap:8px">
+            <button class="qty-btn" onclick="changeQty('${c.id}',-1)">−</button>
+            <span class="qty-num">${c.qty}</span>
+            <button class="qty-btn" onclick="changeQty('${c.id}',1)">+</button>
+          </div>
+          <div style="text-align:left">
+            <div style="font-size:15px;font-weight:900;color:var(--olive-dark)">${c.price * c.qty} ج.م</div>
+            ${c.qty > 1 ? `<div style="font-size:10px;color:var(--text-muted)">${c.price} × ${c.qty}</div>` : ''}
+          </div>
+        </div>
+        <button onclick="removeFromCart('${c.id}')" style="margin-top:6px;color:var(--red);font-size:12px;font-weight:700;background:none;border:none;padding:0;cursor:pointer">🗑️ حذف</button>
       </div>
-    </div>
-  </div>`).join('');
+    </div>`).join('');
   updateCartUI();
   const active = OFFERS.filter(o => isOfferValid(o) && o.type !== 'coupon');
   const noteEl = document.getElementById('activeOfferNote');
@@ -2130,6 +2365,7 @@ function placeOrder() {
   const itemsLines = cart.map(c => {
     let line = `• ${c.name}`;
     if (c.size) line += ` (${c.size})`;
+    if (c.spicyLabel) line += ` — ${c.spicyLabel}`;
     if (c.extras && c.extras.length) line += ` + ${c.extras.join(', ')}`;
     line += ` × ${c.qty} = ${c.price * c.qty} ج.م`;
     return line;
@@ -2191,8 +2427,8 @@ ${totalDisc > 0 ? `🏷️ الخصم: - ${totalDisc} ج.م\n` : ''}${deliveryFe
   };
   ordersData.unshift(newOrder);
   saveData('zz_orders', ordersData);
-  // 🔥 حفظ الطلب في Firebase — الكاشير يشوفه فوراً
-  fbSaveOrder(newOrder);
+  // 🔥 حفظ الطلب في Firebase مؤجل — لن يُرسل للكاشير إلا بعد تأكيد العميل النهائي
+  // fbSaveOrder(newOrder);  <-- مؤجل حتى confirmFinalOrder()
   const histEntry = { ...newOrder, savedAt: Date.now() };
   orderHistory.unshift(histEntry);
   if (orderHistory.length > 50) orderHistory = orderHistory.slice(0, 50);
@@ -2414,6 +2650,8 @@ function applyRoleRestrictions() {
   const tabSettingsBtn = document.getElementById('tabSettingsBtn');
   const tabAddonsBtn = document.getElementById('tabAddonsBtn');
   const tabNotifyBtn = document.getElementById('tabNotifyBtn');
+  const tabAdsBtn = document.getElementById('tabAdsBtn');
+  const tabAgentsBtn = document.getElementById('tabAgentsBtn');
   const revenueCard = document.getElementById('statRevenueCard');
   const adminActionBtns = document.getElementById('adminActionBtns');
   if (tabMenuBtn) tabMenuBtn.style.display = isAdmin ? 'block' : 'none';
@@ -2421,6 +2659,8 @@ function applyRoleRestrictions() {
   if (tabSettingsBtn) tabSettingsBtn.style.display = isAdmin ? 'block' : 'none';
   if (tabAddonsBtn) tabAddonsBtn.style.display = isAdmin ? 'block' : 'none';
   if (tabNotifyBtn) tabNotifyBtn.style.display = isAdmin ? 'block' : 'none';
+  if (tabAdsBtn) tabAdsBtn.style.display = isAdmin ? 'block' : 'none';
+  if (tabAgentsBtn) tabAgentsBtn.style.display = isAdmin ? 'block' : 'none';
   if (revenueCard) revenueCard.style.display = isAdmin ? 'block' : 'none';
   if (adminActionBtns) adminActionBtns.style.display = isAdmin ? 'flex' : 'none';
   if (!isAdmin) {
@@ -2442,7 +2682,7 @@ function applyRoleRestrictions() {
 function switchAdminTab(tab, el) {
   document.querySelectorAll('.admin-tabs button').forEach(b => b.classList.remove('active'));
   el.classList.add('active');
-  ['orders','cashier','bookings','menu','addons','offers','settings','notify'].forEach(t => {
+  ['orders','cashier','bookings','menu','addons','offers','settings','notify','ads','agents'].forEach(t => {
     const tabEl = document.getElementById('tab-' + t);
     if (tabEl) tabEl.style.display = t === tab ? 'block' : 'none';
   });
@@ -2453,6 +2693,8 @@ function switchAdminTab(tab, el) {
   if (tab === 'addons') renderAddonsAdmin();
   if (tab === 'offers') renderOffersAdmin();
   if (tab === 'settings') loadSettingsUI();
+  if (tab === 'ads') renderAdsAdmin();
+  if (tab === 'agents') renderAgentsAdmin();
 }
 
 // ============================================================
@@ -2489,7 +2731,10 @@ function renderAdminOrders() {
       <div class="order-top-row">
         <div style="font-weight:800;color:var(--olive);font-size:12px">#${idx + 1}</div>
         <div>
-          <div style="font-weight:700;font-size:13px">${o.name}</div>
+          <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">
+            <span style="font-weight:700;font-size:13px">${o.name}</span>
+            ${VIP_CUSTOMERS[o.phone] ? '<span class="vip-badge">⭐ VIP</span>' : ''}
+          </div>
           <div style="font-size:10px;color:var(--text-muted)">${o.phone} • ${o.time}</div>
         </div>
         <div><span class="status-badge ${statusCls[o.status] || 's-new'}">${statusLabels[o.status] || o.status}</span></div>
@@ -2504,16 +2749,17 @@ function renderAdminOrders() {
         ${canManage && o.status !== 'payment_pending' ? `
           <button class="action-btn btn-prep" onclick="updateOrderStatus('${o.id}','prep')" title="جارى التجهيز">🍳 تجهيز</button>
           <button class="action-btn btn-ready" onclick="updateOrderStatus('${o.id}','ready')" title="اكتمل التجهيز">✅ جاهز</button>
-          <button class="action-btn btn-deliver" onclick="updateOrderStatus('${o.id}','out')" title="خرج للتوصيل">🛵 خرج</button>
+          <button class="action-btn btn-deliver" onclick="openAgentPopup('${o.id}')" title="خرج للتوصيل">🛵 خرج</button>
           <button class="action-btn btn-ready" onclick="updateOrderStatus('${o.id}','delivered')" title="تم التسليم" style="background:#d4edda;color:#155724">🎉 تسليم</button>
           <button class="action-btn btn-delay" onclick="sendDelayMsg('${o.id}')">⏳ تأخير</button>
         ` : ''}
-        ${adminRoleType === 'admin' ? `<button class="action-btn btn-cancel" onclick="updateOrderStatus('${o.id}','cancelled')">❌ إلغاء</button>` : ''}
+        ${adminRoleType === 'admin' ? `<button class="action-btn btn-cancel" onclick="updateOrderStatus('${o.id}','cancelled')">❌ إلغاء</button>
+          <button class="action-btn" style="background:#ffe3e3;color:#c81a1a;font-weight:900" onclick="deleteOrderAdmin('${o.id}')">🗑️ حذف نهائي</button>` : ''}
         ${o.whatsapp ? `<button class="action-btn btn-wa" onclick="window.open('https://wa.me/${(o.whatsapp||'').replace(/[^0-9]/g,'')}','_blank')">💬 واتساب</button>` : ''}
       </div>
       <div class="order-detail-panel" id="odetail_${o.id}">
         <div style="font-weight:800;margin-bottom:8px">📋 تفاصيل الطلب #${o.id}</div>
-        <div style="margin-bottom:6px;line-height:1.6">${(o.items || []).map(i => `• ${i.emoji} ${i.name}${i.size ? ' ('+i.size+')' : ''} × ${i.qty} = ${i.price * i.qty} ج`).join('<br/>')}</div>
+        <div style="margin-bottom:6px;line-height:1.6">${(o.items || []).map(i => `• ${i.emoji} ${i.name}${i.size ? ' ('+i.size+')' : ''}${i.spicyLabel ? ' — '+i.spicyLabel : ''} × ${i.qty} = ${i.price * i.qty} ج`).join('<br/>')}</div>
         ${o.address ? `<div style="margin-bottom:4px">🏠 ${o.address}</div>` : ''}
         ${o.zone ? `<div style="margin-bottom:4px">📌 المنطقة: ${o.zone}</div>` : ''}
         ${o.tableNum ? `<div style="margin-bottom:4px">🪑 ترابيزة: ${o.tableNum}</div>` : ''}
@@ -2591,6 +2837,20 @@ function clearOldOrders() {
   showNotif('✓ تم حذف الطلبات القديمة');
 }
 
+function deleteOrderAdmin(orderId) {
+  // Show confirm dialog
+  const order = ordersData.find(o => o.id === orderId);
+  if (!order) return;
+  const confirmed = confirm(`⚠️ تأكيد الحذف النهائي\n\nسيتم حذف الطلب #${orderId} بشكل نهائي من النظام.\n\nهل أنت متأكد؟`);
+  if (!confirmed) return;
+  ordersData = ordersData.filter(o => o.id !== orderId);
+  saveData('zz_orders', ordersData);
+  fbRemove('orders/' + orderId);
+  renderAdminOrders();
+  if (document.getElementById('tab-cashier').style.display === 'block') renderCashierSheet();
+  showNotif('✓ تم حذف الطلب نهائياً');
+}
+
 // ============================================================
 // CASHIER SHEET VIEW (Google Sheets style) — with Live Search
 // ============================================================
@@ -2640,11 +2900,12 @@ function renderCashierSheet() {
           ${!isPending ? `
           <button class="track-btn tb-prep ${o.status==='prep'?'active-state':''}" onclick="updateOrderStatus('${o.id}','prep')" title="جارى التجهيز">🍳</button>
           <button class="track-btn tb-ready ${o.status==='ready'?'active-state':''}" onclick="updateOrderStatus('${o.id}','ready')" title="اكتمل">✅</button>
-          <button class="track-btn tb-out ${o.status==='out'?'active-state':''}" onclick="updateOrderStatus('${o.id}','out')" title="خرج">🛵</button>
+          <button class="track-btn tb-out ${o.status==='out'?'active-state':''}" onclick="openAgentPopup('${o.id}')" title="خرج">🛵</button>
           <button class="track-btn tb-done ${o.status==='delivered'?'active-state':''}" onclick="updateOrderStatus('${o.id}','delivered')" title="تسليم">🎉</button>
           <button class="track-btn tb-delay" onclick="sendDelayMsg('${o.id}')" title="تأخير">⏳</button>
           ` : ''}
           ${o.whatsapp ? `<button class="track-btn tb-wa" onclick="window.open('https://wa.me/${(o.whatsapp||'').replace(/[^0-9]/g,'')}','_blank')" title="واتساب">💬</button>` : ''}
+          ${adminRoleType === 'admin' ? `<button class="track-btn" style="background:#ffe3e3;color:#c81a1a;font-size:11px" onclick="deleteOrderAdmin('${o.id}')" title="حذف نهائي">🗑️</button>` : ''}
         </div>` : '—'}
       </td>
     </tr>`;
@@ -3404,7 +3665,7 @@ function openAddCatModal() {
 // ============================================================
 function openSalesReport() {
   openModal('salesReportModal');
-  renderSalesReport();
+  switchReportTab('sales');
 }
 function filterOrdersByPeriod(period) {
   const now = Date.now();
@@ -3519,6 +3780,161 @@ function renderSalesReport() {
     </div>` : '<div style="text-align:center;padding:30px;color:var(--text-muted);font-weight:700">لا توجد بيانات في هذه الفترة</div>'}
   `;
 }
+
+// ============================================================
+// REPORT TAB SWITCHER
+// ============================================================
+function switchReportTab(tab) {
+  const salesTab = document.getElementById('reportTabSales');
+  const custTab = document.getElementById('reportTabCustomers');
+  const btnSales = document.getElementById('rTabSales');
+  const btnCust = document.getElementById('rTabCustomers');
+  if (tab === 'sales') {
+    salesTab.style.display = 'block'; custTab.style.display = 'none';
+    btnSales.style.background = 'var(--white)'; btnSales.style.color = 'var(--olive-dark)'; btnSales.style.boxShadow = '0 2px 6px rgba(0,0,0,.08)';
+    btnCust.style.background = 'none'; btnCust.style.color = 'var(--text-muted)'; btnCust.style.boxShadow = 'none';
+    renderSalesReport();
+  } else {
+    salesTab.style.display = 'none'; custTab.style.display = 'block';
+    btnCust.style.background = 'var(--white)'; btnCust.style.color = 'var(--olive-dark)'; btnCust.style.boxShadow = '0 2px 6px rgba(0,0,0,.08)';
+    btnSales.style.background = 'none'; btnSales.style.color = 'var(--text-muted)'; btnSales.style.boxShadow = 'none';
+    renderCustomersReport();
+  }
+}
+
+// ============================================================
+// CUSTOMERS REPORT + VIP SYSTEM
+// ============================================================
+
+function buildCustomerStats(period) {
+  const orders = filterOrdersByPeriod(period);
+  const map = {};
+  orders.forEach(o => {
+    const key = o.phone || o.name;
+    if (!map[key]) map[key] = { name: o.name, phone: o.phone || '—', count: 0, total: 0, lastOrder: 0 };
+    map[key].count++;
+    map[key].total += o.total || 0;
+    if ((o.timestamp || 0) > map[key].lastOrder) map[key].lastOrder = o.timestamp || 0;
+  });
+  return Object.values(map);
+}
+
+function renderCustomersReport() {
+  const period = document.getElementById('custReportPeriod')?.value || 'all';
+  const sort = document.getElementById('custReportSort')?.value || 'total';
+  const el = document.getElementById('customersReportContent');
+  if (!el) return;
+  let customers = buildCustomerStats(period);
+  if (!customers.length) {
+    el.innerHTML = '<div style="text-align:center;padding:30px;color:var(--text-muted);font-weight:700">لا توجد بيانات</div>';
+    return;
+  }
+  // Sort
+  customers.sort((a,b) => sort === 'count' ? b.count - a.count : sort === 'avg' ? (b.total/b.count) - (a.total/a.count) : b.total - a.total);
+  const maxVal = sort === 'count' ? customers[0].count : sort === 'avg' ? customers[0].total/customers[0].count : customers[0].total;
+  const top3 = customers.slice(0, 3);
+  const vipCount = Object.keys(VIP_CUSTOMERS).length;
+
+  el.innerHTML = `
+    <!-- KPI Row -->
+    <div class="report-kpi-grid" style="margin-bottom:14px">
+      <div class="report-kpi highlight"><div class="kpi-val">${customers.length}</div><div class="kpi-lbl">👥 إجمالى العملاء</div></div>
+      <div class="report-kpi highlight"><div class="kpi-val">${vipCount}</div><div class="kpi-lbl">⭐ عملاء VIP</div></div>
+    </div>
+
+    <!-- Top 3 -->
+    <div style="margin-bottom:14px">
+      <div class="report-section-title">🏆 أفضل 3 عملاء</div>
+      ${top3.map((c,i) => {
+        const medal = i===0?'🥇':i===1?'🥈':'🥉';
+        const isVip = !!VIP_CUSTOMERS[c.phone];
+        const avg = c.count ? Math.round(c.total/c.count) : 0;
+        return `<div class="customer-rank-card">
+          <div class="rank-badge">${medal}</div>
+          <div style="padding-right:28px">
+            <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:4px">
+              <span style="font-size:14px;font-weight:800">${c.name}</span>
+              ${isVip ? '<span class="vip-badge">⭐ VIP</span>' : ''}
+            </div>
+            <div style="font-size:12px;color:var(--text-muted);margin-bottom:8px" dir="ltr">${c.phone}</div>
+            <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px;text-align:center">
+              <div style="background:var(--cream);border-radius:8px;padding:6px"><div style="font-size:14px;font-weight:900;color:var(--olive-dark)">${c.count}</div><div style="font-size:9px;color:var(--text-muted);font-weight:700">طلبات</div></div>
+              <div style="background:var(--cream);border-radius:8px;padding:6px"><div style="font-size:14px;font-weight:900;color:var(--olive-dark)">${c.total}</div><div style="font-size:9px;color:var(--text-muted);font-weight:700">ج.م</div></div>
+              <div style="background:var(--cream);border-radius:8px;padding:6px"><div style="font-size:14px;font-weight:900;color:var(--olive-dark)">${avg}</div><div style="font-size:9px;color:var(--text-muted);font-weight:700">متوسط</div></div>
+            </div>
+            <button onclick="toggleVIP('${c.phone}','${c.name}')" style="margin-top:8px;width:100%;padding:7px;border-radius:8px;font-size:12px;font-weight:800;background:${isVip?'#fef3c7':'linear-gradient(135deg,#f59e0b,#d97706)'};color:${isVip?'#92400e':'#fff'};border:none;cursor:pointer">${isVip?'✓ VIP — إدارة الخصم':'⭐ تحويل إلى VIP'}</button>
+          </div>
+        </div>`;
+      }).join('')}
+    </div>
+
+    <!-- Chart -->
+    <div style="background:var(--white);border-radius:14px;border:1px solid var(--border);padding:14px;margin-bottom:14px">
+      <div class="report-section-title">📊 ${sort==='count'?'الأكثر طلباً':sort==='avg'?'أعلى متوسط':'الأعلى مدفوعاً'}</div>
+      ${customers.slice(0,10).map(c => {
+        const val = sort === 'count' ? c.count : sort === 'avg' ? Math.round(c.total/c.count) : c.total;
+        const w = Math.max(4, Math.round(val/maxVal*200));
+        const isVip = !!VIP_CUSTOMERS[c.phone];
+        return `<div class="cust-chart-bar">
+          <div class="cust-bar-label">${isVip?'⭐ ':''}${c.name.length>8?c.name.slice(0,8)+'..':c.name}</div>
+          <div class="cust-bar-fill" style="width:${w}px"></div>
+          <div class="cust-bar-val">${val}${sort!=='count'?' ج':''}</div>
+        </div>`;
+      }).join('')}
+    </div>
+
+    <!-- Full Table -->
+    <div class="report-section-title">📋 كل العملاء</div>
+    <div style="overflow-x:auto">
+      <table class="report-table">
+        <thead><tr><th>#</th><th>الاسم</th><th>الهاتف</th><th>طلبات</th><th>إجمالى</th><th>متوسط</th><th>آخر طلب</th><th>VIP</th></tr></thead>
+        <tbody>${customers.map((c,i) => {
+          const avg = c.count ? Math.round(c.total/c.count) : 0;
+          const lastDate = c.lastOrder ? new Date(c.lastOrder).toLocaleDateString('ar-EG') : '—';
+          const isVip = !!VIP_CUSTOMERS[c.phone];
+          return `<tr>
+            <td style="font-weight:800;color:var(--olive)">${i+1}</td>
+            <td style="font-weight:700">${c.name}</td>
+            <td style="font-size:11px" dir="ltr">${c.phone}</td>
+            <td style="font-weight:800;text-align:center">${c.count}</td>
+            <td style="font-weight:800;color:var(--olive-dark)">${c.total} ج</td>
+            <td>${avg} ج</td>
+            <td style="font-size:10px;white-space:nowrap">${lastDate}</td>
+            <td><button onclick="toggleVIP('${c.phone}','${c.name}')" style="font-size:16px;background:none;border:none;cursor:pointer">${isVip?'⭐':'☆'}</button></td>
+          </tr>`;
+        }).join('')}</tbody>
+      </table>
+    </div>
+  `;
+}
+
+function toggleVIP(phone, name) {
+  if (VIP_CUSTOMERS[phone]) {
+    // already VIP — manage
+    const disc = prompt(`خصم VIP لـ ${name} الحالي: ${VIP_CUSTOMERS[phone].discount||0}%\nأدخل نسبة الخصم الجديدة (0 لإلغاء VIP):`, VIP_CUSTOMERS[phone].discount || 0);
+    if (disc === null) return;
+    const d = Number(disc);
+    if (d <= 0) { delete VIP_CUSTOMERS[phone]; showNotif(`✓ تم إلغاء VIP من ${name}`); }
+    else { VIP_CUSTOMERS[phone].discount = d; showNotif(`✓ تم تحديث خصم VIP إلى ${d}%`); }
+  } else {
+    const disc = prompt(`تحويل ${name} إلى VIP\nأدخل نسبة الخصم الثابتة (%):`, 10);
+    if (!disc) return;
+    VIP_CUSTOMERS[phone] = { name, discount: Number(disc), since: new Date().toLocaleDateString('ar-EG') };
+    showNotif(`⭐ تم تحويل ${name} إلى VIP بخصم ${disc}%`);
+  }
+  saveData('zz_vip_customers', VIP_CUSTOMERS);
+  if (db) db.ref('vip_customers/' + phone.replace(/[^0-9]/g,'')).set(VIP_CUSTOMERS[phone] || null).catch(()=>{});
+  renderCustomersReport();
+}
+
+// Apply VIP discount when placing order
+function getVIPDiscount() {
+  if (!currentUser?.phone) return 0;
+  const vip = VIP_CUSTOMERS[currentUser.phone];
+  if (!vip || !vip.discount) return 0;
+  return Math.round(cartSubtotal() * vip.discount / 100);
+}
+
 function exportSalesReport() {
   const period = document.getElementById('reportPeriod')?.value || 'today';
   const statusFilter = document.getElementById('reportStatus')?.value || 'delivered';
@@ -3640,10 +4056,66 @@ function showNotif(msg) {
   clearTimeout(notifTimer); notifTimer = setTimeout(() => el.classList.remove('show'), 2800);
 }
 
+// ============================================================
+// FAVORITES SYSTEM — with social proof counter + Firebase sync
+// ============================================================
+
 function toggleFav(e, id) {
   e.stopPropagation();
-  if (favs.has(id)) favs.delete(id); else favs.add(id);
-  saveData('zz_favs', [...favs]); renderMenu();
+  const wasFav = favs.has(id);
+  if (wasFav) {
+    favs.delete(id);
+    // decrement global count
+    favCounts[id] = Math.max(0, (favCounts[id] || 1) - 1);
+  } else {
+    favs.add(id);
+    favCounts[id] = (favCounts[id] || 0) + 1;
+  }
+  saveData('zz_favs', [...favs]);
+  saveData('zz_fav_counts', favCounts);
+  // sync to Firebase so all clients see global counts
+  if (db) db.ref('fav_counts/' + id).set(favCounts[id]).catch(()=>{});
+  renderMenu();
+  showNotif(wasFav ? '🤍 تمت الإزالة من المفضلة' : '❤️ تمت الإضافة للمفضلة');
+}
+
+function renderFavScreen() {
+  const el = document.getElementById('favContent');
+  if (!el) return;
+  if (!favs.size) {
+    el.innerHTML = `<div style="text-align:center;padding:60px 20px;color:var(--text-muted)">
+      <div style="font-size:64px;margin-bottom:16px">🤍</div>
+      <div style="font-size:16px;font-weight:800;margin-bottom:8px">لا توجد منتجات في المفضلة</div>
+      <div style="font-size:13px">اضغط ❤️ على أي منتج لإضافته للمفضلة</div>
+    </div>`;
+    return;
+  }
+  let html = `<div style="margin-bottom:12px;font-size:13px;font-weight:700;color:var(--text-muted)">${favs.size} منتج محفوظ</div>`;
+  // find items in menu
+  Object.keys(MENU).forEach(cat => {
+    (MENU[cat].items || []).forEach(item => {
+      if (!favs.has(item.id)) return;
+      const price = item.prices ? item.prices.S : item.price;
+      const avail = item.available !== false;
+      html += `<div class="fav-card">
+        <div class="fav-card-img">${item.emoji}</div>
+        <div class="fav-card-info">
+          <div class="fav-card-name">${item.name}</div>
+          <div class="fav-card-price">${price} ج.م</div>
+          <span class="fav-card-badge ${avail ? 'fav-available' : 'fav-unavailable'}">${avail ? '✓ متاح' : '✕ غير متاح'}</span>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:8px;align-items:center">
+          ${avail ? `<button onclick="quickAdd(event,'${cat}','${item.id}')" style="width:36px;height:36px;border-radius:10px;background:var(--olive);color:#fff;font-size:20px;display:flex;align-items:center;justify-content:center;border:none;cursor:pointer;font-weight:700">+</button>` : ''}
+          <button onclick="toggleFav(event,'${item.id}');openScreen('favScreen')" style="color:var(--red);font-size:20px;background:none;border:none;cursor:pointer">❤️</button>
+        </div>
+      </div>`;
+    });
+  });
+  el.innerHTML = html;
+}
+
+function getFavCount(id) {
+  return favCounts[id] || 0;
 }
 
 function openWhatsapp(type) {
@@ -4041,7 +4513,7 @@ function triggerPWAInstall() {
 }
 
 // ============================================================
-// SMART ORDER REVIEW SYSTEM
+// SMART ORDER REVIEW SYSTEM — الطلب لا يُرسل للكاشير إلا بعد تأكيد نهائي
 // ============================================================
 let _reviewSecs = 60;
 function openOrderReview(orderObj) {
@@ -4050,13 +4522,20 @@ function openOrderReview(orderObj) {
   document.getElementById('orderReviewOverlay').classList.add('open');
   const numEl = document.getElementById('reviewCountdownNum');
   if (numEl) numEl.textContent = _reviewSecs;
+  // Update order info in overlay
+  const infoEl = document.getElementById('reviewOrderInfo');
+  if (infoEl) {
+    infoEl.innerHTML = `<div style="font-size:13px;color:var(--text-muted);margin-bottom:6px">طلب رقم: <strong style="color:var(--olive-dark)">#${orderObj.id}</strong></div>
+    <div style="font-size:13px;color:var(--text-muted)">الإجمالى: <strong style="color:var(--olive-dark)">${orderObj.total} ج.م</strong></div>`;
+  }
   clearInterval(_orderReviewTimer);
   _orderReviewTimer = setInterval(() => {
     _reviewSecs--;
     if (numEl) numEl.textContent = _reviewSecs;
     if (_reviewSecs <= 0) {
       clearInterval(_orderReviewTimer);
-      closeOrderReview();
+      // Auto-confirm after timeout
+      confirmFinalOrder();
     }
   }, 1000);
 }
@@ -4065,19 +4544,171 @@ function closeOrderReview() {
   document.getElementById('orderReviewOverlay').classList.remove('open');
   _pendingOrderForReview = null;
 }
+function confirmFinalOrder() {
+  if (!_pendingOrderForReview) { closeOrderReview(); return; }
+  clearInterval(_orderReviewTimer);
+  const order = _pendingOrderForReview;
+  // NOW send to Firebase — cashier sees it
+  fbSaveOrder(order);
+  closeOrderReview();
+  showNotif('✅ تم إرسال الطلب للكاشير بنجاح');
+}
 function cancelOrderFromReview() {
   if (!_pendingOrderForReview) { closeOrderReview(); return; }
   const orderId = _pendingOrderForReview.id;
-  // Remove from ordersData
+  // Remove from ordersData (was never sent to Firebase)
   ordersData = ordersData.filter(o => o.id !== orderId);
   orderHistory = orderHistory.filter(o => o.id !== orderId);
   saveData('zz_orders', ordersData);
   saveData('zz_order_history', orderHistory);
-  fbRemove('orders/' + orderId);
+  // No need to fbRemove since we never sent it
   currentOrderNum = null;
   closeOrderReview();
   openScreen('app');
   showNotif('✓ تم إلغاء الطلب بنجاح');
+}
+function editOrderFromReview() {
+  if (!_pendingOrderForReview) { closeOrderReview(); return; }
+  clearInterval(_orderReviewTimer);
+  document.getElementById('orderReviewOverlay').classList.remove('open');
+  // Restore cart from the pending order
+  const order = _pendingOrderForReview;
+  cart = order.items ? order.items.map(i => ({...i})) : [];
+  // Remove from local storage (will re-place)
+  ordersData = ordersData.filter(o => o.id !== order.id);
+  orderHistory = orderHistory.filter(o => o.id !== order.id);
+  saveData('zz_orders', ordersData);
+  saveData('zz_order_history', orderHistory);
+  currentOrderNum = null;
+  _pendingOrderForReview = null;
+  updateCartUI();
+  openScreen('app');
+  setTimeout(() => openSheet('cartSheet'), 300);
+  showNotif('✏️ يمكنك تعديل طلبك الآن');
+}
+
+// ============================================================
+// CASHIER PROFESSIONAL POPUP NOTIFICATIONS
+// ============================================================
+let _cashierPopupQueue = []; // queue of notifications
+let _cashierPopupActive = false;
+let _cashierHighlightOrderId = null;
+
+function showCashierPopup(orderData, type) {
+  // type: 'new_order' | 'order_ready'
+  _cashierPopupQueue.push({ orderData, type });
+  if (!_cashierPopupActive) processCashierPopupQueue();
+}
+
+function processCashierPopupQueue() {
+  if (!_cashierPopupQueue.length) { _cashierPopupActive = false; return; }
+  _cashierPopupActive = true;
+  const { orderData, type } = _cashierPopupQueue.shift();
+  const overlay = document.getElementById('cashierPopupOverlay');
+  const header = document.getElementById('cashierPopupHeader');
+  const icon = document.getElementById('cashierPopupIcon');
+  const title = document.getElementById('cashierPopupTitle');
+  const subtitle = document.getElementById('cashierPopupSubtitle');
+  const btn = document.getElementById('cashierPopupBtn');
+  const statusRow = document.getElementById('cpStatusRow');
+
+  document.getElementById('cpOrderId').textContent = '#' + orderData.id;
+  document.getElementById('cpName').textContent = orderData.name || '—';
+  document.getElementById('cpPhone').textContent = orderData.phone || '—';
+  const typeMap = { delivery: '🛵 دليفرى', pickup: '🏪 استلام', cafe: '☕ كافيه' };
+  document.getElementById('cpType').textContent = typeMap[orderData.type] || orderData.type || '—';
+
+  if (type === 'new_order') {
+    header.className = 'cashier-popup-header new-order';
+    icon.textContent = '🔔';
+    title.textContent = '🆕 طلب جديد وصل!';
+    subtitle.textContent = 'طلب جديد بانتظار التجهيز';
+    btn.className = 'cashier-popup-btn btn-blue';
+    btn.textContent = '✓ تمت المشاهدة — فتح الطلبات';
+    statusRow.style.display = 'none';
+  } else if (type === 'order_ready') {
+    header.className = 'cashier-popup-header ready-order';
+    icon.textContent = '✅';
+    title.textContent = '✅ تم تجهيز الطلب!';
+    subtitle.textContent = 'الطلب جاهز — تسليمه للعميل';
+    btn.className = 'cashier-popup-btn btn-green';
+    btn.textContent = '✓ تمت المشاهدة — فتح الطلبات';
+    statusRow.style.display = 'flex';
+    document.getElementById('cpStatus').textContent = '✅ تم التجهيز — جاهز للتسليم';
+  }
+
+  _cashierHighlightOrderId = orderData.id;
+  playCashierAlertSound(type);
+  overlay.classList.add('show');
+}
+
+function dismissCashierPopup() {
+  const overlay = document.getElementById('cashierPopupOverlay');
+  overlay.classList.remove('show');
+  _cashierPopupActive = false;
+  // Navigate to orders tab
+  const adminPanel = document.getElementById('adminPanel');
+  if (adminPanel && adminPanel.classList.contains('active')) {
+    // Switch to orders tab and highlight the order
+    const ordersTabBtn = document.querySelector('.admin-tabs button');
+    if (ordersTabBtn) switchAdminTab('orders', ordersTabBtn);
+    // Highlight the specific order
+    if (_cashierHighlightOrderId) {
+      setTimeout(() => highlightCashierOrder(_cashierHighlightOrderId), 200);
+    }
+  } else {
+    // Open admin panel if not already
+    if (adminRoleType === 'admin' || adminRoleType === 'cashier') {
+      openScreen('adminPanel');
+      if (_cashierHighlightOrderId) {
+        setTimeout(() => highlightCashierOrder(_cashierHighlightOrderId), 400);
+      }
+    }
+  }
+  // Process next in queue
+  setTimeout(() => { if (_cashierPopupQueue.length) processCashierPopupQueue(); }, 300);
+}
+
+function highlightCashierOrder(orderId) {
+  // In orders tab
+  const row = document.getElementById('orow_' + orderId);
+  if (row) {
+    row.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    row.classList.add('order-highlight-new');
+    setTimeout(() => row.classList.remove('order-highlight-new'), 5000);
+  }
+  // In cashier table
+  const crow = document.getElementById('crow_' + orderId);
+  if (crow) {
+    crow.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    crow.classList.add('order-highlight-new');
+    setTimeout(() => crow.classList.remove('order-highlight-new'), 5000);
+  }
+}
+
+function playCashierAlertSound(type) {
+  try {
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    if (type === 'new_order') {
+      // 3 ascending tones
+      [[440,0],[660,.18],[880,.36]].forEach(([freq, delay]) => {
+        const osc = ctx.createOscillator(); const g = ctx.createGain();
+        osc.connect(g); g.connect(ctx.destination);
+        osc.frequency.value = freq; g.gain.setValueAtTime(0.12, ctx.currentTime + delay);
+        g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + delay + 0.25);
+        osc.start(ctx.currentTime + delay); osc.stop(ctx.currentTime + delay + 0.28);
+      });
+    } else {
+      // 2-tone confirmation
+      [[660,0],[880,.2],[660,.4]].forEach(([freq, delay]) => {
+        const osc = ctx.createOscillator(); const g = ctx.createGain();
+        osc.type = 'sine'; osc.connect(g); g.connect(ctx.destination);
+        osc.frequency.value = freq; g.gain.setValueAtTime(0.1, ctx.currentTime + delay);
+        g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + delay + 0.2);
+        osc.start(ctx.currentTime + delay); osc.stop(ctx.currentTime + delay + 0.22);
+      });
+    }
+  } catch(e) {}
 }
 
 // ============================================================
@@ -4195,7 +4826,19 @@ function setupFirebaseListeners() {
         const activeTab = document.querySelector('.admin-tabs button.active')?.textContent || '';
         if (activeTab.includes('الطلبات')) renderAdminOrders();
         if (activeTab.includes('الكاشير')) renderCashierSheet();
-        if (fbOrders.length > oldCount && oldCount > 0) { playSound(); showNotif('🔔 طلب جديد وصل!'); }
+        if (fbOrders.length > oldCount && oldCount > 0) {
+          // Find new orders
+          const newOrders = fbOrders.filter(o => !ordersData.find(x => x.id === o.id) || false);
+          // Actually compare timestamps
+          const prevIds = new Set(JSON.parse(localStorage.getItem('zz_orders_prev_ids') || '[]'));
+          fbOrders.forEach(o => {
+            if (!prevIds.has(o.id) && (adminRoleType === 'admin' || adminRoleType === 'cashier')) {
+              showCashierPopup(o, 'new_order');
+            }
+          });
+          playSound(); showNotif('🔔 طلب جديد وصل!');
+        }
+        localStorage.setItem('zz_orders_prev_ids', JSON.stringify(fbOrders.map(o => o.id)));
         // إشعار بطلب دفع إلكتروني جديد
         const newPending = fbOrders.filter(o => o.status === 'payment_pending' && !oldPendingIds.includes(o.id));
         newPending.forEach(o => {
@@ -4283,6 +4926,15 @@ function setupFirebaseListeners() {
     }
   });
 
+  // --------- ADS ---------
+  db.ref('ads').on('value', snap => {
+    if (snap.exists() && fbConnected) {
+      ADS = snap.val();
+      saveData('zz_ads', ADS);
+      renderAdsSlider();
+    }
+  });
+
   // --------- CASHIER NOTIFICATIONS (from Pickup) ---------
   db.ref('cashier_notifications').on('value', snap => {
     if (!fbConnected) return;
@@ -4292,12 +4944,35 @@ function setupFirebaseListeners() {
       // Show to cashier if admin/cashier panel is open
       const adminActive = document.getElementById('adminPanel')?.classList.contains('active');
       if (adminActive && (adminRoleType === 'admin' || adminRoleType === 'cashier')) {
-        playSound();
-        showNotif('🔔 ' + notif.msg);
+        // Show professional popup
+        const orderData = ordersData.find(o => o.id === notif.orderId) || {
+          id: notif.orderId, name: notif.name, phone: notif.phone, type: 'delivery'
+        };
+        showCashierPopup(orderData, 'order_ready');
         // Mark as read
         db.ref('cashier_notifications/' + notif.orderId).update({ read: true }).catch(() => {});
       }
     });
+  });
+
+  // --------- FAV COUNTS (global social proof) ---------
+  db.ref('fav_counts').on('value', snap => {
+    if (snap.exists()) {
+      const data = snap.val() || {};
+      Object.keys(data).forEach(id => { favCounts[id] = data[id]; });
+      saveData('zz_fav_counts', favCounts);
+    }
+  });
+
+  // --------- VIP CUSTOMERS ---------
+  db.ref('vip_customers').on('value', snap => {
+    if (snap.exists()) {
+      const data = snap.val() || {};
+      Object.keys(data).forEach(phone => {
+        if (data[phone]) VIP_CUSTOMERS[phone.replace(/^2/,'')] = data[phone];
+      });
+      saveData('zz_vip_customers', VIP_CUSTOMERS);
+    }
   });
 
   // --------- LAST ORDER MODE ---------
@@ -4320,7 +4995,6 @@ function setupFirebaseListeners() {
   });
 }
 
-// Firebase save helpers
 async function fbSaveOrder(order) { 
   const enriched = { ...order, createdAt: new Date().toISOString() };
   await fbSet('orders/' + order.id, enriched); 
@@ -4332,19 +5006,462 @@ async function fbSaveSettings() { await fbSet('settings', SETTINGS); }
 async function fbSaveAddons() { await fbSet('addons', ADDONS); }
 async function fbSaveOffers() { await fbSet('offers', OFFERS); }
 async function fbSetLastOrder(val) { await fbUpdate('config', { lastOrderActive: val }); }
+
+// ============================================================
+// ADS SYSTEM
+// ============================================================
+let ADS = loadData('zz_ads', []);
+let _adsCurrentSlide = 0;
+let _adsAutoSlideTimer = null;
+
+function saveAds() { saveData('zz_ads', ADS); if(db) fbSet('ads', ADS); }
+
+function renderAdsSlider() {
+  const activeAds = ADS.filter(a => a.active);
+  const section = document.getElementById('adsSliderSection');
+  if (!section) return;
+  if (!activeAds.length) { section.style.display = 'none'; return; }
+  section.style.display = 'block';
+  const slider = document.getElementById('adsSlider');
+  const dots = document.getElementById('adsDots');
+  if (!slider) return;
+  slider.innerHTML = activeAds.map(ad => {
+    const mediaHtml = ad.mediaUrl
+      ? (ad.mediaType === 'video'
+        ? `<video src="${ad.mediaUrl}" autoplay muted loop playsinline style="width:100%;height:180px;object-fit:cover;display:block;border-radius:16px 16px 0 0"></video>`
+        : `<img src="${ad.mediaUrl}" alt="${ad.title||''}" style="width:100%;height:180px;object-fit:cover;display:block;border-radius:16px 16px 0 0" onerror="this.style.display='none'"/>`)
+      : '';
+    return `<div class="ad-slide">
+      ${mediaHtml}
+      <div class="ad-slide-body">
+        ${ad.title ? `<div class="ad-slide-title">${ad.title}</div>` : ''}
+        ${ad.caption ? `<div class="ad-slide-caption">${ad.caption}</div>` : ''}
+        ${ad.cta ? `<button class="ad-cta-btn">${ad.cta}</button>` : ''}
+      </div>
+    </div>`;
+  }).join('');
+  if (dots) {
+    dots.innerHTML = activeAds.map((_, i) =>
+      `<div class="ad-dot ${i === 0 ? 'active' : ''}" onclick="goToAdSlide(${i})"></div>`
+    ).join('');
+  }
+  _adsCurrentSlide = 0;
+  goToAdSlide(0);
+  startAdsAutoSlide(activeAds.length);
+}
+
+function goToAdSlide(idx) {
+  const slider = document.getElementById('adsSlider');
+  const dots = document.querySelectorAll('.ad-dot');
+  if (!slider) return;
+  const total = ADS.filter(a => a.active).length;
+  _adsCurrentSlide = (idx + total) % total;
+  slider.style.transform = `translateX(${_adsCurrentSlide * 100}%)`;
+  dots.forEach((d, i) => d.classList.toggle('active', i === _adsCurrentSlide));
+}
+
+function adsSlideNav(dir) {
+  goToAdSlide(_adsCurrentSlide + dir);
+  clearInterval(_adsAutoSlideTimer);
+  startAdsAutoSlide(ADS.filter(a => a.active).length);
+}
+
+function startAdsAutoSlide(total) {
+  clearInterval(_adsAutoSlideTimer);
+  if (total > 1) {
+    _adsAutoSlideTimer = setInterval(() => goToAdSlide(_adsCurrentSlide + 1), 4000);
+  }
+}
+
+function renderAdsAdmin() {
+  const list = document.getElementById('adsAdminList');
+  if (!list) return;
+  if (!ADS.length) {
+    list.innerHTML = '<div style="text-align:center;color:var(--text-muted);padding:30px;font-weight:700">لا توجد إعلانات — أضف إعلاناً جديداً</div>';
+    return;
+  }
+  list.innerHTML = ADS.map((ad, idx) => `
+    <div style="background:var(--white);border-radius:14px;border:1.5px solid ${ad.active ? 'var(--olive)' : 'var(--border)'};padding:12px 14px;margin-bottom:10px">
+      ${ad.mediaUrl ? (ad.mediaType === 'video'
+        ? `<video src="${ad.mediaUrl}" style="width:100%;height:120px;object-fit:cover;border-radius:10px;margin-bottom:8px" muted></video>`
+        : `<img src="${ad.mediaUrl}" style="width:100%;height:120px;object-fit:cover;border-radius:10px;margin-bottom:8px" onerror="this.style.display='none'"/>`
+      ) : ''}
+      <div style="font-size:15px;font-weight:900;color:var(--dark);margin-bottom:2px">${ad.title || '(بدون عنوان)'}</div>
+      ${ad.caption ? `<div style="font-size:12px;color:var(--text-muted);margin-bottom:6px">${ad.caption}</div>` : ''}
+      ${ad.cta ? `<div style="font-size:11px;background:var(--olive-pale);color:var(--olive-dark);display:inline-block;padding:2px 10px;border-radius:100px;font-weight:700;margin-bottom:8px">زر: ${ad.cta}</div>` : ''}
+      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;border-top:1px solid var(--border);padding-top:8px">
+        <div class="toggle-sw ${ad.active ? 'on' : ''}" onclick="toggleAd('${ad.id}',this)"></div>
+        <span style="font-size:12px;font-weight:700;color:var(--text-muted)">${ad.active ? 'مفعّل' : 'معطّل'}</span>
+        <button class="action-btn btn-prep" style="margin-right:auto" onclick="openEditAd('${ad.id}')">✏️ تعديل</button>
+        <button class="action-btn btn-cancel" onclick="deleteAd('${ad.id}')">🗑️ حذف</button>
+        ${idx > 0 ? `<button class="action-btn" onclick="moveAd(${idx},-1)" style="padding:4px 8px;background:var(--cream);color:var(--text);border-radius:6px;font-size:11px">↑</button>` : ''}
+        ${idx < ADS.length-1 ? `<button class="action-btn" onclick="moveAd(${idx},1)" style="padding:4px 8px;background:var(--cream);color:var(--text);border-radius:6px;font-size:11px">↓</button>` : ''}
+      </div>
+    </div>`).join('');
+}
+
+function openAddAdModal() {
+  document.getElementById('addAdTitle').textContent = '🎯 إعلان جديد';
+  document.getElementById('editAdId').value = '';
+  document.getElementById('adTitleInput').value = '';
+  document.getElementById('adCaptionInput').value = '';
+  document.getElementById('adUrlInput').value = '';
+  document.getElementById('adCtaText').value = '';
+  document.getElementById('adMediaType').value = 'image';
+  document.getElementById('adActiveToggle').classList.add('on');
+  document.getElementById('adFileLabel').textContent = 'اضغط لرفع صورة أو فيديو';
+  document.getElementById('adFilePreviewIcon').textContent = '📁';
+  document.getElementById('adMediaPreview').innerHTML = '';
+  openModal('addAdModal');
+}
+
+function openEditAd(id) {
+  const ad = ADS.find(a => a.id === id); if (!ad) return;
+  document.getElementById('addAdTitle').textContent = '✏️ تعديل الإعلان';
+  document.getElementById('editAdId').value = id;
+  document.getElementById('adTitleInput').value = ad.title || '';
+  document.getElementById('adCaptionInput').value = ad.caption || '';
+  document.getElementById('adUrlInput').value = ad.mediaUrl || '';
+  document.getElementById('adCtaText').value = ad.cta || '';
+  document.getElementById('adMediaType').value = ad.mediaType || 'image';
+  if (ad.active) document.getElementById('adActiveToggle').classList.add('on');
+  else document.getElementById('adActiveToggle').classList.remove('on');
+  previewAdUrl(ad.mediaUrl || '');
+  openModal('addAdModal');
+}
+
+function handleAdFile(input) {
+  const file = input.files[0]; if (!file) return;
+  const isVideo = file.type.startsWith('video');
+  document.getElementById('adMediaType').value = isVideo ? 'video' : 'image';
+  document.getElementById('adFilePreviewIcon').textContent = isVideo ? '🎬' : '🖼️';
+  document.getElementById('adFileLabel').textContent = file.name;
+  const reader = new FileReader();
+  reader.onload = e => {
+    document.getElementById('adUrlInput').value = e.target.result;
+    previewAdUrl(e.target.result);
+  };
+  reader.readAsDataURL(file);
+}
+
+function previewAdUrl(url) {
+  const prev = document.getElementById('adMediaPreview');
+  if (!prev || !url) return;
+  const isVideo = url.startsWith('data:video') || /\.(mp4|webm|ogg)$/i.test(url);
+  prev.innerHTML = isVideo
+    ? `<video src="${url}" style="width:100%;max-height:120px;border-radius:8px;object-fit:cover" muted></video>`
+    : `<img src="${url}" style="width:100%;max-height:120px;border-radius:8px;object-fit:cover" onerror="this.style.display='none'"/>`;
+}
+
+function saveAd() {
+  const editId = document.getElementById('editAdId').value;
+  const title = document.getElementById('adTitleInput').value.trim();
+  const caption = document.getElementById('adCaptionInput').value.trim();
+  const mediaUrl = document.getElementById('adUrlInput').value.trim();
+  const mediaType = document.getElementById('adMediaType').value;
+  const cta = document.getElementById('adCtaText').value.trim();
+  const active = document.getElementById('adActiveToggle').classList.contains('on');
+  const ad = { id: editId || 'ad_' + Date.now(), title, caption, mediaUrl, mediaType, cta, active };
+  if (editId) { const idx = ADS.findIndex(a => a.id === editId); if (idx >= 0) ADS[idx] = ad; }
+  else ADS.push(ad);
+  saveAds(); renderAdsAdmin(); renderAdsSlider();
+  closeModal('addAdModal'); showNotif('✓ تم حفظ الإعلان');
+}
+
+function toggleAd(id, el) {
+  const ad = ADS.find(a => a.id === id); if (!ad) return;
+  ad.active = !ad.active; el.classList.toggle('on');
+  saveAds(); renderAdsAdmin(); renderAdsSlider();
+  showNotif(ad.active ? '✓ الإعلان مفعّل' : '✓ الإعلان معطّل');
+}
+
+function deleteAd(id) {
+  if (!confirm('حذف هذا الإعلان؟')) return;
+  ADS = ADS.filter(a => a.id !== id);
+  saveAds(); renderAdsAdmin(); renderAdsSlider(); showNotif('✓ تم حذف الإعلان');
+}
+
+function moveAd(idx, dir) {
+  const newIdx = idx + dir;
+  if (newIdx < 0 || newIdx >= ADS.length) return;
+  [ADS[idx], ADS[newIdx]] = [ADS[newIdx], ADS[idx]];
+  saveAds(); renderAdsAdmin(); renderAdsSlider();
+}
+
+// ============================================================
+// DELIVERY AGENTS SYSTEM
+// ============================================================
+let AGENTS = loadData('zz_agents', []);
+let _selectedAgentId = null;
+let _agentTargetOrderId = null;
+
+function saveAgents() { saveData('zz_agents', AGENTS); }
+
+function renderAgentsAdmin() {
+  const list = document.getElementById('agentsAdminList');
+  if (!list) return;
+  if (!AGENTS.length) {
+    list.innerHTML = '<div style="text-align:center;color:var(--text-muted);padding:30px;font-weight:700">لا يوجد مندوبون — أضف مندوباً جديداً</div>';
+    return;
+  }
+  list.innerHTML = AGENTS.map(a => `
+    <div style="background:var(--white);border-radius:12px;border:1.5px solid var(--border);padding:12px 14px;margin-bottom:8px;display:flex;align-items:center;gap:12px">
+      <div style="width:42px;height:42px;border-radius:50%;background:linear-gradient(135deg,var(--olive),var(--olive-light));display:flex;align-items:center;justify-content:center;font-size:20px;color:#fff;flex-shrink:0">🛵</div>
+      <div style="flex:1">
+        <div style="font-size:14px;font-weight:800;color:var(--dark)">${a.name}</div>
+        <div style="font-size:12px;color:var(--text-muted);direction:ltr">${a.phone}</div>
+      </div>
+      <button class="action-btn btn-prep" onclick="openEditAgent('${a.id}')">✏️</button>
+      <button class="action-btn btn-cancel" onclick="deleteAgent('${a.id}')">🗑️</button>
+    </div>`).join('');
+}
+
+function addAgent() {
+  const name = document.getElementById('newAgentName').value.trim();
+  const phone = document.getElementById('newAgentPhone').value.trim();
+  if (!name || !phone) { showNotif('أدخل اسم المندوب ورقم هاتفه'); return; }
+  AGENTS.push({ id: 'ag_' + Date.now(), name, phone });
+  saveAgents(); renderAgentsAdmin();
+  document.getElementById('newAgentName').value = '';
+  document.getElementById('newAgentPhone').value = '';
+  showNotif('✓ تم إضافة المندوب');
+}
+
+function openEditAgent(id) {
+  const a = AGENTS.find(x => x.id === id); if (!a) return;
+  const newName = prompt('اسم المندوب:', a.name);
+  if (newName === null) return;
+  const newPhone = prompt('رقم الهاتف:', a.phone);
+  if (newPhone === null) return;
+  a.name = newName.trim() || a.name;
+  a.phone = newPhone.trim() || a.phone;
+  saveAgents(); renderAgentsAdmin(); showNotif('✓ تم تعديل بيانات المندوب');
+}
+
+function deleteAgent(id) {
+  if (!confirm('حذف هذا المندوب؟')) return;
+  AGENTS = AGENTS.filter(a => a.id !== id);
+  saveAgents(); renderAgentsAdmin(); showNotif('✓ تم حذف المندوب');
+}
+
+function openAgentPopup(orderId) {
+  _agentTargetOrderId = orderId;
+  _selectedAgentId = null;
+  const list = document.getElementById('agentPopupList');
+  const confirmBtn = document.getElementById('agentConfirmBtn');
+  const subtitle = document.getElementById('agentPopupOrderId');
+  if (subtitle) subtitle.textContent = 'طلب رقم #' + orderId;
+  if (confirmBtn) confirmBtn.disabled = true;
+  if (!list) return;
+  if (!AGENTS.length) {
+    list.innerHTML = '<div style="text-align:center;padding:20px;color:var(--text-muted);font-weight:700">لا يوجد مندوبون — أضف مندوباً أولاً من إعدادات المندوبين</div>';
+  } else {
+    list.innerHTML = AGENTS.map(a => `
+      <div class="agent-item" id="agentItem_${a.id}" onclick="selectAgent('${a.id}')">
+        <div class="agent-icon">🛵</div>
+        <div>
+          <div class="agent-name">${a.name}</div>
+          <div class="agent-phone">${a.phone}</div>
+        </div>
+      </div>`).join('');
+  }
+  document.getElementById('agentPopupOverlay').classList.add('open');
+}
+
+function selectAgent(id) {
+  _selectedAgentId = id;
+  document.querySelectorAll('.agent-item').forEach(el => el.classList.remove('selected'));
+  const el = document.getElementById('agentItem_' + id);
+  if (el) el.classList.add('selected');
+  const btn = document.getElementById('agentConfirmBtn');
+  if (btn) btn.disabled = false;
+}
+
+function closeAgentPopup() {
+  document.getElementById('agentPopupOverlay').classList.remove('open');
+  _agentTargetOrderId = null; _selectedAgentId = null;
+}
+
+function confirmAgentSelection() {
+  if (!_selectedAgentId || !_agentTargetOrderId) return;
+  const agent = AGENTS.find(a => a.id === _selectedAgentId);
+  const order = ordersData.find(o => o.id === _agentTargetOrderId);
+  if (!agent || !order) { closeAgentPopup(); return; }
+  // Update order status to out + attach agent
+  order.status = 'out';
+  order.agent = { id: agent.id, name: agent.name, phone: agent.phone };
+  saveData('zz_orders', ordersData);
+  fbUpdate('orders/' + order.id, { status: 'out', agent: order.agent });
+  // Send WA to client
+  const wa = (order.whatsapp || order.phone || '').replace(/[^0-9]/g, '');
+  if (wa) {
+    const msg = `تم خروج طلبكم للتوصيل بنجاح 🚚\n\nالمندوب: ${agent.name}\nرقم التواصل: ${agent.phone}\n\nنتمنى لكم تجربة سعيدة ❤️\n*${RESTAURANT.name}*`;
+    window.open('https://wa.me/' + wa + '?text=' + encodeURIComponent(msg), '_blank');
+  }
+  renderAdminOrders();
+  if (document.getElementById('tab-cashier')?.style.display === 'block') renderCashierSheet();
+  if (currentOrderNum === order.id) updateTrackingStatus('out');
+  closeAgentPopup();
+  showNotif('✓ تم تعيين المندوب وإرسال إشعار للعميل');
+}
+
+// ============================================================
+// MAIN MENU CATEGORIES (Parent Groups)
+// ============================================================
+const MAIN_GROUPS = {
+  restaurant: { label: 'المطعم', emoji: '🍽️', keywords: ['بيتزا','شاورما','كريب','سندوتش','وجبة','برجر','لحم','دجاج','مطعم','falafel','ساندويتش','فراخ','كباب','grill'] },
+  eastern_sweets: { label: 'حلويات شرقية', emoji: '🍯', keywords: ['كنافة','بسبوسة','قطايف','عيش السرايا','مهلبية','رز بلبن','عسل','شرقى','عربى','oriental','om ali','أم علي'] },
+  western_sweets: { label: 'حلويات غربية', emoji: '🎂', keywords: ['كيك','تارت','براونى','كوكيز','cheesecake','وافل','بان كيك','pancake','cake','chocolate','فطيرة','غربى','western'] },
+  ice_cream: { label: 'ايس كريم', emoji: '🍦', keywords: ['ايس كريم','آيس كريم','ice cream','جيلاتى','gelato','مثلجات','sundae'] },
+  bakery: { label: 'مخبوزات', emoji: '🥐', keywords: ['خبز','كرواسون','بريوش','مافن','muffin','croissant','bakery','مخبز','bagel','toast'] },
+  drinks: { label: 'مشروبات', emoji: '🥤', keywords: ['قهوة','شاى','عصير','موهيتو','سموزى','كوكتيل','drink','coffee','tea','juice','milkshake','ليموناضة','مشروب'] }
+};
+
+let currentMainGroup = null;
+
+function getCatMainGroup(catKey, catLabel) {
+  const lbl = (catLabel || catKey || '').toLowerCase();
+  for (const [gk, gv] of Object.entries(MAIN_GROUPS)) {
+    if (gv.keywords.some(kw => lbl.includes(kw.toLowerCase()))) return gk;
+  }
+  return null;
+}
+
+function renderMainGroups() {
+  const wrap = document.getElementById('mainGroupsWrap');
+  if (!wrap) return;
+  const usedGroups = new Set();
+  Object.keys(MENU).forEach(cat => {
+    const g = getCatMainGroup(cat, MENU[cat]?.label || '');
+    if (g) usedGroups.add(g);
+  });
+  if (usedGroups.size < 2) { wrap.style.display = 'none'; return; }
+  wrap.style.display = 'flex';
+  wrap.innerHTML = Object.entries(MAIN_GROUPS)
+    .filter(([gk]) => usedGroups.has(gk))
+    .map(([gk, gv]) => `
+      <div class="main-group-chip ${currentMainGroup === gk ? 'active' : ''}" onclick="selectMainGroup('${gk}')">
+        <span style="font-size:22px">${gv.emoji}</span>
+        <span style="font-size:12px;font-weight:800;margin-top:2px">${gv.label}</span>
+      </div>`).join('');
+}
+
+function selectMainGroup(gk) {
+  currentMainGroup = currentMainGroup === gk ? null : gk;
+  currentFilter = 'all';
+  renderMainGroups();
+  renderCategories();
+  renderMenu();
+}
+
+function getFilteredCatsByGroup() {
+  if (!currentMainGroup) return Object.keys(MENU);
+  const group = MAIN_GROUPS[currentMainGroup];
+  return Object.keys(MENU).filter(cat => {
+    const lbl = (MENU[cat]?.label || cat).toLowerCase();
+    return group.keywords.some(kw => lbl.includes(kw.toLowerCase()));
+  });
+}
+
 </script>
 <!-- ===== SMART ORDER REVIEW OVERLAY ===== -->
 <div class="order-review-overlay" id="orderReviewOverlay">
   <div class="order-review-card">
     <div style="font-size:36px;margin-bottom:8px">⏳</div>
-    <div style="font-size:18px;font-weight:800;color:var(--dark);margin-bottom:6px">جاري مراجعة طلبك</div>
-    <div style="font-size:13px;color:var(--text-muted);margin-bottom:20px;line-height:1.6">لديك وقت لتعديل أو إلغاء طلبك قبل بدء التجهيز</div>
-    <div class="review-countdown" id="reviewCountdownNum">60</div>
-    <div style="font-size:12px;color:var(--text-muted);margin-bottom:20px">ثانية متبقية لإمكانية التعديل</div>
-    <div style="display:flex;gap:10px">
-      <button onclick="cancelOrderFromReview()" style="flex:1;padding:13px;background:var(--cream);color:var(--red);border-radius:12px;font-size:14px;font-weight:800;border:2px solid var(--red);cursor:pointer">❌ إلغاء الطلب</button>
-      <button onclick="closeOrderReview()" style="flex:1;padding:13px;background:var(--olive);color:#fff;border-radius:12px;font-size:14px;font-weight:800;cursor:pointer;border:none">✓ تأكيد</button>
+    <div style="font-size:18px;font-weight:800;color:var(--dark);margin-bottom:6px">في انتظار تأكيدك النهائي</div>
+    <div style="font-size:13px;color:var(--text-muted);margin-bottom:12px;line-height:1.6">الطلب لم يُرسل للكاشير بعد — يمكنك تعديله أو إلغاؤه</div>
+    <div id="reviewOrderInfo" style="background:var(--olive-pale);border-radius:10px;padding:10px 14px;margin-bottom:12px;text-align:right"></div>
+    <div class="review-countdown" id="reviewCountdownNum">90</div>
+    <div style="font-size:12px;color:var(--text-muted);margin-bottom:20px">ثانية — بعدها يُرسل تلقائياً</div>
+    <div style="display:flex;flex-direction:column;gap:8px">
+      <button onclick="confirmFinalOrder()" style="width:100%;padding:15px;background:linear-gradient(135deg,var(--olive),var(--olive-light));color:#fff;border-radius:12px;font-size:15px;font-weight:900;cursor:pointer;border:none;box-shadow:0 4px 16px rgba(74,124,31,.3)">✅ تأكيد الطلب النهائي — إرسال للكاشير</button>
+      <div style="display:flex;gap:8px">
+        <button onclick="editOrderFromReview()" style="flex:1;padding:12px;background:var(--blue-pale);color:var(--blue);border-radius:12px;font-size:13px;font-weight:800;cursor:pointer;border:2px solid var(--blue)">✏️ تعديل الطلب</button>
+        <button onclick="cancelOrderFromReview()" style="flex:1;padding:12px;background:#fff0f0;color:var(--red);border-radius:12px;font-size:13px;font-weight:800;border:2px solid var(--red);cursor:pointer">❌ إلغاء الطلب</button>
+      </div>
     </div>
+  </div>
+</div>
+
+<!-- ===== ADD AD MODAL ===== -->
+<div class="sheet-overlay" id="addAdModal" onclick="closeModal('addAdModal',event)">
+  <div class="sheet" style="max-height:95vh">
+    <div class="sheet-handle"></div>
+    <div class="sheet-header">
+      <h2 id="addAdTitle">🎯 إعلان جديد</h2>
+      <button class="close-btn" onclick="closeModal('addAdModal',null)">✕</button>
+    </div>
+    <div class="sheet-body">
+      <input type="hidden" id="editAdId"/>
+      <div class="field">
+        <label>العنوان الرئيسي</label>
+        <input type="text" id="adTitleInput" placeholder="عنوان الإعلان"/>
+      </div>
+      <div class="field">
+        <label>الكابشن / الوصف</label>
+        <textarea id="adCaptionInput" rows="3" placeholder="نص الإعلان الاحترافي..." style="width:100%;padding:12px 14px;border:1.5px solid var(--border);border-radius:12px;font-size:14px;resize:none;font-family:inherit;box-sizing:border-box;background:var(--white);color:var(--text);outline:none"></textarea>
+      </div>
+      <div class="field">
+        <label>الوسيط (صورة أو فيديو)</label>
+        <div style="border:2px dashed var(--border);border-radius:12px;padding:20px;text-align:center;background:var(--cream);cursor:pointer" onclick="document.getElementById('adFileInput').click()">
+          <div style="font-size:32px;margin-bottom:6px" id="adFilePreviewIcon">📁</div>
+          <div style="font-size:13px;font-weight:700;color:var(--text-muted)" id="adFileLabel">اضغط لرفع صورة أو فيديو</div>
+          <div id="adMediaPreview" style="margin-top:10px"></div>
+        </div>
+        <input type="file" id="adFileInput" accept="image/*,video/*" style="display:none" onchange="handleAdFile(this)"/>
+        <div style="font-size:11px;color:var(--text-muted);margin-top:6px;text-align:center">أو أدخل رابط مباشر:</div>
+        <input type="url" id="adUrlInput" placeholder="https://..." style="width:100%;padding:10px 12px;border:1.5px solid var(--border);border-radius:10px;font-size:13px;margin-top:6px;background:var(--white);outline:none;direction:ltr" oninput="previewAdUrl(this.value)"/>
+      </div>
+      <div class="field">
+        <label>نوع الوسيط</label>
+        <select id="adMediaType" style="width:100%;padding:10px 12px;border:1.5px solid var(--border);border-radius:10px;font-size:13px;background:var(--white);color:var(--text);outline:none">
+          <option value="image">🖼️ صورة</option>
+          <option value="video">🎬 فيديو</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>زر CTA (اختياري)</label>
+        <input type="text" id="adCtaText" placeholder="مثال: اطلب الآن / شاهد العرض / خصم اليوم"/>
+      </div>
+      <div style="display:flex;align-items:center;gap:12px;padding:12px 0;border-top:1px solid var(--border);margin-bottom:12px">
+        <div class="toggle-sw on" id="adActiveToggle" onclick="this.classList.toggle('on')"></div>
+        <span style="font-size:14px;font-weight:700">تفعيل الإعلان فور الحفظ</span>
+      </div>
+      <button class="btn-primary" onclick="saveAd()">💾 حفظ الإعلان</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== DELIVERY AGENT POPUP ===== -->
+<div class="agent-popup-overlay" id="agentPopupOverlay">
+  <div class="agent-popup-card">
+    <div style="text-align:center;font-size:36px;margin-bottom:8px">🛵</div>
+    <div class="agent-popup-title">اختر المندوب</div>
+    <div class="agent-popup-sub" id="agentPopupOrderId">اختر المندوب المسؤول عن التوصيل</div>
+    <div class="agent-list" id="agentPopupList"></div>
+    <button class="agent-confirm-btn" id="agentConfirmBtn" onclick="confirmAgentSelection()" disabled>✓ تأكيد وإرسال</button>
+    <button class="agent-cancel-btn" onclick="closeAgentPopup()">إلغاء</button>
+  </div>
+</div>
+
+<!-- ===== CASHIER POPUP NOTIFICATIONS ===== -->
+<div class="cashier-popup-overlay" id="cashierPopupOverlay">
+  <div class="cashier-popup-card" id="cashierPopupCard">
+    <div class="cashier-popup-header" id="cashierPopupHeader">
+      <div class="cashier-popup-icon" id="cashierPopupIcon">🔔</div>
+      <div>
+        <div class="cashier-popup-title" id="cashierPopupTitle">طلب جديد وصل!</div>
+        <div class="cashier-popup-subtitle" id="cashierPopupSubtitle">اضغط لمراجعة الطلب</div>
+      </div>
+    </div>
+    <div class="cashier-popup-body">
+      <div class="cashier-popup-row"><strong>كود الطلب</strong><span id="cpOrderId">—</span></div>
+      <div class="cashier-popup-row"><strong>👤 العميل</strong><span id="cpName">—</span></div>
+      <div class="cashier-popup-row"><strong>📱 الهاتف</strong><span id="cpPhone">—</span></div>
+      <div class="cashier-popup-row"><strong>🚚 نوع الطلب</strong><span id="cpType">—</span></div>
+      <div class="cashier-popup-row" id="cpStatusRow" style="display:none"><strong>📋 الحالة</strong><span id="cpStatus">—</span></div>
+    </div>
+    <button class="cashier-popup-btn" id="cashierPopupBtn" onclick="dismissCashierPopup()">✓ تمت المشاهدة — فتح الطلبات</button>
   </div>
 </div>
 
