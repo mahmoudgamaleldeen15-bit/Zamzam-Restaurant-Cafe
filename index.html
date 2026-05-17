@@ -210,6 +210,10 @@ input,select,textarea{font-family:inherit;}
 .sheet-header h2{font-size:18px;font-weight:800;}
 .sheet-body{flex:1;overflow-y:auto;padding:16px;}
 .close-btn{font-size:22px;color:var(--text-muted);background:none;border:none;cursor:pointer;}
+/* Cart sheet: items + footer scrollable معاً، زر التأكيد ثابت */
+#cartSheet .sheet{display:flex;flex-direction:column;max-height:92vh;}
+#cartSheet .sheet-body{flex:1;overflow-y:auto;padding:16px;padding-bottom:0;}
+#cartSheet .cart-footer{overflow-y:auto;padding:0 16px 8px;flex:1;min-height:0;}
 
 /* ===== CART ITEMS ===== */
 .cart-item{display:flex;gap:12px;padding:12px 0;border-bottom:1px solid var(--border);align-items:center;}
@@ -757,43 +761,60 @@ input,select,textarea{font-family:inherit;}
     <div class="sheet-body" id="cartBody">
       <div style="text-align:center;padding:40px;color:var(--text-muted)"><div style="font-size:48px;margin-bottom:12px">🛒</div><div style="font-weight:700">السلة فارغة</div></div>
     </div>
-    <div class="cart-footer">
+    <!-- cart-footer الآن scrollable داخل sheet-body الممتد -->
+    <div class="cart-footer" style="overflow-y:auto;max-height:none;">
       <div class="coupon-row">
         <input id="couponInput" placeholder="COUPON CODE" style="font-family:monospace"/>
         <button onclick="applyCoupon()">تطبيق</button>
       </div>
       <div id="activeOfferNote" style="display:none;background:var(--gold-light);padding:8px 12px;border-radius:10px;font-size:12px;font-weight:700;color:var(--dark);margin-bottom:10px"></div>
-      <div class="delivery-opts">
+
+      <!-- ===== نوع الطلب ===== -->
+      <div style="font-size:11px;font-weight:800;color:var(--text-muted);text-transform:uppercase;margin-bottom:6px">نوع الطلب</div>
+      <div class="delivery-opts" style="margin-bottom:0">
         <div class="d-opt active" onclick="selectDelivery('delivery',this)">🛵 دليفرى</div>
         <div class="d-opt" onclick="selectDelivery('pickup',this)">🏪 استلام</div>
         <div class="d-opt" onclick="selectDelivery('cafe',this)">☕ كافيه</div>
       </div>
-      <div id="tableRow" style="display:none" class="table-input">
+
+      <!-- ===== طاولة الكافيه ===== -->
+      <div id="tableRow" style="display:none;margin-top:10px" class="table-input">
         <div style="font-size:12px;font-weight:700;color:var(--text-muted);margin-bottom:4px">🪑 معلومات الترابيزة</div>
         <input id="tableNum" placeholder="رقم الترابيزة" type="number"/>
       </div>
-      <div id="gpsDeliverySection">
-        <!-- Zone Selector compact -->
-        <div class="delivery-compact">
-          <div style="font-size:11px;font-weight:800;color:var(--text-muted);margin-bottom:6px;text-transform:uppercase">📍 موقع التوصيل</div>
-          <div id="zoneSelector" style="margin-bottom:8px">
-            <div style="font-size:11px;font-weight:700;color:var(--text-muted);margin-bottom:4px">المنطقة (اختيارى)</div>
+
+      <!-- ===== قسم الدليفري — inline section لا overlay ===== -->
+      <div id="gpsDeliverySection" style="margin-top:10px">
+        <div style="background:var(--olive-pale);border-radius:14px;padding:12px 14px;border:1.5px solid var(--olive-light)">
+          <div style="font-size:12px;font-weight:900;color:var(--olive-dark);margin-bottom:10px;display:flex;align-items:center;gap:6px">
+            <span>📍</span> موقع التوصيل
+          </div>
+          <div id="zoneSelector" style="margin-bottom:10px">
+            <div style="font-size:11px;font-weight:700;color:var(--text-muted);margin-bottom:6px">المنطقة (اختيارى)</div>
             <div id="zoneChips" style="display:flex;flex-wrap:wrap;gap:4px"></div>
           </div>
-          <button class="gps-compact-btn" onclick="getGPS()">
+          <button class="gps-compact-btn" onclick="getGPS()" style="margin-bottom:8px">
             <div class="gps-dot"></div>
             <span id="gpsText" style="flex:1">📍 تحديد الموقع تلقائياً</span>
           </button>
-          <textarea class="address-field" id="addressField" placeholder="أو أكتب عنوانك هنا..." style="height:52px;margin-bottom:0"></textarea>
+          <textarea class="address-field" id="addressField" placeholder="أو أكتب عنوانك هنا..." style="height:52px;margin-bottom:0;width:100%;background:var(--white)"></textarea>
         </div>
       </div>
-      <div style="font-size:12px;font-weight:800;color:var(--text-muted);margin-bottom:8px;text-transform:uppercase">طريقة الدفع</div>
+
+      <!-- ===== طريقة الدفع ===== -->
+      <div style="font-size:12px;font-weight:800;color:var(--text-muted);margin:12px 0 8px;text-transform:uppercase">طريقة الدفع</div>
       <div class="payment-row" id="paymentRow">
         <div class="pay-opt active" onclick="selectPay(this,'cash')">💵 كاش</div>
       </div>
       <div id="paymentDetails" style="display:none;margin-bottom:10px"></div>
+
+      <!-- ===== الملخص ===== -->
       <div class="cart-summary" id="cartSummary"></div>
-      <button class="cart-confirm-btn" onclick="placeOrder()">✓ تأكيد الطلب وإرسال للواتساب</button>
+    </div>
+
+    <!-- ===== زر تأكيد ثابت أسفل الشيت ===== -->
+    <div style="padding:12px 16px 16px;background:var(--white);border-top:1px solid var(--border);flex-shrink:0;">
+      <button class="cart-confirm-btn" onclick="placeOrder()" style="margin-top:0">✓ تأكيد الطلب</button>
     </div>
   </div>
 </div>
@@ -845,7 +866,7 @@ input,select,textarea{font-family:inherit;}
       <h3 id="trackOrderNum" style="font-size:16px;font-weight:800;margin-bottom:4px">طلب رقم #ZZ-0000</h3>
       <div style="font-size:12px;color:var(--text-muted);margin-bottom:16px" id="trackOrderTime">—</div>
       <div class="status-steps">
-        <div class="status-step"><div class="step-dot done" id="track1">✓</div><div class="step-info"><div class="st">تم استلام الطلب</div><div class="sd" id="track1t">جارى المراجعة</div></div></div>
+        <div class="status-step"><div class="step-dot" id="track1">⏳</div><div class="step-info"><div class="st">تم استلام الطلب</div><div class="sd" id="track1t">في انتظار الكاشير...</div></div></div>
         <div class="status-step"><div class="step-dot" id="track2">🍳</div><div class="step-info"><div class="st">جارى التجهيز</div><div class="sd" id="track2t">—</div></div></div>
         <div class="status-step"><div class="step-dot" id="track3">✅</div><div class="step-info"><div class="st">اكتمل التجهيز</div><div class="sd" id="track3t">—</div></div></div>
         <div class="status-step"><div class="step-dot" id="track4">🛵</div><div class="step-info"><div class="st">خرج للتوصيل</div><div class="sd" id="track4t">—</div></div></div>
@@ -2437,24 +2458,16 @@ ${totalDisc > 0 ? `🏷️ الخصم: - ${totalDisc} ج.م\n` : ''}${deliveryFe
   document.getElementById('trackOrderTime').textContent = newOrder.time;
   document.getElementById('etaDisplay').textContent = '~' + eta;
   resetTracking();
-  // Send last-order notification if active
-  if (lastOrderActive && currentUser?.whatsapp) {
-    const waLO = (currentUser.whatsapp || '').replace(/[^0-9]/g,'');
-    const loMsg = `السلام عليكم ورحمة الله وبركاته
+  // حفظ رسالة الواتساب مع الطلب لإرسالها لاحقاً عند التأكيد النهائي
+  newOrder._waMsg = msg;
+  // تحديث الطلب في ordersData بالرسالة
+  const savedIdx = ordersData.findIndex(o => o.id === orderNum);
+  if (savedIdx !== -1) ordersData[savedIdx]._waMsg = msg;
+  saveData('zz_orders', ordersData);
 
-عزيزنا *${currentUser.name}* 🌹
-
-نعتذر، يوجد ضغط كبير حالياً على الطلبات 🙏
-وقد يستغرق تجهيز الطلب وقتاً إضافياً، شكراً لتفهمكم.
-
-*${RESTAURANT.name}*`;
-    setTimeout(() => window.open(`https://wa.me/${waLO}?text=${encodeURIComponent(loMsg)}`, '_blank'), 1500);
-  }
   cart = []; appliedDiscount = 0; appliedCouponId = null; selectedDeliveryZone = null;
   saveData('zz_current_cart', []);
   updateCartUI(); renderCartSheet(); closeSheet('cartSheet', null);
-  const waNum = SETTINGS.waNum || RESTAURANT.waNum;
-  window.open(`https://wa.me/${waNum}?text=${encodeURIComponent(msg)}`, '_blank');
   openScreen('tracking');
   // Smart order review — allow 90 seconds to cancel
   setTimeout(() => openOrderReview(newOrder), 400);
@@ -2469,8 +2482,8 @@ function resetTracking() {
     const txt = document.getElementById('track' + i + 't');
     dot.className = 'step-dot'; if (txt) txt.textContent = '—';
   }
-  document.getElementById('track1').className = 'step-dot done';
-  const t1 = document.getElementById('track1t'); if (t1) t1.textContent = 'تم الاستلام';
+  // track1 يبقى pending حتى يستلم الكاشير الطلب فعلياً
+  const t1 = document.getElementById('track1t'); if (t1) t1.textContent = 'في انتظار الكاشير...';
   document.getElementById('delayMsgBox').style.display = 'none';
 }
 function updateTrackingStatus(status) {
@@ -2488,11 +2501,21 @@ function updateTrackingStatus(status) {
     const dot = document.getElementById('track' + i);
     if (!dot) continue;
     if (status === 'payment_pending') {
-      dot.className = i === 1 ? 'step-dot active' : 'step-dot';
+      // track1 pending — لم يستلم الكاشير بعد
+      dot.className = 'step-dot';
     } else {
       if (i < idx) dot.className = 'step-dot done';
       else if (i === idx) dot.className = 'step-dot active';
       else dot.className = 'step-dot';
+    }
+  }
+  // تحديث نص track1
+  const t1 = document.getElementById('track1t');
+  if (t1) {
+    if (status === 'payment_pending') {
+      t1.textContent = 'في انتظار تأكيد الدفع...';
+    } else if (['new','prep','ready','out','delivered'].includes(status)) {
+      t1.textContent = 'تم الاستلام ✓';
     }
   }
 }
@@ -4552,6 +4575,18 @@ function confirmFinalOrder() {
   fbSaveOrder(order);
   closeOrderReview();
   showNotif('✅ تم إرسال الطلب للكاشير بنجاح');
+  // إرسال واتساب هنا فقط — بعد التأكيد النهائي
+  const waNum = SETTINGS.waNum || RESTAURANT.waNum;
+  const msgToSend = order._waMsg || '';
+  if (msgToSend) {
+    window.open(`https://wa.me/${waNum}?text=${encodeURIComponent(msgToSend)}`, '_blank');
+  }
+  // إرسال إشعار Last Order إن وجد
+  if (lastOrderActive && currentUser?.whatsapp) {
+    const waLO = (currentUser.whatsapp || '').replace(/[^0-9]/g,'');
+    const loMsg = `السلام عليكم ورحمة الله وبركاته\n\nعزيزنا *${currentUser.name}* 🌹\n\nنعتذر، يوجد ضغط كبير حالياً على الطلبات 🙏\nوقد يستغرق تجهيز الطلب وقتاً إضافياً، شكراً لتفهمكم.\n\n*${RESTAURANT.name}*`;
+    setTimeout(() => window.open(`https://wa.me/${waLO}?text=${encodeURIComponent(loMsg)}`, '_blank'), 1500);
+  }
 }
 function cancelOrderFromReview() {
   if (!_pendingOrderForReview) { closeOrderReview(); return; }
