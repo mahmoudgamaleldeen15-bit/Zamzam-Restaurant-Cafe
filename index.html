@@ -91,7 +91,7 @@ input,select,textarea{font-family:inherit;}
 .review-countdown{width:64px;height:64px;border-radius:50%;background:linear-gradient(135deg,var(--gold),var(--gold-light));display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:900;color:#fff;margin:0 auto 16px;box-shadow:0 4px 16px rgba(200,151,58,.35);}
 
 /* ===== PWA INSTALL BANNER ===== */
-.pwa-install-bar{background:linear-gradient(135deg,var(--olive-dark),var(--olive));padding:10px 16px;display:flex;align-items:center;gap:10px;cursor:pointer;}
+.pwa-install-bar{background:linear-gradient(135deg,#1e3a0f,var(--olive-dark) 40%,var(--olive));padding:12px 16px;display:flex;align-items:center;gap:12px;cursor:pointer;box-shadow:0 2px 12px rgba(45,80,22,.4);border-bottom:1px solid rgba(255,255,255,.1);}
 .pwa-install-bar.hidden{display:none;}
 
 /* ===== SEARCH HIGHLIGHT ===== */
@@ -632,7 +632,7 @@ input,select,textarea{font-family:inherit;}
     <div class="sub">Restaurant & Café</div>
   </div>
   <div class="splash-dots"><span></span><span></span><span></span></div>
-  <div class="splash-credit">v10.0 — Designed by Mahmoud Gamal Eldeen</div>
+  <div class="splash-credit">v18.0 — Designed by Mahmoud Gamal Eldeen</div>
 </div>
 
 <!-- ===== AUTH ===== -->
@@ -673,9 +673,15 @@ input,select,textarea{font-family:inherit;}
   <div class="notif" id="notif"></div>
   <!-- PWA Install Banner -->
   <div class="pwa-install-bar hidden" id="pwaInstallBar" onclick="triggerPWAInstall()">
-    <span style="font-size:20px">📲</span>
-    <div style="flex:1;color:#fff"><div style="font-size:13px;font-weight:800">ثبّت التطبيق على هاتفك</div><div style="font-size:11px;opacity:.8">أضف زمزم للشاشة الرئيسية</div></div>
-    <button onclick="event.stopPropagation();document.getElementById('pwaInstallBar').classList.add('hidden')" style="color:rgba(255,255,255,.7);font-size:18px;background:none;border:none;cursor:pointer">✕</button>
+    <div style="width:44px;height:44px;border-radius:12px;background:rgba(255,255,255,.2);display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0;animation:pulse 2s infinite">📱</div>
+    <div style="flex:1;color:#fff">
+      <div style="font-size:14px;font-weight:900;line-height:1.2">أضف زمزم إلى الشاشة الرئيسية ✨</div>
+      <div style="font-size:11px;opacity:.85;margin-top:3px">للوصول السريع وطلب أسهل في أي وقت</div>
+    </div>
+    <div style="display:flex;gap:6px;align-items:center">
+      <div style="background:rgba(255,255,255,.25);border-radius:8px;padding:6px 12px;font-size:12px;font-weight:800;color:#fff;border:1px solid rgba(255,255,255,.4)">تثبيت</div>
+      <button onclick="event.stopPropagation();document.getElementById('pwaInstallBar').classList.add('hidden')" style="color:rgba(255,255,255,.8);font-size:18px;background:none;border:none;cursor:pointer;width:28px;height:28px;display:flex;align-items:center;justify-content:center">✕</button>
+    </div>
   </div>
   <div class="topbar">
     <div>
@@ -997,10 +1003,15 @@ input,select,textarea{font-family:inherit;}
       <div class="settings-row"><div class="info"><strong id="settingsUserName">—</strong><span id="settingsUserPhone">—</span></div></div>
       <div class="settings-row" style="cursor:pointer" onclick="doClientLogout()"><div class="info"><strong style="color:var(--red)">تسجيل الخروج</strong></div><span style="color:var(--red)">←</span></div>
     </div>
-    <div style="text-align:center;padding:24px;color:var(--text-muted);font-size:11px">
-      <div style="font-weight:800;font-size:14px;color:var(--olive-dark);margin-bottom:4px">Zamzam Restaurant & Café</div>
-      <div>نسخة 16.0.0 • Favorites + Fav Counter + Customers Report + VIP + Cart UX + Report Tabs • Designed by <strong style="color:var(--dark)">Mahmoud Gamal Eldeen</strong></div>
-      <div style="margin-top:4px">📱 01508613866</div>
+    <div style="text-align:center;padding:28px 20px 32px;color:var(--text-muted)">
+      <div style="width:60px;height:60px;border-radius:16px;background:linear-gradient(135deg,var(--olive-dark),var(--olive));display:flex;align-items:center;justify-content:center;font-size:28px;margin:0 auto 12px;box-shadow:0 4px 16px rgba(45,80,22,.3)">🍽️</div>
+      <div style="font-weight:900;font-size:16px;color:var(--dark);margin-bottom:4px">Zamzam Restaurant & Café</div>
+      <div style="font-size:12px;color:var(--text-muted);margin-bottom:12px" id="appVersionDisplay">Version: 18.0.0</div>
+      <div style="background:var(--cream);border-radius:12px;padding:12px 16px;border:1px solid var(--border);margin-bottom:4px">
+        <div style="font-size:11px;color:var(--text-muted);margin-bottom:4px">Programmer & Developer</div>
+        <div style="font-size:14px;font-weight:800;color:var(--dark)">Designed by <span style="color:var(--olive-dark)">Mahmoud Gamal Eldeen</span></div>
+        <div style="font-size:13px;font-weight:700;color:var(--olive-dark);margin-top:6px">📱 01508613866</div>
+      </div>
     </div>
   </div>
 </div>
@@ -1471,8 +1482,9 @@ input,select,textarea{font-family:inherit;}
     <h3 id="addItemTitle">➕ إضافة صنف</h3>
     <input type="hidden" id="editItemId"/>
     <div class="field"><label>القسم</label>
-      <select id="itemCatInput" style="width:100%;padding:13px 16px;border:1.5px solid var(--border);border-radius:12px;font-size:15px;background:var(--white)"></select>
+      <select id="itemCatInput" onchange="updateItemMainGroupHint()" style="width:100%;padding:13px 16px;border:1.5px solid var(--border);border-radius:12px;font-size:15px;background:var(--white)"></select>
     </div>
+    <div id="itemMainGroupHint" style="display:none;background:var(--olive-pale);border-radius:8px;padding:6px 12px;font-size:12px;font-weight:700;color:var(--olive-dark);margin-bottom:10px"></div>
     <div class="field"><label>اسم الصنف</label><input type="text" id="itemNameInput" placeholder="مثال: كنافة بالقشطة"/></div>
     <div class="field"><label>الوصف</label><input type="text" id="itemDescInput" placeholder="وصف مختصر"/></div>
     <div class="field">
@@ -1508,6 +1520,10 @@ input,select,textarea{font-family:inherit;}
       <div class="toggle-sw on" id="itemNewToggle" onclick="this.classList.toggle('on')"></div>
       <span style="font-size:14px;font-weight:600">وضع شارة "جديد"</span>
     </div>
+    <div class="remember-row" style="margin-bottom:16px">
+      <div class="toggle-sw on" id="itemDeliveryToggle" onclick="this.classList.toggle('on')"></div>
+      <span style="font-size:14px;font-weight:600">متاح للدليفري 🛵</span>
+    </div>
     <button class="btn-primary" onclick="saveItem()">💾 حفظ الصنف</button>
   </div>
 </div>
@@ -1517,6 +1533,18 @@ input,select,textarea{font-family:inherit;}
   <div class="modal-box" style="max-height:90vh;overflow-y:auto">
     <button class="modal-close" onclick="closeModal('addCatModal')">✕</button>
     <h3>➕ قسم جديد</h3>
+    <div class="field">
+      <label>القسم الرئيسي</label>
+      <select id="catMainGroupInput" style="width:100%;padding:13px 16px;border:1.5px solid var(--border);border-radius:12px;font-size:15px;background:var(--white);color:var(--text);outline:none">
+        <option value="">— اختر القسم الرئيسي —</option>
+        <option value="restaurant">🍽️ المطعم</option>
+        <option value="eastern_sweets">🍯 حلويات شرقية</option>
+        <option value="western_sweets">🎂 حلويات غربية</option>
+        <option value="ice_cream">🍦 آيس كريم</option>
+        <option value="drinks">🥤 مشروبات</option>
+        <option value="bakery">🥐 مخبوزات</option>
+      </select>
+    </div>
     <div class="field"><label>اسم القسم</label><input type="text" id="catNameInput" placeholder="مثال: حلويات شرقية"/></div>
     <div class="field">
       <label>الإيموجى المختار</label>
@@ -1594,6 +1622,11 @@ input,select,textarea{font-family:inherit;}
 
 <!-- ===== JAVASCRIPT ===== -->
 <script>
+// ============================================================
+// APP VERSION
+// ============================================================
+const APP_VERSION = '18.0.0';
+
 // ============================================================
 // SECURITY: Passwords stored obfuscated (base64 encoded pairs)
 // ============================================================
@@ -1848,6 +1881,8 @@ function openScreen(id) {
       if (el1) el1.textContent = currentUser.name;
       if (el2) el2.textContent = currentUser.phone;
     }
+    const verEl = document.getElementById('appVersionDisplay');
+    if (verEl) verEl.textContent = 'Version: ' + APP_VERSION;
   }
 }
 
@@ -2367,10 +2402,31 @@ function applyCoupon() {
 // ============================================================
 function placeOrder() {
   if (!cart.length) { showNotif('السلة فارغة!'); return; }
+  // ===== فحص الإنترنت أولاً =====
+  if (!navigator.onLine) {
+    showOfflineAlert();
+    return;
+  }
   // Block if Last Order active
   if (lastOrderActive) {
     document.getElementById('lastOrderBlockOverlay').classList.add('show');
     return;
+  }
+  // ===== فحص المنتجات غير المتاحة للدليفري =====
+  if (deliveryType === 'delivery') {
+    const unavailableItems = cart.filter(ci => {
+      // ابحث عن العنصر في المنيو
+      for (const cat of Object.values(MENU)) {
+        const found = (cat.items || []).find(i => ci.id.startsWith(i.id));
+        if (found && found.availableDelivery === false) return true;
+      }
+      return false;
+    });
+    if (unavailableItems.length > 0) {
+      const names = unavailableItems.map(i => i.name).join('\n• ');
+      showDeliveryUnavailableAlert(names);
+      return;
+    }
   }
   const orderNum = 'ZZ-' + String(Date.now()).slice(-6);
   currentOrderNum = orderNum;
@@ -3239,7 +3295,7 @@ function renderMenuManage() {
       html += `<div class="menu-item-row">
         <div class="item-emoji">${item.emoji}</div>
         <div class="item-info">
-          <div class="name">${item.name}${item.new ? ' <span style="font-size:10px;background:var(--gold);color:#fff;padding:1px 6px;border-radius:4px">جديد</span>' : ''}</div>
+          <div class="name">${item.name}${item.new ? ' <span style="font-size:10px;background:var(--gold);color:#fff;padding:1px 6px;border-radius:4px">جديد</span>' : ''}${item.availableDelivery === false ? ' <span style="font-size:10px;background:#ffe3e3;color:var(--red);padding:1px 6px;border-radius:4px">🚫 دليفري</span>' : ''}</div>
           <div class="price">${priceStr} ج.م</div>
           <div class="desc">${item.desc || ''}</div>
         </div>
@@ -3286,6 +3342,7 @@ function openAddItemModal() {
   ['itemNameInput','itemDescInput','itemEmojiInput','itemPriceInput','itemPriceS','itemPriceM','itemPriceL'].forEach(id => { const el = document.getElementById(id); if(el) el.value = ''; });
   document.getElementById('itemEmojiPreview').textContent = '🍽️';
   document.getElementById('itemNewToggle').classList.add('on');
+  document.getElementById('itemDeliveryToggle').classList.add('on');
   initItemEmojiPicker();
   setPriceType('single'); renderCatSelects(); openModal('addItemModal');
 }
@@ -3314,6 +3371,8 @@ function openEditItem(cat, id) {
   } else { setPriceType('single'); document.getElementById('itemPriceInput').value = item.price || ''; }
   if (item.new) document.getElementById('itemNewToggle').classList.add('on');
   else document.getElementById('itemNewToggle').classList.remove('on');
+  if (item.availableDelivery !== false) document.getElementById('itemDeliveryToggle').classList.add('on');
+  else document.getElementById('itemDeliveryToggle').classList.remove('on');
   openModal('addItemModal');
 }
 function setPriceType(type) {
@@ -3330,6 +3389,7 @@ function saveItem() {
   const desc = document.getElementById('itemDescInput').value.trim();
   const emoji = document.getElementById('itemEmojiInput').value.trim() || '🍽️';
   const isNew = document.getElementById('itemNewToggle').classList.contains('on');
+  const isDelivery = document.getElementById('itemDeliveryToggle').classList.contains('on');
   if (!name || !cat) { showNotif('أدخل اسم الصنف والقسم'); return; }
   let priceData = {};
   if (priceTypeMode === 'sizes') {
@@ -3348,12 +3408,12 @@ function saveItem() {
     const [oldCat, oldId] = editId.split('|');
     const idx = MENU[oldCat].items.findIndex(i => i.id === oldId);
     if (idx >= 0) {
-      const updated = { ...MENU[oldCat].items[idx], name, desc, emoji, new: isNew, ...priceData };
+      const updated = { ...MENU[oldCat].items[idx], name, desc, emoji, new: isNew, availableDelivery: isDelivery, ...priceData };
       if (oldCat !== cat) { MENU[cat].items.push(updated); MENU[oldCat].items.splice(idx, 1); }
       else MENU[oldCat].items[idx] = updated;
     }
   } else {
-    MENU[cat].items.push({ id: cat[0] + '_' + Date.now(), name, desc, emoji, new: isNew, available: true, ...priceData });
+    MENU[cat].items.push({ id: cat[0] + '_' + Date.now(), name, desc, emoji, new: isNew, available: true, availableDelivery: isDelivery, ...priceData });
   }
   saveMenu(); renderMenuManage(); renderMenu(); closeModal('addItemModal');
   showNotif('✓ تم حفظ الصنف');
@@ -3367,12 +3427,27 @@ function openAddCatModal() { renderCatSelects(); openModal('addCatModal'); }
 function saveCategory() {
   const name = document.getElementById('catNameInput').value.trim();
   const emoji = document.getElementById('catEmojiInput').value.trim() || '📋';
+  const mainGroup = document.getElementById('catMainGroupInput')?.value || '';
   if (!name) { showNotif('أدخل اسم القسم'); return; }
   const allowAddons = document.getElementById('catAllowAddonsToggle')?.classList.contains('on') || false;
   const key = 'cat_' + Date.now();
-  MENU[key] = { label: emoji + ' ' + name, emoji, allowAddons, items: [] };
+  MENU[key] = { label: emoji + ' ' + name, emoji, allowAddons, mainGroup, items: [] };
   saveMenu(); renderCatSelects(); renderMenuManage(); renderMenu();
   closeModal('addCatModal'); showNotif('✓ تم إضافة القسم');
+}
+
+function updateItemMainGroupHint() {
+  const catKey = document.getElementById('itemCatInput')?.value;
+  const hint = document.getElementById('itemMainGroupHint');
+  if (!hint || !catKey || !MENU[catKey]) { if (hint) hint.style.display = 'none'; return; }
+  const cat = MENU[catKey];
+  const mainGroupKey = cat.mainGroup || getCatMainGroup(catKey, cat.label || '');
+  if (mainGroupKey && MAIN_GROUPS[mainGroupKey]) {
+    hint.style.display = 'block';
+    hint.textContent = '📂 القسم الرئيسي: ' + MAIN_GROUPS[mainGroupKey].emoji + ' ' + MAIN_GROUPS[mainGroupKey].label;
+  } else {
+    hint.style.display = 'none';
+  }
 }
 function deleteCat(cat) {
   if (!confirm('حذف هذا القسم وكل أصنافه؟')) return;
@@ -3677,6 +3752,8 @@ function openAddCatModal() {
   document.getElementById('catEmojiInput').value = '';
   document.getElementById('catEmojiPreview').textContent = '📋';
   document.getElementById('catAllowAddonsToggle').classList.remove('on');
+  const mgInput = document.getElementById('catMainGroupInput');
+  if (mgInput) mgInput.value = '';
   document.querySelectorAll('.emoji-btn').forEach(b => b.classList.remove('selected'));
   initEmojiPicker();
   renderCatSelects();
@@ -4077,6 +4154,43 @@ function showNotif(msg) {
   const el = document.getElementById('notif');
   el.textContent = msg; el.classList.add('show');
   clearTimeout(notifTimer); notifTimer = setTimeout(() => el.classList.remove('show'), 2800);
+}
+
+// ============================================================
+// OFFLINE ALERT — منع الطلب عند انقطاع الإنترنت
+// ============================================================
+function showOfflineAlert() {
+  let overlay = document.getElementById('offlineAlertOverlay');
+  if (!overlay) {
+    overlay = document.createElement('div');
+    overlay.id = 'offlineAlertOverlay';
+    overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:9000;display:flex;align-items:center;justify-content:center;padding:24px;animation:fadeIn .3s ease';
+    overlay.innerHTML = `<div style="background:var(--white);border-radius:20px;padding:28px 24px;text-align:center;max-width:340px;width:100%;animation:popIn .3s ease">
+      <div style="font-size:56px;margin-bottom:12px">📡</div>
+      <div style="font-size:18px;font-weight:900;color:var(--dark);margin-bottom:8px">لا يوجد اتصال بالإنترنت</div>
+      <div style="font-size:13px;color:var(--text-muted);line-height:1.7;margin-bottom:20px">تعذر إرسال الطلب حالياً بسبب عدم توفر اتصال بالإنترنت 📡<br/>يرجى التحقق من الاتصال ثم إعادة المحاولة.</div>
+      <button onclick="document.getElementById('offlineAlertOverlay').remove()" style="width:100%;padding:14px;background:linear-gradient(135deg,var(--olive),var(--olive-light));color:#fff;border-radius:14px;font-size:15px;font-weight:800;border:none;cursor:pointer">حسناً ✓</button>
+    </div>`;
+    document.body.appendChild(overlay);
+  }
+  overlay.style.display = 'flex';
+}
+
+function showDeliveryUnavailableAlert(itemNames) {
+  let overlay = document.getElementById('deliveryUnavailableOverlay');
+  if (overlay) overlay.remove();
+  overlay = document.createElement('div');
+  overlay.id = 'deliveryUnavailableOverlay';
+  overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:9000;display:flex;align-items:center;justify-content:center;padding:24px;animation:fadeIn .3s ease';
+  overlay.innerHTML = `<div style="background:var(--white);border-radius:20px;padding:28px 24px;text-align:center;max-width:360px;width:100%;animation:popIn .3s ease">
+    <div style="font-size:56px;margin-bottom:12px">🚫</div>
+    <div style="font-size:18px;font-weight:900;color:var(--dark);margin-bottom:8px">منتج غير متاح للدليفري</div>
+    <div style="font-size:13px;color:var(--text-muted);line-height:1.8;margin-bottom:16px">عذراً، المنتج التالي غير متاح حالياً لخدمة الدليفري 🚫</div>
+    <div style="background:#fff0f0;border-radius:12px;padding:12px 16px;margin-bottom:20px;font-size:14px;font-weight:800;color:var(--red);text-align:right;white-space:pre-line">• ${itemNames}</div>
+    <div style="font-size:12px;color:var(--text-muted);margin-bottom:16px">يرجى حذف هذا المنتج من السلة أو اختيار الاستلام أو الكافيه</div>
+    <button onclick="document.getElementById('deliveryUnavailableOverlay').remove()" style="width:100%;padding:14px;background:linear-gradient(135deg,var(--olive),var(--olive-light));color:#fff;border-radius:14px;font-size:15px;font-weight:800;border:none;cursor:pointer">حسناً — سأعدّل طلبي</button>
+  </div>`;
+  document.body.appendChild(overlay);
 }
 
 // ============================================================
@@ -5147,6 +5261,10 @@ function openAddAdModal() {
   document.getElementById('adFileLabel').textContent = 'اضغط لرفع صورة أو فيديو';
   document.getElementById('adFilePreviewIcon').textContent = '📁';
   document.getElementById('adMediaPreview').innerHTML = '';
+  const prevSec = document.getElementById('adPreviewSection');
+  if (prevSec) prevSec.style.display = 'none';
+  const fileInput = document.getElementById('adFileInput');
+  if (fileInput) fileInput.value = '';
   openModal('addAdModal');
 }
 
@@ -5186,6 +5304,33 @@ function previewAdUrl(url) {
   prev.innerHTML = isVideo
     ? `<video src="${url}" style="width:100%;max-height:120px;border-radius:8px;object-fit:cover" muted></video>`
     : `<img src="${url}" style="width:100%;max-height:120px;border-radius:8px;object-fit:cover" onerror="this.style.display='none'"/>`;
+}
+
+function showAdPreview() {
+  const title = document.getElementById('adTitleInput').value.trim();
+  const caption = document.getElementById('adCaptionInput').value.trim();
+  const mediaUrl = document.getElementById('adUrlInput').value.trim();
+  const mediaType = document.getElementById('adMediaType').value;
+  const cta = document.getElementById('adCtaText').value.trim();
+  const previewSection = document.getElementById('adPreviewSection');
+  const previewContent = document.getElementById('adPreviewContent');
+  if (!previewSection || !previewContent) return;
+  const isVideo = mediaType === 'video';
+  const mediaHtml = mediaUrl
+    ? (isVideo
+      ? `<video src="${mediaUrl}" style="width:100%;max-height:160px;border-radius:10px;object-fit:cover;display:block;margin-bottom:8px" muted controls></video>`
+      : `<img src="${mediaUrl}" style="width:100%;max-height:160px;border-radius:10px;object-fit:cover;display:block;margin-bottom:8px" onerror="this.style.display='none'"/>`)
+    : '';
+  previewContent.innerHTML = `<div style="background:var(--white);border-radius:12px;overflow:hidden;border:1px solid var(--border)">
+    ${mediaHtml}
+    <div style="padding:10px 12px">
+      ${title ? `<div style="font-size:15px;font-weight:900;color:var(--dark);margin-bottom:4px">${title}</div>` : ''}
+      ${caption ? `<div style="font-size:12px;color:var(--text-muted);line-height:1.5;margin-bottom:8px">${caption}</div>` : ''}
+      ${cta ? `<button style="padding:7px 18px;background:linear-gradient(135deg,var(--olive),var(--olive-light));color:#fff;border-radius:100px;font-size:13px;font-weight:800;border:none">${cta}</button>` : ''}
+    </div>
+  </div>`;
+  previewSection.style.display = 'block';
+  previewSection.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
 }
 
 function saveAd() {
@@ -5346,8 +5491,8 @@ function confirmAgentSelection() {
 const MAIN_GROUPS = {
   restaurant: { label: 'المطعم', emoji: '🍽️', keywords: ['بيتزا','شاورما','كريب','سندوتش','وجبة','برجر','لحم','دجاج','مطعم','falafel','ساندويتش','فراخ','كباب','grill'] },
   eastern_sweets: { label: 'حلويات شرقية', emoji: '🍯', keywords: ['كنافة','بسبوسة','قطايف','عيش السرايا','مهلبية','رز بلبن','عسل','شرقى','عربى','oriental','om ali','أم علي'] },
-  western_sweets: { label: 'حلويات غربية', emoji: '🎂', keywords: ['كيك','تارت','براونى','كوكيز','cheesecake','وافل','بان كيك','pancake','cake','chocolate','فطيرة','غربى','western'] },
-  ice_cream: { label: 'ايس كريم', emoji: '🍦', keywords: ['ايس كريم','آيس كريم','ice cream','جيلاتى','gelato','مثلجات','sundae'] },
+  western_sweets: { label: 'حلويات غربية', emoji: '🎂', keywords: ['كيك','تارت','براونى','كوكيز','cheesecake','وافل','بان كيك','pancake','cake','chocolate','فطيرة','غربى','western','تشيز','تيراميسو'] },
+  ice_cream: { label: 'آيس كريم', emoji: '🍦', keywords: ['ايس كريم','آيس كريم','ice cream','جيلاتى','gelato','مثلجات','sundae'] },
   bakery: { label: 'مخبوزات', emoji: '🥐', keywords: ['خبز','كرواسون','بريوش','مافن','muffin','croissant','bakery','مخبز','bagel','toast'] },
   drinks: { label: 'مشروبات', emoji: '🥤', keywords: ['قهوة','شاى','عصير','موهيتو','سموزى','كوكتيل','drink','coffee','tea','juice','milkshake','ليموناضة','مشروب'] }
 };
@@ -5355,6 +5500,8 @@ const MAIN_GROUPS = {
 let currentMainGroup = null;
 
 function getCatMainGroup(catKey, catLabel) {
+  // استخدم mainGroup المخزن أولاً
+  if (MENU[catKey]?.mainGroup) return MENU[catKey].mainGroup;
   const lbl = (catLabel || catKey || '').toLowerCase();
   for (const [gk, gv] of Object.entries(MAIN_GROUPS)) {
     if (gv.keywords.some(kw => lbl.includes(kw.toLowerCase()))) return gk;
@@ -5419,14 +5566,14 @@ function getFilteredCatsByGroup() {
 </div>
 
 <!-- ===== ADD AD MODAL ===== -->
-<div class="sheet-overlay" id="addAdModal" onclick="closeModal('addAdModal',event)">
-  <div class="sheet" style="max-height:95vh">
+<div class="modal-overlay" id="addAdModal" style="align-items:flex-end;padding:0">
+  <div class="sheet" style="max-height:95vh;border-radius:20px 20px 0 0">
     <div class="sheet-handle"></div>
     <div class="sheet-header">
       <h2 id="addAdTitle">🎯 إعلان جديد</h2>
-      <button class="close-btn" onclick="closeModal('addAdModal',null)">✕</button>
+      <button class="close-btn" onclick="closeModal('addAdModal')">✕</button>
     </div>
-    <div class="sheet-body">
+    <div class="sheet-body" style="overflow-y:auto;padding-bottom:20px">
       <input type="hidden" id="editAdId"/>
       <div class="field">
         <label>العنوان الرئيسي</label>
@@ -5462,7 +5609,15 @@ function getFilteredCatsByGroup() {
         <div class="toggle-sw on" id="adActiveToggle" onclick="this.classList.toggle('on')"></div>
         <span style="font-size:14px;font-weight:700">تفعيل الإعلان فور الحفظ</span>
       </div>
-      <button class="btn-primary" onclick="saveAd()">💾 حفظ الإعلان</button>
+      <!-- معاينة الإعلان قبل الحفظ -->
+      <div id="adPreviewSection" style="display:none;background:var(--cream);border-radius:14px;padding:14px;border:1.5px solid var(--olive);margin-bottom:16px">
+        <div style="font-size:12px;font-weight:800;color:var(--olive-dark);margin-bottom:8px">👁️ معاينة الإعلان:</div>
+        <div id="adPreviewContent"></div>
+      </div>
+      <div style="display:flex;gap:8px;margin-bottom:8px">
+        <button onclick="showAdPreview()" style="flex:1;padding:12px;background:var(--cream);color:var(--olive-dark);border-radius:12px;font-size:13px;font-weight:800;border:2px solid var(--olive);cursor:pointer">👁️ معاينة</button>
+        <button onclick="saveAd()" style="flex:2;padding:12px;background:linear-gradient(135deg,var(--olive),var(--olive-light));color:#fff;border-radius:12px;font-size:14px;font-weight:800;border:none;cursor:pointer">💾 حفظ الإعلان</button>
+      </div>
     </div>
   </div>
 </div>
