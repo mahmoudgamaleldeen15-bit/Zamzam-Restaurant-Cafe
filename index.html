@@ -90,9 +90,25 @@ input,select,textarea{font-family:inherit;}
 .order-review-card{background:var(--white);border-radius:24px;padding:28px 20px;width:100%;max-width:400px;animation:popIn .35s ease;text-align:center;}
 .review-countdown{width:64px;height:64px;border-radius:50%;background:linear-gradient(135deg,var(--gold),var(--gold-light));display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:900;color:#fff;margin:0 auto 16px;box-shadow:0 4px 16px rgba(200,151,58,.35);}
 
-/* ===== PWA INSTALL BANNER ===== */
-.pwa-install-bar{background:linear-gradient(135deg,#1e3a0f,var(--olive-dark) 40%,var(--olive));padding:12px 16px;display:flex;align-items:center;gap:12px;cursor:pointer;box-shadow:0 2px 12px rgba(45,80,22,.4);border-bottom:1px solid rgba(255,255,255,.1);}
+/* ===== PWA INSTALL BANNER — Enhanced ===== */
+@keyframes pwaGlow{0%,100%{box-shadow:0 0 18px rgba(106,171,46,.5),0 4px 24px rgba(45,80,22,.45)}50%{box-shadow:0 0 36px rgba(106,171,46,.85),0 6px 32px rgba(45,80,22,.6)}}
+@keyframes pwaPulseIcon{0%,100%{transform:scale(1)}50%{transform:scale(1.12)}}
+@keyframes pwaFadeIn{from{opacity:0;transform:translateY(-16px)}to{opacity:1;transform:translateY(0)}}
+@keyframes pwaBorderGlow{0%,100%{border-color:rgba(106,171,46,.4)}50%{border-color:rgba(106,171,46,.9)}}
+.pwa-install-bar{
+  background:linear-gradient(135deg,#1a3a0a,#2d5016 35%,#3d6b1c 70%,#4a7c1f);
+  padding:14px 16px;display:flex;align-items:center;gap:12px;cursor:pointer;
+  border-bottom:2px solid rgba(106,171,46,.5);position:relative;overflow:hidden;
+  animation:pwaGlow 2.5s ease-in-out infinite,pwaFadeIn .5s ease;
+}
+.pwa-install-bar::before{content:'';position:absolute;inset:0;background:linear-gradient(90deg,transparent,rgba(255,255,255,.06),transparent);animation:shimmer 2s linear infinite;pointer-events:none;}
+.pwa-install-bar::after{content:'';position:absolute;inset:0;border:1.5px solid transparent;border-radius:0;background:linear-gradient(135deg,rgba(106,171,46,.3),rgba(255,255,255,.08),rgba(106,171,46,.3)) border-box;-webkit-mask:linear-gradient(#fff 0 0) padding-box,linear-gradient(#fff 0 0);-webkit-mask-composite:destination-out;mask-composite:exclude;pointer-events:none;}
 .pwa-install-bar.hidden{display:none;}
+.pwa-icon-wrap{width:48px;height:48px;border-radius:14px;background:linear-gradient(135deg,rgba(255,255,255,.25),rgba(255,255,255,.12));border:1.5px solid rgba(255,255,255,.3);display:flex;align-items:center;justify-content:center;font-size:24px;flex-shrink:0;animation:pwaPulseIcon 2s ease-in-out infinite;box-shadow:0 0 12px rgba(106,171,46,.4);}
+.pwa-install-btn{background:linear-gradient(135deg,rgba(255,255,255,.95),rgba(255,255,255,.85));border-radius:10px;padding:7px 16px;font-size:12px;font-weight:900;color:#2d5016;border:none;cursor:pointer;white-space:nowrap;box-shadow:0 2px 8px rgba(0,0,0,.2),0 0 12px rgba(255,255,255,.3);transition:.2s;animation:pwaBorderGlow 2s ease infinite;}
+.pwa-install-btn:active{transform:scale(.95);}
+.pwa-close-btn{color:rgba(255,255,255,.7);font-size:18px;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);border-radius:8px;cursor:pointer;width:30px;height:30px;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:.2s;}
+.pwa-close-btn:hover{background:rgba(255,255,255,.2);color:#fff;}
 
 /* ===== SEARCH HIGHLIGHT ===== */
 .search-hl{background:var(--gold-light);border-radius:3px;padding:0 2px;}
@@ -620,6 +636,74 @@ input,select,textarea{font-family:inherit;}
 .order-highlight-new{animation:orderHighlight 1.5s ease 3;border:2px solid #1a5fc8 !important;background:linear-gradient(135deg,#e8f0ff,#f0f5ff) !important;}
 @keyframes orderHighlightGreen{0%{box-shadow:0 0 0 0 rgba(22,163,74,.6)}50%{box-shadow:0 0 0 8px rgba(22,163,74,.2)}100%{box-shadow:0 0 0 0 rgba(22,163,74,0)}}
 .order-highlight-ready{animation:orderHighlightGreen 1.5s ease 3;border:2px solid #16a34a !important;background:linear-gradient(135deg,#e8fff0,#f0fff5) !important;}
+
+/* ===== DELIVERY STATUS BADGE (على الكارت) ===== */
+.delivery-badge{display:inline-flex;align-items:center;gap:4px;padding:3px 8px;border-radius:100px;font-size:10px;font-weight:800;margin-top:4px;letter-spacing:.3px;}
+.delivery-badge.avail{background:linear-gradient(135deg,#dcfce7,#bbf7d0);color:#15803d;border:1px solid #86efac;box-shadow:0 0 8px rgba(34,197,94,.25);}
+.delivery-badge.unavail{background:linear-gradient(135deg,#fee2e2,#fecaca);color:#b91c1c;border:1px solid #fca5a5;box-shadow:0 0 6px rgba(220,38,38,.2);}
+.delivery-badge .badge-dot{width:5px;height:5px;border-radius:50%;flex-shrink:0;}
+.delivery-badge.avail .badge-dot{background:#16a34a;animation:pulse 2s infinite;}
+.delivery-badge.unavail .badge-dot{background:#dc2626;}
+
+/* ===== PWA STATS & RATINGS — Admin Panel ===== */
+.stats-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px;}
+@media(min-width:600px){.stats-grid{grid-template-columns:repeat(4,1fr);}}
+.stat-card{background:var(--white);border-radius:16px;border:1px solid var(--border);padding:14px;text-align:center;position:relative;overflow:hidden;transition:.2s;}
+.stat-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,var(--olive-light),var(--olive));}
+.stat-card.blue::before{background:linear-gradient(90deg,#60a5fa,#2563eb);}
+.stat-card.gold::before{background:linear-gradient(90deg,var(--gold-light),var(--gold));}
+.stat-card.red::before{background:linear-gradient(90deg,#f87171,#e03030);}
+.stat-card.purple::before{background:linear-gradient(90deg,#c084fc,#9333ea);}
+.stat-val{font-size:26px;font-weight:900;color:var(--olive-dark);font-family:'Playfair Display',serif;line-height:1;}
+.stat-val.blue{color:#2563eb;}.stat-val.gold{color:var(--gold);}.stat-val.red{color:var(--red);}.stat-val.purple{color:#9333ea;}
+.stat-lbl{font-size:11px;color:var(--text-muted);font-weight:700;margin-top:5px;line-height:1.3;}
+.stat-sub{font-size:10px;color:var(--olive);font-weight:800;margin-top:3px;}
+.conversion-bar-wrap{background:var(--white);border-radius:14px;border:1px solid var(--border);padding:14px;margin-bottom:12px;}
+.conversion-bar-title{font-size:13px;font-weight:800;color:var(--dark);margin-bottom:10px;}
+.conv-row{display:flex;align-items:center;gap:8px;margin-bottom:8px;}
+.conv-label{font-size:11px;font-weight:700;min-width:90px;text-align:right;color:var(--text-muted);}
+.conv-track{flex:1;height:16px;background:var(--cream);border-radius:8px;overflow:hidden;}
+.conv-fill{height:100%;border-radius:8px;transition:.6s;background:linear-gradient(90deg,var(--olive-light),var(--olive));}
+.conv-fill.blue{background:linear-gradient(90deg,#60a5fa,#2563eb);}
+.conv-pct{font-size:11px;font-weight:800;min-width:36px;text-align:left;color:var(--olive-dark);}
+.period-pills{display:flex;gap:6px;margin-bottom:12px;flex-wrap:wrap;}
+.period-pill{padding:5px 12px;border-radius:100px;background:var(--cream);border:1.5px solid var(--border);font-size:12px;font-weight:700;color:var(--text-muted);cursor:pointer;transition:.2s;}
+.period-pill.active{background:var(--olive);border-color:var(--olive);color:#fff;}
+.rating-stars-big{display:flex;gap:6px;margin:8px 0;}
+.star-btn-big{font-size:28px;cursor:pointer;transition:.15s;filter:grayscale(1);}
+.star-btn-big.lit{filter:none;}
+.star-btn-big:hover,.star-btn-big:active{transform:scale(1.2);}
+.rating-bar-row{display:flex;align-items:center;gap:8px;margin-bottom:6px;}
+.rating-bar-label{font-size:12px;font-weight:700;color:var(--text-muted);min-width:20px;text-align:right;}
+.rating-bar-track{flex:1;height:14px;background:var(--cream);border-radius:7px;overflow:hidden;}
+.rating-bar-fill{height:100%;border-radius:7px;background:linear-gradient(90deg,var(--gold-light),var(--gold));transition:.5s;}
+.rating-bar-count{font-size:11px;font-weight:800;color:var(--text-muted);min-width:28px;text-align:left;}
+.review-card{background:var(--white);border-radius:14px;border:1px solid var(--border);padding:14px;margin-bottom:10px;transition:.2s;}
+.review-card:hover{border-color:var(--olive);box-shadow:0 2px 12px rgba(74,124,31,.1);}
+.review-card .rc-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px;}
+.review-card .rc-name{font-size:14px;font-weight:800;color:var(--dark);}
+.review-card .rc-date{font-size:11px;color:var(--text-muted);}
+.review-card .rc-stars{font-size:14px;margin-bottom:6px;}
+.review-card .rc-comment{font-size:13px;color:var(--text);line-height:1.6;}
+.avg-rating-display{text-align:center;padding:16px;background:linear-gradient(135deg,var(--olive-dark),var(--olive));border-radius:16px;margin-bottom:14px;color:#fff;}
+.avg-rating-num{font-size:48px;font-weight:900;font-family:'Playfair Display',serif;line-height:1;}
+.avg-rating-stars{font-size:20px;margin:4px 0;}
+.avg-rating-count{font-size:12px;opacity:.85;font-weight:700;}
+.tab-section-header{font-size:13px;font-weight:800;color:var(--dark);margin:14px 0 8px;display:flex;align-items:center;gap:6px;}
+/* Rating popup — client */
+.rating-popup-overlay{position:fixed;inset:0;background:rgba(0,0,0,.65);z-index:600;display:none;align-items:center;justify-content:center;padding:20px;}
+.rating-popup-overlay.open{display:flex;}
+.rating-popup-card{background:var(--white);border-radius:24px;padding:28px 22px;width:100%;max-width:380px;animation:popIn .35s ease;text-align:center;}
+
+.backup-import-overlay{position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:800;display:none;align-items:center;justify-content:center;padding:20px;}
+.backup-import-overlay.open{display:flex;}
+.backup-import-card{background:var(--white);border-radius:24px;padding:28px 22px;width:100%;max-width:440px;max-height:90vh;overflow-y:auto;animation:popIn .35s ease;}
+.backup-mode-btn{flex:1;padding:12px 8px;border-radius:12px;border:2px solid var(--border);font-size:12px;font-weight:800;cursor:pointer;text-align:center;transition:.2s;background:var(--cream);color:var(--text-muted);}
+.backup-mode-btn.active{border-color:var(--olive);background:var(--olive-pale);color:var(--olive-dark);}
+.selective-cb{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:10px;border:1.5px solid var(--border);cursor:pointer;transition:.15s;margin-bottom:6px;}
+.selective-cb:hover{background:var(--olive-pale);border-color:var(--olive);}
+.selective-cb input[type=checkbox]{width:18px;height:18px;accent-color:var(--olive);}
+.backup-progress{background:var(--olive-pale);border-radius:10px;padding:12px 14px;font-size:12px;line-height:2;color:var(--olive-dark);font-weight:700;display:none;}
 </style>
 </head>
 <body>
@@ -632,7 +716,7 @@ input,select,textarea{font-family:inherit;}
     <div class="sub">Restaurant & Café</div>
   </div>
   <div class="splash-dots"><span></span><span></span><span></span></div>
-  <div class="splash-credit">v18.0 — Designed by Mahmoud Gamal Eldeen</div>
+  <div class="splash-credit">v20.0 — Designed by Mahmoud Gamal Eldeen</div>
 </div>
 
 <!-- ===== AUTH ===== -->
@@ -671,16 +755,16 @@ input,select,textarea{font-family:inherit;}
 <!-- ===== MAIN APP ===== -->
 <div id="app" class="screen">
   <div class="notif" id="notif"></div>
-  <!-- PWA Install Banner -->
+  <!-- PWA Install Banner — Enhanced -->
   <div class="pwa-install-bar hidden" id="pwaInstallBar" onclick="triggerPWAInstall()">
-    <div style="width:44px;height:44px;border-radius:12px;background:rgba(255,255,255,.2);display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0;animation:pulse 2s infinite">📱</div>
+    <div class="pwa-icon-wrap">📱</div>
     <div style="flex:1;color:#fff">
-      <div style="font-size:14px;font-weight:900;line-height:1.2">أضف زمزم إلى الشاشة الرئيسية ✨</div>
-      <div style="font-size:11px;opacity:.85;margin-top:3px">للوصول السريع وطلب أسهل في أي وقت</div>
+      <div style="font-size:14px;font-weight:900;line-height:1.3;text-shadow:0 1px 3px rgba(0,0,0,.3)">أضف زمزم إلى الشاشة الرئيسية ✨</div>
+      <div style="font-size:11px;opacity:.9;margin-top:3px;font-weight:600">للوصول السريع وتجربة أسرع بكثير</div>
     </div>
     <div style="display:flex;gap:6px;align-items:center">
-      <div style="background:rgba(255,255,255,.25);border-radius:8px;padding:6px 12px;font-size:12px;font-weight:800;color:#fff;border:1px solid rgba(255,255,255,.4)">تثبيت</div>
-      <button onclick="event.stopPropagation();document.getElementById('pwaInstallBar').classList.add('hidden')" style="color:rgba(255,255,255,.8);font-size:18px;background:none;border:none;cursor:pointer;width:28px;height:28px;display:flex;align-items:center;justify-content:center">✕</button>
+      <button class="pwa-install-btn" onclick="event.stopPropagation();triggerPWAInstall()">⬇ تثبيت</button>
+      <button class="pwa-close-btn" onclick="event.stopPropagation();document.getElementById('pwaInstallBar').classList.add('hidden');trackPWAStat('dismissed')">✕</button>
     </div>
   </div>
   <div class="topbar">
@@ -832,6 +916,7 @@ input,select,textarea{font-family:inherit;}
     <div class="pm-body">
       <div class="pm-name" id="pmName"></div>
       <div class="pm-desc" id="pmDesc"></div>
+      <div id="pmDeliveryBadge" style="margin-bottom:8px"></div>
       <div class="pm-section" id="pmSizeSection">
         <h4>اختر الحجم</h4>
         <div class="size-pills" id="pmSizes"></div>
@@ -994,6 +1079,7 @@ input,select,textarea{font-family:inherit;}
     <div style="padding:12px 16px 6px;font-size:14px;font-weight:800;color:var(--text-muted)">التواصل</div>
     <div class="settings-section">
       <div class="settings-row" style="cursor:pointer" onclick="openScreen('favScreen')"><div class="info"><strong>❤️ المفضلة</strong><span>المنتجات المحفوظة</span></div><span style="color:var(--red)">←</span></div>
+      <div class="settings-row" style="cursor:pointer" onclick="openRatingPopup()"><div class="info"><strong>تقييم التطبيق ⭐</strong><span>شاركنا رأيك وتجربتك</span></div><span style="color:var(--gold)">←</span></div>
       <div class="settings-row" style="cursor:pointer" onclick="openWhatsapp('rating')"><div class="info"><strong>تقييم الخدمة ⭐</strong><span>إرسال تقييم للإدارة</span></div><span style="color:var(--olive)">←</span></div>
       <div class="settings-row" style="cursor:pointer" onclick="openWhatsapp('complaint')"><div class="info"><strong>شكوى / اقتراح 📋</strong><span>إبلاغ عن مشكلة أو اقتراح</span></div><span style="color:var(--olive)">←</span></div>
       <div class="settings-row" style="cursor:pointer" onclick="shareApp()"><div class="info"><strong>مشاركة التطبيق</strong><span>أرسل لصديق</span></div><span style="color:var(--olive)">←</span></div>
@@ -1006,7 +1092,7 @@ input,select,textarea{font-family:inherit;}
     <div style="text-align:center;padding:28px 20px 32px;color:var(--text-muted)">
       <div style="width:60px;height:60px;border-radius:16px;background:linear-gradient(135deg,var(--olive-dark),var(--olive));display:flex;align-items:center;justify-content:center;font-size:28px;margin:0 auto 12px;box-shadow:0 4px 16px rgba(45,80,22,.3)">🍽️</div>
       <div style="font-weight:900;font-size:16px;color:var(--dark);margin-bottom:4px">Zamzam Restaurant & Café</div>
-      <div style="font-size:12px;color:var(--text-muted);margin-bottom:12px" id="appVersionDisplay">Version: 18.0.0</div>
+      <div style="font-size:12px;color:var(--text-muted);margin-bottom:12px" id="appVersionDisplay">Version: 19.0.0</div>
       <div style="background:var(--cream);border-radius:12px;padding:12px 16px;border:1px solid var(--border);margin-bottom:4px">
         <div style="font-size:11px;color:var(--text-muted);margin-bottom:4px">Programmer & Developer</div>
         <div style="font-size:14px;font-weight:800;color:var(--dark)">Designed by <span style="color:var(--olive-dark)">Mahmoud Gamal Eldeen</span></div>
@@ -1135,7 +1221,7 @@ input,select,textarea{font-family:inherit;}
       <div class="admin-card"><div class="num" id="statOrders">0</div><div class="lbl">طلبات اليوم</div><div class="trend" id="statTrend">▲ 0 نشط</div></div>
       <div class="admin-card" id="statRevenueCard"><div class="num" id="statRevenue">0</div><div class="lbl">إيرادات اليوم (ج)</div></div>
       <div class="admin-card"><div class="num" id="statPending">0</div><div class="lbl">طلبات معلقة</div></div>
-      <div class="admin-card"><div class="num">4.8 ⭐</div><div class="lbl">متوسط التقييم</div></div>
+      <div class="admin-card"><div class="num" id="statRatingAvg">—</div><div class="lbl">متوسط التقييم ⭐</div></div>
     </div>
     <div style="padding:0 16px 12px;display:flex;gap:10px">
       <button onclick="toggleLastOrder()" id="lastOrderBtn" style="flex:1;padding:13px;background:var(--red);color:#fff;border-radius:12px;font-size:13px;font-weight:800">⚠️ تفعيل LAST ORDER</button>
@@ -1144,7 +1230,8 @@ input,select,textarea{font-family:inherit;}
     <!-- Admin-only action buttons -->
     <div id="adminActionBtns" style="padding:0 16px 12px;display:none;gap:8px;flex-wrap:wrap">
       <button onclick="openSalesReport()" style="flex:1;min-width:120px;padding:11px;background:linear-gradient(135deg,#1a5fc8,#2176e0);color:#fff;border-radius:12px;font-size:13px;font-weight:800">📊 تقرير المبيعات</button>
-      <button onclick="exportBackup()" style="flex:1;min-width:100px;padding:11px;background:linear-gradient(135deg,var(--olive-dark),var(--olive));color:#fff;border-radius:12px;font-size:13px;font-weight:800">💾 Backup</button>
+      <button onclick="exportBackup()" style="flex:1;min-width:100px;padding:11px;background:linear-gradient(135deg,var(--olive-dark),var(--olive));color:#fff;border-radius:12px;font-size:13px;font-weight:800">💾 تصدير Backup</button>
+      <button onclick="openImportBackupModal()" style="flex:1;min-width:100px;padding:11px;background:linear-gradient(135deg,#1a5fc8,#2176e0);color:#fff;border-radius:12px;font-size:13px;font-weight:800">📥 استيراد Backup</button>
       <button onclick="confirmSystemReset()" style="flex:1;min-width:100px;padding:11px;background:linear-gradient(135deg,#c0392b,#e74c3c);color:#fff;border-radius:12px;font-size:13px;font-weight:800">🗑️ مسح النظام</button>
     </div>
     <div class="admin-tabs" id="adminTabsEl">
@@ -1158,6 +1245,7 @@ input,select,textarea{font-family:inherit;}
       <button id="tabNotifyBtn" onclick="switchAdminTab('notify',this)">📢 إشعارات</button>
       <button id="tabAdsBtn" onclick="switchAdminTab('ads',this)">🎯 الإعلانات</button>
       <button id="tabAgentsBtn" onclick="switchAdminTab('agents',this)">🛵 المندوبين</button>
+      <button id="tabStatsBtn" onclick="switchAdminTab('stats',this)">📊 الإحصائيات</button>
     </div>
 
     <!-- ORDERS TAB (Card View) -->
@@ -1305,7 +1393,66 @@ input,select,textarea{font-family:inherit;}
       <div id="agentsAdminList"></div>
     </div>
 
-    <!-- SETTINGS TAB - ADMIN ONLY -->
+    <!-- STATS TAB (Admin Only) -->
+    <div id="tab-stats" style="display:none;padding:0 16px 24px">
+      <!-- Period Filter -->
+      <div class="tab-section-header">📊 إحصائيات التطبيق</div>
+      <div class="period-pills">
+        <div class="period-pill active" onclick="setStatsPeriod('today',this)">اليوم</div>
+        <div class="period-pill" onclick="setStatsPeriod('week',this)">الأسبوع</div>
+        <div class="period-pill" onclick="setStatsPeriod('month',this)">الشهر</div>
+        <div class="period-pill" onclick="setStatsPeriod('all',this)">الكل</div>
+      </div>
+
+      <!-- PWA Install Stats -->
+      <div class="tab-section-header">📱 إحصائيات التثبيت</div>
+      <div class="stats-grid" id="pwaStatsGrid">
+        <div class="stat-card blue"><div class="stat-val blue" id="statPwaShown">0</div><div class="stat-lbl">ظهور الإشعار</div></div>
+        <div class="stat-card"><div class="stat-val" id="statPwaClicked">0</div><div class="stat-lbl">ضغط على تثبيت</div></div>
+        <div class="stat-card gold"><div class="stat-val gold" id="statPwaInstalled">0</div><div class="stat-lbl">تم التثبيت فعلاً</div></div>
+        <div class="stat-card red"><div class="stat-val red" id="statPwaDismissed">0</div><div class="stat-lbl">تم الإغلاق</div></div>
+      </div>
+      <!-- Conversion Bar -->
+      <div class="conversion-bar-wrap">
+        <div class="conversion-bar-title">📈 نسبة التحويل</div>
+        <div class="conv-row">
+          <div class="conv-label">ظهور الإشعار</div>
+          <div class="conv-track"><div class="conv-fill blue" id="convShown" style="width:100%"></div></div>
+          <div class="conv-pct" id="convShownPct">100%</div>
+        </div>
+        <div class="conv-row">
+          <div class="conv-label">ضغط تثبيت</div>
+          <div class="conv-track"><div class="conv-fill" id="convClicked" style="width:0%"></div></div>
+          <div class="conv-pct" id="convClickedPct">0%</div>
+        </div>
+        <div class="conv-row">
+          <div class="conv-label">تثبيت ناجح</div>
+          <div class="conv-track"><div class="conv-fill" id="convInstalled" style="width:0%;background:linear-gradient(90deg,#fbbf24,#f59e0b)"></div></div>
+          <div class="conv-pct" id="convInstalledPct">0%</div>
+        </div>
+      </div>
+
+      <!-- Ratings Summary -->
+      <div class="tab-section-header">⭐ التقييمات</div>
+      <div class="avg-rating-display" id="avgRatingDisplay">
+        <div class="avg-rating-num" id="avgRatingNum">—</div>
+        <div class="avg-rating-stars" id="avgRatingStars">☆☆☆☆☆</div>
+        <div class="avg-rating-count" id="avgRatingCount">لا توجد تقييمات بعد</div>
+      </div>
+      <div style="background:var(--white);border-radius:14px;border:1px solid var(--border);padding:14px;margin-bottom:14px" id="ratingBarsWrap">
+        <div class="rating-bar-row"><div class="rating-bar-label">5 ⭐</div><div class="rating-bar-track"><div class="rating-bar-fill" id="rbar5" style="width:0%"></div></div><div class="rating-bar-count" id="rcount5">0</div></div>
+        <div class="rating-bar-row"><div class="rating-bar-label">4 ⭐</div><div class="rating-bar-track"><div class="rating-bar-fill" id="rbar4" style="width:0%"></div></div><div class="rating-bar-count" id="rcount4">0</div></div>
+        <div class="rating-bar-row"><div class="rating-bar-label">3 ⭐</div><div class="rating-bar-track"><div class="rating-bar-fill" id="rbar3" style="width:0%"></div></div><div class="rating-bar-count" id="rcount3">0</div></div>
+        <div class="rating-bar-row"><div class="rating-bar-label">2 ⭐</div><div class="rating-bar-track"><div class="rating-bar-fill" id="rbar2" style="width:0%"></div></div><div class="rating-bar-count" id="rcount2">0</div></div>
+        <div class="rating-bar-row"><div class="rating-bar-label">1 ⭐</div><div class="rating-bar-track"><div class="rating-bar-fill" id="rbar1" style="width:0%"></div></div><div class="rating-bar-count" id="rcount1">0</div></div>
+      </div>
+
+      <!-- Reviews List -->
+      <div class="tab-section-header">💬 تعليقات العملاء <span style="background:var(--olive-pale);color:var(--olive-dark);padding:2px 8px;border-radius:100px;font-size:11px" id="reviewsCountBadge">0</span></div>
+      <div id="adminReviewsList"><div style="text-align:center;padding:30px;color:var(--text-muted);font-weight:700">لا توجد تعليقات بعد</div></div>
+    </div>
+
+
     <div id="tab-settings" style="display:none">
       <div style="padding:0 16px 8px;font-size:15px;font-weight:800;color:var(--dark)">🗺️ مناطق التوصيل</div>
       <div class="settings-section">
@@ -1484,8 +1631,7 @@ input,select,textarea{font-family:inherit;}
     <div class="field"><label>القسم</label>
       <select id="itemCatInput" onchange="updateItemMainGroupHint()" style="width:100%;padding:13px 16px;border:1.5px solid var(--border);border-radius:12px;font-size:15px;background:var(--white)"></select>
     </div>
-    <div id="itemMainGroupHint" style="display:none;background:var(--olive-pale);border-radius:8px;padding:6px 12px;font-size:12px;font-weight:700;color:var(--olive-dark);margin-bottom:10px"></div>
-    <div class="field"><label>اسم الصنف</label><input type="text" id="itemNameInput" placeholder="مثال: كنافة بالقشطة"/></div>
+    <div id="itemMainGroupHint" style="display:none;background:var(--olive-pale);border-radius:8px;padding:6px 12px;font-size:12px;font-weight:700;color:var(--olive-dark);margin-bottom:10px"></div>    <div class="field"><label>اسم الصنف</label><input type="text" id="itemNameInput" placeholder="مثال: كنافة بالقشطة"/></div>
     <div class="field"><label>الوصف</label><input type="text" id="itemDescInput" placeholder="وصف مختصر"/></div>
     <div class="field">
       <label>الإيموجى</label>
@@ -1625,7 +1771,7 @@ input,select,textarea{font-family:inherit;}
 // ============================================================
 // APP VERSION
 // ============================================================
-const APP_VERSION = '18.0.0';
+const APP_VERSION = '19.0.0';
 
 // ============================================================
 // SECURITY: Passwords stored obfuscated (base64 encoded pairs)
@@ -1792,6 +1938,7 @@ window.onload = () => {
     _pwaInstallPrompt = e;
     const bar = document.getElementById('pwaInstallBar');
     if (bar) bar.classList.remove('hidden');
+    trackPWAStat('shown');
   });
 
   // ===== Restore cart from localStorage =====
@@ -2044,6 +2191,7 @@ function renderMenu() {
           ${item.prices ? `<div class="size-pills"><span class="size-pill active">S</span><span class="size-pill">M</span><span class="size-pill">L</span></div>` : ''}
           <div class="food-name">${item.name}</div>
           <div class="food-desc">${item.desc||''}</div>
+          ${deliveryType==='delivery' ? `<div class="delivery-badge ${item.deliveryAvailable===false ? 'unavail' : 'avail'}"><span class="badge-dot"></span>${item.deliveryAvailable===false ? '📦 استلام فقط' : '🚚 متاح للدليفري'}</div>` : ''}
           <div style="display:flex;align-items:center;justify-content:space-between">
             <div class="food-price">${price} <span style="font-size:11px;color:var(--text-muted)">ج.م</span></div>
             ${!notAvail ? `<div class="food-add" onclick="quickAdd(event,'${cat}','${item.id}')">+</div>` : ''}
@@ -2110,6 +2258,12 @@ function openProduct(cat, id) {
   document.getElementById('pmImg').textContent = item.emoji;
   document.getElementById('pmName').textContent = item.name;
   document.getElementById('pmDesc').textContent = item.desc || '';
+  // Delivery badge in modal
+  const pmDB = document.getElementById('pmDeliveryBadge');
+  if (pmDB) {
+    const isAvail = item.deliveryAvailable !== false;
+    pmDB.innerHTML = `<span class="delivery-badge ${isAvail ? 'avail' : 'unavail'}"><span class="badge-dot"></span>${isAvail ? '🚚 متاح للدليفري' : '📦 استلام فقط — غير متاح للدليفري'}</span>`;
+  }
   const ss = document.getElementById('pmSizeSection');
   if (item.prices) {
     ss.style.display = 'block';
@@ -2731,6 +2885,7 @@ function applyRoleRestrictions() {
   const tabNotifyBtn = document.getElementById('tabNotifyBtn');
   const tabAdsBtn = document.getElementById('tabAdsBtn');
   const tabAgentsBtn = document.getElementById('tabAgentsBtn');
+  const tabStatsBtn = document.getElementById('tabStatsBtn');
   const revenueCard = document.getElementById('statRevenueCard');
   const adminActionBtns = document.getElementById('adminActionBtns');
   if (tabMenuBtn) tabMenuBtn.style.display = isAdmin ? 'block' : 'none';
@@ -2740,6 +2895,7 @@ function applyRoleRestrictions() {
   if (tabNotifyBtn) tabNotifyBtn.style.display = isAdmin ? 'block' : 'none';
   if (tabAdsBtn) tabAdsBtn.style.display = isAdmin ? 'block' : 'none';
   if (tabAgentsBtn) tabAgentsBtn.style.display = isAdmin ? 'block' : 'none';
+  if (tabStatsBtn) tabStatsBtn.style.display = isAdmin ? 'block' : 'none';
   if (revenueCard) revenueCard.style.display = isAdmin ? 'block' : 'none';
   if (adminActionBtns) adminActionBtns.style.display = isAdmin ? 'flex' : 'none';
   if (!isAdmin) {
@@ -2761,7 +2917,7 @@ function applyRoleRestrictions() {
 function switchAdminTab(tab, el) {
   document.querySelectorAll('.admin-tabs button').forEach(b => b.classList.remove('active'));
   el.classList.add('active');
-  ['orders','cashier','bookings','menu','addons','offers','settings','notify','ads','agents'].forEach(t => {
+  ['orders','cashier','bookings','menu','addons','offers','settings','notify','ads','agents','stats'].forEach(t => {
     const tabEl = document.getElementById('tab-' + t);
     if (tabEl) tabEl.style.display = t === tab ? 'block' : 'none';
   });
@@ -2774,6 +2930,7 @@ function switchAdminTab(tab, el) {
   if (tab === 'settings') loadSettingsUI();
   if (tab === 'ads') renderAdsAdmin();
   if (tab === 'agents') renderAgentsAdmin();
+  if (tab === 'stats') { loadRatingsFromFirebase(); renderStatsTab(); }
 }
 
 // ============================================================
@@ -2796,6 +2953,12 @@ function renderAdminOrders() {
   if (elRev) elRev.textContent = ordersData.filter(o => o.status === 'delivered').reduce((s, o) => s + (o.total || 0), 0).toLocaleString('ar-EG');
   if (elPend) elPend.textContent = ordersData.filter(o => o.status === 'new' || o.status === 'prep').length;
   if (elTrend) elTrend.textContent = '▲ ' + ordersData.filter(o => !['delivered','cancelled'].includes(o.status)).length + ' نشط';
+  // Update real rating avg
+  const ratingAvgEl = document.getElementById('statRatingAvg');
+  if (ratingAvgEl && APP_RATINGS.length) {
+    const avg = (APP_RATINGS.reduce((s, r) => s + r.rating, 0) / APP_RATINGS.length).toFixed(1);
+    ratingAvgEl.textContent = avg + ' ⭐';
+  } else if (ratingAvgEl) { ratingAvgEl.textContent = '—'; }
 
   const body = document.getElementById('adminOrdersBody');
   if (!filtered.length) {
@@ -4056,52 +4219,486 @@ function exportSalesReport() {
 }
 
 // ============================================================
-// BACKUP SYSTEM (Admin Only)
 // ============================================================
+// BACKUP SYSTEM v2 — Full Professional (Admin Only)
+// ============================================================
+
+const BACKUP_VERSION = '19.0';
+
+// ========== EXPORT BACKUP (Full System) ==========
 function exportBackup() {
+  if (adminRoleType !== 'admin') { showNotif('⛔ أدمن فقط'); return; }
   const users = loadData('zz_users', []);
+  const agents = loadData('zz_agents', []);
   const backup = {
-    exportDate: new Date().toISOString(),
-    exportedBy: 'Zamzam Admin',
-    restaurant: RESTAURANT.name,
+    _meta: {
+      version: BACKUP_VERSION,
+      appVersion: APP_VERSION,
+      exportDate: new Date().toISOString(),
+      exportedBy: 'Zamzam Admin',
+      restaurant: RESTAURANT.name,
+      checksum: Date.now()
+    },
     summary: {
       totalUsers: users.length,
       totalOrders: ordersData.length,
-      totalBookings: bookingsData.length
+      totalBookings: bookingsData.length,
+      totalMenuCategories: Object.keys(MENU).length,
+      totalMenuItems: Object.values(MENU).reduce((s,c)=>s+(c.items||[]).length,0),
+      totalOffers: OFFERS.length,
+      totalAddons: ADDONS.length
     },
-    users: users.map(u => ({
-      name: u.name,
-      phone: u.phone,
-      whatsapp: u.whatsapp || u.phone,
-      registeredAt: u.registeredAt || '—'
-    })),
-    contacts: users.map(u => u.whatsapp || u.phone).filter(Boolean),
-    orders: ordersData,
-    bookings: bookingsData,
-    settings: { ...SETTINGS, adminPass: undefined },
+    // ===== كل بيانات النظام =====
+    menu: MENU,
+    settings: { ...SETTINGS },
     addons: ADDONS,
-    offers: OFFERS
+    offers: OFFERS,
+    orders: ordersData,
+    orderHistory: orderHistory,
+    bookings: bookingsData,
+    users: users,
+    agents: agents,
+    ads: loadData('zz_ads', []),
+    vipCustomers: VIP_CUSTOMERS,
+    usedOffers: usedOffers,
+    favCounts: loadData('zz_fav_counts', {}),
+    mainGroups: MAIN_GROUPS
   };
+
   const json = JSON.stringify(backup, null, 2);
   const blob = new Blob([json], {type:'application/json;charset=utf-8'});
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a'); a.href = url;
-  a.download = `zamzam_backup_${new Date().toISOString().slice(0,10)}.json`;
+  const dateStr = new Date().toISOString().slice(0,16).replace('T','_').replace(':','-');
+  a.download = `zamzam_full_backup_v${BACKUP_VERSION}_${dateStr}.json`;
   a.click(); URL.revokeObjectURL(url);
 
-  // أيضاً تصدير ملف CSV للعملاء فقط
+  // CSV للعملاء
   const csvRows = [['الاسم','الهاتف','واتساب','تاريخ التسجيل']];
   users.forEach(u => csvRows.push([u.name||'—', u.phone||'—', u.whatsapp||u.phone||'—', u.registeredAt||'—']));
   const csv = csvRows.map(r=>r.map(v=>`"${String(v).replace(/"/g,'""')}"`).join(',')).join('\n');
   const csvBlob = new Blob(['\uFEFF'+csv],{type:'text/csv;charset=utf-8'});
   const csvUrl = URL.createObjectURL(csvBlob);
-  setTimeout(()=>{
-    const b = document.createElement('a'); b.href=csvUrl;
-    b.download=`zamzam_customers_${new Date().toISOString().slice(0,10)}.csv`;
-    b.click(); URL.revokeObjectURL(csvUrl);
-  }, 500);
+  setTimeout(()=>{ const b=document.createElement('a'); b.href=csvUrl; b.download=`zamzam_customers_${dateStr}.csv`; b.click(); URL.revokeObjectURL(csvUrl); }, 600);
 
-  showNotif(`✓ تم تصدير Backup — ${users.length} عميل، ${ordersData.length} طلب`);
+  showNotif(`✓ تم تصدير Backup كامل — ${users.length} عميل، ${ordersData.length} طلب`);
+}
+
+// ========== AUTO BACKUP قبل أي استيراد ==========
+function _autoBackupBeforeImport() {
+  try {
+    const users = loadData('zz_users', []);
+    const autoBackup = {
+      _meta: { version: BACKUP_VERSION, exportDate: new Date().toISOString(), type: 'auto_pre_import' },
+      menu: MENU, settings: SETTINGS, addons: ADDONS, offers: OFFERS,
+      orders: ordersData, orderHistory: orderHistory, bookings: bookingsData,
+      users: users, ads: loadData('zz_ads',[]), vipCustomers: VIP_CUSTOMERS
+    };
+    const json = JSON.stringify(autoBackup);
+    const blob = new Blob([json], {type:'application/json;charset=utf-8'});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a'); a.href = url;
+    a.download = `zamzam_AUTO_backup_${new Date().toISOString().slice(0,10)}.json`;
+    a.click(); URL.revokeObjectURL(url);
+    return true;
+  } catch(e) { return false; }
+}
+
+// ========== VALIDATE BACKUP FILE ==========
+function _validateBackupFile(data) {
+  if (!data || typeof data !== 'object') return { ok: false, msg: 'ملف غير صالح — ليس JSON' };
+  if (!data._meta) return { ok: false, msg: 'ملف قديم أو تالف — لا يحتوي على بيانات Meta' };
+  if (!data.menu && !data.settings && !data.orders) return { ok: false, msg: 'ملف لا يحتوي على بيانات كافية' };
+  return { ok: true, version: data._meta?.version || 'قديم', date: data._meta?.exportDate };
+}
+
+// ========== MIGRATE OLD BACKUP to new structure ==========
+function _migrateBackupData(data) {
+  // Version compatibility: إذا Backup قديم يفتقد بعض الحقول
+  if (!data.orderHistory) data.orderHistory = [];
+  if (!data.agents) data.agents = [];
+  if (!data.ads) data.ads = [];
+  if (!data.vipCustomers) data.vipCustomers = {};
+  if (!data.usedOffers) data.usedOffers = {};
+  if (!data.favCounts) data.favCounts = {};
+  if (!data.users) data.users = [];
+  if (!data.addons) data.addons = [];
+  if (!data.offers) data.offers = [];
+  if (!data.orders) data.orders = [];
+  if (!data.bookings) data.bookings = [];
+  if (!data.settings) data.settings = {};
+  if (!data.menu) data.menu = {};
+  // تأكد من أن كل item في المنيو له deliveryAvailable
+  Object.keys(data.menu).forEach(cat => {
+    (data.menu[cat]?.items || []).forEach(item => {
+      if (item.deliveryAvailable === undefined) item.deliveryAvailable = true;
+    });
+  });
+  return data;
+}
+
+// ========== MERGE HELPER: لدمج بدون تكرار بناءً على ID ==========
+function _mergeArrayById(existing, incoming) {
+  const map = {};
+  existing.forEach(item => { if (item.id) map[item.id] = item; });
+  incoming.forEach(item => {
+    if (!item.id) return;
+    if (!map[item.id]) {
+      map[item.id] = item; // عنصر جديد — أضفه
+    } else {
+      // دمج: الأحدث timestamp يسود
+      const existTs = map[item.id].timestamp || map[item.id].registeredAt || 0;
+      const newTs   = item.timestamp || item.registeredAt || 0;
+      if (newTs > existTs) map[item.id] = { ...map[item.id], ...item };
+    }
+  });
+  return Object.values(map);
+}
+
+// ========== MERGE MENU: دمج بدون حذف الأقسام الحالية ==========
+function _mergeMenu(existingMenu, incomingMenu) {
+  const merged = { ...existingMenu };
+  Object.keys(incomingMenu).forEach(cat => {
+    if (!merged[cat]) {
+      merged[cat] = incomingMenu[cat]; // قسم جديد — أضفه
+    } else {
+      // دمج Items بدون تكرار
+      const existItems = merged[cat].items || [];
+      const newItems   = incomingMenu[cat].items || [];
+      const itemMap = {};
+      existItems.forEach(i => { if(i.id) itemMap[i.id] = i; });
+      newItems.forEach(i => {
+        if (!i.id) return;
+        if (!itemMap[i.id]) itemMap[i.id] = i;
+        // else: حافظ على الحالي (الأحدث محلياً)
+      });
+      merged[cat] = { ...merged[cat], ...incomingMenu[cat], items: Object.values(itemMap) };
+    }
+  });
+  return merged;
+}
+
+// ========== OPEN IMPORT MODAL ==========
+function openImportBackupModal() {
+  if (adminRoleType !== 'admin') { showNotif('⛔ أدمن فقط'); return; }
+  let modal = document.getElementById('importBackupModal');
+  if (!modal) {
+    modal = document.createElement('div');
+    modal.id = 'importBackupModal';
+    modal.className = 'backup-import-overlay';
+    modal.innerHTML = `
+      <div class="backup-import-card">
+        <div style="text-align:center;margin-bottom:16px">
+          <div style="font-size:40px;margin-bottom:6px">📥</div>
+          <div style="font-size:18px;font-weight:900;color:var(--dark)">استيراد Backup</div>
+          <div style="font-size:12px;color:var(--text-muted);margin-top:4px">اختر الملف وطريقة الاستيراد</div>
+        </div>
+
+        <!-- اختيار الملف -->
+        <div style="border:2px dashed var(--olive);border-radius:14px;padding:18px;text-align:center;background:var(--olive-ultra);cursor:pointer;margin-bottom:16px" onclick="document.getElementById('backupFileInput').click()">
+          <div style="font-size:28px;margin-bottom:6px">📂</div>
+          <div style="font-size:13px;font-weight:800;color:var(--olive-dark)" id="backupFileLabel">اضغط لاختيار ملف JSON</div>
+          <div style="font-size:11px;color:var(--text-muted);margin-top:4px">ملفات .json فقط</div>
+        </div>
+        <input type="file" id="backupFileInput" accept=".json" style="display:none" onchange="handleBackupFileSelect(this)"/>
+
+        <!-- معلومات الملف -->
+        <div id="backupFileInfo" style="display:none;background:var(--cream);border-radius:10px;padding:10px 14px;font-size:12px;margin-bottom:14px;border:1px solid var(--border)">
+          <div id="backupFileInfoContent"></div>
+        </div>
+
+        <!-- طريقة الاستيراد -->
+        <div style="font-size:12px;font-weight:800;color:var(--text-muted);margin-bottom:8px;text-transform:uppercase">طريقة الاستيراد</div>
+        <div style="display:flex;gap:6px;margin-bottom:14px">
+          <div class="backup-mode-btn active" id="bmodeMerge" onclick="selectBackupMode('merge')">🔀<br/>دمج البيانات</div>
+          <div class="backup-mode-btn" id="bmodeReplace" onclick="selectBackupMode('replace')">♻️<br/>استبدال كامل</div>
+          <div class="backup-mode-btn" id="bmodeSelective" onclick="selectBackupMode('selective')">🎯<br/>استعادة جزئية</div>
+        </div>
+
+        <!-- وصف الطريقة -->
+        <div id="backupModeDesc" style="background:var(--blue-pale);border-radius:10px;padding:10px 14px;font-size:12px;color:#1a5fc8;font-weight:700;margin-bottom:14px;line-height:1.7">
+          🔀 <strong>دمج البيانات:</strong> يدمج البيانات الواردة مع الحالية — لا يحذف شيئاً — يمنع التكرار تلقائياً.
+        </div>
+
+        <!-- الاستعادة الجزئية (Selective) -->
+        <div id="selectiveOptions" style="display:none;margin-bottom:14px">
+          <div style="font-size:12px;font-weight:800;color:var(--text-muted);margin-bottom:8px">اختر ما تريد استعادته:</div>
+          <label class="selective-cb"><input type="checkbox" id="selMenu" checked/> 🍕 المنيو والأسعار</label>
+          <label class="selective-cb"><input type="checkbox" id="selSettings" checked/> ⚙️ الإعدادات</label>
+          <label class="selective-cb"><input type="checkbox" id="selOrders"/> 📦 الطلبات</label>
+          <label class="selective-cb"><input type="checkbox" id="selUsers" checked/> 👥 العملاء</label>
+          <label class="selective-cb"><input type="checkbox" id="selOffers" checked/> 🎁 العروض والكوبونات</label>
+          <label class="selective-cb"><input type="checkbox" id="selAddons" checked/> ➕ الإضافات</label>
+          <label class="selective-cb"><input type="checkbox" id="selAgents"/> 🛵 المندوبين</label>
+          <label class="selective-cb"><input type="checkbox" id="selAds"/> 🎯 الإعلانات</label>
+          <label class="selective-cb"><input type="checkbox" id="selVip"/> ⭐ بيانات VIP</label>
+        </div>
+
+        <!-- تقدم الاستيراد -->
+        <div class="backup-progress" id="backupProgress"></div>
+
+        <!-- أزرار -->
+        <div style="display:flex;gap:8px;margin-top:4px">
+          <button onclick="closeImportBackupModal()" style="flex:1;padding:12px;background:var(--cream);color:var(--text-muted);border-radius:12px;font-size:14px;font-weight:800;border:none;cursor:pointer">إلغاء</button>
+          <button onclick="executeImportBackup()" id="importBackupBtn" disabled style="flex:2;padding:12px;background:linear-gradient(135deg,#1a5fc8,#2176e0);color:#fff;border-radius:12px;font-size:14px;font-weight:800;border:none;cursor:pointer;opacity:.5">📥 استيراد الآن</button>
+        </div>
+        <div style="text-align:center;margin-top:10px;font-size:11px;color:var(--text-muted)">⚠️ سيتم عمل Auto-Backup تلقائى قبل الاستيراد لحماية بياناتك</div>
+      </div>`;
+    document.body.appendChild(modal);
+  }
+  _backupImportData = null;
+  _backupImportMode = 'merge';
+  document.getElementById('backupFileLabel').textContent = 'اضغط لاختيار ملف JSON';
+  document.getElementById('backupFileInfo').style.display = 'none';
+  document.getElementById('backupProgress').style.display = 'none';
+  document.getElementById('importBackupBtn').disabled = true;
+  document.getElementById('importBackupBtn').style.opacity = '.5';
+  modal.classList.add('open');
+}
+
+function closeImportBackupModal() {
+  const m = document.getElementById('importBackupModal');
+  if (m) m.classList.remove('open');
+}
+
+let _backupImportData = null;
+let _backupImportMode = 'merge';
+
+function selectBackupMode(mode) {
+  _backupImportMode = mode;
+  ['merge','replace','selective'].forEach(m => {
+    document.getElementById('bmode'+m.charAt(0).toUpperCase()+m.slice(1))?.classList.toggle('active', m === mode);
+  });
+  const descs = {
+    merge: '🔀 <strong>دمج البيانات:</strong> يدمج البيانات الواردة مع الحالية — لا يحذف شيئاً — يمنع التكرار تلقائياً.',
+    replace: '♻️ <strong>استبدال كامل:</strong> يستبدل جميع البيانات الحالية بالنسخة الاحتياطية — سيتم Auto-Backup أولاً.',
+    selective: '🎯 <strong>استعادة جزئية:</strong> اختر أي أقسام تريد استعادتها فقط — باقي البيانات تبقى دون تغيير.'
+  };
+  document.getElementById('backupModeDesc').innerHTML = descs[mode] || '';
+  document.getElementById('selectiveOptions').style.display = mode === 'selective' ? 'block' : 'none';
+}
+
+function handleBackupFileSelect(input) {
+  const file = input.files[0];
+  if (!file) return;
+  const label = document.getElementById('backupFileLabel');
+  label.textContent = '⏳ جارى قراءة الملف...';
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    try {
+      const data = JSON.parse(e.target.result);
+      const validation = _validateBackupFile(data);
+      if (!validation.ok) {
+        label.textContent = '❌ ' + validation.msg;
+        document.getElementById('backupFileInfo').style.display = 'none';
+        document.getElementById('importBackupBtn').disabled = true;
+        document.getElementById('importBackupBtn').style.opacity = '.5';
+        return;
+      }
+      _backupImportData = _migrateBackupData(data);
+      label.textContent = '✅ ' + file.name;
+      // عرض معلومات الملف
+      const info = document.getElementById('backupFileInfo');
+      const d = data._meta || {};
+      info.style.display = 'block';
+      document.getElementById('backupFileInfoContent').innerHTML = `
+        <div style="font-weight:800;color:var(--olive-dark);margin-bottom:6px">📋 معلومات النسخة الاحتياطية:</div>
+        <div>📅 تاريخ التصدير: <strong>${d.exportDate ? new Date(d.exportDate).toLocaleString('ar-EG') : 'غير محدد'}</strong></div>
+        <div>🔢 إصدار Backup: <strong>${d.version || 'قديم'}</strong></div>
+        <div>🏪 المطعم: <strong>${d.restaurant || '—'}</strong></div>
+        <div>📦 الطلبات: <strong>${(data.orders||[]).length}</strong> | 👥 العملاء: <strong>${(data.users||[]).length}</strong></div>
+        <div>🍕 أقسام المنيو: <strong>${Object.keys(data.menu||{}).length}</strong> | 🎁 عروض: <strong>${(data.offers||[]).length}</strong></div>
+      `;
+      document.getElementById('importBackupBtn').disabled = false;
+      document.getElementById('importBackupBtn').style.opacity = '1';
+    } catch(err) {
+      label.textContent = '❌ ملف تالف — تعذر قراءة JSON';
+      document.getElementById('backupFileInfo').style.display = 'none';
+      document.getElementById('importBackupBtn').disabled = true;
+      document.getElementById('importBackupBtn').style.opacity = '.5';
+    }
+  };
+  reader.readAsText(file);
+}
+
+async function executeImportBackup() {
+  if (adminRoleType !== 'admin') { showNotif('⛔ أدمن فقط'); return; }
+  if (!_backupImportData) { showNotif('❌ لم يتم اختيار ملف'); return; }
+
+  const progress = document.getElementById('backupProgress');
+  const setProgress = msg => { progress.style.display = 'block'; progress.innerHTML = msg; };
+
+  try {
+    setProgress('💾 جارى Auto-Backup للبيانات الحالية قبل الاستيراد...');
+    await new Promise(r => setTimeout(r, 300));
+    _autoBackupBeforeImport();
+    await new Promise(r => setTimeout(r, 800));
+
+    const d = _backupImportData;
+    const mode = _backupImportMode;
+
+    if (mode === 'replace') {
+      // استبدال كامل
+      setProgress('♻️ جارى استبدال البيانات الكاملة...<br/>⚠️ تم عمل Auto-Backup مسبقاً ✅');
+      await new Promise(r => setTimeout(r, 400));
+
+      MENU = d.menu || MENU;
+      SETTINGS = { ...SETTINGS, ...d.settings };
+      ADDONS = d.addons || ADDONS;
+      OFFERS = d.offers || OFFERS;
+      ordersData = d.orders || [];
+      orderHistory = d.orderHistory || [];
+      bookingsData = d.bookings || [];
+      VIP_CUSTOMERS = d.vipCustomers || {};
+      usedOffers = d.usedOffers || {};
+
+      saveData('zz_menu', MENU);
+      saveData('zz_settings', SETTINGS);
+      saveData('zz_addons', ADDONS);
+      saveData('zz_offers', OFFERS);
+      saveData('zz_orders', ordersData);
+      saveData('zz_order_history', orderHistory);
+      saveData('zz_bookings', bookingsData);
+      saveData('zz_vip_customers', VIP_CUSTOMERS);
+      saveData('zz_used_offers', usedOffers);
+      if (d.users) saveData('zz_users', d.users);
+      if (d.agents) saveData('zz_agents', d.agents);
+      if (d.ads) { saveData('zz_ads', d.ads); ADS = d.ads; }
+      if (d.favCounts) saveData('zz_fav_counts', d.favCounts);
+
+      // Firebase sync
+      if (db && fbConnected) {
+        setProgress('♻️ مزامنة مع Firebase...');
+        await fbSaveMenu(); await fbSaveSettings(); await fbSaveAddons(); await fbSaveOffers();
+        if (d.ads) await fbSet('ads', d.ads);
+      }
+
+    } else if (mode === 'merge') {
+      // دمج ذكي
+      setProgress('🔀 جارى دمج البيانات...<br/>✅ تم Auto-Backup');
+      await new Promise(r => setTimeout(r, 400));
+
+      MENU = _mergeMenu(MENU, d.menu || {});
+      SETTINGS = { ...SETTINGS, ...d.settings };
+      ADDONS = _mergeArrayById(ADDONS, d.addons || []);
+      OFFERS = _mergeArrayById(OFFERS, d.offers || []);
+      ordersData = _mergeArrayById(ordersData, d.orders || []);
+      ordersData.sort((a,b) => (b.timestamp||0)-(a.timestamp||0));
+      orderHistory = _mergeArrayById(orderHistory, d.orderHistory || []);
+      bookingsData = _mergeArrayById(bookingsData, d.bookings || []);
+      VIP_CUSTOMERS = { ...d.vipCustomers, ...VIP_CUSTOMERS }; // الحالي يسود
+      usedOffers = { ...d.usedOffers, ...usedOffers };
+
+      // دمج العملاء
+      const existUsers = loadData('zz_users', []);
+      const mergedUsers = _mergeArrayById(existUsers, d.users || []);
+      saveData('zz_users', mergedUsers);
+
+      // دمج المندوبين
+      const existAgents = loadData('zz_agents', []);
+      const mergedAgents = _mergeArrayById(existAgents, d.agents || []);
+      saveData('zz_agents', mergedAgents);
+
+      saveData('zz_menu', MENU);
+      saveData('zz_settings', SETTINGS);
+      saveData('zz_addons', ADDONS);
+      saveData('zz_offers', OFFERS);
+      saveData('zz_orders', ordersData);
+      saveData('zz_order_history', orderHistory);
+      saveData('zz_bookings', bookingsData);
+      saveData('zz_vip_customers', VIP_CUSTOMERS);
+      saveData('zz_used_offers', usedOffers);
+
+      // دمج الإعلانات
+      if (d.ads) {
+        const existAds = loadData('zz_ads', []);
+        ADS = _mergeArrayById(existAds, d.ads);
+        saveData('zz_ads', ADS);
+      }
+
+      if (d.favCounts) {
+        const existCounts = loadData('zz_fav_counts', {});
+        const mergedCounts = { ...d.favCounts, ...existCounts };
+        saveData('zz_fav_counts', mergedCounts);
+      }
+
+      if (db && fbConnected) {
+        setProgress('🔀 مزامنة مع Firebase...');
+        await fbSaveMenu(); await fbSaveSettings(); await fbSaveAddons(); await fbSaveOffers();
+      }
+
+    } else if (mode === 'selective') {
+      // استعادة جزئية
+      setProgress('🎯 جارى الاستعادة الجزئية...<br/>✅ تم Auto-Backup');
+      await new Promise(r => setTimeout(r, 400));
+
+      if (document.getElementById('selMenu')?.checked && d.menu) {
+        MENU = _mergeMenu(MENU, d.menu);
+        saveData('zz_menu', MENU);
+        if (db && fbConnected) await fbSaveMenu();
+      }
+      if (document.getElementById('selSettings')?.checked && d.settings) {
+        SETTINGS = { ...SETTINGS, ...d.settings };
+        saveData('zz_settings', SETTINGS);
+        if (db && fbConnected) await fbSaveSettings();
+      }
+      if (document.getElementById('selOrders')?.checked && d.orders) {
+        ordersData = _mergeArrayById(ordersData, d.orders);
+        orderHistory = _mergeArrayById(orderHistory, d.orderHistory || []);
+        saveData('zz_orders', ordersData);
+        saveData('zz_order_history', orderHistory);
+      }
+      if (document.getElementById('selUsers')?.checked && d.users) {
+        const existUsers = loadData('zz_users', []);
+        saveData('zz_users', _mergeArrayById(existUsers, d.users));
+      }
+      if (document.getElementById('selOffers')?.checked && d.offers) {
+        OFFERS = _mergeArrayById(OFFERS, d.offers);
+        usedOffers = { ...d.usedOffers, ...usedOffers };
+        saveData('zz_offers', OFFERS);
+        saveData('zz_used_offers', usedOffers);
+        if (db && fbConnected) await fbSaveOffers();
+      }
+      if (document.getElementById('selAddons')?.checked && d.addons) {
+        ADDONS = _mergeArrayById(ADDONS, d.addons);
+        saveData('zz_addons', ADDONS);
+        if (db && fbConnected) await fbSaveAddons();
+      }
+      if (document.getElementById('selAgents')?.checked && d.agents) {
+        const existAgents = loadData('zz_agents', []);
+        saveData('zz_agents', _mergeArrayById(existAgents, d.agents));
+      }
+      if (document.getElementById('selAds')?.checked && d.ads) {
+        const existAds = loadData('zz_ads', []);
+        ADS = _mergeArrayById(existAds, d.ads);
+        saveData('zz_ads', ADS);
+        if (db && fbConnected) await fbSet('ads', ADS);
+      }
+      if (document.getElementById('selVip')?.checked && d.vipCustomers) {
+        VIP_CUSTOMERS = { ...d.vipCustomers, ...VIP_CUSTOMERS };
+        saveData('zz_vip_customers', VIP_CUSTOMERS);
+      }
+    }
+
+    setProgress('✅ تم الاستيراد بنجاح!<br/>🔄 جارى تحديث الواجهة...');
+    await new Promise(r => setTimeout(r, 600));
+
+    // تحديث الواجهة
+    if (document.getElementById('app')?.classList.contains('active')) renderMenu();
+    if (document.getElementById('adminPanel')?.classList.contains('active')) {
+      renderAdminOrders();
+      renderMenuManage();
+      renderOffersAdmin();
+      renderAdsSlider();
+    }
+
+    closeImportBackupModal();
+    showNotif('✅ تم استيراد Backup بنجاح!');
+
+  } catch(err) {
+    setProgress('❌ حدث خطأ أثناء الاستيراد: ' + err.message + '<br/>البيانات الأصلية محفوظة في Auto-Backup.');
+    console.error('Import backup error:', err);
+  }
 }
 
 // ============================================================
@@ -4637,10 +5234,14 @@ function updateOffersBadge() {
 // PWA INSTALL
 // ============================================================
 function triggerPWAInstall() {
+  trackPWAStat('clicked');
   if (_pwaInstallPrompt) {
     _pwaInstallPrompt.prompt();
     _pwaInstallPrompt.userChoice.then(r => {
-      if (r.outcome === 'accepted') document.getElementById('pwaInstallBar')?.classList.add('hidden');
+      if (r.outcome === 'accepted') {
+        document.getElementById('pwaInstallBar')?.classList.add('hidden');
+        trackPWAStat('installed');
+      }
       _pwaInstallPrompt = null;
     });
   } else {
@@ -5124,7 +5725,34 @@ function setupFirebaseListeners() {
     }
   });
 
-  // --------- LAST ORDER MODE ---------
+  // --------- APP RATINGS ---------
+  db.ref('app_ratings').on('value', snap => {
+    if (snap.exists()) {
+      const data = snap.val() || {};
+      const arr = Object.values(data).filter(Boolean);
+      if (arr.length > 0) {
+        APP_RATINGS = arr.sort((a, b) => (b.ts || 0) - (a.ts || 0));
+        saveData('zz_app_ratings', APP_RATINGS);
+        if (document.getElementById('tab-stats')?.style.display === 'block') renderStatsTab();
+      }
+    }
+  });
+
+  // --------- PWA STATS from Firebase ---------
+  db.ref('pwa_stats').on('value', snap => {
+    if (snap.exists()) {
+      const fbStats = snap.val() || {};
+      // Merge: keep local events, use FB counters if higher
+      if ((fbStats.shown || 0) > (PWA_STATS.shown || 0)) PWA_STATS.shown = fbStats.shown;
+      if ((fbStats.clicked || 0) > (PWA_STATS.clicked || 0)) PWA_STATS.clicked = fbStats.clicked;
+      if ((fbStats.installed || 0) > (PWA_STATS.installed || 0)) PWA_STATS.installed = fbStats.installed;
+      if ((fbStats.dismissed || 0) > (PWA_STATS.dismissed || 0)) PWA_STATS.dismissed = fbStats.dismissed;
+      saveData('zz_pwa_stats', PWA_STATS);
+      if (document.getElementById('tab-stats')?.style.display === 'block') renderStatsTab();
+    }
+  });
+
+
   db.ref('config/lastOrderActive').on('value', snap => {
     if (snap.exists()) {
       const val = snap.val();
@@ -5486,8 +6114,202 @@ function confirmAgentSelection() {
 }
 
 // ============================================================
-// MAIN MENU CATEGORIES (Parent Groups)
+// LOAD RATINGS FROM FIREBASE (on demand)
 // ============================================================
+async function loadRatingsFromFirebase() {
+  if (!db) return;
+  try {
+    const snap = await db.ref('app_ratings').get();
+    if (snap.exists()) {
+      const data = snap.val() || {};
+      const arr = Object.values(data).filter(Boolean);
+      if (arr.length > 0) {
+        APP_RATINGS = arr.sort((a, b) => (b.ts || 0) - (a.ts || 0));
+        saveData('zz_app_ratings', APP_RATINGS);
+      }
+    }
+    // Also load pwa_stats
+    const statsSnap = await db.ref('pwa_stats').get();
+    if (statsSnap.exists()) {
+      const fbStats = statsSnap.val() || {};
+      if ((fbStats.shown || 0) > (PWA_STATS.shown || 0)) PWA_STATS.shown = fbStats.shown;
+      if ((fbStats.clicked || 0) > (PWA_STATS.clicked || 0)) PWA_STATS.clicked = fbStats.clicked;
+      if ((fbStats.installed || 0) > (PWA_STATS.installed || 0)) PWA_STATS.installed = fbStats.installed;
+      if ((fbStats.dismissed || 0) > (PWA_STATS.dismissed || 0)) PWA_STATS.dismissed = fbStats.dismissed;
+      saveData('zz_pwa_stats', PWA_STATS);
+    }
+    renderStatsTab();
+  } catch(e) { console.warn('loadRatingsFromFirebase failed:', e); }
+}
+
+
+let PWA_STATS = loadData('zz_pwa_stats', {
+  shown: 0, clicked: 0, installed: 0, dismissed: 0,
+  events: [] // [{type, date, ts}]
+});
+
+function trackPWAStat(type) {
+  const now = new Date();
+  const dateStr = now.toLocaleDateString('ar-EG');
+  if (type === 'shown') PWA_STATS.shown = (PWA_STATS.shown || 0) + 1;
+  else if (type === 'clicked') PWA_STATS.clicked = (PWA_STATS.clicked || 0) + 1;
+  else if (type === 'installed') PWA_STATS.installed = (PWA_STATS.installed || 0) + 1;
+  else if (type === 'dismissed') PWA_STATS.dismissed = (PWA_STATS.dismissed || 0) + 1;
+  PWA_STATS.events = (PWA_STATS.events || []).concat([{type, date: dateStr, ts: now.getTime()}]);
+  if (PWA_STATS.events.length > 500) PWA_STATS.events = PWA_STATS.events.slice(-500);
+  saveData('zz_pwa_stats', PWA_STATS);
+  if (db) fbUpdate('pwa_stats', { shown: PWA_STATS.shown, clicked: PWA_STATS.clicked, installed: PWA_STATS.installed, dismissed: PWA_STATS.dismissed }).catch(()=>{});
+}
+
+// ============================================================
+// APP RATINGS SYSTEM
+// ============================================================
+let APP_RATINGS = loadData('zz_app_ratings', []);
+// [{id, name, phone, rating, comment, date, ts}]
+
+let _clientSelectedRating = 0;
+const RATING_LABELS = {1:'سيء 😞', 2:'مقبول 😐', 3:'جيد 👍', 4:'جيد جداً 😊', 5:'ممتاز! 🌟'};
+
+function openRatingPopup() {
+  _clientSelectedRating = 0;
+  document.getElementById('ratingLabelText').textContent = 'اختر تقييمك';
+  document.getElementById('clientRatingComment').value = '';
+  const stars = document.querySelectorAll('#clientRatingStars .star-btn-big');
+  stars.forEach(s => s.classList.remove('lit'));
+  document.getElementById('ratingPopupOverlay').classList.add('open');
+}
+
+function closeRatingPopup() {
+  document.getElementById('ratingPopupOverlay').classList.remove('open');
+}
+
+function selectClientRating(n) {
+  _clientSelectedRating = n;
+  document.getElementById('ratingLabelText').textContent = RATING_LABELS[n] || '';
+  const stars = document.querySelectorAll('#clientRatingStars .star-btn-big');
+  stars.forEach((s, i) => s.classList.toggle('lit', i < n));
+}
+
+function submitClientRating() {
+  if (!_clientSelectedRating) { showNotif('⭐ اختر عدد النجوم أولاً'); return; }
+  const comment = document.getElementById('clientRatingComment').value.trim();
+  const name = currentUser?.name || 'مجهول';
+  const phone = currentUser?.phone || '';
+  const now = new Date();
+  const rating = {
+    id: 'r_' + Date.now(),
+    name, phone,
+    rating: _clientSelectedRating,
+    comment,
+    date: now.toLocaleDateString('ar-EG') + ' — ' + now.toLocaleTimeString('ar-EG', {hour:'2-digit',minute:'2-digit'}),
+    ts: now.getTime()
+  };
+  APP_RATINGS.unshift(rating);
+  saveData('zz_app_ratings', APP_RATINGS);
+  if (db) fbPush('app_ratings', rating).catch(()=>{});
+  closeRatingPopup();
+  showNotif('✅ شكراً! تم إرسال تقييمك');
+}
+
+// ============================================================
+// STATS TAB RENDER
+// ============================================================
+let _currentStatsPeriod = 'today';
+
+function setStatsPeriod(period, el) {
+  _currentStatsPeriod = period;
+  document.querySelectorAll('.period-pill').forEach(p => p.classList.remove('active'));
+  if (el) el.classList.add('active');
+  renderStatsTab();
+}
+
+function filterStatsByPeriod(events, period) {
+  if (!events) return [];
+  const now = Date.now();
+  const DAY = 86400000;
+  if (period === 'today') return events.filter(e => now - e.ts < DAY);
+  if (period === 'week') return events.filter(e => now - e.ts < 7 * DAY);
+  if (period === 'month') return events.filter(e => now - e.ts < 30 * DAY);
+  return events;
+}
+
+function renderStatsTab() {
+  const events = filterStatsByPeriod(PWA_STATS.events || [], _currentStatsPeriod);
+  const shown = events.filter(e => e.type === 'shown').length || ((_currentStatsPeriod === 'all') ? PWA_STATS.shown : 0);
+  const clicked = events.filter(e => e.type === 'clicked').length || ((_currentStatsPeriod === 'all') ? PWA_STATS.clicked : 0);
+  const installed = events.filter(e => e.type === 'installed').length || ((_currentStatsPeriod === 'all') ? PWA_STATS.installed : 0);
+  const dismissed = events.filter(e => e.type === 'dismissed').length || ((_currentStatsPeriod === 'all') ? PWA_STATS.dismissed : 0);
+
+  const shownN = _currentStatsPeriod === 'all' ? (PWA_STATS.shown || 0) : shown;
+  const clickedN = _currentStatsPeriod === 'all' ? (PWA_STATS.clicked || 0) : clicked;
+  const installedN = _currentStatsPeriod === 'all' ? (PWA_STATS.installed || 0) : installed;
+  const dismissedN = _currentStatsPeriod === 'all' ? (PWA_STATS.dismissed || 0) : dismissed;
+
+  document.getElementById('statPwaShown').textContent = shownN;
+  document.getElementById('statPwaClicked').textContent = clickedN;
+  document.getElementById('statPwaInstalled').textContent = installedN;
+  document.getElementById('statPwaDismissed').textContent = dismissedN;
+
+  const maxBase = shownN || 1;
+  const clickedPct = shownN ? Math.round(clickedN / shownN * 100) : 0;
+  const installedPct = shownN ? Math.round(installedN / shownN * 100) : 0;
+  document.getElementById('convClicked').style.width = clickedPct + '%';
+  document.getElementById('convClickedPct').textContent = clickedPct + '%';
+  document.getElementById('convInstalled').style.width = installedPct + '%';
+  document.getElementById('convInstalledPct').textContent = installedPct + '%';
+
+  // Ratings
+  const ratings = _currentStatsPeriod === 'all' ? APP_RATINGS : filterStatsByPeriod(APP_RATINGS.map(r => ({...r, ts: r.ts || 0})), _currentStatsPeriod);
+  const totalR = ratings.length;
+  const avgR = totalR ? (ratings.reduce((s, r) => s + r.rating, 0) / totalR).toFixed(1) : null;
+
+  const avgEl = document.getElementById('avgRatingNum');
+  const starsEl = document.getElementById('avgRatingStars');
+  const countEl = document.getElementById('avgRatingCount');
+  if (avgR) {
+    avgEl.textContent = avgR;
+    const filled = Math.round(parseFloat(avgR));
+    starsEl.textContent = '⭐'.repeat(filled) + '☆'.repeat(5 - filled);
+    countEl.textContent = `بناءً على ${totalR} تقييم`;
+  } else {
+    avgEl.textContent = '—';
+    starsEl.textContent = '☆☆☆☆☆';
+    countEl.textContent = 'لا توجد تقييمات بعد';
+  }
+
+  for (let star = 1; star <= 5; star++) {
+    const count = ratings.filter(r => r.rating === star).length;
+    const pct = totalR ? Math.round(count / totalR * 100) : 0;
+    const bar = document.getElementById('rbar' + star);
+    const cnt = document.getElementById('rcount' + star);
+    if (bar) bar.style.width = pct + '%';
+    if (cnt) cnt.textContent = count;
+  }
+
+  // Reviews list
+  const reviewsList = document.getElementById('adminReviewsList');
+  const badge = document.getElementById('reviewsCountBadge');
+  if (badge) badge.textContent = totalR;
+  if (!totalR) {
+    reviewsList.innerHTML = '<div style="text-align:center;padding:30px;color:var(--text-muted);font-weight:700">لا توجد تعليقات بعد</div>';
+    return;
+  }
+  const toShow = _currentStatsPeriod === 'all' ? APP_RATINGS : ratings;
+  reviewsList.innerHTML = toShow.map(r => `
+    <div class="review-card">
+      <div class="rc-header">
+        <div>
+          <div class="rc-name">${r.name || 'مجهول'}</div>
+          ${r.phone ? `<div style="font-size:11px;color:var(--text-muted);direction:ltr">${r.phone}</div>` : ''}
+        </div>
+        <div class="rc-date">${r.date || ''}</div>
+      </div>
+      <div class="rc-stars">${'⭐'.repeat(r.rating || 0)}${'☆'.repeat(5 - (r.rating || 0))}</div>
+      ${r.comment ? `<div class="rc-comment">${r.comment}</div>` : '<div class="rc-comment" style="color:var(--text-muted);font-style:italic">بدون تعليق</div>'}
+    </div>`).join('');
+}
+
+
 const MAIN_GROUPS = {
   restaurant: { label: 'المطعم', emoji: '🍽️', keywords: ['بيتزا','شاورما','كريب','سندوتش','وجبة','برجر','لحم','دجاج','مطعم','falafel','ساندويتش','فراخ','كباب','grill'] },
   eastern_sweets: { label: 'حلويات شرقية', emoji: '🍯', keywords: ['كنافة','بسبوسة','قطايف','عيش السرايا','مهلبية','رز بلبن','عسل','شرقى','عربى','oriental','om ali','أم علي'] },
@@ -5546,6 +6368,28 @@ function getFilteredCatsByGroup() {
 }
 
 </script>
+<!-- ===== RATING POPUP (Client) ===== -->
+<div class="rating-popup-overlay" id="ratingPopupOverlay">
+  <div class="rating-popup-card">
+    <div style="font-size:40px;margin-bottom:10px">⭐</div>
+    <div style="font-size:18px;font-weight:900;color:var(--dark);margin-bottom:6px">قيّم تجربتك معنا!</div>
+    <div style="font-size:13px;color:var(--text-muted);margin-bottom:16px;line-height:1.6">رأيك يهمنا ويساعدنا على التطوير</div>
+    <div class="rating-stars-big" style="justify-content:center" id="clientRatingStars">
+      <span class="star-btn-big" onclick="selectClientRating(1)">⭐</span>
+      <span class="star-btn-big" onclick="selectClientRating(2)">⭐</span>
+      <span class="star-btn-big" onclick="selectClientRating(3)">⭐</span>
+      <span class="star-btn-big" onclick="selectClientRating(4)">⭐</span>
+      <span class="star-btn-big" onclick="selectClientRating(5)">⭐</span>
+    </div>
+    <div style="font-size:12px;color:var(--text-muted);margin-bottom:12px" id="ratingLabelText">اختر تقييمك</div>
+    <textarea id="clientRatingComment" rows="3" placeholder="اكتب تعليقك أو اقتراحك هنا... (اختياري)" style="width:100%;padding:12px 14px;border:1.5px solid var(--border);border-radius:12px;font-size:13px;resize:none;font-family:inherit;box-sizing:border-box;background:var(--white);color:var(--text);outline:none;margin-bottom:14px"></textarea>
+    <div style="display:flex;gap:8px">
+      <button onclick="closeRatingPopup()" style="flex:1;padding:12px;background:var(--cream);color:var(--text-muted);border-radius:12px;font-size:13px;font-weight:800;border:1.5px solid var(--border);cursor:pointer">لاحقاً</button>
+      <button onclick="submitClientRating()" style="flex:2;padding:12px;background:linear-gradient(135deg,var(--olive),var(--olive-light));color:#fff;border-radius:12px;font-size:14px;font-weight:900;border:none;cursor:pointer">إرسال التقييم ⭐</button>
+    </div>
+  </div>
+</div>
+
 <!-- ===== SMART ORDER REVIEW OVERLAY ===== -->
 <div class="order-review-overlay" id="orderReviewOverlay">
   <div class="order-review-card">
