@@ -526,6 +526,36 @@ input,select,textarea{font-family:inherit;}
 @keyframes popIn{0%{transform:scale(.8);opacity:0}100%{transform:scale(1);opacity:1}}
 @keyframes glow{0%,100%{box-shadow:0 0 8px rgba(224,48,48,.6)}50%{box-shadow:0 0 20px rgba(224,48,48,.9)}}
 @keyframes newBadgePulse{0%,100%{transform:scale(1)}50%{transform:scale(1.08)}}
+@keyframes cashierGlowPulse{0%,100%{box-shadow:0 0 0 0 rgba(26,95,200,.7),0 20px 60px rgba(0,0,0,.5)}50%{box-shadow:0 0 0 20px rgba(26,95,200,0),0 20px 60px rgba(0,0,0,.5)}}
+@keyframes cashierBorderPulse{0%,100%{border-color:rgba(255,255,255,.3)}50%{border-color:rgba(255,255,255,.9)}}
+@keyframes cashierShake{0%,100%{transform:translateX(0)}10%,30%,50%,70%,90%{transform:translateX(-6px)}20%,40%,60%,80%{transform:translateX(6px)}}
+
+/* ===== ENHANCED CASHIER POPUP ===== */
+.cashier-popup-card{animation:cashierSlideIn .35s ease,cashierGlowPulse 2s ease 0.5s infinite !important;border:3px solid rgba(255,255,255,.5) !important;}
+.cashier-popup-card.new-alert{animation:cashierSlideIn .35s ease,cashierGlowPulse 2s ease 0.5s infinite,cashierShake .6s ease 0.4s !important;}
+.cashier-popup-header.new-order{background:linear-gradient(135deg,#1a5fc8,#2176e0);position:relative;overflow:hidden;}
+.cashier-popup-header.new-order::after{content:'';position:absolute;inset:0;background:linear-gradient(90deg,transparent,rgba(255,255,255,.15),transparent);animation:shimmer 1.5s linear infinite;background-size:200% 100%;}
+.cashier-popup-icon{animation:pulse .7s ease infinite !important;transform-origin:center;}
+.cashier-popup-body .cashier-popup-row:first-child{background:var(--olive-pale);border-radius:8px;padding:8px 10px;margin-bottom:4px;}
+.cashier-popup-items-box{background:#f0f7ff;border:1.5px solid #90c0ff;border-radius:10px;padding:10px 12px;margin:8px 0;max-height:120px;overflow-y:auto;font-size:12px;line-height:1.8;color:var(--dark);}
+
+/* ===== VIP AUTO LIMIT SETTINGS ===== */
+.vip-auto-settings{background:linear-gradient(135deg,#fffbeb,#fef3c7);border:2px solid #f59e0b;border-radius:16px;padding:16px;margin-bottom:14px;}
+.vip-auto-settings h4{font-size:13px;font-weight:900;color:#92400e;margin-bottom:12px;}
+.vip-limit-row{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid rgba(245,158,11,.2);}
+.vip-limit-row:last-child{border-bottom:none;}
+.vip-limit-row label{flex:1;font-size:13px;font-weight:700;color:var(--dark);}
+.vip-limit-input{width:90px;padding:6px 10px;border:1.5px solid #f59e0b;border-radius:8px;font-size:14px;font-weight:800;text-align:center;background:#fff;color:var(--dark);outline:none;}
+.vip-limit-input:focus{border-color:#d97706;box-shadow:0 0 0 3px rgba(245,158,11,.2);}
+.vip-auto-badge{display:inline-flex;align-items:center;gap:4px;background:linear-gradient(135deg,#f59e0b,#d97706);color:#fff;font-size:9px;font-weight:900;padding:2px 8px;border-radius:100px;}
+
+/* ===== TRACKING NO-ORDER STATE ===== */
+.track-no-order-state{text-align:center;padding:40px 20px;color:var(--text-muted);}
+.track-no-order-icon{font-size:60px;margin-bottom:16px;opacity:.6;}
+.track-no-order-title{font-size:16px;font-weight:800;color:var(--text-muted);margin-bottom:8px;}
+.track-no-order-sub{font-size:13px;color:var(--text-muted);line-height:1.7;opacity:.8;}
+/* waiting step — لم يستلم الكاشير بعد */
+.step-dot.waiting{background:var(--cream);border:2px dashed var(--text-muted);color:var(--text-muted);animation:pulse 2s infinite;}
 
 /* ===== OFFERS BUTTON (Red CTA) ===== */
 .offers-nav-btn{background:linear-gradient(135deg,var(--red),#ff5252) !important;color:#fff !important;border-radius:12px !important;padding:11px !important;animation:glow 2s infinite;}
@@ -637,6 +667,25 @@ input,select,textarea{font-family:inherit;}
 @keyframes orderHighlightGreen{0%{box-shadow:0 0 0 0 rgba(22,163,74,.6)}50%{box-shadow:0 0 0 8px rgba(22,163,74,.2)}100%{box-shadow:0 0 0 0 rgba(22,163,74,0)}}
 .order-highlight-ready{animation:orderHighlightGreen 1.5s ease 3;border:2px solid #16a34a !important;background:linear-gradient(135deg,#e8fff0,#f0fff5) !important;}
 
+/* ===== NEW ORDER GLOW EFFECT (Cashier) ===== */
+@keyframes newOrderGlow{0%,100%{box-shadow:0 0 0 0 rgba(26,95,200,0)}25%{box-shadow:0 0 20px 8px rgba(26,95,200,.5)}50%{box-shadow:0 0 40px 16px rgba(26,95,200,.35)}75%{box-shadow:0 0 20px 8px rgba(26,95,200,.5)}}
+@keyframes newOrderPulse{0%,100%{transform:scale(1)}50%{transform:scale(1.015)}}
+@keyframes newOrderFadeIn{from{opacity:0;transform:translateY(-12px)}to{opacity:1;transform:translateY(0)}}
+.order-new-arrival{
+  animation:newOrderGlow 2s ease 4, newOrderPulse 1.5s ease 4, newOrderFadeIn .4s ease;
+  border:2.5px solid #1a5fc8 !important;
+  background:linear-gradient(135deg,#dbeafe,#eff6ff) !important;
+  position:relative;
+}
+.new-order-badge{
+  position:absolute;top:-8px;right:8px;
+  background:linear-gradient(135deg,#1a5fc8,#2176e0);
+  color:#fff;font-size:10px;font-weight:900;
+  padding:3px 10px;border-radius:100px;
+  animation:newBadgePulse 1s infinite;
+  z-index:10;
+}
+
 /* ===== DELIVERY STATUS BADGE (على الكارت) ===== */
 .delivery-badge{display:inline-flex;align-items:center;gap:4px;padding:3px 8px;border-radius:100px;font-size:10px;font-weight:800;margin-top:4px;letter-spacing:.3px;}
 .delivery-badge.avail{background:linear-gradient(135deg,#dcfce7,#bbf7d0);color:#15803d;border:1px solid #86efac;box-shadow:0 0 8px rgba(34,197,94,.25);}
@@ -704,6 +753,19 @@ input,select,textarea{font-family:inherit;}
 .selective-cb:hover{background:var(--olive-pale);border-color:var(--olive);}
 .selective-cb input[type=checkbox]{width:18px;height:18px;accent-color:var(--olive);}
 .backup-progress{background:var(--olive-pale);border-radius:10px;padding:12px 14px;font-size:12px;line-height:2;color:var(--olive-dark);font-weight:700;display:none;}
+
+/* ===== DELIVERY BADGE (admin menu manage) ===== */
+.delivery-badge-admin{display:inline-flex;align-items:center;gap:3px;font-size:10px;font-weight:800;padding:2px 7px;border-radius:100px;border:1px solid;margin-right:4px;}
+.delivery-badge-admin.avail{background:#d1fae5;color:#065f46;border-color:#22c55e;box-shadow:0 0 6px rgba(34,197,94,.25);}
+.delivery-badge-admin.unavail{background:#fee2e2;color:#991b1b;border-color:#f87171;box-shadow:0 0 6px rgba(248,113,113,.25);}
+
+/* ===== DELIVERY BADGE (client food cards) ===== */
+.delivery-badge{display:inline-flex;align-items:center;gap:4px;font-size:10px;font-weight:800;padding:3px 8px;border-radius:100px;margin-bottom:5px;border:1px solid;}
+.delivery-badge .badge-dot{width:6px;height:6px;border-radius:50%;flex-shrink:0;}
+.delivery-badge.avail{background:#d1fae5;color:#065f46;border-color:#22c55e;box-shadow:0 0 8px rgba(34,197,94,.3);}
+.delivery-badge.avail .badge-dot{background:#22c55e;}
+.delivery-badge.unavail{background:#fee2e2;color:#991b1b;border-color:#f87171;box-shadow:0 0 8px rgba(248,113,113,.25);}
+.delivery-badge.unavail .badge-dot{background:#f87171;}
 </style>
 </head>
 <body>
@@ -716,7 +778,7 @@ input,select,textarea{font-family:inherit;}
     <div class="sub">Restaurant & Café</div>
   </div>
   <div class="splash-dots"><span></span><span></span><span></span></div>
-  <div class="splash-credit">v20.0 — Designed by Mahmoud Gamal Eldeen</div>
+  <div class="splash-credit">v22.1 — Designed by Mahmoud Gamal Eldeen</div>
 </div>
 
 <!-- ===== AUTH ===== -->
@@ -726,19 +788,40 @@ input,select,textarea{font-family:inherit;}
     <div class="sub">Restaurant & Café</div>
   </div>
   <div class="auth-body">
-    <div class="auth-tabs">
-      <button class="active" onclick="switchAuthTab('login')">تسجيل الدخول</button>
-      <button onclick="switchAuthTab('register')">إنشاء حساب</button>
+    <!-- auth-tabs: hidden on first open, shown after logout for returning users -->
+    <div class="auth-tabs" id="authTabs" style="display:none">
+      <button id="authTabLogin" onclick="switchAuthTab('login')">تسجيل الدخول</button>
+      <button id="authTabRegister" class="active" onclick="switchAuthTab('register')">إنشاء حساب</button>
     </div>
-    <div id="loginForm">
-      <div class="field"><label>رقم الهاتف</label><input type="tel" id="loginPhone" placeholder="01xxxxxxxxx" inputmode="tel"/></div>
+    <!-- login form: shown only after logout -->
+    <div id="loginForm" style="display:none">
+      <div style="text-align:center;margin-bottom:20px">
+        <div style="font-size:32px;margin-bottom:8px">👋</div>
+        <div style="font-size:17px;font-weight:800;color:var(--dark)">أهلاً بعودتك!</div>
+        <div style="font-size:12px;color:var(--text-muted);margin-top:4px">أدخل رقم هاتفك لاسترجاع حسابك</div>
+      </div>
+      <div class="field"><label>رقم الهاتف</label><input type="tel" id="loginPhone" placeholder="01xxxxxxxxx" inputmode="tel" oninput="previewLoginUser(this.value)"/></div>
+      <div id="loginUserPreview" style="display:none;background:var(--olive-pale);border-radius:12px;padding:12px 14px;margin-bottom:12px;border:1.5px solid var(--olive)">
+        <div style="font-size:12px;font-weight:700;color:var(--olive-dark);margin-bottom:4px">✅ تم العثور على حسابك</div>
+        <div style="font-size:14px;font-weight:800;color:var(--dark)" id="loginFoundName">—</div>
+      </div>
       <div class="remember-row">
         <div class="toggle-sw on" id="rememberToggle" onclick="this.classList.toggle('on')"></div>
         <span style="font-size:14px;font-weight:600">تذكرنى فى المرات القادمة</span>
       </div>
       <button class="btn-primary" onclick="doLogin()">دخول ←</button>
+      <div style="text-align:center;margin-top:14px">
+        <span style="font-size:13px;color:var(--text-muted)">عميل جديد؟ </span>
+        <button onclick="switchAuthTab('register')" style="font-size:13px;font-weight:700;color:var(--olive);background:none;border:none;cursor:pointer">إنشاء حساب</button>
+      </div>
     </div>
-    <div id="registerForm" style="display:none">
+    <!-- register form: shown on first open -->
+    <div id="registerForm">
+      <div style="text-align:center;margin-bottom:20px">
+        <div style="font-size:32px;margin-bottom:8px">🌟</div>
+        <div style="font-size:17px;font-weight:800;color:var(--dark)">إنشاء حساب جديد</div>
+        <div style="font-size:12px;color:var(--text-muted);margin-top:4px">سجّل بياناتك مرة واحدة فقط</div>
+      </div>
       <div class="field"><label>الاسم بالكامل</label><input type="text" id="regName" placeholder="أدخل اسمك الكامل"/></div>
       <div class="field"><label>رقم الهاتف</label><input type="tel" id="regPhone" placeholder="01xxxxxxxxx" inputmode="tel"/></div>
       <div class="field"><label>رقم الواتساب ⭐ (إجبارى)</label><input type="tel" id="regWhatsapp" placeholder="01xxxxxxxxx" inputmode="tel"/></div>
@@ -748,6 +831,10 @@ input,select,textarea{font-family:inherit;}
         <span style="font-size:14px;font-weight:600">تذكرنى فى المرات القادمة</span>
       </div>
       <button class="btn-primary" onclick="doRegister()">إنشاء حساب ←</button>
+      <div style="text-align:center;margin-top:14px">
+        <span style="font-size:13px;color:var(--text-muted)">عندك حساب بالفعل؟ </span>
+        <button onclick="switchAuthTab('login')" style="font-size:13px;font-weight:700;color:var(--olive);background:none;border:none;cursor:pointer">تسجيل الدخول</button>
+      </div>
     </div>
   </div>
 </div>
@@ -958,8 +1045,8 @@ input,select,textarea{font-family:inherit;}
       <div style="font-size:12px;color:var(--text-muted);margin-bottom:16px" id="trackOrderTime">—</div>
       <div class="status-steps">
         <div class="status-step"><div class="step-dot" id="track1">⏳</div><div class="step-info"><div class="st">تم استلام الطلب</div><div class="sd" id="track1t">في انتظار الكاشير...</div></div></div>
-        <div class="status-step"><div class="step-dot" id="track2">🍳</div><div class="step-info"><div class="st">جارى التجهيز</div><div class="sd" id="track2t">—</div></div></div>
-        <div class="status-step"><div class="step-dot" id="track3">✅</div><div class="step-info"><div class="st">اكتمل التجهيز</div><div class="sd" id="track3t">—</div></div></div>
+        <div class="status-step"><div class="step-dot" id="track2">🍳</div><div class="step-info"><div class="st">بدأ تجهيز الطلب</div><div class="sd" id="track2t">—</div></div></div>
+        <div class="status-step"><div class="step-dot" id="track3">✅</div><div class="step-info"><div class="st">الطلب جاهز</div><div class="sd" id="track3t">—</div></div></div>
         <div class="status-step"><div class="step-dot" id="track4">🛵</div><div class="step-info"><div class="st">خرج للتوصيل</div><div class="sd" id="track4t">—</div></div></div>
         <div class="status-step"><div class="step-dot" id="track5">🎉</div><div class="step-info"><div class="st">تم التسليم</div><div class="sd" id="track5t">—</div></div></div>
       </div>
@@ -976,8 +1063,13 @@ input,select,textarea{font-family:inherit;}
       <div style="font-size:14px;font-weight:800;margin-bottom:4px">⏱️ وقت التوصيل المتوقع</div>
       <div style="font-size:28px;font-weight:800;color:var(--olive-dark)" id="etaDisplay">~30 دقيقة</div>
     </div>
-    <button class="delivery-confirm-btn" id="deliveryConfirmBtn" onclick="confirmDeliveryReceived()">✅ تم استلام الطلب</button>
-    <div id="deliveryConfirmedMsg" style="display:none;background:var(--olive-pale);border-radius:12px;padding:14px;text-align:center;margin-top:10px;font-weight:800;color:var(--olive-dark)">✅ شكراً! تم تسجيل استلامك للطلب</div>
+    <div id="deliveryOutBox" style="display:none;background:linear-gradient(135deg,#1a5fc8,#2176e0);border-radius:16px;padding:18px 16px;margin-bottom:14px;text-align:center;color:#fff;animation:pulse 2s infinite">
+      <div style="font-size:32px;margin-bottom:8px">🚚</div>
+      <div style="font-size:17px;font-weight:900;margin-bottom:6px">تم توصيل طلبك 🚚</div>
+      <div style="font-size:13px;opacity:.9;line-height:1.7;margin-bottom:14px">نتمنى أن تكون التجربة قد نالت إعجابك ❤️</div>
+      <button class="delivery-confirm-btn visible" id="deliveryConfirmBtn" onclick="confirmDeliveryReceived()" style="display:block;animation:none;background:rgba(255,255,255,.2);border:2px solid rgba(255,255,255,.5);font-size:16px;font-weight:900">📦 استلمت الطلب</button>
+    </div>
+    <div id="deliveryConfirmedMsg" style="display:none;background:var(--olive-pale);border-radius:12px;padding:14px;text-align:center;margin-top:10px;font-weight:800;color:var(--olive-dark)">✅ شكراً! تم تسجيل استلامك للطلب بنجاح 🎉</div>
     <button class="btn-primary" onclick="openWhatsapp('order')" style="margin-bottom:10px;margin-top:10px">تواصل عبر واتساب 💬</button>
     <button class="btn-primary btn-secondary" onclick="openScreen('app')">العودة للمنيو</button>
   </div>
@@ -1022,13 +1114,13 @@ input,select,textarea{font-family:inherit;}
         <div class="field"><label>الوقت</label><input type="time" id="bookTime" value="12:00" onchange="renderTablesGrid()"/></div>
         <div class="field"><label>عدد الأشخاص</label>
           <select id="bookPersons" style="width:100%;padding:13px 16px;border:1.5px solid var(--border);border-radius:12px;font-size:15px;background:var(--white)" onchange="renderTablesGrid()">
-            <option value="1">شخص واحد</option>
-            <option value="2">شخصان</option>
-            <option value="3">3 أشخاص</option>
-            <option value="4">4 أشخاص</option>
-            <option value="5">5 أشخاص</option>
-            <option value="6">6 أشخاص</option>
-            <option value="7">7 أشخاص</option>
+            <option value="1">شخص واحد — (ترابيزات 12–16)</option>
+            <option value="2">شخصان — (ترابيزات 12–16)</option>
+            <option value="3">3 أشخاص — (ترابيزات 1–9، 17)</option>
+            <option value="4">4 أشخاص — (ترابيزات 1–9، 17)</option>
+            <option value="5">5 أشخاص — (ترابيزات 10–11)</option>
+            <option value="6">6 أشخاص — (ترابيزات 10–11)</option>
+            <option value="7">7 أشخاص — (ترابيزات 10–11)</option>
           </select>
         </div>
       </div>
@@ -1509,7 +1601,8 @@ input,select,textarea{font-family:inherit;}
         <div style="padding:12px 16px">
           <div style="font-size:13px;font-weight:800;color:var(--olive-dark);margin-bottom:8px">📋 قواعد السعة الحالية</div>
           <div style="font-size:12px;line-height:1.9;color:var(--text-muted);background:var(--cream);border-radius:8px;padding:10px">
-            🪑 ترابيزات 1→9: حتى 4 أشخاص<br/>
+            🪑 ترابيزات 12→16: فرد أو فردين فقط (1–2)<br/>
+            🪑 ترابيزات 1→9 و17: من 3 إلى 4 أشخاص<br/>
             🪑 ترابيزة 10 و11: من 5 إلى 7 أشخاص<br/>
             🪑 ترابيزة 12: شخصان فقط<br/>
             🪑 ترابيزات 13→16: فرد أو فردين
@@ -1569,6 +1662,31 @@ input,select,textarea{font-family:inherit;}
     </div>
     <!-- Customers Tab -->
     <div id="reportTabCustomers" style="display:none">
+      <!-- VIP Auto Settings Panel -->
+      <div class="vip-auto-settings" id="vipAutoSettingsPanel">
+        <h4>⭐ إعدادات VIP التلقائي</h4>
+        <div class="vip-limit-row">
+          <label>تفعيل VIP التلقائي</label>
+          <div class="toggle-sw" id="vipAutoEnabled" onclick="this.classList.toggle('on')"></div>
+        </div>
+        <div class="vip-limit-row">
+          <label>🛒 عدد الطلبات للترقية</label>
+          <input type="number" class="vip-limit-input" id="vipOrdersLimit" value="20" min="1" placeholder="20"/>
+        </div>
+        <div class="vip-limit-row">
+          <label>💰 إجمالى المشتريات (ج.م)</label>
+          <input type="number" class="vip-limit-input" id="vipAmountLimit" value="10000" min="1" placeholder="10000"/>
+        </div>
+        <div class="vip-limit-row">
+          <label>🏷️ نسبة الخصم الافتراضية (%)</label>
+          <input type="number" class="vip-limit-input" id="vipDefaultDiscount" value="10" min="1" max="100" placeholder="10"/>
+        </div>
+        <div style="display:flex;gap:8px;margin-top:12px">
+          <button onclick="saveVIPAutoSettings()" style="flex:1;padding:10px;background:linear-gradient(135deg,#f59e0b,#d97706);color:#fff;border-radius:10px;font-size:13px;font-weight:800;border:none;cursor:pointer">💾 حفظ الإعدادات</button>
+          <button onclick="autoCheckVIPLimits()" style="flex:1;padding:10px;background:linear-gradient(135deg,var(--olive),var(--olive-light));color:#fff;border-radius:10px;font-size:13px;font-weight:800;border:none;cursor:pointer">⭐ تطبيق الآن</button>
+        </div>
+        <div style="font-size:11px;color:#92400e;margin-top:8px;text-align:center">يتم الترقية عند تحقيق أي شرط من الشرطين</div>
+      </div>
       <div style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap">
         <select id="custReportPeriod" onchange="renderCustomersReport()" style="flex:1;padding:8px 12px;border:1.5px solid var(--border);border-radius:10px;font-size:13px;background:var(--white);color:var(--text);outline:none">
           <option value="today">اليوم</option>
@@ -1709,9 +1827,13 @@ input,select,textarea{font-family:inherit;}
         <div id="emojiGroup4" style="display:flex;flex-wrap:wrap;gap:4px"></div>
       </div>
     </div>
-    <div class="remember-row" style="margin-bottom:16px">
+    <div class="remember-row" style="margin-bottom:12px">
       <div class="toggle-sw" id="catAllowAddonsToggle" onclick="this.classList.toggle('on')"></div>
       <span style="font-size:13px;font-weight:600">السماح بالإضافات لهذا القسم</span>
+    </div>
+    <div class="remember-row" style="margin-bottom:16px">
+      <div class="toggle-sw on" id="catDeliveryToggle" onclick="this.classList.toggle('on')"></div>
+      <span style="font-size:13px;font-weight:600">🚚 متاح للدليفري (يطبق على كل منتجات القسم)</span>
     </div>
     <button class="btn-primary" onclick="saveCategory()">إضافة القسم</button>
   </div>
@@ -1771,7 +1893,7 @@ input,select,textarea{font-family:inherit;}
 // ============================================================
 // APP VERSION
 // ============================================================
-const APP_VERSION = '19.0.0';
+const APP_VERSION = '22.1.0';
 
 // ============================================================
 // SECURITY: Passwords stored obfuscated (base64 encoded pairs)
@@ -1909,10 +2031,55 @@ let bookingsData = loadData('zz_bookings', []);
 let cart=[], currentUser=null, favs=new Set(loadData('zz_favs',[]));
 let favCounts = loadData('zz_fav_counts', {}); // {itemId: globalCount}
 let VIP_CUSTOMERS = loadData('zz_vip_customers', {}); // {phone: {discount, since}}
+let VIP_AUTO_SETTINGS = loadData('zz_vip_auto_settings', { enabled: false, ordersLimit: 20, amountLimit: 10000, defaultDiscount: 10 });
+
+// تحقق تلقائي من عملاء VIP بناءً على Limits
+function autoCheckVIPLimits() {
+  if (!VIP_AUTO_SETTINGS.enabled) return;
+  const customers = buildCustomerStats('all');
+  let promoted = 0;
+  customers.forEach(c => {
+    if (!c.phone || VIP_CUSTOMERS[c.phone]) return; // بالفعل VIP
+    const meetsOrders = VIP_AUTO_SETTINGS.ordersLimit > 0 && c.count >= VIP_AUTO_SETTINGS.ordersLimit;
+    const meetsAmount = VIP_AUTO_SETTINGS.amountLimit > 0 && c.total >= VIP_AUTO_SETTINGS.amountLimit;
+    if (meetsOrders || meetsAmount) {
+      VIP_CUSTOMERS[c.phone] = { name: c.name, discount: Number(VIP_AUTO_SETTINGS.defaultDiscount) || 10, since: new Date().toLocaleDateString('ar-EG'), auto: true };
+      if (db) db.ref('vip_customers/' + c.phone.replace(/[^0-9]/g,'')).set(VIP_CUSTOMERS[c.phone]).catch(()=>{});
+      promoted++;
+    }
+  });
+  if (promoted > 0) {
+    saveData('zz_vip_customers', VIP_CUSTOMERS);
+    showNotif(`⭐ تم ترقية ${promoted} عميل إلى VIP تلقائياً`);
+  }
+}
+
+function saveVIPAutoSettings() {
+  const enabled = document.getElementById('vipAutoEnabled')?.classList.contains('on') || false;
+  const ordersLimit = Number(document.getElementById('vipOrdersLimit')?.value) || 20;
+  const amountLimit = Number(document.getElementById('vipAmountLimit')?.value) || 10000;
+  const defaultDiscount = Number(document.getElementById('vipDefaultDiscount')?.value) || 10;
+  VIP_AUTO_SETTINGS = { enabled, ordersLimit, amountLimit, defaultDiscount };
+  saveData('zz_vip_auto_settings', VIP_AUTO_SETTINGS);
+  if (db) fbUpdate('config', { vipAutoSettings: VIP_AUTO_SETTINGS }).catch(()=>{});
+  if (enabled) autoCheckVIPLimits();
+  showNotif('✓ تم حفظ إعدادات VIP التلقائي');
+}
+
+function loadVIPAutoSettingsUI() {
+  const el = document.getElementById('vipAutoEnabled');
+  if (el) el.classList.toggle('on', !!VIP_AUTO_SETTINGS.enabled);
+  const ol = document.getElementById('vipOrdersLimit');
+  if (ol) ol.value = VIP_AUTO_SETTINGS.ordersLimit || 20;
+  const al = document.getElementById('vipAmountLimit');
+  if (al) al.value = VIP_AUTO_SETTINGS.amountLimit || 10000;
+  const dd = document.getElementById('vipDefaultDiscount');
+  if (dd) dd.value = VIP_AUTO_SETTINGS.defaultDiscount || 10;
+}
 let deliveryType='delivery', paymentType='cash', paymentTypeLabel='💵 كاش';
 let currentPM=null, pmQtyVal=1, pmSelectedSize=null, pmSelectedExtras=new Set(), pmSpicy='normal';
 let gpsCoords=null, lastOrderActive=false, currentFilter='all', searchQuery='';
-let adminRoleType=null, currentOrderNum=null;
+let adminRoleType=null, currentOrderNum=null, _cashierViewedCurrentOrder=false;
 let appliedDiscount=0, appliedCouponId=null;
 let priceTypeMode='single';
 let selectedTableNum=null;
@@ -1981,7 +2148,26 @@ window.onload = () => {
     }
 
     const saved = loadData('zamzam_user', null);
-    if (saved) { currentUser = saved; openScreen('app'); }
+    if (saved && saved.name) {
+      currentUser = saved;
+      // Quietly try to refresh from Firebase in background
+      if (db && saved.phone) {
+        const cleanPhone = (saved.phone||'').replace(/[^0-9]/g,'');
+        db.ref('users/' + cleanPhone).get().then(snap => {
+          if (snap.exists()) {
+            const fbUser = snap.val();
+            if (fbUser && fbUser.name) {
+              currentUser = { ...fbUser, verified: true };
+              saveData('zamzam_user', currentUser);
+              // Update greet
+              const greetEl = document.getElementById('greetUser');
+              if (greetEl) greetEl.textContent = 'أهلاً ' + currentUser.name + ' 👋';
+            }
+          }
+        }).catch(()=>{});
+      }
+      openScreen('app');
+    }
     else showScreen('auth');
   }, 2000);
 
@@ -2015,7 +2201,47 @@ function showScreen(id) {
 }
 function openScreen(id) {
   showScreen(id);
-  if (id === 'app') { renderMenu(); updateOffersBadge(); renderAdsSlider(); }
+  if (id === 'app') {
+    renderMenu(); updateOffersBadge(); renderAdsSlider();
+    // Always update greeting with real user name
+    const greetEl = document.getElementById('greetUser');
+    if (greetEl && currentUser && currentUser.name) {
+      greetEl.textContent = 'أهلاً ' + currentUser.name + ' 👋';
+    } else if (greetEl && (!currentUser || !currentUser.name)) {
+      // Try to reload from storage in case currentUser lost sync
+      const savedU = loadData('zamzam_user', null);
+      if (savedU && savedU.name) {
+        currentUser = savedU;
+        greetEl.textContent = 'أهلاً ' + currentUser.name + ' 👋';
+      }
+    }
+  }
+  if (id === 'tracking') {
+    // إذا لم يكن هناك طلب نشط — نظهر حالة محايدة احترافية
+    const orderCard = document.querySelector('#tracking .order-card');
+    const trackNumEl = document.getElementById('trackOrderNum');
+    if (!currentOrderNum) {
+      // لا يوجد طلب — نظهر رسالة محايدة
+      if (orderCard) {
+        orderCard.innerHTML = `<div class="track-no-order-state">
+          <div class="track-no-order-icon">📋</div>
+          <div class="track-no-order-title">لا يوجد طلب نشط حالياً 🕘</div>
+          <div class="track-no-order-sub">عند تأكيد طلبك سيبدأ عرض مراحل التتبع هنا مباشرة.</div>
+          <button onclick="openSheet('cartSheet')" style="margin-top:20px;padding:12px 24px;background:linear-gradient(135deg,var(--olive),var(--olive-light));color:#fff;border-radius:12px;font-size:14px;font-weight:800;border:none;cursor:pointer">🛒 اطلب الآن</button>
+        </div>`;
+      }
+    } else {
+      // يوجد طلب نشط — نحمّل حالته من Firebase
+      if (db && currentOrderNum) {
+        db.ref('orders/' + currentOrderNum).get().then(snap => {
+          if (snap.exists()) {
+            const ord = snap.val();
+            if (ord) updateTrackingStatus(ord.status);
+          }
+        }).catch(()=>{});
+      }
+    }
+  }
   if (id === 'adminPanel') { renderAdminOrders(); renderMenuManage(); renderOffersAdmin(); renderCatSelects(); loadSettingsUI(); applyRoleRestrictions(); }
   if (id === 'history') renderHistory();
   if (id === 'favScreen') renderFavScreen();
@@ -2037,37 +2263,167 @@ function openScreen(id) {
 // AUTH
 // ============================================================
 function switchAuthTab(t) {
+  // show tabs bar whenever user switches
+  const tabs = document.getElementById('authTabs');
+  if (tabs) tabs.style.display = 'flex';
   document.getElementById('loginForm').style.display = t === 'login' ? 'block' : 'none';
   document.getElementById('registerForm').style.display = t === 'register' ? 'block' : 'none';
-  document.querySelectorAll('.auth-tabs button').forEach((b, i) =>
-    b.classList.toggle('active', (t === 'login' && i === 0) || (t === 'register' && i === 1)));
+  const tl = document.getElementById('authTabLogin');
+  const tr = document.getElementById('authTabRegister');
+  if (tl) tl.classList.toggle('active', t === 'login');
+  if (tr) tr.classList.toggle('active', t === 'register');
+}
+
+// Preview existing user when typing phone in login
+let _previewTimer = null;
+const _INVALID_NAMES_PREVIEW = ['عميل', 'مجهول', 'زائر', 'guest', 'unknown', ''];
+async function previewLoginUser(phone) {
+  const preview = document.getElementById('loginUserPreview');
+  const nameEl = document.getElementById('loginFoundName');
+  if (!preview || !nameEl) return;
+  if (!phone || phone.replace(/[^0-9]/g,'').length < 10) { preview.style.display = 'none'; return; }
+
+  // Step 1: Local lookup
+  const users = loadData('zz_users', []);
+  const cleanPhone = phone.replace(/[^0-9]/g,'');
+  let found = users.find(u => (u.phone||'').replace(/[^0-9]/g,'') === cleanPhone);
+
+  if (found && found.name && !_INVALID_NAMES_PREVIEW.includes((found.name||'').trim().toLowerCase())) {
+    nameEl.textContent = found.name;
+    preview.style.display = 'block';
+    return;
+  }
+
+  // Step 2: Debounced Firebase lookup
+  clearTimeout(_previewTimer);
+  _previewTimer = setTimeout(async () => {
+    if (!db) return;
+    try {
+      const snap = await db.ref('users/' + cleanPhone).get();
+      if (snap.exists()) {
+        const fbUser = snap.val();
+        const realName = fbUser && fbUser.name && !_INVALID_NAMES_PREVIEW.includes((fbUser.name||'').trim().toLowerCase());
+        if (realName) {
+          nameEl.textContent = fbUser.name;
+          preview.style.display = 'block';
+          // Cache locally
+          const u2 = loadData('zz_users', []);
+          const existI = u2.findIndex(u => (u.phone||'').replace(/[^0-9]/g,'') === cleanPhone);
+          if (existI >= 0) u2[existI] = fbUser; else u2.push(fbUser);
+          saveData('zz_users', u2);
+        } else {
+          preview.style.display = 'none';
+        }
+      } else {
+        preview.style.display = 'none';
+      }
+    } catch(e) { preview.style.display = 'none'; }
+  }, 500);
 }
 // ===== OTP SYSTEM =====
 let _otpPending = null; // {code, user, isLogin, timer}
 
 function generateOTP() { return Math.floor(1000 + Math.random() * 9000).toString(); }
 
-function doLogin() {
+async function doLogin() {
   const phone = document.getElementById('loginPhone').value.trim();
   if (!phone || phone.length < 10) { showNotif('أدخل رقم هاتف صحيح'); return; }
-  // Check if already verified
+  const cleanPhone = phone.replace(/[^0-9]/g,'');
+
+  // Step 1: Search local storage first
+  let users = loadData('zz_users', []);
+  let foundUser = users.find(u => (u.phone||'').replace(/[^0-9]/g,'') === cleanPhone);
+
+  // Step 2: If not found locally — fetch from Firebase
+  if (!foundUser && db) {
+    try {
+      const snap = await db.ref('users/' + cleanPhone).get();
+      if (snap.exists()) {
+        foundUser = snap.val();
+        // Cache locally for future use
+        if (foundUser && foundUser.phone) {
+          const idx = users.findIndex(u => (u.phone||'').replace(/[^0-9]/g,'') === cleanPhone);
+          if (idx >= 0) users[idx] = foundUser; else users.push(foundUser);
+          saveData('zz_users', users);
+        }
+      }
+    } catch(e) { console.warn('Firebase user lookup failed:', e); }
+  }
+
+  // Step 3: Build userData — treat 'عميل' / 'مجهول' / 'زائر' as NO name (corrupted data)
+  const INVALID_NAMES = ['عميل', 'مجهول', 'زائر', 'guest', 'unknown', ''];
+  const hasRealName = foundUser && foundUser.name && !INVALID_NAMES.includes((foundUser.name||'').trim().toLowerCase());
+  const userData = hasRealName
+    ? { ...foundUser, verified: true }
+    : { name: '', phone: cleanPhone.startsWith('2') ? '0' + cleanPhone.slice(1) : phone, whatsapp: phone, address: '', verified: false };
+
+  // Step 4: Check if already OTP-verified → skip OTP only if real name exists
   const savedVerified = loadData('zz_verified_phones', {});
-  if (savedVerified[phone]) {
-    currentUser = { name: 'عميل', phone, whatsapp: phone, address: '', verified: true };
-    if (document.getElementById('rememberToggle').classList.contains('on'))
-      saveData('zamzam_user', currentUser);
+  const phoneNorm = phone.replace(/[^0-9]/g,'');
+  const isVerified = savedVerified[phone] || savedVerified[phoneNorm] || savedVerified['0'+phoneNorm.replace(/^2/,'')] || false;
+
+  if (isVerified && hasRealName) {
+    currentUser = { ...userData, verified: true };
+    // ALWAYS save session — keep user logged in
+    saveData('zamzam_user', currentUser);
+    const rememberEl = document.getElementById('rememberToggle');
+    if (rememberEl && !rememberEl.classList.contains('on')) {
+      const sm = loadData('zz_session_meta', {}); sm.temporary = true; saveData('zz_session_meta', sm);
+    } else {
+      const sm = loadData('zz_session_meta', {}); sm.temporary = false; saveData('zz_session_meta', sm);
+    }
     openScreen('app'); getGPS(); return;
   }
-  startOTP(phone, 'login', { name: 'عميل', phone, whatsapp: phone, address: '' });
+
+  // Step 5: Phone verified but name is missing/corrupted — force complete registration
+  if (isVerified && !hasRealName) {
+    showNotif('⚠️ بياناتك غير مكتملة — أكمل تسجيلك بالاسم الحقيقي');
+    switchAuthTab('register');
+    // Prefill phone fields
+    const rp = document.getElementById('regPhone');
+    const rw = document.getElementById('regWhatsapp');
+    if (rp) rp.value = phone;
+    if (rw) rw.value = phone;
+    document.getElementById('regName')?.focus();
+    return;
+  }
+
+  // Step 6: Not verified at all — go through OTP
+  startOTP(userData.whatsapp || userData.phone || phone, 'login', userData);
 }
 
-function doRegister() {
+async function doRegister() {
   const name = document.getElementById('regName').value.trim();
   const phone = document.getElementById('regPhone').value.trim();
   const wa = document.getElementById('regWhatsapp').value.trim();
   const addr = document.getElementById('regAddress').value.trim();
   if (!name || !phone) { showNotif('يرجى ملء الاسم ورقم الهاتف'); return; }
   if (!wa) { showNotif('⚠️ رقم الواتساب إجبارى'); return; }
+  // Check if phone already registered — local first
+  const INVALID_NAMES_REG = ['عميل', 'مجهول', 'زائر', 'guest', 'unknown', ''];
+  const users = loadData('zz_users', []);
+  const cleanPhone = phone.replace(/[^0-9]/g,'');
+  let existing = users.find(u => (u.phone||'').replace(/[^0-9]/g,'') === cleanPhone);
+  // Also check Firebase
+  if (!existing && db) {
+    try {
+      const snap = await db.ref('users/' + cleanPhone).get();
+      if (snap.exists()) {
+        const fbUser = snap.val();
+        if (fbUser && fbUser.name) existing = fbUser;
+      }
+    } catch(e) {}
+  }
+  // Only block re-registration if existing account has a REAL name (not عميل/corrupted)
+  const existingHasRealName = existing && existing.name && !INVALID_NAMES_REG.includes((existing.name||'').trim().toLowerCase());
+  if (existingHasRealName) {
+    showNotif('⚠️ هذا الرقم مسجل بالفعل — استخدم تسجيل الدخول');
+    switchAuthTab('login');
+    const loginPhoneEl = document.getElementById('loginPhone');
+    if (loginPhoneEl) { loginPhoneEl.value = phone; previewLoginUser(phone); }
+    return;
+  }
+  // If existing has corrupted/empty name — allow re-registration to fix it
   const user = { name, phone, whatsapp: wa, address: addr, verified: false };
   startOTP(wa, 'register', user);
 }
@@ -2109,20 +2465,53 @@ function verifyOTP() {
   // Verified!
   currentUser = { ..._otpPending.user, verified: true };
   const savedVerified = loadData('zz_verified_phones', {});
-  savedVerified[currentUser.phone] = true;
+  // Store multiple phone variants so login always works
+  const _phone = currentUser.phone || '';
+  const _clean = _phone.replace(/[^0-9]/g,'');
+  savedVerified[_phone] = true;
+  savedVerified[_clean] = true;
+  if (_clean.startsWith('2')) savedVerified['0' + _clean.slice(1)] = true;
+  if (_clean.startsWith('0')) savedVerified['2' + _clean] = true;
   saveData('zz_verified_phones', savedVerified);
-  // Save user
-  const remember = document.getElementById(_otpPending.isLogin ? 'rememberToggle' : 'rememberToggle2');
-  if (remember && remember.classList.contains('on')) saveData('zamzam_user', currentUser);
-  // Register to users list
+  // Register / update user in users list
+  const INVALID_NAMES_MERGE = ['عميل', 'مجهول', 'زائر', 'guest', 'unknown', ''];
   const users = loadData('zz_users', []);
-  if (!users.find(u => u.phone === currentUser.phone)) {
+  const existIdx = users.findIndex(u => (u.phone||'').replace(/[^0-9]/g,'') === (currentUser.phone||'').replace(/[^0-9]/g,''));
+  if (existIdx >= 0) {
+    // Merge — use new name if old name was corrupted/empty, keep old name only if new name is missing
+    const oldName = (users[existIdx].name||'').trim();
+    const newName = (currentUser.name||'').trim();
+    const oldNameValid = oldName && !INVALID_NAMES_MERGE.includes(oldName.toLowerCase());
+    const newNameValid = newName && !INVALID_NAMES_MERGE.includes(newName.toLowerCase());
+    const mergedUser = { ...users[existIdx], ...currentUser };
+    // Always prefer a valid new name over a corrupted old name
+    mergedUser.name = newNameValid ? newName : (oldNameValid ? oldName : newName);
+    users[existIdx] = mergedUser;
+    currentUser = { ...users[existIdx] };
+  } else {
     users.push({ ...currentUser, registeredAt: new Date().toLocaleDateString('ar-EG') });
-    saveData('zz_users', users);
-    fbSet('users/' + currentUser.phone.replace(/[^0-9]/g,''), currentUser);
   }
+  saveData('zz_users', users);
+  // --- ALWAYS save session so user stays logged in ---
+  saveData('zamzam_user', currentUser);
+  // Also respect "remember me" toggle — if OFF, mark session as non-persistent
+  const rememberToggleId = _otpPending.isLogin ? 'rememberToggle' : 'rememberToggle2';
+  const rememberEl = document.getElementById(rememberToggleId);
+  if (rememberEl && !rememberEl.classList.contains('on')) {
+    // Mark session as temporary (cleared on explicit logout only, not on next visit)
+    const sessionMeta = loadData('zz_session_meta', {});
+    sessionMeta.temporary = true;
+    saveData('zz_session_meta', sessionMeta);
+  } else {
+    const sessionMeta = loadData('zz_session_meta', {});
+    sessionMeta.temporary = false;
+    saveData('zz_session_meta', sessionMeta);
+  }
+  // Save to Firebase so other devices can find this user
+  const phoneKey = (currentUser.phone||'').replace(/[^0-9]/g,'');
+  if (phoneKey) fbSet('users/' + phoneKey, { ...currentUser, verified: true, registeredAt: users[existIdx >= 0 ? existIdx : users.length-1]?.registeredAt || new Date().toLocaleDateString('ar-EG') });
   _otpPending = null;
-  showNotif('✅ تم التحقق بنجاح');
+  showNotif('✅ تم التحقق بنجاح — أهلاً ' + currentUser.name);
   openScreen('app'); getGPS();
 }
 
@@ -2152,14 +2541,28 @@ function resendOTP() {
 function doClientLogout() {
   currentUser = null;
   localStorage.removeItem('zamzam_user');
+  localStorage.removeItem('zz_session_meta');
   showScreen('auth');
+  // After logout: show tabs + login mode (returning user)
+  const tabs = document.getElementById('authTabs');
+  if (tabs) tabs.style.display = 'flex';
+  switchAuthTab('login');
 }
 
 // ============================================================
 // MENU RENDER
 // ============================================================
 function renderMenu() {
-  if (currentUser) document.getElementById('greetUser').textContent = 'أهلاً ' + currentUser.name + ' 👋';
+  if (currentUser) {
+    const _INVALID = ['عميل','مجهول','زائر','guest','unknown',''];
+    const displayName = (currentUser.name||'').trim();
+    const greetEl = document.getElementById('greetUser');
+    if (greetEl) {
+      greetEl.textContent = (displayName && !_INVALID.includes(displayName.toLowerCase()))
+        ? 'أهلاً ' + displayName + ' 👋'
+        : 'أهلاً بك 👋';
+    }
+  }
   renderMainGroups();
   renderCategories();
   renderAdsSlider();
@@ -2191,7 +2594,7 @@ function renderMenu() {
           ${item.prices ? `<div class="size-pills"><span class="size-pill active">S</span><span class="size-pill">M</span><span class="size-pill">L</span></div>` : ''}
           <div class="food-name">${item.name}</div>
           <div class="food-desc">${item.desc||''}</div>
-          ${deliveryType==='delivery' ? `<div class="delivery-badge ${item.deliveryAvailable===false ? 'unavail' : 'avail'}"><span class="badge-dot"></span>${item.deliveryAvailable===false ? '📦 استلام فقط' : '🚚 متاح للدليفري'}</div>` : ''}
+          ${deliveryType==='delivery' ? `<div class="delivery-badge ${getItemDeliveryMode(cat, item) ? 'avail' : 'unavail'}"><span class="badge-dot"></span>${getItemDeliveryMode(cat, item) ? '🚚 متاح للدليفري' : '📦 استلام فقط'}</div>` : ''}
           <div style="display:flex;align-items:center;justify-content:space-between">
             <div class="food-price">${price} <span style="font-size:11px;color:var(--text-muted)">ج.م</span></div>
             ${!notAvail ? `<div class="food-add" onclick="quickAdd(event,'${cat}','${item.id}')">+</div>` : ''}
@@ -2261,7 +2664,7 @@ function openProduct(cat, id) {
   // Delivery badge in modal
   const pmDB = document.getElementById('pmDeliveryBadge');
   if (pmDB) {
-    const isAvail = item.deliveryAvailable !== false;
+    const isAvail = getItemDeliveryMode(cat, item);
     pmDB.innerHTML = `<span class="delivery-badge ${isAvail ? 'avail' : 'unavail'}"><span class="badge-dot"></span>${isAvail ? '🚚 متاح للدليفري' : '📦 استلام فقط — غير متاح للدليفري'}</span>`;
   }
   const ss = document.getElementById('pmSizeSection');
@@ -2584,6 +2987,7 @@ function placeOrder() {
   }
   const orderNum = 'ZZ-' + String(Date.now()).slice(-6);
   currentOrderNum = orderNum;
+  _cashierViewedCurrentOrder = false; // يُعاد تعيينه عند فتح الكاشير للطلب فعلياً
   const subtotal = cartSubtotal();
   const autoDisc = calcAutoDiscount();
   const totalDisc = Math.max(appliedDiscount, autoDisc);
@@ -2613,7 +3017,7 @@ function placeOrder() {
   const lastOrderNote = lastOrderActive ? '\n\n⚠️ *ملاحظة:* هذا الطلب بعد Last Order — قد يكون هناك تأخير' : '';
   const msg = `🍽️ *طلب جديد — #${orderNum}*
 ━━━━━━━━━━━━━━━━━━━━━
-👤 *الاسم:* ${currentUser?.name || 'عميل'}
+👤 *الاسم:* ${currentUser?.name || loadData('zamzam_user',{}).name || 'زائر'}
 📞 *الهاتف:* ${currentUser?.phone || '—'}
 📱 *واتساب:* ${currentUser?.whatsapp || currentUser?.phone || '—'}
 ${address ? `🏠 *العنوان:* ${address}` : ''}
@@ -2638,7 +3042,7 @@ ${totalDisc > 0 ? `🏷️ الخصم: - ${totalDisc} ج.م\n` : ''}${deliveryFe
   const isElectronicPayment = paymentType !== 'cash';
   const clientWalletNum = isElectronicPayment ? (document.getElementById('clientWalletNum')?.value?.trim() || '') : '';
   const newOrder = {
-    id: orderNum, name: currentUser?.name || 'عميل', phone: currentUser?.phone || '—',
+    id: orderNum, name: currentUser?.name || loadData('zamzam_user',{}).name || 'زائر', phone: currentUser?.phone || '—',
     whatsapp: currentUser?.whatsapp || currentUser?.phone || '',
     type: deliveryType, status: isElectronicPayment ? 'payment_pending' : 'new',
     items: cart.map(c => ({ ...c })),
@@ -2692,10 +3096,11 @@ function resetTracking() {
     const txt = document.getElementById('track' + i + 't');
     dot.className = 'step-dot'; if (txt) txt.textContent = '—';
   }
-  // track1 يبقى pending حتى يستلم الكاشير الطلب فعلياً
+  // track1 يبقى في حالة انتظار حتى يفتح الكاشير الطلب فعلياً
   const t1 = document.getElementById('track1t'); if (t1) t1.textContent = 'في انتظار الكاشير...';
   document.getElementById('delayMsgBox').style.display = 'none';
 }
+
 function updateTrackingStatus(status) {
   const steps = { new: 1, prep: 2, ready: 3, out: 4, delivered: 5 };
   const idx = steps[status] || 1;
@@ -2711,22 +3116,55 @@ function updateTrackingStatus(status) {
     const dot = document.getElementById('track' + i);
     if (!dot) continue;
     if (status === 'payment_pending') {
-      // track1 pending — لم يستلم الكاشير بعد
       dot.className = 'step-dot';
     } else {
-      if (i < idx) dot.className = 'step-dot done';
+      // Step 1 (تم استلام الطلب) تضيء فقط بعد أن يفتح الكاشير الطلب فعلياً
+      // يُعتبر "فتح الطلب" عندما يغير الكاشير الحالة إلى prep أو أعلى
+      const cashierActuallyViewed = (status === 'prep' || status === 'ready' || status === 'out' || status === 'delivered');
+      if (i === 1) {
+        if (cashierActuallyViewed || status === 'new' && _cashierViewedCurrentOrder) {
+          dot.className = 'step-dot done';
+        } else {
+          // لم يستلم الكاشير بعد — نضع حالة محايدة
+          dot.className = 'step-dot waiting';
+        }
+      } else if (i < idx) dot.className = 'step-dot done';
       else if (i === idx) dot.className = 'step-dot active';
       else dot.className = 'step-dot';
     }
   }
-  // تحديث نص track1
+
+  // تحديث نصوص مراحل التتبع
   const t1 = document.getElementById('track1t');
-  if (t1) {
-    if (status === 'payment_pending') {
-      t1.textContent = 'في انتظار تأكيد الدفع...';
-    } else if (['new','prep','ready','out','delivered'].includes(status)) {
-      t1.textContent = 'تم الاستلام ✓';
-    }
+  const t2 = document.getElementById('track2t');
+  const t3 = document.getElementById('track3t');
+  const t4 = document.getElementById('track4t');
+  const t5 = document.getElementById('track5t');
+
+  if (status === 'payment_pending') {
+    if (t1) t1.textContent = 'في انتظار تأكيد الدفع...';
+  } else if (status === 'new') {
+    // الكاشير لم يتفاعل مع الطلب بعد — نظهر حالة انتظار محايدة
+    if (t1) t1.textContent = _cashierViewedCurrentOrder ? 'تم الاستلام ✓' : 'في انتظار مراجعة الكاشير 🕘';
+  } else if (status === 'prep') {
+    // الكاشير بدأ التجهيز = تفاعل فعلي → نُظهر تم الاستلام
+    if (t1) t1.textContent = 'تم الاستلام ✓';
+    if (t2) t2.textContent = 'بدأ تجهيز الطلب 🍳';
+  } else if (status === 'ready') {
+    if (t1) t1.textContent = 'تم الاستلام ✓';
+    if (t2) t2.textContent = 'بدأ تجهيز الطلب ✓';
+    if (t3) t3.textContent = 'الطلب جاهز ✅';
+  } else if (status === 'out') {
+    if (t1) t1.textContent = 'تم الاستلام ✓';
+    if (t2) t2.textContent = 'بدأ تجهيز الطلب ✓';
+    if (t3) t3.textContent = 'الطلب جاهز ✓';
+    if (t4) t4.textContent = 'خرج للتوصيل 🚚';
+  } else if (status === 'delivered') {
+    if (t1) t1.textContent = 'تم الاستلام ✓';
+    if (t2) t2.textContent = 'بدأ تجهيز الطلب ✓';
+    if (t3) t3.textContent = 'الطلب جاهز ✓';
+    if (t4) t4.textContent = 'خرج للتوصيل ✓';
+    if (t5) t5.textContent = 'تم التسليم 🎉';
   }
 }
 
@@ -2856,6 +3294,8 @@ function doAdminLogin() {
   }
   adminRoleType = role;
   document.getElementById('adminRoleLabel').textContent = role === 'admin' ? '🔑 مدير النظام' : '💳 كاشير';
+  // طلب إذن Desktop Notifications
+  requestNotifPermission();
   openScreen('adminPanel');
 }
 function doLogout() {
@@ -2989,10 +3429,9 @@ function renderAdminOrders() {
           <button class="action-btn" style="background:#fef3c7;color:#92400e;font-weight:900;animation:pulse 1.5s infinite" onclick="confirmOrderPayment('${o.id}')">💳 تأكيد الدفع</button>
         ` : ''}
         ${canManage && o.status !== 'payment_pending' ? `
-          <button class="action-btn btn-prep" onclick="updateOrderStatus('${o.id}','prep')" title="جارى التجهيز">🍳 تجهيز</button>
-          <button class="action-btn btn-ready" onclick="updateOrderStatus('${o.id}','ready')" title="اكتمل التجهيز">✅ جاهز</button>
+          <button class="action-btn btn-prep" onclick="updateOrderStatus('${o.id}','prep')" title="بدأ التجهيز">🍳 بدأ التجهيز</button>
+          <button class="action-btn btn-ready" onclick="updateOrderStatus('${o.id}','ready')" title="الطلب جاهز">✅ جاهز</button>
           <button class="action-btn btn-deliver" onclick="openAgentPopup('${o.id}')" title="خرج للتوصيل">🛵 خرج</button>
-          <button class="action-btn btn-ready" onclick="updateOrderStatus('${o.id}','delivered')" title="تم التسليم" style="background:#d4edda;color:#155724">🎉 تسليم</button>
           <button class="action-btn btn-delay" onclick="sendDelayMsg('${o.id}')">⏳ تأخير</button>
         ` : ''}
         ${adminRoleType === 'admin' ? `<button class="action-btn btn-cancel" onclick="updateOrderStatus('${o.id}','cancelled')">❌ إلغاء</button>
@@ -3008,7 +3447,7 @@ function renderAdminOrders() {
         ${o.gps ? `<div style="margin-bottom:4px">📍 <a href="https://www.google.com/maps?q=${o.gps.lat},${o.gps.lng}" target="_blank" style="color:var(--blue)">عرض الموقع</a></div>` : ''}
         <div style="font-size:15px;font-weight:800;color:var(--olive-dark)">الإجمالى: ${o.total} ج.م</div>
         ${o.isAfterLastOrder ? '<div style="color:var(--red);font-size:12px;font-weight:700;margin-top:4px">⚠️ بعد Last Order</div>' : ''}
-        ${o.clientConfirmedAt ? `<div style="color:var(--olive);font-size:12px;font-weight:800;margin-top:4px">✅ استلم العميل الطلب — ${o.clientReceivedTime||''} ${o.clientReceivedDate||''}</div>` : ''}
+        ${o.deliveredByClient ? `<div style="background:#d1fae5;border-radius:8px;padding:8px 12px;margin-top:6px;color:#065f46;font-size:12px;font-weight:800">✅ تم التسليم بواسطة العميل — ${o.clientReceivedTime||''} — ${o.clientReceivedDate||''}</div>` : o.clientConfirmedAt ? `<div style="color:var(--olive);font-size:12px;font-weight:800;margin-top:4px">✅ استلم العميل الطلب — ${o.clientReceivedTime||''} ${o.clientReceivedDate||''}</div>` : ''}
       </div>
     </div>
   `).join('');
@@ -3025,12 +3464,32 @@ function updateOrderStatus(id, status) {
   saveData('zz_orders', ordersData);
   // 🔥 حفظ في Firebase — الـ listener هيحدث الواجهة تلقائياً
   fbUpdateOrderStatus(id, status);
+
+  // ===== تحديث Tracking العميل حسب الحالة =====
+  // prep → تحديث العميل: بدأ التجهيز
+  if (status === 'prep') {
+    // الكاشير تفاعل فعلياً مع الطلب — نضع cashierViewedAt
+    fbUpdate('orders/' + id, { status: 'prep', prepStartedAt: new Date().toISOString(), cashierViewedAt: new Date().toISOString() });
+  }
+  // ready → تحديث Tracking العميل: الطلب جاهز
+  if (status === 'ready') {
+    fbUpdate('orders/' + id, { status: 'ready', readyAt: new Date().toISOString() });
+  }
+  // out → إرسال إشعار للعميل + تحديث Tracking
+  if (status === 'out') {
+    fbUpdate('orders/' + id, { status: 'out', outAt: new Date().toISOString() });
+  }
+  // delivered → تحديث حالة نهائية
+  if (status === 'delivered') {
+    fbUpdate('orders/' + id, { status: 'delivered', deliveredAt: new Date().toISOString() });
+  }
+
   renderAdminOrders();
   if (document.getElementById('tab-cashier').style.display === 'block') renderCashierSheet();
   if (currentOrderNum === id) updateTrackingStatus(status);
   // Auto WA message
   sendStatusWhatsapp(order, status);
-  const labels = { prep: 'جارى التجهيز', ready: 'جاهز للاستلام', out: 'خرج للتوصيل', delivered: 'تم التسليم ✅', cancelled: 'تم الإلغاء' };
+  const labels = { prep: 'بدأ تجهيز الطلب', ready: 'الطلب جاهز', out: 'خرج للتوصيل', delivered: 'تم التسليم ✅', cancelled: 'تم الإلغاء' };
   showNotif('✓ ' + (labels[status] || status));
 }
 
@@ -3099,7 +3558,16 @@ function deleteOrderAdmin(orderId) {
 function renderCashierSheet() {
   const statusLabels = { new: 'جديد', prep: 'تجهيز', ready: 'جاهز', out: 'في الطريق', delivered: 'تم التسليم', cancelled: 'ملغى', payment_pending: '⏳ دفع معلق' };
   const statusColors = { new: '#e3f0ff', prep: '#fff3d0', ready: '#e0f7e0', out: '#d4edda', delivered: '#e8f5d0', cancelled: '#ffe3e3', payment_pending: '#fef3c7' };
-  let sorted = [...ordersData].sort((a, b) => (a.timestamp || 0) - (b.timestamp || 0));
+  // ===== الطلبات الجديدة أعلى القائمة =====
+  let sorted = [...ordersData].sort((a, b) => {
+    // الطلبات الجديدة والنشطة أولاً
+    const activeStatuses = ['new', 'prep', 'payment_pending'];
+    const aActive = activeStatuses.includes(a.status) ? 1 : 0;
+    const bActive = activeStatuses.includes(b.status) ? 1 : 0;
+    if (bActive !== aActive) return bActive - aActive;
+    // ثم ترتيب زمني (الأحدث أولاً داخل كل مجموعة)
+    return (b.timestamp || 0) - (a.timestamp || 0);
+  });
   if (cashierStatusFilter && cashierStatusFilter !== 'all') {
     sorted = sorted.filter(o => o.status === cashierStatusFilter);
   }
@@ -3123,9 +3591,10 @@ function renderCashierSheet() {
     const discStr = o.disc > 0 ? `<span style="color:var(--red);font-weight:800">- ${o.disc} ج</span>` : '—';
     const statusBg = statusColors[o.status] || '#fff';
     const isPending = o.status === 'payment_pending';
+    const isVip = !!VIP_CUSTOMERS[o.phone];
     return `<tr class="${isPending ? 'priority-row' : o.status === 'new' ? 'priority-row' : ''}" id="crow_${o.id}">
       <td style="font-weight:800;color:var(--olive)">${idx + 1}</td>
-      <td style="font-weight:700;white-space:nowrap">${o.name}</td>
+      <td style="font-weight:700;white-space:nowrap">${o.name}${isVip ? ' <span class="vip-auto-badge">⭐VIP</span>' : ''}</td>
       <td>${o.whatsapp ? `<a href="https://wa.me/${(o.whatsapp||'').replace(/[^0-9]/g,'')}" target="_blank" style="color:var(--olive);font-weight:700">📱 ${o.phone}</a>` : o.phone}</td>
       <td style="max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${o.address || (o.tableNum ? '🪑 '+o.tableNum : o.type === 'pickup' ? '🏪 استلام' : '—')}</td>
       <td style="max-width:180px;font-size:11px">${itemsStr}</td>
@@ -3133,6 +3602,7 @@ function renderCashierSheet() {
       <td>${discStr}</td>
       <td><span style="background:${statusBg};padding:3px 8px;border-radius:6px;font-size:10px;font-weight:800">${statusLabels[o.status]||o.status}</span>
         ${isPending ? `<br/><span style="font-size:9px;color:#92400e">${o.payment||''}</span>` : ''}
+        ${o.deliveredByClient ? `<br/><span style="font-size:9px;background:#d1fae5;color:#065f46;padding:1px 5px;border-radius:4px;font-weight:800">✅ استلم العميل — ${o.clientReceivedTime||''}</span>` : ''}
       </td>
       <td style="white-space:nowrap">${o.time}</td>
       <td style="white-space:nowrap">${o.date || '—'}</td>
@@ -3140,10 +3610,9 @@ function renderCashierSheet() {
         ${canManage ? `<div class="track-btns">
           ${isPending ? `<button class="track-btn" style="background:#fef3c7;color:#92400e;font-weight:900;padding:4px 8px;font-size:10px" onclick="confirmOrderPayment('${o.id}')">💳 تأكيد</button>` : ''}
           ${!isPending ? `
-          <button class="track-btn tb-prep ${o.status==='prep'?'active-state':''}" onclick="updateOrderStatus('${o.id}','prep')" title="جارى التجهيز">🍳</button>
-          <button class="track-btn tb-ready ${o.status==='ready'?'active-state':''}" onclick="updateOrderStatus('${o.id}','ready')" title="اكتمل">✅</button>
+          <button class="track-btn tb-prep ${o.status==='prep'?'active-state':''}" onclick="updateOrderStatus('${o.id}','prep')" title="بدأ التجهيز">🍳</button>
+          <button class="track-btn tb-ready ${o.status==='ready'?'active-state':''}" onclick="updateOrderStatus('${o.id}','ready')" title="جاهز">✅</button>
           <button class="track-btn tb-out ${o.status==='out'?'active-state':''}" onclick="openAgentPopup('${o.id}')" title="خرج">🛵</button>
-          <button class="track-btn tb-done ${o.status==='delivered'?'active-state':''}" onclick="updateOrderStatus('${o.id}','delivered')" title="تسليم">🎉</button>
           <button class="track-btn tb-delay" onclick="sendDelayMsg('${o.id}')" title="تأخير">⏳</button>
           ` : ''}
           ${o.whatsapp ? `<button class="track-btn tb-wa" onclick="window.open('https://wa.me/${(o.whatsapp||'').replace(/[^0-9]/g,'')}','_blank')" title="واتساب">💬</button>` : ''}
@@ -3189,27 +3658,28 @@ function toggleLastOrder() {
 // BOOKING SYSTEM
 // ============================================================
 // Table capacity rules
+// ── قواعد السعة لكل ترابيزة ──────────────────────────────
+// ترابيزات 12-16 : فرد أو فردين فقط (1-2)
+// ترابيزات 1-9 و17 : 3 أو 4 أفراد فقط (3-4)
+// ترابيزات 10-11  : من 5 إلى 7 أفراد  (5-7)
 const TABLE_CAPACITY = {
-  default: { min:1, max:4 },   // tables 1-9
-  large: { min:5, max:7 },     // tables 10,11
-  couple: { min:1, max:2 },    // table 12
-  single: { min:1, max:2 }     // tables 13-16
+  small:   { min:1, max:2 },  // 12,13,14,15,16
+  medium:  { min:3, max:4 },  // 1,2,3,4,5,6,7,8,9,17
+  large:   { min:5, max:7 }   // 10,11
 };
 function getTableCapacity(tableNum) {
-  if (tableNum >= 1 && tableNum <= 9) return TABLE_CAPACITY.default;
   if (tableNum === 10 || tableNum === 11) return TABLE_CAPACITY.large;
-  if (tableNum === 12) return TABLE_CAPACITY.couple;
-  if (tableNum >= 13 && tableNum <= 16) return TABLE_CAPACITY.single;
-  return TABLE_CAPACITY.default;
+  if (tableNum >= 12 && tableNum <= 16)   return TABLE_CAPACITY.small;
+  return TABLE_CAPACITY.medium; // 1-9 و17 وما بعدها
 }
 function getTableCapacityLabel(tableNum) {
   const c = getTableCapacity(tableNum);
   if (c.min === c.max) return c.min + ' شخص';
-  return c.min + '-' + c.max + ' أشخاص';
+  return c.min + '–' + c.max + ' أشخاص';
 }
 
 function renderTablesGrid() {
-  const tablesCount = Number(SETTINGS.tablesCount) || 16;
+  const tablesCount = Number(SETTINGS.tablesCount) || 17;
   const today = document.getElementById('bookDate')?.value || new Date().toISOString().split('T')[0];
   const time = document.getElementById('bookTime')?.value || '12:00';
   const persons = Number(document.getElementById('bookPersons')?.value) || 1;
@@ -3223,8 +3693,22 @@ function renderTablesGrid() {
       Math.abs(timeToMin(b.time) - timeToMin(time)) < 90);
     const isSelected = selectedTableNum === t;
     const canSelect = !isBooked && fitsPersons;
-    let cls = isBooked ? 'booked' : !fitsPersons ? 'booked' : isSelected ? 'selected' : 'available';
-    let capLabel = isBooked ? '🔴 محجوزة' : !fitsPersons ? '⚠️ ' + getTableCapacityLabel(t) : isSelected ? '✓ محددة' : '🟢 ' + getTableCapacityLabel(t);
+    let cls, capLabel;
+    if (isBooked) {
+      cls = 'booked';
+      capLabel = '🔴 محجوزة';
+    } else if (!fitsPersons) {
+      cls = 'booked';
+      // Explain WHY it's blocked
+      if (persons < cap.min) capLabel = `❌ تحتاج ${cap.min}+ أشخاص`;
+      else capLabel = `❌ بحد أقصى ${cap.max} أشخاص`;
+    } else if (isSelected) {
+      cls = 'selected';
+      capLabel = '✓ محددة';
+    } else {
+      cls = 'available';
+      capLabel = '🟢 ' + getTableCapacityLabel(t);
+    }
     html += `<div class="table-card ${cls}" onclick="${canSelect ? `selectTable(${t})` : ''}">
       <div class="t-num">${t}</div>
       <div class="t-cap" style="font-size:10px">${capLabel}</div>
@@ -3448,17 +3932,40 @@ function renderMenuManage() {
   let html = '';
   cats.forEach(cat => {
     const sec = MENU[cat];
-    html += `<div style="margin-bottom:16px">
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
-        <div style="font-size:16px;font-weight:800">${sec.label}</div>
-        ${adminRoleType === 'admin' ? `<button class="del-btn" onclick="deleteCat('${cat}')" style="width:auto;padding:4px 10px;font-size:11px;border-radius:6px">🗑️ حذف القسم</button>` : ''}
-      </div>`;
+    if (!sec) return;
+    const catDelivMode = sec.deliveryMode || 'delivery';
+    const catDelivOn = catDelivMode !== 'pickup_only';
+    const mainGroupKey = sec.mainGroup || getCatMainGroup(cat, sec.label || '');
+    const mainGroupLabel = mainGroupKey && MAIN_GROUPS[mainGroupKey] ? `<span style="font-size:11px;background:var(--olive-pale);color:var(--olive-dark);padding:2px 8px;border-radius:100px;margin-right:6px">${MAIN_GROUPS[mainGroupKey].emoji} ${MAIN_GROUPS[mainGroupKey].label}</span>` : '';
+    html += `<div style="margin-bottom:20px;border:1.5px solid var(--border);border-radius:16px;overflow:hidden">
+      <div style="background:var(--white);padding:12px 14px;border-bottom:1px solid var(--border)">
+        <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px">
+          <div>
+            <div style="font-size:16px;font-weight:800">${sec.label}</div>
+            <div style="margin-top:4px">${mainGroupLabel}</div>
+          </div>
+          <div style="display:flex;align-items:center;gap:8px">
+            <!-- Delivery mode toggle for entire category -->
+            <div style="display:flex;align-items:center;gap:6px;background:${catDelivOn ? '#e8f5d0' : '#ffe3e3'};padding:5px 10px;border-radius:100px;border:1.5px solid ${catDelivOn ? 'var(--olive)' : 'var(--red)'}">
+              <div class="toggle-sw ${catDelivOn ? 'on' : ''}" style="width:34px;height:20px" onclick="setCatDeliveryMode('${cat}', this.classList.contains('on') ? 'pickup_only' : 'delivery')"></div>
+              <span style="font-size:11px;font-weight:800;color:${catDelivOn ? 'var(--olive-dark)' : 'var(--red)'}">${catDelivOn ? '🟢 دليفري' : '🔴 استلام فقط'}</span>
+            </div>
+            ${adminRoleType === 'admin' ? `<button class="del-btn" onclick="deleteCat('${cat}')" style="width:auto;padding:4px 10px;font-size:11px;border-radius:6px">🗑️</button>` : ''}
+          </div>
+        </div>
+      </div>
+      <div style="padding:8px 12px">`;
+    if (!(sec.items || []).length) {
+      html += `<div style="text-align:center;padding:16px;color:var(--text-muted);font-size:12px;font-weight:700">لا توجد أصناف — أضف صنفاً جديداً</div>`;
+    }
     (sec.items || []).forEach(item => {
       const priceStr = item.prices ? Object.entries(item.prices).map(([s, p]) => `${s}: ${p}`).join(' | ') : item.price + ' ج';
+      const effDelivery = catDelivOn ? (item.availableDelivery !== false) : false;
+      const delivBadge = `<span class="delivery-badge-admin ${effDelivery ? 'avail' : 'unavail'}">${effDelivery ? '🟢 دليفري' : '🔴 استلام فقط'}</span>`;
       html += `<div class="menu-item-row">
         <div class="item-emoji">${item.emoji}</div>
         <div class="item-info">
-          <div class="name">${item.name}${item.new ? ' <span style="font-size:10px;background:var(--gold);color:#fff;padding:1px 6px;border-radius:4px">جديد</span>' : ''}${item.availableDelivery === false ? ' <span style="font-size:10px;background:#ffe3e3;color:var(--red);padding:1px 6px;border-radius:4px">🚫 دليفري</span>' : ''}</div>
+          <div class="name">${item.name}${item.new ? ' <span style="font-size:10px;background:var(--gold);color:#fff;padding:1px 6px;border-radius:4px">جديد</span>' : ''} ${delivBadge}</div>
           <div class="price">${priceStr} ج.م</div>
           <div class="desc">${item.desc || ''}</div>
         </div>
@@ -3471,7 +3978,7 @@ function renderMenuManage() {
         </div>
       </div>`;
     });
-    html += '</div>';
+    html += '</div></div>';
   });
   document.getElementById('menuManageList').innerHTML = html || '<div style="text-align:center;color:var(--text-muted);padding:20px">لا توجد أصناف</div>';
 }
@@ -3545,7 +4052,7 @@ function setPriceType(type) {
   document.getElementById('singlePriceRow').style.display = type === 'single' ? 'block' : 'none';
   document.getElementById('sizesPriceRow').style.display = type === 'sizes' ? 'block' : 'none';
 }
-function saveItem() {
+async function saveItem() {
   const editId = document.getElementById('editItemId').value;
   const cat = document.getElementById('itemCatInput').value;
   const name = document.getElementById('itemNameInput').value.trim();
@@ -3554,6 +4061,7 @@ function saveItem() {
   const isNew = document.getElementById('itemNewToggle').classList.contains('on');
   const isDelivery = document.getElementById('itemDeliveryToggle').classList.contains('on');
   if (!name || !cat) { showNotif('أدخل اسم الصنف والقسم'); return; }
+  if (!MENU[cat]) { showNotif('❌ القسم غير موجود — اختر قسماً صحيحاً'); return; }
   let priceData = {};
   if (priceTypeMode === 'sizes') {
     const S = Number(document.getElementById('itemPriceS').value);
@@ -3567,19 +4075,43 @@ function saveItem() {
     if (!price) { showNotif('أدخل السعر'); return; }
     priceData.price = price;
   }
+  // Show saving indicator
+  const saveBtn = document.querySelector('#addItemModal .btn-primary');
+  if (saveBtn) { saveBtn.textContent = '⏳ جارى الحفظ...'; saveBtn.disabled = true; }
   if (editId) {
     const [oldCat, oldId] = editId.split('|');
-    const idx = MENU[oldCat].items.findIndex(i => i.id === oldId);
+    const idx = MENU[oldCat]?.items.findIndex(i => i.id === oldId);
     if (idx >= 0) {
-      const updated = { ...MENU[oldCat].items[idx], name, desc, emoji, new: isNew, availableDelivery: isDelivery, ...priceData };
+      const catDeliv2 = MENU[cat]?.deliveryMode;
+      const effDeliv2 = catDeliv2 === 'pickup_only' ? false : catDeliv2 === 'delivery' ? true : isDelivery;
+      const updated = { ...MENU[oldCat].items[idx], name, desc, emoji, new: isNew, availableDelivery: effDeliv2, deliveryAvailable: effDeliv2, ...priceData };
       if (oldCat !== cat) { MENU[cat].items.push(updated); MENU[oldCat].items.splice(idx, 1); }
       else MENU[oldCat].items[idx] = updated;
     }
   } else {
-    MENU[cat].items.push({ id: cat[0] + '_' + Date.now(), name, desc, emoji, new: isNew, available: true, availableDelivery: isDelivery, ...priceData });
+    const catDeliv = MENU[cat]?.deliveryMode;
+    const effectiveDelivery = catDeliv === 'pickup_only' ? false : catDeliv === 'delivery' ? true : isDelivery;
+    const newItem = { id: cat + '_' + Date.now(), name, desc, emoji, new: isNew, available: true, availableDelivery: effectiveDelivery, deliveryAvailable: effectiveDelivery, ...priceData };
+    if (!MENU[cat].items) MENU[cat].items = [];
+    MENU[cat].items.push(newItem);
   }
-  saveMenu(); renderMenuManage(); renderMenu(); closeModal('addItemModal');
-  showNotif('✓ تم حفظ الصنف');
+  // Save locally first (instant)
+  saveData('zz_menu', MENU);
+  // Close modal and update UI immediately
+  closeModal('addItemModal');
+  renderMenuManage();
+  renderMenu();
+  showNotif('✅ تم إضافة الصنف بنجاح');
+  // Then save to Firebase in background
+  _menuWriteLock = true;
+  try {
+    await fbSaveMenu();
+  } catch(e) {
+    showNotif('⚠️ تم الحفظ محلياً — تحقق من الاتصال بالإنترنت');
+  } finally {
+    setTimeout(() => { _menuWriteLock = false; }, 3000);
+    if (saveBtn) { saveBtn.textContent = '💾 حفظ الصنف'; saveBtn.disabled = false; }
+  }
 }
 function deleteItem(cat, id) {
   if (!confirm('حذف هذا الصنف؟')) return;
@@ -3593,10 +4125,39 @@ function saveCategory() {
   const mainGroup = document.getElementById('catMainGroupInput')?.value || '';
   if (!name) { showNotif('أدخل اسم القسم'); return; }
   const allowAddons = document.getElementById('catAllowAddonsToggle')?.classList.contains('on') || false;
+  // delivery mode at category level: 'delivery' | 'pickup_only'
+  const delivMode = document.getElementById('catDeliveryToggle')?.classList.contains('on') ? 'delivery' : 'pickup_only';
   const key = 'cat_' + Date.now();
-  MENU[key] = { label: emoji + ' ' + name, emoji, allowAddons, mainGroup, items: [] };
+  MENU[key] = { label: emoji + ' ' + name, emoji, allowAddons, mainGroup, deliveryMode: delivMode, items: [] };
+  // ➡ apply delivery to all items (none yet, but sets default)
   saveMenu(); renderCatSelects(); renderMenuManage(); renderMenu();
   closeModal('addCatModal'); showNotif('✓ تم إضافة القسم');
+}
+
+// ============================================================
+// CATEGORY DELIVERY MODE — controls all items in category
+// ============================================================
+function setCatDeliveryMode(cat, mode) {
+  if (!MENU[cat]) return;
+  MENU[cat].deliveryMode = mode; // 'delivery' | 'pickup_only'
+  // Apply to all items in this category
+  (MENU[cat].items || []).forEach(item => {
+    item.deliveryAvailable = (mode !== 'pickup_only');
+    item.availableDelivery = (mode !== 'pickup_only');
+  });
+  saveMenu();
+  renderMenuManage();
+  renderMenu();
+  showNotif(mode === 'delivery' ? '🟢 تم تفعيل الدليفري لكل منتجات القسم' : '🔴 تم ضبط القسم على استلام فقط');
+}
+
+// Get effective delivery mode for an item (check category first)
+function getItemDeliveryMode(cat, item) {
+  const catMode = MENU[cat]?.deliveryMode;
+  if (catMode === 'pickup_only') return false;
+  if (catMode === 'delivery') return true;
+  // fallback to item-level
+  return item.deliveryAvailable !== false;
 }
 
 function updateItemMainGroupHint() {
@@ -3616,7 +4177,12 @@ function deleteCat(cat) {
   if (!confirm('حذف هذا القسم وكل أصنافه؟')) return;
   delete MENU[cat]; saveMenu(); renderMenuManage(); renderMenu(); showNotif('✓ تم حذف القسم');
 }
-function saveMenu() { saveData('zz_menu', MENU); fbSaveMenu(); /* 🔥 Firebase */ }
+let _menuWriteLock = false;
+function saveMenu() {
+  saveData("zz_menu", MENU);
+  _menuWriteLock = true;
+  fbSaveMenu().finally(() => { setTimeout(() => { _menuWriteLock = false; }, 3000); });
+}
 
 // ============================================================
 // OFFERS
@@ -4083,6 +4649,7 @@ function buildCustomerStats(period) {
 }
 
 function renderCustomersReport() {
+  loadVIPAutoSettingsUI();
   const period = document.getElementById('custReportPeriod')?.value || 'all';
   const sort = document.getElementById('custReportSort')?.value || 'total';
   const el = document.getElementById('customersReportContent');
@@ -4884,6 +5451,7 @@ let pickupItemsDone = {}; // {orderId: Set of item indices done}
 let _hashAccessRole = null; // tracks which role was requested via hash
 let _pickupTimers = {}; // {orderId: startTimestamp}
 let _pickupTimerInterval = null;
+let _pickupLocalDone = new Set(); // طلبات تم تجهيزها محلياً داخل pickup (monitoring only)
 
 function setupPickupPanel() {
   pickupItemsDone = {};
@@ -4983,7 +5551,9 @@ function renderPickupOrders() {
       </div>
       ${isReady
         ? `<div class="pickup-done-stamp">✅ تم تسليمه للكاشير</div>`
-        : `<button class="pickup-complete-btn ${allDone ? 'visible' : ''}" id="pcomplete_${order.id}" onclick="pickupCompleteOrder('${order.id}')">✅ تم تجهيز الطلب — إخطار الكاشير</button>`
+        : _pickupLocalDone.has(order.id)
+          ? `<div class="pickup-done-stamp" style="color:#D4651A">🍳 تم التجهيز — في انتظار الكاشير</div>`
+          : `<button class="pickup-complete-btn ${allDone ? 'visible' : ''}" id="pcomplete_${order.id}" onclick="pickupCompleteOrder('${order.id}')">✅ تم تجهيز الطلب</button>`
       }
     </div>`;
   }).join('')}</div>`;
@@ -5005,15 +5575,15 @@ function togglePickupItem(orderId, idx) {
 }
 
 function pickupCompleteOrder(orderId) {
+  // ⚠️ PICKUP IS MONITORING ONLY — لا تغيير في الحالة، لا إرسال إشعارات، لا تحديث Firebase
+  // هذه الوظيفة للمتابعة الداخلية فقط داخل لوحة التجهيز
   const order = ordersData.find(o => o.id === orderId);
   if (!order) return;
-  order.status = 'ready';
-  saveData('zz_orders', ordersData);
-  fbUpdateOrderStatus(orderId, 'ready');
-  // ✅ NO WHATSAPP — Internal cashier notification only
-  notifyCashier(order);
+  // تسجيل محلي فقط للعرض داخل pickup panel
+  if (!_pickupLocalDone) _pickupLocalDone = new Set();
+  _pickupLocalDone.add(orderId);
   delete _pickupTimers[orderId];
-  showNotif('✅ تم إخطار الكاشير — الطلب جاهز');
+  showNotif('✅ تم تجهيز الطلب — في انتظار الكاشير');
   renderPickupOrders();
 }
 
@@ -5077,6 +5647,9 @@ function confirmOrderPayment(orderId) {
   order.paymentConfirmedAt = new Date().toISOString();
   saveData('zz_orders', ordersData);
   fbUpdate('orders/' + orderId, { status: 'new', paymentConfirmedAt: order.paymentConfirmedAt });
+
+  // تحديث tracking العميل
+  if (currentOrderNum === orderId) updateTrackingStatus('new');
 
   showNotif('✅ تم تأكيد الدفع — الطلب ينتقل للتجهيز');
   renderAdminOrders();
@@ -5151,36 +5724,54 @@ function confirmDeliveryReceived() {
   const order = ordersData.find(o => o.id === currentOrderNum);
   const now = new Date();
   const receivedAt = now.toLocaleTimeString('ar-EG', {hour:'2-digit',minute:'2-digit'});
-  // Update Firebase with received timestamp
-  fbUpdate('orders/' + currentOrderNum, {
-    clientConfirmedAt: now.toISOString(),
-    clientReceivedTime: receivedAt,
-    clientReceivedDate: now.toLocaleDateString('ar-EG')
-  });
+  const receivedDate = now.toLocaleDateString('ar-EG');
+
+  // ===== العميل يؤكد الاستلام — يحول الحالة لـ delivered =====
   if (order) {
+    order.status = 'delivered';
     order.clientConfirmedAt = now.toISOString();
     order.clientReceivedTime = receivedAt;
+    order.clientReceivedDate = receivedDate;
+    order.deliveredByClient = true;
     saveData('zz_orders', ordersData);
   }
+
+  // 🔥 تحديث Firebase — الكاشير يشوف التسليم فوراً
+  fbUpdate('orders/' + currentOrderNum, {
+    status: 'delivered',
+    clientConfirmedAt: now.toISOString(),
+    clientReceivedTime: receivedAt,
+    clientReceivedDate: receivedDate,
+    deliveredByClient: true
+  });
+
+  // تحديث tracking
+  updateTrackingStatus('delivered');
+
   document.getElementById('deliveryConfirmBtn').style.display = 'none';
-  document.getElementById('deliveryConfirmedMsg').style.display = 'block';
+  const confirmedMsg = document.getElementById('deliveryConfirmedMsg');
+  if (confirmedMsg) confirmedMsg.style.display = 'block';
   showNotif('✅ شكراً! تم تسجيل استلامك');
 }
 
 // Show delivery confirm button when status is 'out'
 function checkDeliveryConfirmBtn(status) {
+  const outBox = document.getElementById('deliveryOutBox');
   const btn = document.getElementById('deliveryConfirmBtn');
   const confirmedMsg = document.getElementById('deliveryConfirmedMsg');
   if (!btn) return;
   if (status === 'out' || status === 'delivered') {
     const order = ordersData.find(o => o.id === currentOrderNum);
     if (order && order.clientConfirmedAt) {
+      if (outBox) outBox.style.display = 'none';
       btn.style.display = 'none';
       if (confirmedMsg) confirmedMsg.style.display = 'block';
     } else {
-      btn.classList.add('visible');
+      if (outBox) outBox.style.display = 'block';
+      if (confirmedMsg) confirmedMsg.style.display = 'none';
     }
   } else {
+    if (outBox) outBox.style.display = 'none';
     btn.classList.remove('visible');
   }
 }
@@ -5362,11 +5953,33 @@ function processCashierPopupQueue() {
   const btn = document.getElementById('cashierPopupBtn');
   const statusRow = document.getElementById('cpStatusRow');
 
-  document.getElementById('cpOrderId').textContent = '#' + orderData.id;
+  // Order badge (code)
+  const badge = document.getElementById('cpOrderBadge');
+  if (badge) badge.textContent = '#' + orderData.id;
+
   document.getElementById('cpName').textContent = orderData.name || '—';
   document.getElementById('cpPhone').textContent = orderData.phone || '—';
   const typeMap = { delivery: '🛵 دليفرى', pickup: '🏪 استلام', cafe: '☕ كافيه' };
   document.getElementById('cpType').textContent = typeMap[orderData.type] || orderData.type || '—';
+
+  // Show order items
+  const itemsBox = document.getElementById('cpItemsBox');
+  if (itemsBox) {
+    if (orderData.items && orderData.items.length) {
+      itemsBox.innerHTML = orderData.items.map(i =>
+        `<div style="display:flex;justify-content:space-between;border-bottom:1px dashed rgba(0,0,0,.08);padding:3px 0">
+          <span>${i.emoji || ''} ${i.name}${i.size ? ' ('+i.size+')' : ''}${i.spicyLabel ? ' — '+i.spicyLabel : ''}</span>
+          <span style="font-weight:800;color:var(--olive-dark)">×${i.qty}</span>
+        </div>`
+      ).join('');
+    } else {
+      itemsBox.textContent = '—';
+    }
+  }
+
+  // Show total
+  const totalEl = document.getElementById('cpTotal');
+  if (totalEl) totalEl.textContent = orderData.total ? orderData.total + ' ج.م' : '—';
 
   if (type === 'new_order') {
     header.className = 'cashier-popup-header new-order';
@@ -5376,6 +5989,8 @@ function processCashierPopupQueue() {
     btn.className = 'cashier-popup-btn btn-blue';
     btn.textContent = '✓ تمت المشاهدة — فتح الطلبات';
     statusRow.style.display = 'none';
+    // Mark cashier received
+    if (db) fbUpdate('orders/' + orderData.id, { cashierViewedAt: new Date().toISOString() }).catch(()=>{});
   } else if (type === 'order_ready') {
     header.className = 'cashier-popup-header ready-order';
     icon.textContent = '✅';
@@ -5389,33 +6004,38 @@ function processCashierPopupQueue() {
 
   _cashierHighlightOrderId = orderData.id;
   playCashierAlertSound(type);
+  // Enhanced desktop notification with order details
+  sendDesktopNotificationEnhanced(orderData, type);
   overlay.classList.add('show');
+  // Add shake animation to card
+  const card = document.getElementById('cashierPopupCard');
+  if (card) {
+    card.classList.add('new-alert');
+    setTimeout(() => card.classList.remove('new-alert'), 1000);
+  }
 }
 
 function dismissCashierPopup() {
   const overlay = document.getElementById('cashierPopupOverlay');
   overlay.classList.remove('show');
   _cashierPopupActive = false;
-  // Navigate to orders tab
+  // Navigate to cashier tab and highlight the order
   const adminPanel = document.getElementById('adminPanel');
   if (adminPanel && adminPanel.classList.contains('active')) {
-    // Switch to orders tab and highlight the order
-    const ordersTabBtn = document.querySelector('.admin-tabs button');
-    if (ordersTabBtn) switchAdminTab('orders', ordersTabBtn);
-    // Highlight the specific order
+    // Switch to cashier tab for quicker access
+    const cashierTabBtn = document.querySelector('.admin-tabs button:nth-child(2)');
+    if (cashierTabBtn) switchAdminTab('cashier', cashierTabBtn);
     if (_cashierHighlightOrderId) {
-      setTimeout(() => highlightCashierOrder(_cashierHighlightOrderId), 200);
+      setTimeout(() => highlightCashierOrder(_cashierHighlightOrderId), 300);
     }
   } else {
-    // Open admin panel if not already
     if (adminRoleType === 'admin' || adminRoleType === 'cashier') {
       openScreen('adminPanel');
       if (_cashierHighlightOrderId) {
-        setTimeout(() => highlightCashierOrder(_cashierHighlightOrderId), 400);
+        setTimeout(() => highlightCashierOrder(_cashierHighlightOrderId), 500);
       }
     }
   }
-  // Process next in queue
   setTimeout(() => { if (_cashierPopupQueue.length) processCashierPopupQueue(); }, 300);
 }
 
@@ -5440,30 +6060,117 @@ function playCashierAlertSound(type) {
   try {
     const ctx = new (window.AudioContext || window.webkitAudioContext)();
     if (type === 'new_order') {
-      // 3 ascending tones
-      [[440,0],[660,.18],[880,.36]].forEach(([freq, delay]) => {
+      // صوت تنبيه قوي ومميز — 5 نغمات متصاعدة
+      [[440,0,.18],[550,.22,.18],[660,.44,.18],[770,.66,.18],[880,.88,.22]].forEach(([freq, delay, dur]) => {
         const osc = ctx.createOscillator(); const g = ctx.createGain();
+        osc.type = 'square';
         osc.connect(g); g.connect(ctx.destination);
-        osc.frequency.value = freq; g.gain.setValueAtTime(0.12, ctx.currentTime + delay);
+        osc.frequency.value = freq;
+        g.gain.setValueAtTime(0, ctx.currentTime + delay);
+        g.gain.linearRampToValueAtTime(0.18, ctx.currentTime + delay + 0.04);
+        g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + delay + dur);
+        osc.start(ctx.currentTime + delay); osc.stop(ctx.currentTime + delay + dur + 0.05);
+      });
+      // طبقة ثانية sine لإضافة عمق
+      [[330,0],[440,.3],[550,.6]].forEach(([freq, delay]) => {
+        const osc = ctx.createOscillator(); const g = ctx.createGain();
+        osc.type = 'sine'; osc.connect(g); g.connect(ctx.destination);
+        osc.frequency.value = freq;
+        g.gain.setValueAtTime(0.08, ctx.currentTime + delay);
         g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + delay + 0.25);
         osc.start(ctx.currentTime + delay); osc.stop(ctx.currentTime + delay + 0.28);
       });
     } else {
-      // 2-tone confirmation
-      [[660,0],[880,.2],[660,.4]].forEach(([freq, delay]) => {
+      // صوت تأكيد (order ready)
+      [[660,0,.2],[880,.25,.2],[660,.5,.2],[1100,.75,.25]].forEach(([freq, delay, dur]) => {
         const osc = ctx.createOscillator(); const g = ctx.createGain();
         osc.type = 'sine'; osc.connect(g); g.connect(ctx.destination);
-        osc.frequency.value = freq; g.gain.setValueAtTime(0.1, ctx.currentTime + delay);
-        g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + delay + 0.2);
-        osc.start(ctx.currentTime + delay); osc.stop(ctx.currentTime + delay + 0.22);
+        osc.frequency.value = freq;
+        g.gain.setValueAtTime(0.12, ctx.currentTime + delay);
+        g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + delay + dur);
+        osc.start(ctx.currentTime + delay); osc.stop(ctx.currentTime + delay + dur + 0.05);
       });
     }
   } catch(e) {}
 }
 
 // ============================================================
-// CASHIER LIVE SEARCH
+// DESKTOP NOTIFICATIONS (Background / Minimized support)
 // ============================================================
+function requestNotifPermission() {
+  if ('Notification' in window && Notification.permission === 'default') {
+    Notification.requestPermission();
+  }
+}
+
+function sendDesktopNotification(order) {
+  if (!('Notification' in window)) return;
+  if (Notification.permission !== 'granted') {
+    Notification.requestPermission().then(perm => {
+      if (perm === 'granted') _doDesktopNotif(order);
+    });
+    return;
+  }
+  _doDesktopNotif(order);
+}
+
+function _doDesktopNotif(order) {
+  try {
+    const typeMap = { delivery: '🛵 دليفرى', pickup: '🏪 استلام', cafe: '☕ كافيه' };
+    const itemsSummary = (order.items || []).slice(0, 3).map(i => `${i.emoji || ''}${i.name} ×${i.qty}`).join(' | ');
+    const notif = new Notification('🔔 طلب جديد — Zamzam', {
+      body: `#${order.id} | ${order.name} | ${order.phone}\n${typeMap[order.type] || order.type}\n${itemsSummary}${order.total ? '\n💰 ' + order.total + ' ج.م' : ''}`,
+      icon: 'https://res.cloudinary.com/dk3xw0x5v/image/upload/v1778698476/Gemini_Generated_Image_1%D8%BA%D8%BAix4ur1ix4ur1ix4_x2fzvd_zgujcf.png',
+      badge: 'https://res.cloudinary.com/dk3xw0x5v/image/upload/v1778698476/Gemini_Generated_Image_1%D8%BA%D8%BAix4ur1ix4ur1ix4_x2fzvd_zgujcf.png',
+      tag: 'zamzam-order-' + order.id,
+      requireInteraction: true,
+      vibrate: [300, 100, 300, 100, 300]
+    });
+    notif.onclick = () => {
+      window.focus();
+      notif.close();
+      // فتح لوحة الكاشير والتنقل للطلب
+      const adminPanel = document.getElementById('adminPanel');
+      if (adminPanel && adminPanel.classList.contains('active')) {
+        const cashierBtn = document.querySelector('.admin-tabs button:nth-child(2)');
+        if (cashierBtn) { cashierBtn.click(); }
+        setTimeout(() => {
+          const row = document.getElementById('crow_' + order.id);
+          if (row) { row.scrollIntoView({ behavior: 'smooth', block: 'center' }); row.classList.add('order-highlight-new'); setTimeout(()=>row.classList.remove('order-highlight-new'),5000); }
+        }, 400);
+      } else if (adminRoleType === 'admin' || adminRoleType === 'cashier') {
+        openScreen('adminPanel');
+        setTimeout(() => highlightCashierOrder(order.id), 600);
+      }
+    };
+    // صوت عند وصول الإشعار
+    playCashierAlertSound('new_order');
+  } catch(e) {}
+}
+
+// Enhanced notification — also triggers when app is in background
+function sendDesktopNotificationEnhanced(order, type) {
+  if (!('Notification' in window)) return;
+  const typeMap = { delivery: '🛵 دليفرى', pickup: '🏪 استلام', cafe: '☕ كافيه' };
+  const itemsSummary = (order.items || []).slice(0, 4).map(i => `${i.emoji || ''}${i.name} ×${i.qty}`).join(' | ');
+  const title = type === 'new_order' ? '🔔 طلب جديد — زمزم' : '✅ طلب جاهز — زمزم';
+  const body = `#${order.id} | ${order.name} | ${order.phone || ''}\n${typeMap[order.type] || ''} — ${order.total || ''}ج.م\n${itemsSummary}`;
+  const doNotif = () => {
+    try {
+      const n = new Notification(title, {
+        body, tag: 'zamzam-' + type + '-' + order.id,
+        icon: 'https://res.cloudinary.com/dk3xw0x5v/image/upload/v1778698476/Gemini_Generated_Image_1%D8%BA%D8%BAix4ur1ix4ur1ix4_x2fzvd_zgujcf.png',
+        requireInteraction: true,
+        vibrate: [400, 100, 400]
+      });
+      n.onclick = () => { window.focus(); n.close(); dismissCashierPopup(); };
+    } catch(e) {}
+  };
+  if (Notification.permission === 'granted') doNotif();
+  else if (Notification.permission === 'default') Notification.requestPermission().then(p => { if (p === 'granted') doNotif(); });
+}
+
+
 function filterCashierLive(q) {
   cashierSearchQuery = q.trim().toLowerCase();
   renderCashierSheet();
@@ -5584,6 +6291,26 @@ function setupFirebaseListeners() {
           fbOrders.forEach(o => {
             if (!prevIds.has(o.id) && (adminRoleType === 'admin' || adminRoleType === 'cashier')) {
               showCashierPopup(o, 'new_order');
+              // ===== Desktop Notification =====
+              sendDesktopNotification(o);
+              // ===== تأثيرات بصرية على الطلب الجديد =====
+              setTimeout(() => {
+                const row = document.getElementById('orow_' + o.id) || document.getElementById('crow_' + o.id);
+                if (row) {
+                  row.classList.add('order-new-arrival');
+                  // إضافة New Order badge
+                  if (!row.querySelector('.new-order-badge')) {
+                    const badge = document.createElement('div');
+                    badge.className = 'new-order-badge';
+                    badge.textContent = '🆕 New Order';
+                    row.style.position = 'relative';
+                    row.appendChild(badge);
+                    setTimeout(() => badge.remove(), 8000);
+                  }
+                  row.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                  setTimeout(() => row.classList.remove('order-new-arrival'), 8000);
+                }
+              }, 400);
             }
           });
           playSound(); showNotif('🔔 طلب جديد وصل!');
@@ -5604,6 +6331,10 @@ function setupFirebaseListeners() {
       if (currentOrderNum) {
         const myOrder = fbOrders.find(o => o.id === currentOrderNum);
         if (myOrder) {
+          // إذا فتح الكاشير الطلب فعلياً (cashierViewedAt) أو غيّر الحالة لـ prep أو أعلى
+          if (myOrder.cashierViewedAt || myOrder.status === 'prep' || myOrder.status === 'ready' || myOrder.status === 'out' || myOrder.status === 'delivered') {
+            _cashierViewedCurrentOrder = true;
+          }
           updateTrackingStatus(myOrder.status);
           if (myOrder.status === 'cancelled' && _pendingOrderForReview?.id === currentOrderNum) {
             closeOrderReview();
@@ -5630,10 +6361,25 @@ function setupFirebaseListeners() {
 
   // --------- MENU PRICES ---------
   db.ref('menu').on('value', snap => {
+    // Skip if admin just saved — avoid overwriting with stale server echo
+    if (_menuWriteLock) return;
     if (snap.exists() && fbConnected) {
-      MENU = snap.val();
-      saveData('zz_menu', MENU);
-      if (document.getElementById('app')?.classList.contains('active')) renderMenu();
+      const incoming = snap.val();
+      // Merge incoming with local MENU to avoid losing newly added items
+      // Only update if incoming has MORE or SAME items (never downgrade)
+      let shouldUpdate = true;
+      if (incoming && MENU) {
+        const incomingCount = Object.values(incoming).reduce((s,c)=>s+((c.items||[]).length),0);
+        const localCount = Object.values(MENU).reduce((s,c)=>s+((c.items||[]).length),0);
+        // If local has more items, this is a stale read — skip
+        if (localCount > incomingCount) shouldUpdate = false;
+      }
+      if (shouldUpdate) {
+        MENU = incoming;
+        saveData('zz_menu', MENU);
+        if (document.getElementById('app')?.classList.contains('active')) renderMenu();
+        if (document.getElementById('adminPanel')?.classList.contains('active')) renderMenuManage();
+      }
     }
   });
 
@@ -5682,6 +6428,39 @@ function setupFirebaseListeners() {
       ADS = snap.val();
       saveData('zz_ads', ADS);
       renderAdsSlider();
+    }
+  });
+
+  // --------- USERS — Real-Time Sync (for login name restoration) ---------
+  db.ref('users').on('value', snap => {
+    if (!snap.exists() || !fbConnected) return;
+    const fbUsers = [];
+    snap.forEach(child => { const v = child.val(); if (v && v.phone) fbUsers.push(v); });
+    if (fbUsers.length === 0) return;
+    // Merge into local storage — never overwrite, only add missing
+    const localUsers = loadData('zz_users', []);
+    let changed = false;
+    fbUsers.forEach(fbU => {
+      const cleanFb = (fbU.phone||'').replace(/[^0-9]/g,'');
+      const idx = localUsers.findIndex(u => (u.phone||'').replace(/[^0-9]/g,'') === cleanFb);
+      if (idx < 0) { localUsers.push(fbU); changed = true; }
+      else if (!localUsers[idx].name && fbU.name) { localUsers[idx] = { ...localUsers[idx], ...fbU }; changed = true; }
+    });
+    if (changed) saveData('zz_users', localUsers);
+  });
+
+  // --------- AGENTS — Real-Time Sync ---------
+  db.ref('agents').on('value', snap => {
+    if (snap.exists() && fbConnected) {
+      const fbAgents = snap.val();
+      if (Array.isArray(fbAgents)) {
+        AGENTS = fbAgents;
+        saveData('zz_agents', AGENTS);
+        if (document.getElementById('adminPanel')?.classList.contains('active')) {
+          const activeTab = document.querySelector('.admin-tabs button.active')?.textContent || '';
+          if (activeTab.includes('المندوبين') || activeTab.includes('مندوب')) renderAgentsAdmin();
+        }
+      }
     }
   });
 
@@ -5770,6 +6549,17 @@ function setupFirebaseListeners() {
       }
     }
   });
+
+  // --------- VIP AUTO SETTINGS from Firebase ---------
+  db.ref('config/vipAutoSettings').on('value', snap => {
+    if (snap.exists()) {
+      const s = snap.val();
+      if (s) {
+        VIP_AUTO_SETTINGS = { ...VIP_AUTO_SETTINGS, ...s };
+        saveData('zz_vip_auto_settings', VIP_AUTO_SETTINGS);
+      }
+    }
+  });
 }
 
 async function fbSaveOrder(order) { 
@@ -5778,7 +6568,17 @@ async function fbSaveOrder(order) {
 }
 async function fbUpdateOrderStatus(orderId, status) { await fbUpdate('orders/' + orderId, { status }); }
 async function fbSaveBooking(booking) { await fbSet('bookings/' + booking.id, booking); }
-async function fbSaveMenu() { await fbSet('menu', MENU); }
+async function fbSaveMenu() {
+  if (!db) return;
+  try {
+    await fbSet('menu', MENU);
+  } catch(e) {
+    // Retry once after 1 second
+    console.warn('fbSaveMenu retry:', e);
+    await new Promise(r => setTimeout(r, 1000));
+    try { await fbSet('menu', MENU); } catch(e2) { console.error('fbSaveMenu failed:', e2); }
+  }
+}
 async function fbSaveSettings() { await fbSet('settings', SETTINGS); }
 async function fbSaveAddons() { await fbSet('addons', ADDONS); }
 async function fbSaveOffers() { await fbSet('offers', OFFERS); }
@@ -6003,7 +6803,7 @@ let AGENTS = loadData('zz_agents', []);
 let _selectedAgentId = null;
 let _agentTargetOrderId = null;
 
-function saveAgents() { saveData('zz_agents', AGENTS); }
+function saveAgents() { saveData('zz_agents', AGENTS); if(db) fbSet('agents', AGENTS); /* 🔥 Firebase Real-Time */ }
 
 function renderAgentsAdmin() {
   const list = document.getElementById('agentsAdminList');
@@ -6483,17 +7283,22 @@ function getFilteredCatsByGroup() {
   <div class="cashier-popup-card" id="cashierPopupCard">
     <div class="cashier-popup-header" id="cashierPopupHeader">
       <div class="cashier-popup-icon" id="cashierPopupIcon">🔔</div>
-      <div>
+      <div style="flex:1">
         <div class="cashier-popup-title" id="cashierPopupTitle">طلب جديد وصل!</div>
         <div class="cashier-popup-subtitle" id="cashierPopupSubtitle">اضغط لمراجعة الطلب</div>
       </div>
+      <div id="cpOrderBadge" style="background:rgba(255,255,255,.25);border-radius:10px;padding:6px 12px;font-size:14px;font-weight:900;color:#fff;font-family:monospace;white-space:nowrap"></div>
     </div>
     <div class="cashier-popup-body">
-      <div class="cashier-popup-row"><strong>كود الطلب</strong><span id="cpOrderId">—</span></div>
-      <div class="cashier-popup-row"><strong>👤 العميل</strong><span id="cpName">—</span></div>
-      <div class="cashier-popup-row"><strong>📱 الهاتف</strong><span id="cpPhone">—</span></div>
-      <div class="cashier-popup-row"><strong>🚚 نوع الطلب</strong><span id="cpType">—</span></div>
+      <div class="cashier-popup-row" style="background:var(--olive-pale);border-radius:8px;padding:8px 10px;margin-bottom:4px"><strong>👤 العميل</strong><span id="cpName" style="font-size:15px;font-weight:900;color:var(--olive-dark)">—</span></div>
+      <div class="cashier-popup-row"><strong>📱 الهاتف</strong><span id="cpPhone" style="direction:ltr;font-weight:800">—</span></div>
+      <div class="cashier-popup-row"><strong>🚚 نوع الطلب</strong><span id="cpType" style="font-weight:800">—</span></div>
       <div class="cashier-popup-row" id="cpStatusRow" style="display:none"><strong>📋 الحالة</strong><span id="cpStatus">—</span></div>
+      <div id="cpOrderId" style="display:none">—</div>
+      <!-- محتوى الطلب -->
+      <div style="font-size:11px;font-weight:800;color:var(--text-muted);margin:8px 0 4px;text-transform:uppercase">🛒 محتوى الطلب</div>
+      <div class="cashier-popup-items-box" id="cpItemsBox">—</div>
+      <div class="cashier-popup-row" style="border-top:2px solid var(--olive);padding-top:8px;margin-top:4px"><strong style="color:var(--olive-dark);font-size:14px">💰 الإجمالى</strong><span id="cpTotal" style="font-size:16px;font-weight:900;color:var(--olive-dark)">—</span></div>
     </div>
     <button class="cashier-popup-btn" id="cashierPopupBtn" onclick="dismissCashierPopup()">✓ تمت المشاهدة — فتح الطلبات</button>
   </div>
