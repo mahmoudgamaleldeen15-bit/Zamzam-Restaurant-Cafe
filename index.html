@@ -810,6 +810,8 @@ input,select,textarea{font-family:inherit;}
 .work-hours-row:has(#wh_toggle_restaurant.on),.work-hours-row:has(.toggle-sw.on){border-color:var(--olive);background:var(--olive-pale);}
 .work-hours-label{font-size:13px;font-weight:800;flex:1;min-width:90px;}
 .work-hours-time{padding:7px 8px;border:1.5px solid var(--border);border-radius:8px;font-size:13px;background:var(--white);outline:none;color:var(--text);width:86px;}
+.main-group-manager-row:hover{border-color:var(--olive)!important;box-shadow:0 2px 8px rgba(0,0,0,.06);}
+.main-group-manager-row button:hover{opacity:.85;}
 
 /* ===== FOOD CARD WITH IMAGE SUPPORT ===== */
 .food-img-wrap{width:100%;height:110px;position:relative;overflow:hidden;border-radius:0;}
@@ -861,7 +863,7 @@ input,select,textarea{font-family:inherit;}
 .vip-benefit-chip{flex-shrink:0;display:flex;flex-direction:column;align-items:center;gap:3px;background:linear-gradient(135deg,#fffbf0,#fef3c7);border:1.5px solid rgba(200,151,58,.4);border-radius:14px;padding:10px 14px;min-width:80px;}
 .vip-benefit-chip-icon{font-size:20px;}
 .vip-benefit-chip-text{font-size:10px;font-weight:800;color:#92400e;text-align:center;line-height:1.3;}
-.vip-disc-tag{position:absolute;top:8px;right:8px;background:linear-gradient(135deg,#d97706,#f59e0b);color:#fff;font-size:9px;font-weight:900;padding:2px 7px;border-radius:100px;z-index:3;box-shadow:0 2px 6px rgba(200,151,58,.4);}
+.vip-disc-tag{position:absolute;top:8px;left:8px;background:linear-gradient(135deg,#92400e,#d97706,#f59e0b);color:#fff;font-size:9.5px;font-weight:900;padding:3px 9px 3px 7px;border-radius:100px;z-index:3;box-shadow:0 2px 10px rgba(217,119,6,.55),0 0 0 1.5px rgba(245,158,11,.35);letter-spacing:.4px;border:1px solid rgba(255,255,255,.25);text-shadow:0 1px 2px rgba(0,0,0,.2);}
 
 /* ===== VIP PROFESSIONAL SYSTEM ===== */
 @keyframes vipPulseGold{0%,100%{box-shadow:0 0 0 0 rgba(200,151,58,0)}40%{box-shadow:0 0 16px 6px rgba(200,151,58,.45)}80%{box-shadow:0 0 8px 2px rgba(200,151,58,.2)}}
@@ -929,7 +931,7 @@ input,select,textarea{font-family:inherit;}
     <div class="sub">Restaurant & Café</div>
   </div>
   <div class="splash-dots"><span></span><span></span><span></span></div>
-  <div class="splash-credit">v22.1 — Designed by Mahmoud Gamal Eldeen</div>
+  <div class="splash-credit">v38 — Designed by Mahmoud Gamal Eldeen</div>
 </div>
 
 <!-- ===== AUTH ===== -->
@@ -1622,6 +1624,7 @@ input,select,textarea{font-family:inherit;}
         </select>
         <button onclick="openAddItemModal()" style="padding:10px 14px;background:var(--olive);color:#fff;border-radius:10px;font-size:13px;font-weight:800">+ صنف</button>
         <button onclick="openAddCatModal()" style="padding:10px 14px;background:var(--olive-dark);color:#fff;border-radius:10px;font-size:13px;font-weight:800">+ قسم</button>
+        <button onclick="openMainGroupsManager()" style="padding:10px 14px;background:linear-gradient(135deg,#7c4dff,#5e35b1);color:#fff;border-radius:10px;font-size:13px;font-weight:800" title="إدارة الأقسام الرئيسية">🗂️</button>
       </div>
       <div class="menu-manage-section" id="menuManageList"></div>
     </div>
@@ -2071,12 +2074,6 @@ input,select,textarea{font-family:inherit;}
       <label>القسم الرئيسي</label>
       <select id="catMainGroupInput" style="width:100%;padding:13px 16px;border:1.5px solid var(--border);border-radius:12px;font-size:15px;background:var(--white);color:var(--text);outline:none">
         <option value="">— اختر القسم الرئيسي —</option>
-        <option value="restaurant">🍽️ المطعم</option>
-        <option value="eastern_sweets">🍯 حلويات شرقية</option>
-        <option value="western_sweets">🎂 حلويات غربية</option>
-        <option value="ice_cream">🍦 آيس كريم</option>
-        <option value="drinks">🥤 مشروبات</option>
-        <option value="bakery">🥐 مخبوزات</option>
       </select>
     </div>
     <div class="field"><label>اسم القسم</label><input type="text" id="catNameInput" placeholder="مثال: حلويات شرقية"/></div>
@@ -2123,6 +2120,58 @@ input,select,textarea{font-family:inherit;}
       <span style="font-size:13px;font-weight:600">🚚 متاح للدليفري (يطبق على كل منتجات القسم)</span>
     </div>
     <button class="btn-primary" onclick="saveCategory()">إضافة القسم</button>
+  </div>
+</div>
+
+<!-- ===== MODAL: MAIN GROUPS MANAGER ===== -->
+<div class="modal-overlay" id="mainGroupsManagerModal">
+  <div class="modal-box" style="max-height:90vh;overflow-y:auto">
+    <button class="modal-close" onclick="closeModal('mainGroupsManagerModal')">✕</button>
+    <h3>🗂️ إدارة الأقسام الرئيسية</h3>
+    <div style="background:var(--olive-ultra);border-radius:10px;padding:10px 14px;margin-bottom:14px;font-size:12px;color:var(--olive-dark);line-height:1.7">
+      💡 الأقسام الرئيسية تظهر للعميل كـ فلاتر رئيسية فوق المنيو — يمكنك إضافة وتعديل وحذف وإعادة ترتيبها
+    </div>
+    <div id="mainGroupsManagerList" style="margin-bottom:16px"></div>
+    <button onclick="openAddMainGroupForm()" style="width:100%;padding:12px;background:linear-gradient(135deg,#7c4dff,#5e35b1);color:#fff;border-radius:12px;font-size:14px;font-weight:800;border:none;cursor:pointer">+ إضافة قسم رئيسي جديد</button>
+  </div>
+</div>
+
+<!-- ===== MODAL: ADD/EDIT MAIN GROUP ===== -->
+<div class="modal-overlay" id="mainGroupFormModal">
+  <div class="modal-box" style="max-height:90vh;overflow-y:auto">
+    <button class="modal-close" onclick="closeModal('mainGroupFormModal')">✕</button>
+    <h3 id="mainGroupFormTitle">➕ قسم رئيسي جديد</h3>
+    <input type="hidden" id="editingMainGroupKey"/>
+    <div class="field">
+      <label>اسم القسم الرئيسي</label>
+      <input type="text" id="mgNameInput" placeholder="مثال: المطعم" style="width:100%;padding:13px 16px;border:1.5px solid var(--border);border-radius:12px;font-size:15px;background:var(--white);color:var(--text);outline:none;box-sizing:border-box"/>
+    </div>
+    <div class="field">
+      <label>الإيموجى</label>
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:10px">
+        <div id="mgEmojiPreview" style="font-size:40px;width:60px;height:60px;display:flex;align-items:center;justify-content:center;background:var(--olive-ultra);border-radius:14px;border:2px solid var(--olive)">🍽️</div>
+        <div>
+          <div style="font-size:12px;color:var(--text-muted);margin-bottom:6px">اكتب إيموجى مباشرة:</div>
+          <input type="text" id="mgEmojiInput" style="width:60px;font-size:24px;text-align:center;border:1.5px solid var(--border);border-radius:8px;padding:4px;background:var(--white)" placeholder="🍽️" oninput="document.getElementById('mgEmojiPreview').textContent=this.value||'🍽️'"/>
+        </div>
+      </div>
+      <div style="background:var(--cream);border-radius:12px;padding:10px;border:1px solid var(--border)">
+        <div style="font-size:11px;font-weight:800;color:var(--olive-dark);margin-bottom:6px">🍔 أكلات ومطاعم</div>
+        <div style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:8px" id="mgEmojiFood"></div>
+        <div style="font-size:11px;font-weight:800;color:var(--olive-dark);margin-bottom:6px">🥤 مشروبات</div>
+        <div style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:8px" id="mgEmojiDrinks"></div>
+        <div style="font-size:11px;font-weight:800;color:var(--olive-dark);margin-bottom:6px">🍰 حلويات</div>
+        <div style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:8px" id="mgEmojiSweets"></div>
+        <div style="font-size:11px;font-weight:800;color:var(--olive-dark);margin-bottom:6px">🍽️ متنوعة</div>
+        <div style="display:flex;flex-wrap:wrap;gap:4px" id="mgEmojiMisc"></div>
+      </div>
+    </div>
+    <div class="field">
+      <label>كلمات البحث (مفصولة بفاصلة)</label>
+      <textarea id="mgKeywordsInput" rows="3" placeholder="مثال: بيتزا، شاورما، برجر" style="width:100%;padding:13px 16px;border:1.5px solid var(--border);border-radius:12px;font-size:14px;resize:none;font-family:inherit;box-sizing:border-box;background:var(--white);color:var(--text);outline:none"></textarea>
+      <div style="font-size:11px;color:var(--text-muted);margin-top:4px">💡 تُستخدم للربط التلقائي بين الأقسام الفرعية والقسم الرئيسي</div>
+    </div>
+    <button class="btn-primary" onclick="saveMainGroupForm()" id="mgSaveBtn">✓ حفظ القسم الرئيسي</button>
   </div>
 </div>
 
@@ -4561,7 +4610,26 @@ function deleteItem(cat, id) {
   MENU[cat].items = MENU[cat].items.filter(i => i.id !== id);
   saveMenu(); renderMenuManage(); renderMenu(); showNotif('✓ تم الحذف');
 }
-function openAddCatModal() { renderCatSelects(); openModal('addCatModal'); }
+function openAddCatModal() {
+  // ملء قائمة الأقسام الرئيسية ديناميكياً
+  const sel = document.getElementById('catMainGroupInput');
+  if (sel) {
+    sel.innerHTML = '<option value="">— اختر القسم الرئيسي —</option>' +
+      getMainGroupsSorted().map(([k, v]) => `<option value="${k}">${v.emoji} ${v.label}</option>`).join('');
+    sel.value = '';
+  }
+  // Reset form fields
+  const ni = document.getElementById('catNameInput'); if (ni) ni.value = '';
+  const ei = document.getElementById('catEmojiInput'); if (ei) ei.value = '';
+  const ep = document.getElementById('catEmojiPreview'); if (ep) ep.textContent = '📋';
+  const at = document.getElementById('catAllowAddonsToggle'); if (at) at.classList.remove('on');
+  document.querySelectorAll('.emoji-btn').forEach(b => b.classList.remove('selected'));
+  switchCatImgTab('emoji');
+  const cd = document.getElementById('catImageData'); if (cd) cd.value = '';
+  initEmojiPicker();
+  renderCatSelects();
+  openModal('addCatModal');
+}
 function saveCategory() {
   const name = document.getElementById('catNameInput').value.trim();
   const emoji = document.getElementById('catEmojiInput').value.trim() || '📋';
@@ -5003,21 +5071,7 @@ function selectCatEmoji(e, btn) {
   if (inp) inp.value = e;
   if (prev) prev.textContent = e;
 }
-function openAddCatModal() {
-  document.getElementById('catNameInput').value = '';
-  document.getElementById('catEmojiInput').value = '';
-  document.getElementById('catEmojiPreview').textContent = '📋';
-  document.getElementById('catAllowAddonsToggle').classList.remove('on');
-  const mgInput = document.getElementById('catMainGroupInput');
-  if (mgInput) mgInput.value = '';
-  document.querySelectorAll('.emoji-btn').forEach(b => b.classList.remove('selected'));
-  // Reset image
-  switchCatImgTab('emoji');
-  if (document.getElementById('catImageData')) document.getElementById('catImageData').value = '';
-  initEmojiPicker();
-  renderCatSelects();
-  openModal('addCatModal');
-}
+// openAddCatModal defined above with dynamic mainGroups support
 
 // ============================================================
 // SALES REPORT (Admin Only)
@@ -5663,6 +5717,16 @@ async function executeImportBackup() {
       bookingsData = d.bookings || [];
       VIP_CUSTOMERS = d.vipCustomers || {};
       usedOffers = d.usedOffers || {};
+      // استعادة الأقسام الرئيسية
+      if (d.mainGroups && Object.keys(d.mainGroups).length > 0) {
+        MAIN_GROUPS = d.mainGroups;
+        saveData('zz_main_groups', MAIN_GROUPS);
+      }
+      if (d.workHours) {
+        WORK_HOURS = { ...WORK_HOURS, ...d.workHours };
+        saveData('zz_work_hours', WORK_HOURS);
+      }
+      syncWorkHoursWithMainGroups();
 
       saveData('zz_menu', MENU);
       saveData('zz_settings', SETTINGS);
@@ -5701,6 +5765,10 @@ async function executeImportBackup() {
       bookingsData = _mergeArrayById(bookingsData, d.bookings || []);
       VIP_CUSTOMERS = { ...d.vipCustomers, ...VIP_CUSTOMERS }; // الحالي يسود
       usedOffers = { ...d.usedOffers, ...usedOffers };
+
+      // دمج الأقسام الرئيسية (الحالي يسود)
+      if (d.mainGroups) { MAIN_GROUPS = { ...d.mainGroups, ...MAIN_GROUPS }; saveData('zz_main_groups', MAIN_GROUPS); }
+      syncWorkHoursWithMainGroups();
 
       // دمج العملاء
       const existUsers = loadData('zz_users', []);
@@ -7295,6 +7363,28 @@ function setupFirebaseListeners() {
     }
   });
 
+  // --------- MAIN GROUPS from Firebase (Real-Time Sync) ---------
+  db.ref('config/mainGroups').on('value', snap => {
+    if (snap.exists()) {
+      const mg = snap.val();
+      if (mg && typeof mg === 'object' && Object.keys(mg).length > 0) {
+        MAIN_GROUPS = mg;
+        saveData('zz_main_groups', MAIN_GROUPS);
+        syncWorkHoursWithMainGroups();
+        renderMainGroups();
+        renderCategories();
+        // تحديث قائمة catMainGroupInput
+        const sel = document.getElementById('catMainGroupInput');
+        if (sel) {
+          const prevVal = sel.value;
+          sel.innerHTML = '<option value="">— اختر القسم الرئيسي —</option>' +
+            getMainGroupsSorted().map(([k, v]) => `<option value="${k}">${v.emoji} ${v.label}</option>`).join('');
+          sel.value = prevVal;
+        }
+      }
+    }
+  });
+
   // --------- VIP BENEFITS from Firebase ---------
   db.ref('config/vipBenefits').on('value', snap => {
     if (snap.exists()) {
@@ -7831,14 +7921,43 @@ function renderStatsTab() {
 }
 
 
-const MAIN_GROUPS = {
-  restaurant: { label: 'المطعم', emoji: '🍽️', keywords: ['بيتزا','شاورما','كريب','سندوتش','وجبة','برجر','لحم','دجاج','مطعم','falafel','ساندويتش','فراخ','كباب','grill'] },
-  eastern_sweets: { label: 'حلويات شرقية', emoji: '🍯', keywords: ['كنافة','بسبوسة','قطايف','عيش السرايا','مهلبية','رز بلبن','عسل','شرقى','عربى','oriental','om ali','أم علي'] },
-  western_sweets: { label: 'حلويات غربية', emoji: '🎂', keywords: ['كيك','تارت','براونى','كوكيز','cheesecake','وافل','بان كيك','pancake','cake','chocolate','فطيرة','غربى','western','تشيز','تيراميسو'] },
-  ice_cream: { label: 'آيس كريم', emoji: '🍦', keywords: ['ايس كريم','آيس كريم','ice cream','جيلاتى','gelato','مثلجات','sundae'] },
-  bakery: { label: 'مخبوزات', emoji: '🥐', keywords: ['خبز','كرواسون','بريوش','مافن','muffin','croissant','bakery','مخبز','bagel','toast'] },
-  drinks: { label: 'مشروبات', emoji: '🥤', keywords: ['قهوة','شاى','عصير','موهيتو','سموزى','كوكتيل','drink','coffee','tea','juice','milkshake','ليموناضة','مشروب'] }
+// ============================================================
+// MAIN GROUPS — Dynamic System (قابل للإدارة من الأدمن)
+// ============================================================
+const MAIN_GROUPS_DEFAULTS = {
+  restaurant: { label: 'المطعم', emoji: '🍽️', order: 1, keywords: ['بيتزا','شاورما','كريب','سندوتش','وجبة','برجر','لحم','دجاج','مطعم','falafel','ساندويتش','فراخ','كباب','grill'] },
+  eastern_sweets: { label: 'حلويات شرقية', emoji: '🍯', order: 2, keywords: ['كنافة','بسبوسة','قطايف','عيش السرايا','مهلبية','رز بلبن','عسل','شرقى','عربى','oriental','om ali','أم علي'] },
+  western_sweets: { label: 'حلويات غربية', emoji: '🎂', order: 3, keywords: ['كيك','تارت','براونى','كوكيز','cheesecake','وافل','بان كيك','pancake','cake','chocolate','فطيرة','غربى','western','تشيز','تيراميسو'] },
+  ice_cream: { label: 'آيس كريم', emoji: '🍦', order: 4, keywords: ['ايس كريم','آيس كريم','ice cream','جيلاتى','gelato','مثلجات','sundae'] },
+  bakery: { label: 'مخبوزات', emoji: '🥐', order: 5, keywords: ['خبز','كرواسون','بريوش','مافن','muffin','croissant','bakery','مخبز','bagel','toast'] },
+  drinks: { label: 'مشروبات', emoji: '🥤', order: 6, keywords: ['قهوة','شاى','عصير','موهيتو','سموزى','كوكتيل','drink','coffee','tea','juice','milkshake','ليموناضة','مشروب'] }
 };
+
+let MAIN_GROUPS = loadData('zz_main_groups', null);
+if (!MAIN_GROUPS) {
+  MAIN_GROUPS = JSON.parse(JSON.stringify(MAIN_GROUPS_DEFAULTS));
+  saveData('zz_main_groups', MAIN_GROUPS);
+} else {
+  // إضافة order لو مش موجود
+  let changed = false;
+  Object.entries(MAIN_GROUPS_DEFAULTS).forEach(([k, v]) => {
+    if (!MAIN_GROUPS[k]) { MAIN_GROUPS[k] = { ...v }; changed = true; }
+    else if (MAIN_GROUPS[k].order == null) { MAIN_GROUPS[k].order = v.order; changed = true; }
+    if (!MAIN_GROUPS[k].keywords) { MAIN_GROUPS[k].keywords = v.keywords || []; changed = true; }
+  });
+  if (changed) saveData('zz_main_groups', MAIN_GROUPS);
+}
+
+function saveMainGroups() {
+  saveData('zz_main_groups', MAIN_GROUPS);
+  if (typeof db !== 'undefined' && db && typeof fbConnected !== 'undefined' && fbConnected) {
+    try { fbUpdate('config', { mainGroups: MAIN_GROUPS }).catch(() => {}); } catch(e) {}
+  }
+}
+
+function getMainGroupsSorted() {
+  return Object.entries(MAIN_GROUPS).sort((a, b) => ((a[1].order || 99) - (b[1].order || 99)));
+}
 
 let currentMainGroup = null;
 
@@ -7862,7 +7981,7 @@ function renderMainGroups() {
   });
   if (usedGroups.size < 2) { wrap.style.display = 'none'; return; }
   wrap.style.display = 'flex';
-  wrap.innerHTML = Object.entries(MAIN_GROUPS)
+  wrap.innerHTML = getMainGroupsSorted()
     .filter(([gk]) => usedGroups.has(gk))
     .map(([gk, gv]) => `
       <div class="main-group-chip ${currentMainGroup === gk ? 'active' : ''}" onclick="selectMainGroup('${gk}')">
@@ -8325,6 +8444,187 @@ let WORK_HOURS = loadData('zz_work_hours', {
   drinks:         { enabled: false, from: '09:00', to: '02:00', label: '🥤 مشروبات' }
 });
 
+// ============================================================
+// MAIN GROUPS MANAGER — إدارة الأقسام الرئيسية ديناميكياً
+// ============================================================
+
+const MG_EMOJI_FOOD = ['🍽️','🍔','🌯','🌮','🍕','🥪','🥙','🌭','🍱','🥗','🍲','🥘','🫕','🍛','🍜','🍝','🥣','🥫','🥩','🍗','🍖','🥚','🧆','🧇','🧈','🍿','🥜','🥨','🥯','🧀','🥞'];
+const MG_EMOJI_DRINKS = ['🥤','🧃','☕','🍵','🧋','🍹','🍺','🥛','🫖','🍶','🥂','🧊','🍷','🫗'];
+const MG_EMOJI_SWEETS = ['🍰','🎂','🧁','🍮','🍯','🍦','🍧','🍨','🍩','🍪','🍫','🍬','🍭','🍡','🧃','🥐','🥖','🫓','🥟','🥮','🍢'];
+const MG_EMOJI_MISC = ['🏪','🛒','⭐','🎁','🎯','🔥','💎','🌟','🏅','🎪','🛍️','🧺','🏠','🌿','🥦','🫚','🧂','🌾','🫙'];
+
+function openMainGroupsManager() {
+  renderMainGroupsManagerList();
+  openModal('mainGroupsManagerModal');
+}
+
+function renderMainGroupsManagerList() {
+  const el = document.getElementById('mainGroupsManagerList');
+  if (!el) return;
+  const sorted = getMainGroupsSorted();
+  if (!sorted.length) { el.innerHTML = '<div style="text-align:center;color:var(--text-muted);padding:20px">لا توجد أقسام رئيسية</div>'; return; }
+
+  el.innerHTML = sorted.map(([k, v], idx) => {
+    const catCount = Object.keys(MENU).filter(cat => getCatMainGroup(cat, MENU[cat]?.label||'') === k).length;
+    return `
+    <div class="main-group-manager-row" style="background:var(--white);border:1.5px solid var(--border);border-radius:14px;padding:12px 14px;margin-bottom:10px;display:flex;align-items:center;gap:10px">
+      <div style="display:flex;flex-direction:column;gap:3px">
+        <button onclick="moveMainGroup('${k}',-1)" style="padding:2px 8px;background:var(--olive-ultra);border:1px solid var(--border);border-radius:5px;font-size:12px;cursor:pointer;${idx===0?'opacity:.3;pointer-events:none':''}">▲</button>
+        <button onclick="moveMainGroup('${k}',1)" style="padding:2px 8px;background:var(--olive-ultra);border:1px solid var(--border);border-radius:5px;font-size:12px;cursor:pointer;${idx===sorted.length-1?'opacity:.3;pointer-events:none':''}">▼</button>
+      </div>
+      <div style="font-size:34px;flex-shrink:0">${v.emoji}</div>
+      <div style="flex:1;min-width:0">
+        <div style="font-size:15px;font-weight:800;color:var(--dark)">${v.label}</div>
+        <div style="font-size:11px;color:var(--text-muted);margin-top:2px">🗂️ ${catCount} قسم فرعي مرتبط</div>
+      </div>
+      <div style="display:flex;gap:6px;flex-shrink:0">
+        <button onclick="openEditMainGroupForm('${k}')" style="padding:7px 12px;background:var(--olive-ultra);color:var(--olive-dark);border:1px solid var(--olive);border-radius:9px;font-size:12px;font-weight:700;cursor:pointer">✏️ تعديل</button>
+        <button onclick="deleteMainGroup('${k}')" style="padding:7px 12px;background:#fff0f0;color:#c00;border:1px solid #fca5a5;border-radius:9px;font-size:12px;font-weight:700;cursor:pointer">🗑️</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function moveMainGroup(key, dir) {
+  const sorted = getMainGroupsSorted();
+  const idx = sorted.findIndex(([k]) => k === key);
+  if (idx < 0) return;
+  const newIdx = idx + dir;
+  if (newIdx < 0 || newIdx >= sorted.length) return;
+  // Swap orders
+  const myOrder = MAIN_GROUPS[sorted[idx][0]].order;
+  const otherKey = sorted[newIdx][0];
+  MAIN_GROUPS[sorted[idx][0]].order = MAIN_GROUPS[otherKey].order;
+  MAIN_GROUPS[otherKey].order = myOrder;
+  saveMainGroups();
+  syncWorkHoursWithMainGroups();
+  renderMainGroupsManagerList();
+  renderMainGroups();
+}
+
+function openAddMainGroupForm() {
+  document.getElementById('mainGroupFormTitle').textContent = '➕ قسم رئيسي جديد';
+  document.getElementById('editingMainGroupKey').value = '';
+  document.getElementById('mgNameInput').value = '';
+  document.getElementById('mgEmojiInput').value = '🍽️';
+  document.getElementById('mgEmojiPreview').textContent = '🍽️';
+  document.getElementById('mgKeywordsInput').value = '';
+  document.getElementById('mgSaveBtn').textContent = '✓ إضافة القسم الرئيسي';
+  _fillMgEmojiPicker();
+  closeModal('mainGroupsManagerModal');
+  openModal('mainGroupFormModal');
+}
+
+function openEditMainGroupForm(key) {
+  const g = MAIN_GROUPS[key];
+  if (!g) return;
+  document.getElementById('mainGroupFormTitle').textContent = '✏️ تعديل القسم الرئيسي';
+  document.getElementById('editingMainGroupKey').value = key;
+  document.getElementById('mgNameInput').value = g.label;
+  document.getElementById('mgEmojiInput').value = g.emoji;
+  document.getElementById('mgEmojiPreview').textContent = g.emoji;
+  document.getElementById('mgKeywordsInput').value = (g.keywords || []).join('، ');
+  document.getElementById('mgSaveBtn').textContent = '✓ حفظ التعديلات';
+  _fillMgEmojiPicker();
+  closeModal('mainGroupsManagerModal');
+  openModal('mainGroupFormModal');
+}
+
+function _fillMgEmojiPicker() {
+  const pick = (id, arr) => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.innerHTML = arr.map(e => `<span onclick="document.getElementById('mgEmojiInput').value='${e}';document.getElementById('mgEmojiPreview').textContent='${e}'" style="font-size:22px;cursor:pointer;padding:2px;border-radius:6px;display:inline-flex;align-items:center;justify-content:center;width:32px;height:32px;hover:background:#eee">${e}</span>`).join('');
+  };
+  pick('mgEmojiFood', MG_EMOJI_FOOD);
+  pick('mgEmojiDrinks', MG_EMOJI_DRINKS);
+  pick('mgEmojiSweets', MG_EMOJI_SWEETS);
+  pick('mgEmojiMisc', MG_EMOJI_MISC);
+}
+
+function saveMainGroupForm() {
+  const name = document.getElementById('mgNameInput').value.trim();
+  const emoji = document.getElementById('mgEmojiInput').value.trim() || '🍽️';
+  const keywordsRaw = document.getElementById('mgKeywordsInput').value;
+  const keywords = keywordsRaw.split(/[,،]/).map(k => k.trim()).filter(Boolean);
+  const editKey = document.getElementById('editingMainGroupKey').value;
+
+  if (!name) { showNotif('أدخل اسم القسم الرئيسي'); return; }
+
+  if (editKey) {
+    // تعديل
+    MAIN_GROUPS[editKey].label = name;
+    MAIN_GROUPS[editKey].emoji = emoji;
+    MAIN_GROUPS[editKey].keywords = keywords;
+  } else {
+    // إضافة جديد
+    const newKey = 'mg_' + Date.now();
+    const maxOrder = Math.max(0, ...Object.values(MAIN_GROUPS).map(g => g.order || 0));
+    MAIN_GROUPS[newKey] = { label: name, emoji, order: maxOrder + 1, keywords };
+    // إضافة مواعيد عمل افتراضية
+    WORK_HOURS[newKey] = { enabled: false, from: '09:00', to: '23:00', label: emoji + ' ' + name };
+    saveData('zz_work_hours', WORK_HOURS);
+  }
+
+  saveMainGroups();
+  syncWorkHoursWithMainGroups();
+  renderMainGroups();
+  renderCategories();
+  renderWorkHoursAdmin();
+
+  // تحديث قوائم الأقسام
+  renderCatSelects();
+  const sel = document.getElementById('catMainGroupInput');
+  if (sel) {
+    const prevVal = sel.value;
+    sel.innerHTML = '<option value="">— اختر القسم الرئيسي —</option>' +
+      getMainGroupsSorted().map(([k, v]) => `<option value="${k}">${v.emoji} ${v.label}</option>`).join('');
+    sel.value = prevVal;
+  }
+
+  closeModal('mainGroupFormModal');
+  openModal('mainGroupsManagerModal');
+  renderMainGroupsManagerList();
+  showNotif(editKey ? '✓ تم تعديل القسم الرئيسي' : '✓ تم إضافة القسم الرئيسي الجديد');
+}
+
+function deleteMainGroup(key) {
+  const g = MAIN_GROUPS[key];
+  if (!g) return;
+  // فحص هل في أقسام فرعية مرتبطة
+  const linked = Object.keys(MENU).filter(cat => {
+    if (MENU[cat]?.mainGroup === key) return true;
+    return getCatMainGroup(cat, MENU[cat]?.label||'') === key;
+  });
+  const warn = linked.length > 0 ? `\n\n⚠️ يوجد ${linked.length} قسم فرعي مرتبط به — ستظهر بدون قسم رئيسي.` : '';
+  if (!confirm(`حذف القسم الرئيسي "${g.emoji} ${g.label}"؟${warn}`)) return;
+  delete MAIN_GROUPS[key];
+  if (WORK_HOURS[key]) { delete WORK_HOURS[key]; saveData('zz_work_hours', WORK_HOURS); }
+  if (currentMainGroup === key) currentMainGroup = null;
+  saveMainGroups();
+  renderMainGroupsManagerList();
+  renderMainGroups();
+  renderCategories();
+  renderWorkHoursAdmin();
+  showNotif('✓ تم حذف القسم الرئيسي');
+}
+
+// مزامنة WORK_HOURS مع MAIN_GROUPS — أضف أي مجموعة جديدة لم تكن موجودة
+function syncWorkHoursWithMainGroups() {
+  let changed = false;
+  Object.entries(MAIN_GROUPS).forEach(([k, v]) => {
+    if (!WORK_HOURS[k]) {
+      WORK_HOURS[k] = { enabled: false, from: '09:00', to: '23:00', label: v.emoji + ' ' + v.label };
+      changed = true;
+    } else if (!WORK_HOURS[k].label || WORK_HOURS[k].label !== v.emoji + ' ' + v.label) {
+      WORK_HOURS[k].label = v.emoji + ' ' + v.label;
+      changed = true;
+    }
+  });
+  if (changed) saveData('zz_work_hours', WORK_HOURS);
+}
+syncWorkHoursWithMainGroups();
+
 function isGroupOpen(groupKey) {
   const wh = WORK_HOURS[groupKey];
   if (!wh || !wh.enabled) return true; // لو مش مفعّل → متاح دايماً
@@ -8367,7 +8667,14 @@ function checkCurrentCatWorkHours() {
 function renderWorkHoursAdmin() {
   const el = document.getElementById('workHoursAdminList');
   if (!el) return;
-  el.innerHTML = Object.entries(WORK_HOURS).map(([key, wh]) => `
+  // رتّب حسب ترتيب الأقسام الرئيسية
+  const sortedKeys = getMainGroupsSorted().map(([k]) => k).filter(k => WORK_HOURS[k]);
+  // أضف أي مفاتيح في WORK_HOURS غير موجودة في MAIN_GROUPS (legacy)
+  Object.keys(WORK_HOURS).forEach(k => { if (!sortedKeys.includes(k)) sortedKeys.push(k); });
+  el.innerHTML = sortedKeys.map(key => {
+    const wh = WORK_HOURS[key];
+    if (!wh) return '';
+    return `
     <div class="work-hours-row">
       <span class="work-hours-label">${wh.label}</span>
       <input type="time" class="work-hours-time" id="wh_from_${key}" value="${wh.from}"
@@ -8381,7 +8688,8 @@ function renderWorkHoursAdmin() {
       <span style="font-size:10px;font-weight:800;color:${wh.enabled ? 'var(--olive)' : 'var(--text-muted)'};min-width:32px">
         ${wh.enabled ? '🟢' : '⚫'}
       </span>
-    </div>`).join('');
+    </div>`;
+  }).join('');
 }
 
 function autoSaveWorkHour(key, field, value) {
@@ -8637,6 +8945,14 @@ function triggerAndroidInstall() {
 // IMPROVED IMPORT BACKUP — Full Rebuild After Import
 // ============================================================
 function _fullRebuildAfterImport() {
+  // مزامنة WORK_HOURS مع MAIN_GROUPS بعد الاستيراد
+  syncWorkHoursWithMainGroups();
+  // تحديث قائمة catMainGroupInput ديناميكياً
+  const sel = document.getElementById('catMainGroupInput');
+  if (sel) {
+    sel.innerHTML = '<option value="">— اختر القسم الرئيسي —</option>' +
+      getMainGroupsSorted().map(([k, v]) => `<option value="${k}">${v.emoji} ${v.label}</option>`).join('');
+  }
   // إعادة بناء كاملة للواجهة بعد الاستيراد
   renderMenu();
   renderMenuManage();
@@ -8651,6 +8967,7 @@ function _fullRebuildAfterImport() {
   updateOffersBadge();
   renderActiveOfferStrip();
   loadSettingsUI();
+  renderWorkHoursAdmin();
   if (document.getElementById('tab-cashier')?.style.display === 'block') renderCashierSheet();
   if (document.getElementById('tab-stats')?.style.display === 'block') renderStatsTab();
 }
