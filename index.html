@@ -7580,25 +7580,25 @@ function setupFirebaseListeners() {
 
   // --------- MENU PRICES ---------
   db.ref('menu').on('value', snap => {
-    // Skip if admin just saved — avoid overwriting with stale server echo
     if (_menuWriteLock) return;
     if (snap.exists() && fbConnected) {
       const incoming = snap.val();
-      // مقارنة عدد الأقسام والأصناف معاً لتجنب تجاهل أقسام جديدة فارغة
+      // Firebase دايماً يـ override الـ Default
+      // بس لو الأدمن حفظ بيانات محلية أحدث — نحترمها
+      const localIsDefault = !loadData('zz_menu_from_firebase', false);
       let shouldUpdate = true;
-      if (incoming && MENU) {
+      if (!localIsDefault && incoming && MENU) {
         const incomingCatCount = Object.keys(incoming).length;
         const localCatCount = Object.keys(MENU).length;
         const incomingCount = Object.values(incoming).reduce((s,c)=>s+((c.items||[]).length),0);
         const localCount = Object.values(MENU).reduce((s,c)=>s+((c.items||[]).length),0);
-        // إذا الـ local عنده أقسام أكثر أو أصناف أكثر → تجاهل
         if (localCatCount > incomingCatCount && localCount >= incomingCount) shouldUpdate = false;
-        // إذا الـ local عنده أصناف أكثر بس نفس الأقسام → تجاهل
         if (localCount > incomingCount && localCatCount >= incomingCatCount) shouldUpdate = false;
       }
       if (shouldUpdate) {
         MENU = incoming;
         saveData('zz_menu', MENU);
+        saveData('zz_menu_from_firebase', true); // علّم إن البيانات جاية من Firebase
         if (document.getElementById('app')?.classList.contains('active')) renderMenu();
         if (document.getElementById('adminPanel')?.classList.contains('active')) {
           renderMenuManage();
