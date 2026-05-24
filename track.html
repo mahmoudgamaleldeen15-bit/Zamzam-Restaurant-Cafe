@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1"/>
+<title>تتبع طلبك — زمزم</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:Cairo,sans-serif;background:#f5f5f0;min-height:100vh;direction:rtl}
+.header{background:linear-gradient(135deg,#2d5016,#4a7c2f);padding:14px 20px;color:#fff;text-align:center}
+.header h1{font-size:19px;font-weight:900;margin-bottom:2px}
+.header p{font-size:12px;opacity:.8}
+.card{background:#fff;margin:12px 16px;border-radius:14px;padding:16px;border:1.5px solid #e5e7eb;box-shadow:0 2px 10px rgba(0,0,0,.06)}
+.status-row{display:flex;align-items:center;gap:12px}
+.s-icon{width:44px;height:44px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0}
+.s-label{font-size:15px;font-weight:900;color:#1a1a1a}
+.s-sub{font-size:12px;color:#6b7280;margin-top:3px}
+.agent-info{display:flex;align-items:center;gap:12px;margin-bottom:12px}
+.agent-av{width:46px;height:46px;border-radius:50%;background:linear-gradient(135deg,#f59e0b,#d97706);display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0}
+.call-btn{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;padding:11px;background:linear-gradient(135deg,#22c55e,#16a34a);color:#fff;border-radius:10px;font-size:14px;font-weight:800;text-decoration:none}
+#map{height:290px;margin:0 16px 12px;border-radius:14px;overflow:hidden;border:1.5px solid #e5e7eb}
+.steps{display:flex;align-items:center;margin:12px 16px;background:#fff;border-radius:12px;padding:12px;border:1.5px solid #e5e7eb;gap:4px}
+.step{display:flex;flex-direction:column;align-items:center;gap:4px}
+.dot{width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:900;flex-shrink:0;transition:all .4s}
+.dot.done{background:#16a34a;color:#fff}
+.dot.active{background:#f59e0b;color:#fff;box-shadow:0 0 0 4px rgba(245,158,11,.25)}
+.dot.pending{background:#e5e7eb;color:#9ca3af}
+.lbl{font-size:9px;font-weight:700;color:#6b7280;text-align:center}
+.line{flex:1;height:2px;background:#e5e7eb;margin-bottom:14px;transition:background .4s}
+.line.done{background:#16a34a}
+.line.active{background:#f59e0b}
+.pulse{animation:pulse 2s ease-in-out infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.5}}
+.delivered{background:linear-gradient(135deg,#16a34a,#22c55e);color:#fff;text-align:center;padding:26px;margin:12px 16px;border-radius:14px}
+.update{text-align:center;font-size:11px;color:#9ca3af;padding-bottom:16px}
+.no-loc{text-align:center;padding:22px;color:#6b7280}
+.no-loc div{font-size:34px;margin-bottom:8px}
+
+/* Popup إشعار المندوب خرج */
+.agent-out-popup{position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:999;display:none;align-items:center;justify-content:center;padding:20px;backdrop-filter:blur(4px)}
+.agent-out-popup.show{display:flex;animation:popIn .4s cubic-bezier(.34,1.56,.64,1)}
+.agent-out-box{background:#fff;border-radius:20px;width:100%;max-width:340px;overflow:hidden;box-shadow:0 0 0 3px #f59e0b,0 20px 60px rgba(0,0,0,.35)}
+@keyframes popIn{from{opacity:0;transform:scale(.6)}to{opacity:1;transform:scale(1)}}
+.popup-header{background:linear-gradient(135deg,#d97706,#f59e0b);padding:20px;text-align:center;color:#fff}
+.popup-icon{font-size:52px;animation:vroom 1s ease-in-out infinite alternate;display:block;margin-bottom:6px}
+@keyframes vroom{from{transform:translateX(-8px)}to{transform:translateX(8px)}}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>🛵 تتبع طلبك</h1>
+  <p id="hSub">زمزم للمطعم والكافيه</p>
+</div>
+
+<!-- Steps -->
+<div class="steps">
+  <div class="step"><div class="dot done">✓</div><div class="lbl">الطلب</div></div>
+  <div class="line done"></div>
+  <div class="step"><div class="dot done" id="d-prep">✓</div><div class="lbl">التجهيز</div></div>
+  <div class="line" id="l2"></div>
+  <div class="step"><div class="dot pending" id="d-out">🛵</div><div class="lbl">في الطريق</div></div>
+  <div class="line" id="l3"></div>
+  <div class="step"><div class="dot pending" id="d-done">✅</div><div class="lbl">التسليم</div></div>
+</div>
+
+<!-- Status -->
+<div class="card">
+  <div class="status-row">
+    <div class="s-icon" id="sIcon" style="background:#fef3c7">⏳</div>
+    <div><div class="s-label" id="sLabel">جاري التحميل...</div><div class="s-sub" id="sSub">يرجى الانتظار</div></div>
+  </div>
+</div>
+
+<!-- Agent -->
+<div class="card" id="agentCard" style="display:none">
+  <div style="font-size:11px;font-weight:800;color:#6b7280;margin-bottom:10px">🛵 مندوب التوصيل</div>
+  <div class="agent-info">
+    <div class="agent-av">🛵</div>
+    <div><div style="font-size:15px;font-weight:900" id="agName">—</div><div style="font-size:12px;color:#6b7280" id="agPhone">—</div></div>
+  </div>
+  <a class="call-btn" id="callBtn" href="#">📞 اتصل بالمندوب</a>
+</div>
+
+<!-- Map -->
+<div id="map" style="display:none"></div>
+<div class="card no-loc" id="noLoc" style="display:none"><div>📍</div><p id="noLocText">سيظهر موقع المندوب هنا عند انطلاقه</p></div>
+
+<!-- Delivered -->
+<div class="delivered" id="delivBanner" style="display:none">
+  <div style="font-size:46px;margin-bottom:10px">🎉</div>
+  <div style="font-size:17px;font-weight:900;margin-bottom:6px">تم التسليم بنجاح!</div>
+  <div style="font-size:13px;opacity:.9">نتمنى لك تجربة ممتعة ❤️</div>
+</div>
+
+<div class="update" id="updTime" style="display:none">📍 آخر تحديث: <span id="updVal">—</span></div>
+
+<!-- Popup: المندوب خرج -->
+<div class="agent-out-popup" id="agentOutPopup">
+  <div class="agent-out-box">
+    <div class="popup-header">
+      <span class="popup-icon">🛵</span>
+      <div style="font-size:18px;font-weight:900">المندوب في الطريق إليك!</div>
+      <div style="font-size:12px;opacity:.9;margin-top:4px" id="popupAgentName">جاري التحميل...</div>
+    </div>
+    <div style="padding:18px">
+      <div style="background:#fef3c7;border-radius:10px;padding:12px;margin-bottom:14px;text-align:center">
+        <div style="font-size:13px;color:#92400e;font-weight:700">📍 يمكنك الآن تتبع موقعه على الخريطة</div>
+      </div>
+      <button onclick="closeAgentOutPopup()" style="width:100%;padding:13px;background:linear-gradient(135deg,#d97706,#f59e0b);color:#fff;border-radius:12px;font-size:14px;font-weight:900;border:none;cursor:pointer">
+        🗺️ تتبع المندوب الآن
+      </button>
+    </div>
+  </div>
+</div>
+
+<script>
+var db, trackMap, agentMarker, currentAgentId, locListenerOn;
+var prevOutAt = undefined; // undefined = أول تحميل للصفحة
+
+var firebaseConfig = {
+  apiKey: "AIzaSyB1x64GzJFU2yRll59RoGN6yzOBg7WeRS4",
+  authDomain: "zamzam-restaurant-cafe.firebaseapp.com",
+  databaseURL: "https://zamzam-restaurant-cafe-default-rtdb.firebaseio.com",
+  projectId: "zamzam-restaurant-cafe",
+  storageBucket: "zamzam-restaurant-cafe.appspot.com",
+  messagingSenderId: "669077377507",
+  appId: "1:669077377507:web:d308d8bdc3047b719bd0d6"
+};
+
+try {
+  if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+  db = firebase.database();
+} catch(e) {
+  document.getElementById('sLabel').textContent = 'خطأ في الاتصال';
+}
+
+var params = new URLSearchParams(window.location.search);
+var orderId = params.get('order');
+
+if (!orderId) {
+  document.getElementById('sIcon').textContent = '🔗';
+  document.getElementById('sLabel').textContent = 'رابط التتبع غير مكتمل';
+  document.getElementById('sSub').textContent = 'يرجى استخدام الرابط الذي أرسله لك المطعم عبر واتساب';
+} else {
+  document.getElementById('hSub').textContent = 'طلب رقم #' + orderId;
+  startTracking();
+}
+
+function startTracking() {
+  db.ref('orders/' + orderId).on('value', function(snap) {
+    if (!snap.exists()) {
+      document.getElementById('sLabel').textContent = 'الطلب غير موجود';
+      return;
+    }
+    updateUI(snap.val());
+  });
+}
+
+function updateUI(order) {
+  var st = order.status;
+  var outAt = order.outAt; // موجود فقط لما المندوب يضغط "في الطريق"
+  var agent = order.agent;
+
+  // هل المندوب فعلاً خرج؟ (بناءً على outAt مش status بس)
+  var agentActuallyOut = (st === 'out' || st === 'delivered') && !!outAt;
+
+  // Steps — تنور "في الطريق" فقط لما outAt موجود
+  if (agentActuallyOut) {
+    document.getElementById('d-out').className = 'dot active';
+    document.getElementById('l2').className = 'line active';
+  } else if (st === 'ready' || st === 'out') {
+    // out بدون outAt = لسه في مرحلة التجهيز النهائي
+    document.getElementById('d-prep').className = 'dot active';
+  }
+  if (st === 'delivered') {
+    document.getElementById('d-out').className = 'dot done';
+    document.getElementById('d-out').textContent = '✓';
+    document.getElementById('d-done').className = 'dot done';
+    document.getElementById('d-done').textContent = '✓';
+    document.getElementById('l2').className = 'line done';
+    document.getElementById('l3').className = 'line done';
+  }
+
+  // Status card
+  var displaySt = agentActuallyOut ? 'out' : (st === 'out' ? 'ready' : st);
+  var sm = {
+    new:       {icon:'📋', bg:'#e3f0ff', label:'تم استلام طلبك',           sub:'جاري مراجعة طلبك'},
+    prep:      {icon:'👨‍🍳', bg:'#fef3c7', label:'قيد التجهيز',               sub:'طاقمنا يجهّز طلبك الآن'},
+    ready:     {icon:'✅', bg:'#d1fae5', label:'طلبك على وشك الانطلاق ✅',  sub:'جاري تسليمه للمندوب — ترقب!'},
+    out:       {icon:'🛵', bg:'#fef3c7', label:'المندوب في الطريق إليك! 🛵', sub:'تابع موقعه على الخريطة'},
+    delivered: {icon:'🎉', bg:'#d1fae5', label:'تم التسليم ✅',              sub:'نتمنى لك تجربة ممتعة ❤️'},
+    cancelled: {icon:'❌', bg:'#fee2e2', label:'تم إلغاء الطلب',            sub:'تواصل معنا لمزيد من المعلومات'}
+  };
+  var s = sm[displaySt] || sm.new;
+  document.getElementById('sIcon').textContent = s.icon;
+  document.getElementById('sIcon').style.background = s.bg;
+  document.getElementById('sIcon').classList.toggle('pulse', agentActuallyOut);
+  document.getElementById('sLabel').textContent = s.label;
+  document.getElementById('sSub').textContent = s.sub;
+
+  // Agent info
+  if (agent && (st === 'out' || st === 'delivered')) {
+    document.getElementById('agentCard').style.display = 'block';
+    document.getElementById('agName').textContent = agent.name || '—';
+    document.getElementById('agPhone').textContent = agent.phone || '—';
+    document.getElementById('callBtn').href = 'tel:' + (agent.phone || '');
+    currentAgentId = agent.id;
+  }
+
+  // إشعار popup — يظهر فقط لما outAt يظهر لأول مرة (المندوب ضغط "في الطريق")
+  if (agentActuallyOut && prevOutAt === undefined) {
+    // أول مرة نشوف outAt — لو الصفحة اتفتحت وهو لسه ما خرجش، prevOutAt = null
+    prevOutAt = null;
+  }
+  if (agentActuallyOut && outAt && outAt !== prevOutAt && prevOutAt !== undefined) {
+    prevOutAt = outAt;
+    setTimeout(function() {
+      var popup = document.getElementById('agentOutPopup');
+      var agentNameEl = document.getElementById('popupAgentName');
+      if (agentNameEl && agent) agentNameEl.textContent = 'المندوب ' + (agent.name||'') + (agent.phone ? ' · 📞 ' + agent.phone : '');
+      if (popup) popup.classList.add('show');
+      try {
+        var ctx = new (window.AudioContext||window.webkitAudioContext)();
+        [[600,0,.15],[750,.2,.15],[900,.4,.2]].forEach(function(p) {
+          var osc = ctx.createOscillator(), g = ctx.createGain();
+          osc.connect(g); g.connect(ctx.destination);
+          osc.frequency.value = p[0]; osc.type = 'sine';
+          g.gain.setValueAtTime(.4, ctx.currentTime + p[1]);
+          g.gain.exponentialRampToValueAtTime(.01, ctx.currentTime + p[1] + p[2]);
+          osc.start(ctx.currentTime + p[1]);
+          osc.stop(ctx.currentTime + p[1] + p[2]);
+        });
+      } catch(e) {}
+    }, 600);
+  } else if (outAt) {
+    prevOutAt = outAt;
+  } else if (!outAt && prevOutAt === null) {
+    // لسه مش خرج — prevOutAt يفضل null
+  }
+
+  // Delivered
+  if (st === 'delivered') {
+    document.getElementById('map').style.display = 'none';
+    document.getElementById('noLoc').style.display = 'none';
+    document.getElementById('delivBanner').style.display = 'block';
+    document.getElementById('updTime').style.display = 'none';
+    if (currentAgentId) db.ref('agents_location/' + currentAgentId).off();
+    return;
+  }
+
+  // تتبع الموقع فقط لما المندوب فعلاً خرج
+  if (agentActuallyOut && currentAgentId && !locListenerOn) {
+    locListenerOn = true;
+    document.getElementById('noLoc').style.display = 'block';
+    db.ref('agents_location/' + currentAgentId).on('value', function(locSnap) {
+      if (!locSnap.exists()) {
+        document.getElementById('map').style.display = 'none';
+        document.getElementById('noLoc').style.display = 'block';
+        document.getElementById('noLocText').textContent = 'سيظهر موقع المندوب هنا قريباً...';
+        return;
+      }
+      var loc = locSnap.val();
+      if (loc.orderId !== orderId) {
+        document.getElementById('map').style.display = 'none';
+        document.getElementById('noLoc').style.display = 'block';
+        document.getElementById('noLocText').textContent = 'المندوب في طريقه إليك قريباً...';
+        return;
+      }
+      document.getElementById('map').style.display = 'block';
+      document.getElementById('noLoc').style.display = 'none';
+      document.getElementById('updTime').style.display = 'block';
+      document.getElementById('updVal').textContent =
+        new Date(loc.updatedAt).toLocaleTimeString('ar-EG', {hour:'2-digit',minute:'2-digit',second:'2-digit'});
+      drawMap(loc);
+    });
+  } else if (!agentActuallyOut && st === 'out') {
+    // الكاشير عيّن مندوب لكن لم يخرج بعد
+    document.getElementById('noLoc').style.display = 'block';
+    document.getElementById('noLocText').textContent = 'المندوب سيبدأ التوصيل قريباً... 🛵';
+  } else if (st !== 'out') {
+    document.getElementById('noLoc').style.display = 'none';
+  }
+}
+
+function closeAgentOutPopup() {
+  document.getElementById('agentOutPopup').classList.remove('show');
+}
+
+function drawMap(loc) {
+  var ll = [loc.lat, loc.lng];
+  var el = document.getElementById('map');
+  if (!trackMap) {
+    trackMap = L.map(el).setView(ll, 15);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {attribution:'© OpenStreetMap'}).addTo(trackMap);
+  }
+  var icon = L.divIcon({
+    html: '<div style="background:#f59e0b;border:3px solid #fff;border-radius:50%;width:40px;height:40px;display:flex;align-items:center;justify-content:center;font-size:20px;box-shadow:0 3px 10px rgba(0,0,0,.3)">🛵</div>',
+    iconSize:[40,40], iconAnchor:[20,20], className:''
+  });
+  if (!agentMarker) {
+    agentMarker = L.marker(ll, {icon:icon}).addTo(trackMap)
+      .bindPopup('<b>' + (loc.agentName||'المندوب') + '</b><br>في الطريق إليك 🛵');
+  } else {
+    agentMarker.setLatLng(ll);
+  }
+  trackMap.setView(ll, 15);
+}
+</script>
+</body>
+</html>
