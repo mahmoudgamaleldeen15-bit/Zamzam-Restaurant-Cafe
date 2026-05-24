@@ -1258,6 +1258,12 @@ input,select,textarea{font-family:inherit;}
     <div class="order-card">
       <h3 id="trackOrderNum" style="font-size:16px;font-weight:800;margin-bottom:4px">طلب رقم #ZZ-0000</h3>
       <div style="font-size:12px;color:var(--text-muted);margin-bottom:16px" id="trackOrderTime">—</div>
+
+      <!-- بانر تفعيل إشعارات العميل -->
+      <div id="clientPushBanner" style="display:none;background:linear-gradient(135deg,#f59e0b,#d97706);border-radius:12px;padding:10px 14px;margin-bottom:14px;display:flex;align-items:center;justify-content:space-between;gap:10px">
+        <div style="font-size:12px;color:#fff;font-weight:700">🔔 فعّل الإشعارات لتتابع حالة طلبك</div>
+        <button onclick="activateClientPush()" style="padding:6px 12px;background:rgba(255,255,255,.25);color:#fff;border:1px solid rgba(255,255,255,.4);border-radius:8px;font-size:11px;font-weight:800;cursor:pointer;white-space:nowrap;flex-shrink:0">تفعيل</button>
+      </div>
       <div class="status-steps">
         <div class="status-step"><div class="step-dot" id="track1">⏳</div><div class="step-info"><div class="st">تم استلام الطلب</div><div class="sd" id="track1t">في انتظار الكاشير...</div></div></div>
         <div class="status-step"><div class="step-dot" id="track2">🍳</div><div class="step-info"><div class="st">بدأ تجهيز الطلب</div><div class="sd" id="track2t">—</div></div></div>
@@ -2875,7 +2881,7 @@ function openScreen(id) {
       }
     }
   }
-  if (id === 'tracking') {
+  if (id === 'tracking') { setTimeout(_checkClientPushBanner, 500);
     // إذا لم يكن هناك طلب نشط — نظهر حالة محايدة احترافية
     const orderCard = document.querySelector('#tracking .order-card');
     const trackNumEl = document.getElementById('trackOrderNum');
@@ -3922,6 +3928,18 @@ function resetTracking() {
 }
 
 function updateTrackingStatus(status, outAt) {
+  // إشعار Push للعميل لما تتغير حالة طلبه
+  const clientPushMsgs = {
+    prep:      { title: '👨‍🍳 طلبك قيد التجهيز', body: 'طاقمنا يجهّز طلبك الآن بأفضل جودة!' },
+    ready:     { title: '✅ طلبك جاهز!', body: 'طلبك اكتمل تجهيزه وجاهز للتسليم' },
+    out:       { title: '🛵 المندوب في الطريق إليك!', body: 'تابع موقع المندوب من التطبيق' },
+    delivered: { title: '🎉 تم التسليم بنجاح!', body: 'نتمنى لك تجربة ممتعة ❤️' },
+    cancelled: { title: '❌ تم إلغاء الطلب', body: 'تواصل معنا لمزيد من المعلومات' }
+  };
+  if (clientPushMsgs[status]) {
+    const { title, body } = clientPushMsgs[status];
+    sendSWPushNotification(title, body, { status, orderId: currentOrderNum });
+  }
   // لو الحالة out لكن المندوب لسه مش ضغط "في الطريق" — نعاملها كـ ready
   const effectiveStatus = (status === 'out' && !outAt) ? 'ready' : status;
   const steps = { new: 1, prep: 2, ready: 3, out: 4, delivered: 5 };
@@ -10628,16 +10646,15 @@ async function requestPushPermission() {
   try {
     if (window._fcmMessaging) {
       // ملاحظة: VAPID_KEY لازم تضيفه من Firebase Console > Project Settings > Cloud Messaging
-      const VAPID_KEY = 'YOUR_VAPID_KEY_HERE'; // ← ضع هنا الـ VAPID key من Firebase Console
-      if (VAPID_KEY !== 'YOUR_VAPID_KEY_HERE') {
+      const VAPID_KEY = '9Y24vAFOnHaNHR7I_Al70P3kTMdpGFZL2s97hkPml7I';
+      if (VAPID_KEY && VAPID_KEY.length > 10) {
         const token = await window._fcmMessaging.getToken({
           vapidKey: VAPID_KEY,
           serviceWorkerRegistration: window._swReg
         });
         if (token) {
           console.log('[FCM] Token:', token);
-          // حفظ الـ Token في Firebase
-          const role = adminRoleType || 'unknown';
+          const role = adminRoleType || 'client';
           if (typeof db !== 'undefined' && db) {
             db.ref('push_tokens/' + role + '_' + Date.now()).set({
               token, role, device: navigator.userAgent.substring(0, 80),
@@ -10664,7 +10681,34 @@ async function requestPushPermission() {
   return 'granted';
 }
 
-// ===== إرسال Push Notification عبر SW (نفس الجهاز) =====
+// ===== Push Notifications للعميل =====
+async function activateClientPush() {
+  const token = await requestPushPermission();
+  if (token) {
+    // حفظ token خاص بالعميل
+    if (db && currentUser?.phone) {
+      const cleanPhone = currentUser.phone.replace(/\D/g,'');
+      db.ref('client_push_tokens/' + cleanPhone).set({
+        token, phone: currentUser.phone, name: currentUser.name || '',
+        savedAt: new Date().toISOString()
+      }).catch(() => {});
+    }
+    saveData('zz_client_push_token', token);
+    document.getElementById('clientPushBanner').style.display = 'none';
+  }
+}
+
+function _checkClientPushBanner() {
+  const banner = document.getElementById('clientPushBanner');
+  if (!banner) return;
+  const hasToken = loadData('zz_client_push_token', null);
+  const hasPerm = Notification.permission === 'granted';
+  if (!hasToken && !hasPerm && 'Notification' in window) {
+    banner.style.display = 'flex';
+  } else {
+    banner.style.display = 'none';
+  }
+}
 function sendSWPushNotification(title, body, data = {}) {
   if (window._swReg?.active) {
     window._swReg.active.postMessage({
