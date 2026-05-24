@@ -2757,6 +2757,10 @@ window.onload = () => {
 function showScreen(id) {
   document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
   document.getElementById(id).classList.add('active');
+  // إغلاق أي overlays مفتوحة عند تغيير الشاشة
+  if (typeof closeUpsell === 'function') closeUpsell();
+  // إغلاق الـ sheets
+  document.querySelectorAll('.sheet-overlay.open').forEach(s => s.classList.remove('open'));
 }
 function openScreen(id) {
   showScreen(id);
