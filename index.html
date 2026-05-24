@@ -2505,39 +2505,8 @@ function saveData(key, val) {
   try { localStorage.setItem(key, JSON.stringify(val)); } catch(e) {}
 }
 
-let MENU = loadData('zz_menu', {
-  kanafa:{label:'🍮 الكنافة والقطايف',emoji:'🍮',items:[
-    {id:'k1',name:'كنافة بالقشطة',desc:'كنافة بالقشطة الطازجة والعسل',prices:{S:45,M:75,L:110},emoji:'🍮',new:true,available:true},
-    {id:'k2',name:'كنافة بالجبنة',desc:'جبنة بيضاء مميزة',prices:{S:40,M:70,L:100},emoji:'🍮',available:true},
-    {id:'k3',name:'قطايف بالمكسرات',desc:'مكسرات فاخرة بالعسل',price:35,emoji:'🥟',available:true},
-    {id:'k4',name:'قطايف بالقشطة',desc:'قشطة طازجة ومكسرات',price:38,emoji:'🥟',new:true,available:true}
-  ]},
-  ice:{label:'🍦 الآيس كريم',emoji:'🍦',items:[
-    {id:'i1',name:'آيس كريم بالفستق',desc:'آيس كريم كريمى بالفستق الحلبى',price:35,emoji:'🍦',available:true},
-    {id:'i2',name:'آيس كريم شوكولاتة',desc:'شوكولاتة بلجيكية فاخرة',price:32,emoji:'🍫',available:true},
-    {id:'i3',name:'صانديه مشكلة',desc:'3 نكهات مع توبينج',price:55,emoji:'🍨',new:true,available:true}
-  ]},
-  oriental:{label:'🍰 حلويات شرقية',emoji:'🍰',items:[
-    {id:'o1',name:'بقلاوة مشكلة',desc:'بقلاوة فاخرة بالمكسرات',price:60,emoji:'🥮',available:true},
-    {id:'o2',name:'بسبوسة بالقشطة',desc:'بسبوسة طرية بالقشطة',price:25,emoji:'🍰',available:true},
-    {id:'o3',name:'أم على',desc:'بالمكسرات والكريمة الساخنة',price:40,emoji:'🥘',available:true},
-    {id:'o4',name:'مهلبية',desc:'بالماء الورد والفستق',price:25,emoji:'🍮',available:true}
-  ]},
-  western:{label:'🎂 حلويات غربية',emoji:'🎂',items:[
-    {id:'w1',name:'تشيز كيك',desc:'تشيز كيك نيويورك بالفراولة',price:55,emoji:'🎂',new:true,available:true},
-    {id:'w2',name:'تيراميسو',desc:'الكلاسيكى الإيطالى',price:50,emoji:'☕',available:true},
-    {id:'w3',name:'كريب نوتيلا',desc:'نوتيلا وموز وعسل',price:45,emoji:'🥞',available:true}
-  ]},
-  bakery:{label:'🥐 المخبوزات',emoji:'🥐',items:[
-    {id:'b1',name:'كرواسون',desc:'طازج يومياً بالزبدة الفرنسية',price:20,emoji:'🥐',available:true},
-    {id:'b2',name:'كيك موز',desc:'كيك موز رطب بالجوز',price:35,emoji:'🍌',available:true}
-  ]},
-  drinks:{label:'☕ المشروبات',emoji:'☕',items:[
-    {id:'d1',name:'قهوة عربية',desc:'بالهيل والزعفران',price:18,emoji:'☕',available:true},
-    {id:'d2',name:'شاى بالنعناع',desc:'شاى أحمر بالنعناع الطازج',price:12,emoji:'🍵',available:true},
-    {id:'d3',name:'عصير فراولة',desc:'فراولة طازجة طبيعية',price:25,emoji:'🍓',available:true}
-  ]}
-});
+// MENU يُحمَّل من Firebase — لا يوجد منيو افتراضي
+let MENU = loadData('zz_menu', {});
 
 const EXTRAS_LIST = [
   {id:'x1',name:'قشطة إضافية',price:10},
@@ -7580,30 +7549,16 @@ function setupFirebaseListeners() {
 
   // --------- MENU PRICES ---------
   db.ref('menu').on('value', snap => {
-    // Skip if admin just saved — avoid overwriting with stale server echo
     if (_menuWriteLock) return;
     if (snap.exists() && fbConnected) {
       const incoming = snap.val();
-      // مقارنة عدد الأقسام والأصناف معاً لتجنب تجاهل أقسام جديدة فارغة
-      let shouldUpdate = true;
-      if (incoming && MENU) {
-        const incomingCatCount = Object.keys(incoming).length;
-        const localCatCount = Object.keys(MENU).length;
-        const incomingCount = Object.values(incoming).reduce((s,c)=>s+((c.items||[]).length),0);
-        const localCount = Object.values(MENU).reduce((s,c)=>s+((c.items||[]).length),0);
-        // إذا الـ local عنده أقسام أكثر أو أصناف أكثر → تجاهل
-        if (localCatCount > incomingCatCount && localCount >= incomingCount) shouldUpdate = false;
-        // إذا الـ local عنده أصناف أكثر بس نفس الأقسام → تجاهل
-        if (localCount > incomingCount && localCatCount >= incomingCatCount) shouldUpdate = false;
-      }
-      if (shouldUpdate) {
-        MENU = incoming;
-        saveData('zz_menu', MENU);
-        if (document.getElementById('app')?.classList.contains('active')) renderMenu();
-        if (document.getElementById('adminPanel')?.classList.contains('active')) {
-          renderMenuManage();
-          renderCatSelects();
-        }
+      // Firebase دايماً هو المرجع الصح — الـ local defaults مش موثوقة
+      MENU = incoming;
+      saveData('zz_menu', MENU);
+      if (document.getElementById('app')?.classList.contains('active')) renderMenu();
+      if (document.getElementById('adminPanel')?.classList.contains('active')) {
+        renderMenuManage();
+        renderCatSelects();
       }
     }
   });
@@ -9243,15 +9198,16 @@ const MAIN_GROUPS_DEFAULTS = {
 
 let MAIN_GROUPS = loadData('zz_main_groups', null);
 if (!MAIN_GROUPS) {
-  MAIN_GROUPS = JSON.parse(JSON.stringify(MAIN_GROUPS_DEFAULTS));
-  saveData('zz_main_groups', MAIN_GROUPS);
+  // لو مفيش بيانات — ابدأ بـ object فاضي، Firebase هيحمّل البيانات الصح
+  MAIN_GROUPS = {};
+  // لو مفيش Firebase (offline) — استخدم defaults كـ fallback مؤقت
+  // سيتم override لما Firebase يتصل
 } else {
-  // إضافة order لو مش موجود
+  // تأكد من وجود order في كل مجموعة موجودة
   let changed = false;
-  Object.entries(MAIN_GROUPS_DEFAULTS).forEach(([k, v]) => {
-    if (!MAIN_GROUPS[k]) { MAIN_GROUPS[k] = { ...v }; changed = true; }
-    else if (MAIN_GROUPS[k].order == null) { MAIN_GROUPS[k].order = v.order; changed = true; }
-    if (!MAIN_GROUPS[k].keywords) { MAIN_GROUPS[k].keywords = v.keywords || []; changed = true; }
+  Object.entries(MAIN_GROUPS).forEach(([k, v]) => {
+    if (v.order == null) { MAIN_GROUPS[k].order = Object.keys(MAIN_GROUPS).indexOf(k) + 1; changed = true; }
+    if (!MAIN_GROUPS[k].keywords) { MAIN_GROUPS[k].keywords = []; changed = true; }
   });
   if (changed) saveData('zz_main_groups', MAIN_GROUPS);
 }
