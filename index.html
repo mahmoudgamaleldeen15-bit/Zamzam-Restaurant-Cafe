@@ -1194,7 +1194,19 @@ input,select,textarea{font-family:inherit;}
 </div>
 
 <!-- ===== PRODUCT MODAL ===== -->
-<div class="product-modal-overlay" id="productModal" onclick="closePM(event)">
+<!-- ===== UPSELL POPUP ===== -->
+<div id="upsellOverlay" style="position:fixed;inset:0;z-index:400;display:none;align-items:flex-end;justify-content:center;pointer-events:none">
+  <div id="upsellPopup" style="width:100%;max-width:480px;background:var(--white);border-radius:20px 20px 0 0;padding:18px 16px 28px;box-shadow:0 -8px 40px rgba(0,0,0,.18);pointer-events:all;transform:translateY(100%);transition:transform .35s cubic-bezier(.34,1.3,.64,1)">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
+      <div>
+        <div style="font-size:15px;font-weight:900;color:var(--dark)" id="upsellTitle">🔥 هل تريد إضافة أيضاً؟</div>
+        <div style="font-size:11px;color:var(--text-muted);margin-top:2px" id="upsellSubtitle">يطلبها العملاء مع طلبك</div>
+      </div>
+      <button onclick="closeUpsell()" style="background:var(--cream);border:none;border-radius:50%;width:30px;height:30px;font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center">✕</button>
+    </div>
+    <div id="upsellItems" style="display:flex;gap:10px;overflow-x:auto;padding-bottom:4px"></div>
+  </div>
+</div>
   <div class="product-modal">
     <div class="pm-img" id="pmImg">🍕</div>
     <div class="pm-body">
@@ -1267,6 +1279,30 @@ input,select,textarea{font-family:inherit;}
       <button class="delivery-confirm-btn visible" id="deliveryConfirmBtn" onclick="confirmDeliveryReceived()" style="display:block;animation:none;background:rgba(255,255,255,.2);border:2px solid rgba(255,255,255,.5);font-size:16px;font-weight:900">📦 استلمت الطلب</button>
     </div>
     <div id="deliveryConfirmedMsg" style="display:none;background:var(--olive-pale);border-radius:12px;padding:14px;text-align:center;margin-top:10px;font-weight:800;color:var(--olive-dark)">✅ شكراً! تم تسجيل استلامك للطلب بنجاح 🎉</div>
+
+    <!-- تقييم المندوب — يظهر بعد تأكيد الاستلام -->
+    <div id="agentRatingBox" style="display:none;background:var(--white);border-radius:16px;border:1.5px solid var(--border);padding:18px;margin-top:12px;text-align:center">
+      <div style="font-size:22px;margin-bottom:6px">🛵</div>
+      <div style="font-size:15px;font-weight:900;color:var(--dark);margin-bottom:4px">كيف كانت تجربتك مع المندوب؟</div>
+      <div style="font-size:12px;color:var(--text-muted);margin-bottom:14px">تقييمك يساعدنا على تحسين الخدمة</div>
+      <div id="agentStarsInput" style="display:flex;justify-content:center;gap:8px;margin-bottom:14px">
+        <span onclick="setAgentRating(1)" style="font-size:32px;cursor:pointer;transition:.2s" data-star="1">⭐</span>
+        <span onclick="setAgentRating(2)" style="font-size:32px;cursor:pointer;transition:.2s" data-star="2">⭐</span>
+        <span onclick="setAgentRating(3)" style="font-size:32px;cursor:pointer;transition:.2s" data-star="3">⭐</span>
+        <span onclick="setAgentRating(4)" style="font-size:32px;cursor:pointer;transition:.2s" data-star="4">⭐</span>
+        <span onclick="setAgentRating(5)" style="font-size:32px;cursor:pointer;transition:.2s" data-star="5">⭐</span>
+      </div>
+      <textarea id="agentRatingComment" placeholder="تعليق اختياري... (شكوى أو مديح)" rows="2"
+        style="width:100%;padding:10px 12px;border:1.5px solid var(--border);border-radius:10px;font-size:13px;font-family:inherit;resize:none;outline:none;margin-bottom:10px;box-sizing:border-box"></textarea>
+      <button onclick="submitAgentRating()" id="agentRatingSubmitBtn"
+        style="width:100%;padding:12px;background:linear-gradient(135deg,var(--olive),var(--olive-light));color:#fff;border-radius:10px;font-size:14px;font-weight:900;border:none;cursor:pointer">
+        إرسال التقييم ⭐
+      </button>
+      <button onclick="document.getElementById('agentRatingBox').style.display='none'"
+        style="width:100%;padding:10px;background:none;color:var(--text-muted);font-size:12px;border:none;cursor:pointer;margin-top:4px">
+        تخطي
+      </button>
+    </div>
     <button class="btn-primary" onclick="openWhatsapp('order')" style="margin-bottom:10px;margin-top:10px">تواصل عبر واتساب 💬</button>
     <button class="btn-primary btn-secondary" onclick="openScreen('app')">العودة للمنيو</button>
   </div>
@@ -1306,14 +1342,21 @@ input,select,textarea{font-family:inherit;}
         <button onclick="agentLogout()" style="background:rgba(255,255,255,.15);color:#fff;border:none;border-radius:8px;padding:6px 12px;font-size:12px;cursor:pointer">خروج</button>
       </div>
     </div>
+
+    <!-- تبويبين -->
+    <div style="display:flex;background:var(--white);border-bottom:2px solid var(--border)">
+      <button id="agentTab1" onclick="switchAgentTab(1)"
+        style="flex:1;padding:12px;font-size:13px;font-weight:800;background:var(--olive);color:#fff;border:none;cursor:pointer">
+        🛵 جاري التوصيل <span id="agentActiveCount" style="background:rgba(255,255,255,.25);border-radius:100px;padding:1px 7px;font-size:11px;margin-right:4px">0</span>
+      </button>
+      <button id="agentTab2" onclick="switchAgentTab(2)"
+        style="flex:1;padding:12px;font-size:13px;font-weight:800;background:var(--cream);color:var(--text-muted);border:none;cursor:pointer">
+        ✅ تم التسليم <span id="agentDoneCount" style="background:var(--border);border-radius:100px;padding:1px 7px;font-size:11px;margin-right:4px">0</span>
+      </button>
+    </div>
+
     <div style="padding:16px">
-      <div style="font-size:14px;font-weight:800;color:var(--dark);margin-bottom:12px">📋 طلباتك الحالية</div>
-      <div id="agentOrdersList">
-        <div style="text-align:center;padding:40px;color:var(--text-muted)">
-          <div style="font-size:36px;margin-bottom:8px">📭</div>
-          <div style="font-size:13px;font-weight:700">لا توجد طلبات مكلف بها حالياً</div>
-        </div>
-      </div>
+      <div id="agentOrdersList"></div>
     </div>
   </div>
 </div>
@@ -1416,7 +1459,38 @@ input,select,textarea{font-family:inherit;}
       </div>
     </div>
 
-    <div style="padding:12px 16px 6px;font-size:14px;font-weight:800;color:var(--text-muted)">اللغة</div>
+    <div style="padding:12px 16px 6px;font-size:14px;font-weight:800;color:var(--text-muted)">💡 Upsell / اقتراحات الأصناف</div>
+    <div class="settings-section">
+      <div class="settings-row">
+        <div class="info">
+          <strong>اقتراح أصناف عند الإضافة</strong>
+          <span>يظهر للعميل أصناف مكملة عند إضافة أي صنف للسلة</span>
+        </div>
+        <div class="toggle-sw on" id="upsellToggle" onclick="toggleUpsellSetting()"></div>
+      </div>
+    </div>
+
+    <div style="padding:12px 16px 6px;font-size:14px;font-weight:800;color:var(--text-muted)">💾 النسخ الاحتياطي التلقائي</div>
+    <div class="settings-section">
+      <div class="settings-row" style="flex-wrap:wrap;gap:8px">
+        <div class="info">
+          <strong>Backup تلقائي يومي</strong>
+          <span id="autoBackupStatusText">كل 24 ساعة — يحفظ في Firebase</span>
+        </div>
+        <div class="toggle-sw" id="autoBackupToggle" onclick="toggleAutoBackup()"></div>
+      </div>
+      <div id="autoBackupInfo" style="padding:0 14px 12px;display:none">
+        <div style="font-size:11px;color:var(--text-muted);margin-bottom:8px" id="lastAutoBackupTime">آخر backup: لم يتم بعد</div>
+        <button onclick="runManualAutoBackup()" style="width:100%;padding:9px;background:var(--olive-ultra);color:var(--olive-dark);border:1.5px solid var(--olive);border-radius:9px;font-size:12px;font-weight:800;cursor:pointer">
+          💾 حفظ backup الآن
+        </button>
+      </div>
+      <!-- قائمة آخر 7 Backups -->
+      <div id="autoBackupList" style="padding:0 14px 12px;display:none">
+        <div style="font-size:11px;font-weight:800;color:var(--text-muted);margin-bottom:8px">📋 آخر النسخ الاحتياطية</div>
+        <div id="autoBackupItems"></div>
+      </div>
+    </div>
     <div class="settings-section">
       <div class="settings-row"><div class="info"><strong>اللغة</strong><span>Language</span></div>
         <select class="settings-input" style="width:100px">
@@ -1801,6 +1875,20 @@ input,select,textarea{font-family:inherit;}
         <button onclick="addAgent()" style="width:100%;padding:10px;background:var(--olive);color:#fff;border-radius:9px;font-size:13px;font-weight:800">+ إضافة المندوب</button>
       </div>
       <div id="agentsAdminList"></div>
+
+      <!-- تقارير المندوبين -->
+      <div style="margin-top:16px">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+          <div style="font-size:14px;font-weight:800;color:var(--dark)">📊 تقارير وتقييمات المندوبين</div>
+          <select id="agentReportFilter" onchange="renderAgentReports()" style="padding:6px 10px;border:1.5px solid var(--border);border-radius:8px;font-size:12px;background:var(--white)">
+            <option value="today">اليوم</option>
+            <option value="week">هذا الأسبوع</option>
+            <option value="month">هذا الشهر</option>
+            <option value="all">الكل</option>
+          </select>
+        </div>
+        <div id="agentReportsList"></div>
+      </div>
     </div>
 
     <!-- STATS TAB (Admin Only) -->
@@ -3247,7 +3335,7 @@ function addToCartFromPM() {
   const spicyLabel = pmSpicy === 'spicy' ? '🌶️ حار' : '🍃 عادي';
   const hasSpicy = catHasSpicy(currentPM.cat);
   const spicyExtra = (pmSpicy === 'spicy' && hasSpicy) ? (SPICY_SETTINGS.hotExtraPrice || 0) : 0;
-  addToCart({ id: item.id + '_' + (pmSelectedSize||'') + '_' + Date.now(), name: item.name, size: pmSelectedSize, emoji: item.emoji, price: base + extPrice + spicyExtra, basePrice: base, extras, qty: pmQtyVal, spicy: hasSpicy ? pmSpicy : null, spicyLabel: hasSpicy ? spicyLabel : null });
+  addToCart({ id: item.id + '_' + (pmSelectedSize||'') + '_' + Date.now(), name: item.name, size: pmSelectedSize, emoji: item.emoji, price: base + extPrice + spicyExtra, basePrice: base, extras, qty: pmQtyVal, spicy: hasSpicy ? pmSpicy : null, spicyLabel: hasSpicy ? spicyLabel : null, _catKey: currentPM.cat });
   document.getElementById('productModal').classList.remove('open');
 }
 
@@ -3264,12 +3352,126 @@ function quickAdd(e, cat, id) {
   }
   const item = MENU[cat].items.find(i => i.id === id);
   const price = item.prices ? item.prices.S : item.price;
-  addToCart({ id: item.id + '_quick', name: item.name, size: item.prices ? 'S' : null, emoji: item.emoji, price, basePrice: price, extras: [], qty: 1 });
+  addToCart({ id: item.id + '_quick', name: item.name, size: item.prices ? 'S' : null, emoji: item.emoji, price, basePrice: price, extras: [], qty: 1, _catKey: cat });
 }
 function addToCart(ci) {
   const ex = cart.find(c => c.id === ci.id);
   if (ex) ex.qty += ci.qty; else cart.push({ ...ci });
   playSound(); updateCartUI(); showNotif('✓ تمت الإضافة إلى السلة');
+  // إظهار Upsell بعد الإضافة
+  if (typeof showUpsell === 'function') showUpsell(ci);
+}
+
+// ============================================================
+// UPSELL / CROSS-SELL SYSTEM
+// ============================================================
+
+let _upsellTimer = null;
+
+// قواعد Upsell الذكية — مجموعات متكاملة
+const UPSELL_RULES = {
+  // أكل → مشروبات
+  food_drinks: { triggers: ['ساندوتش','برجر','شاورما','وجبة','كباب','فراخ','لحم','بيتزا','كريب','مكرونة','فطيرة'], suggest: ['مشروبات','عصائر','كولا','ليموناضة','تي','قهوة','مياه'] },
+  // مشروبات ساخنة → حلويات
+  hot_drinks_sweets: { triggers: ['قهوة','شاي','نسكافيه','كابتشينو','لاتيه','موكا'], suggest: ['كيك','تارت','كوكيز','براونى','حلويات'] },
+  // أكل رئيسي → صوص/إضافات
+  main_sauces: { triggers: ['برجر','شاورما','ساندوتش','وجبة'], suggest: ['صوص','فريز','بطاطس','سلطة'] }
+};
+
+function _getUpsellSuggestions(addedItem) {
+  const itemName = (addedItem.name || '').toLowerCase();
+  const cartIds = new Set(cart.map(c => c.id.split('_')[0]));
+  const suggestions = [];
+
+  // ابحث في كل الأقسام والأصناف
+  Object.entries(MENU).forEach(([catKey, cat]) => {
+    if (!cat.items) return;
+    cat.items.forEach(item => {
+      if (cartIds.has(item.id)) return; // موجود في الكارت بالفعل
+      if (item.id === addedItem.id?.split('_')[0]) return; // نفس الصنف
+
+      const iName = (item.name || '').toLowerCase();
+      const catLabel = (cat.label || '').toLowerCase();
+
+      // تحقق من قواعد Upsell
+      let score = 0;
+      Object.values(UPSELL_RULES).forEach(rule => {
+        const triggerMatch = rule.triggers.some(t => itemName.includes(t));
+        const suggestMatch = rule.suggest.some(s => iName.includes(s) || catLabel.includes(s));
+        if (triggerMatch && suggestMatch) score += 3;
+      });
+
+      // نفس القسم → اقتراح طبيعي
+      if (catKey === addedItem._catKey && score === 0) score = 1;
+
+      // الأصناف الأكثر مبيعاً
+      const favCount = loadData('zz_fav_counts', {})[item.id] || 0;
+      score += Math.min(favCount, 3);
+
+      if (score > 0 && item.available !== false) {
+        const price = item.prices ? item.prices.S : item.price;
+        suggestions.push({ item, catKey, price, score });
+      }
+    });
+  });
+
+  // رتب حسب الـ score ورجّع أحسن 4
+  return suggestions.sort((a, b) => b.score - a.score).slice(0, 4);
+}
+
+function showUpsell(addedItem) {
+  if (_upsellTimer) clearTimeout(_upsellTimer);
+
+  // لو Upsell مش مفعّل من الإعدادات
+  if (loadData('zz_upsell_enabled', true) === false) return;
+
+  const suggestions = _getUpsellSuggestions(addedItem);
+  if (!suggestions.length) return;
+
+  const overlay = document.getElementById('upsellOverlay');
+  const popup = document.getElementById('upsellPopup');
+  const itemsEl = document.getElementById('upsellItems');
+  const titleEl = document.getElementById('upsellTitle');
+  const subEl = document.getElementById('upsellSubtitle');
+
+  if (!overlay || !popup) return;
+
+  // عنوان ديناميكي
+  const titles = ['🔥 يطلبها العملاء مع طلبك!', '💡 ممكن تحتاجها كمان؟', '⭐ العملاء يضيفون أيضاً:', '🎯 اكمّل طلبك!'];
+  titleEl.textContent = titles[Math.floor(Math.random() * titles.length)];
+  subEl.textContent = `أضيف "${addedItem.name}" — هل تريد إضافة أي من هذه؟`;
+
+  itemsEl.innerHTML = suggestions.map(({ item, catKey, price }) => `
+    <div style="flex-shrink:0;width:130px;background:var(--cream);border-radius:14px;padding:10px;text-align:center;border:1.5px solid var(--border);cursor:pointer" onclick="quickAddUpsell('${catKey}','${item.id}')">
+      <div style="font-size:30px;margin-bottom:4px">${item.emoji || '🍽️'}</div>
+      <div style="font-size:12px;font-weight:800;color:var(--dark);margin-bottom:4px;line-height:1.3">${item.name}</div>
+      <div style="font-size:11px;color:var(--olive-dark);font-weight:700;margin-bottom:8px">${price} ج.م</div>
+      <button style="width:100%;padding:6px;background:var(--olive);color:#fff;border-radius:8px;font-size:11px;font-weight:800;border:none;cursor:pointer">+ إضافة</button>
+    </div>`).join('');
+
+  overlay.style.display = 'flex';
+  requestAnimationFrame(() => {
+    popup.style.transform = 'translateY(0)';
+  });
+
+  // إغلاق تلقائي بعد 6 ثواني
+  _upsellTimer = setTimeout(closeUpsell, 6000);
+}
+
+function quickAddUpsell(catKey, itemId) {
+  const item = MENU[catKey]?.items?.find(i => i.id === itemId);
+  if (!item) return;
+  const price = item.prices ? item.prices.S : item.price;
+  addToCart({ id: item.id + '_upsell_' + Date.now(), name: item.name, emoji: item.emoji, price, basePrice: price, extras: [], qty: 1, _catKey: catKey });
+  closeUpsell();
+}
+
+function closeUpsell() {
+  if (_upsellTimer) { clearTimeout(_upsellTimer); _upsellTimer = null; }
+  const popup = document.getElementById('upsellPopup');
+  const overlay = document.getElementById('upsellOverlay');
+  if (popup) popup.style.transform = 'translateY(100%)';
+  setTimeout(() => { if (overlay) overlay.style.display = 'none'; }, 350);
 }
 function removeFromCart(id) { cart = cart.filter(c => c.id !== id); appliedDiscount = 0; appliedCouponId = null; updateCartUI(); renderCartSheet(); }
 function changeQty(id, d) {
@@ -3817,6 +4019,7 @@ function doAdminLogin() {
   document.getElementById('adminRoleLabel').textContent = role === 'admin' ? '🔑 مدير النظام' : '💳 كاشير';
   // طلب إذن Desktop Notifications
   requestNotifPermission();
+  initAutoBackup();
   openScreen('adminPanel');
 }
 function doLogout() {
@@ -3888,9 +4091,9 @@ function switchAdminTab(tab, el) {
   if (tab === 'menu') { renderMenuManage(); renderCatSelects(); }
   if (tab === 'addons') { renderAddonsAdmin(); renderSpicyCatToggles(); }
   if (tab === 'offers') renderOffersAdmin();
-  if (tab === 'settings') { loadSettingsUI(); _updatePushStatusUI(); }
+  if (tab === 'settings') { loadSettingsUI(); _updatePushStatusUI(); _updateAutoBackupUI(); _initUpsellToggle(); }
   if (tab === 'ads') renderAdsAdmin();
-  if (tab === 'agents') { renderAgentsAdmin(); startAdminAgentsTracking(); }
+  if (tab === 'agents') { renderAgentsAdmin(); renderAgentReports(); startAdminAgentsTracking(); }
   if (tab === 'stats') { loadRatingsFromFirebase(); renderStatsTab(); }
 }
 
@@ -6463,6 +6666,20 @@ function confirmDeliveryReceived() {
   document.getElementById('deliveryConfirmBtn').style.display = 'none';
   const confirmedMsg = document.getElementById('deliveryConfirmedMsg');
   if (confirmedMsg) confirmedMsg.style.display = 'block';
+
+  // إظهار تقييم المندوب لو الطلب كان delivery وعنده مندوب
+  const ratingBox = document.getElementById('agentRatingBox');
+  if (ratingBox && order?.agent?.id) {
+    ratingBox.style.display = 'block';
+    ratingBox.dataset.agentId = order.agent.id;
+    ratingBox.dataset.agentName = order.agent.name || '';
+    ratingBox.dataset.orderId = currentOrderNum;
+    _selectedAgentRating = 0;
+    // reset stars
+    document.querySelectorAll('#agentStarsInput span').forEach(s => s.style.filter = 'grayscale(1)');
+    document.getElementById('agentRatingComment').value = '';
+  }
+
   showNotif('✅ شكراً! تم تسجيل استلامك');
 }
 
@@ -7536,6 +7753,22 @@ function setupFirebaseListeners() {
       }
     }
   });
+  // --------- AGENT RATINGS — Real-Time Sync ---------
+  db.ref('agent_ratings').on('value', snap => {
+    if (!snap.exists()) return;
+    snap.forEach(agentSnap => {
+      const agentId = agentSnap.key;
+      const ag = AGENTS.find(a => a.id === agentId);
+      if (!ag) return;
+      const ratings = [];
+      agentSnap.forEach(rSnap => { if (rSnap.val()) ratings.push(rSnap.val()); });
+      ag.ratings = ratings;
+      ag.avgRating = ratings.length ? (ratings.reduce((s, r) => s + (r.stars||0), 0) / ratings.length).toFixed(1) : 0;
+      ag.totalRatings = ratings.length;
+    });
+    saveAgents();
+    if (document.getElementById('tab-agents')?.style.display === 'block') renderAgentReports();
+  });
 }
 
 async function fbSaveOrder(order) { 
@@ -7889,7 +8122,63 @@ function confirmAgentSelection() {
 }
 
 // ============================================================
-// DELIVERY AGENT SYSTEM — نظام المندوب الكامل
+// AGENT RATING SYSTEM — نظام تقييم المندوب
+// ============================================================
+
+let _selectedAgentRating = 0;
+
+function setAgentRating(stars) {
+  _selectedAgentRating = stars;
+  document.querySelectorAll('#agentStarsInput span').forEach((s, i) => {
+    s.style.filter = i < stars ? 'none' : 'grayscale(1)';
+    s.style.transform = i < stars ? 'scale(1.15)' : 'scale(1)';
+  });
+}
+
+function submitAgentRating() {
+  if (!_selectedAgentRating) { showNotif('⭐ اختر عدد النجوم أولاً'); return; }
+  const box = document.getElementById('agentRatingBox');
+  const agentId = box?.dataset?.agentId;
+  const agentName = box?.dataset?.agentName || '';
+  const orderId = box?.dataset?.orderId || currentOrderNum;
+  const comment = document.getElementById('agentRatingComment')?.value?.trim() || '';
+
+  if (!agentId) return;
+
+  const rating = {
+    stars: _selectedAgentRating,
+    comment,
+    orderId,
+    agentId,
+    agentName,
+    clientName: currentUser?.name || '—',
+    clientPhone: currentUser?.phone || '—',
+    ratedAt: new Date().toISOString(),
+    date: new Date().toLocaleDateString('ar-EG')
+  };
+
+  // حفظ في Firebase
+  if (db) db.ref('agent_ratings/' + agentId + '/' + orderId).set(rating).catch(() => {});
+
+  // تحديث بيانات المندوب في AGENTS
+  const ag = AGENTS.find(a => a.id === agentId);
+  if (ag) {
+    if (!ag.ratings) ag.ratings = [];
+    ag.ratings.push({ stars: _selectedAgentRating, orderId, ratedAt: rating.ratedAt, comment });
+    ag.avgRating = (ag.ratings.reduce((s, r) => s + r.stars, 0) / ag.ratings.length).toFixed(1);
+    ag.totalRatings = ag.ratings.length;
+    saveAgents();
+  }
+
+  // إخفاء نافذة التقييم
+  if (box) box.style.display = 'none';
+
+  const stars = '⭐'.repeat(_selectedAgentRating);
+  showNotif(stars + ' شكراً على تقييمك!');
+}
+
+// ============================================================
+// AGENT ORDERS — ترتيب وتبويبات
 // ============================================================
 
 let _currentAgent = null;        // المندوب الحالي المسجّل دخوله
@@ -7990,38 +8279,74 @@ function agentLogout() {
   openScreen('app');
 }
 
+// ===== تبويبات صفحة المندوب =====
+let _agentCurrentTab = 1;
+
+function switchAgentTab(tab) {
+  _agentCurrentTab = tab;
+  const t1 = document.getElementById('agentTab1');
+  const t2 = document.getElementById('agentTab2');
+  if (t1) { t1.style.background = tab === 1 ? 'var(--olive)' : 'var(--cream)'; t1.style.color = tab === 1 ? '#fff' : 'var(--text-muted)'; }
+  if (t2) { t2.style.background = tab === 2 ? 'var(--olive)' : 'var(--cream)'; t2.style.color = tab === 2 ? '#fff' : 'var(--text-muted)'; }
+  renderAgentOrders();
+}
+
 // ===== عرض طلبات المندوب =====
 function renderAgentOrders() {
   const el = document.getElementById('agentOrdersList');
   if (!el || !_currentAgent) return;
-  const myOrders = ordersData.filter(o => o.status === 'out' && o.agent?.id === _currentAgent.id);
-  if (!myOrders.length) {
+
+  const allMyOrders = ordersData
+    .filter(o => o.agent?.id === _currentAgent.id)
+    .sort((a, b) => new Date(a.agentAssignedAt||a.timestamp||0) - new Date(b.agentAssignedAt||b.timestamp||0));
+
+  const activeOrders = allMyOrders.filter(o => o.status === 'out');
+  const doneOrders = allMyOrders.filter(o => o.status === 'delivered');
+
+  const ac = document.getElementById('agentActiveCount');
+  const dc = document.getElementById('agentDoneCount');
+  if (ac) ac.textContent = activeOrders.length;
+  if (dc) dc.textContent = doneOrders.length;
+
+  const orders = _agentCurrentTab === 1 ? activeOrders : doneOrders;
+
+  if (!orders.length) {
     el.innerHTML = `<div style="text-align:center;padding:40px;color:var(--text-muted)">
-      <div style="font-size:36px;margin-bottom:8px">📭</div>
-      <div style="font-size:13px;font-weight:700">لا توجد طلبات مكلف بها حالياً</div>
-      <div style="font-size:11px;margin-top:6px;opacity:.7">ستظهر الطلبات هنا فور تعيينك من الكاشير</div>
+      <div style="font-size:36px;margin-bottom:8px">${_agentCurrentTab === 1 ? '📭' : '✅'}</div>
+      <div style="font-size:13px;font-weight:700">${_agentCurrentTab === 1 ? 'لا توجد طلبات جارية' : 'لا توجد طلبات مسلّمة اليوم'}</div>
+      <div style="font-size:11px;margin-top:6px;opacity:.7">${_agentCurrentTab === 1 ? 'ستظهر الطلبات هنا فور تعيينك من الكاشير' : 'الطلبات المسلّمة تظهر هنا بعد الضغط على تم التسليم'}</div>
     </div>`;
     return;
   }
-  el.innerHTML = myOrders.map(o => {
+
+  el.innerHTML = orders.map((o, idx) => {
     const isActive = o.agentActiveDelivery === _currentAgent.id + '_' + o.id;
-    const items = (o.items||[]).map(i => `<div style="display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px dashed #f0f0f0"><span>${i.emoji||''} ${i.name}${i.size?' ('+i.size+')':''}</span><span style="font-weight:800;color:var(--olive)">×${i.qty}</span></div>`).join('');
+    const isDone = o.status === 'delivered';
     const da = o.detailedAddress || {};
     const addrParts = [
       o.address ? '📍 ' + o.address : '',
-      da.street ? '🏠 الشارع/الحى: ' + da.street : '',
-      da.floor  ? '🏢 الدور/الشقة: ' + da.floor : '',
-      da.landmark ? '🏷️ علامة مميزة: ' + da.landmark : '',
-      o.zone ? '🗺️ المنطقة: ' + o.zone : ''
+      da.street ? '🏠 ' + da.street : '',
+      da.floor ? '🏢 ' + da.floor : '',
+      da.landmark ? '🏷️ ' + da.landmark : '',
+      o.zone ? '🗺️ ' + o.zone : ''
     ].filter(Boolean);
-    const addrHtml = addrParts.length ? addrParts.map(p=>`<div style="font-size:12px;color:var(--text-muted);margin-top:3px">${p}</div>`).join('') : `<div style="font-size:12px;color:var(--red)">⚠️ لم يتم تحديد عنوان</div>`;
+    const addrHtml = addrParts.length
+      ? addrParts.map(p => `<div style="font-size:12px;color:var(--text-muted);margin-top:3px">${p}</div>`).join('')
+      : `<div style="font-size:12px;color:var(--red)">⚠️ لم يتم تحديد عنوان</div>`;
     const mapLink = o.gps?.lat && o.gps?.lng
-      ? `<a href="https://www.google.com/maps?q=${o.gps.lat},${o.gps.lng}" target="_blank" style="display:inline-flex;align-items:center;gap:4px;margin-top:6px;padding:5px 12px;background:#e8f5d0;color:var(--olive-dark);border-radius:8px;font-size:11px;font-weight:800;text-decoration:none">🗺️ فتح الموقع على الخريطة</a>`
-      : '';
-    return `<div style="background:var(--white);border-radius:16px;border:2px solid ${isActive?'var(--olive)':'var(--border)'};margin-bottom:14px;overflow:hidden;${isActive?'box-shadow:0 4px 16px rgba(74,124,47,.2)':''}">
-      <div style="background:${isActive?'var(--olive)':'var(--cream)'};padding:10px 14px;display:flex;align-items:center;justify-content:space-between">
-        <div style="font-size:13px;font-weight:900;color:${isActive?'#fff':'var(--dark)'}">طلب #${o.id}</div>
-        <div style="font-size:11px;background:${isActive?'rgba(255,255,255,.2)':'var(--olive-pale)'};color:${isActive?'#fff':'var(--olive-dark)'};padding:3px 10px;border-radius:100px;font-weight:800">${isActive?'🛵 في الطريق':'⏳ في انتظار انطلاقك'}</div>
+      ? `<a href="https://www.google.com/maps?q=${o.gps.lat},${o.gps.lng}" target="_blank" style="display:inline-flex;align-items:center;gap:4px;margin-top:6px;padding:5px 12px;background:#e8f5d0;color:var(--olive-dark);border-radius:8px;font-size:11px;font-weight:800;text-decoration:none">🗺️ فتح الموقع على الخريطة</a>` : '';
+    const items = (o.items||[]).map(i =>
+      `<div style="display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px dashed #f0f0f0"><span>${i.emoji||''} ${i.name}${i.size?' ('+i.size+')':''}</span><span style="font-weight:800;color:var(--olive)">×${i.qty}</span></div>`).join('');
+    const headerColor = isDone ? '#16a34a' : (isActive ? 'var(--olive)' : '#f59e0b');
+    const orderNum = idx + 1;
+
+    return `<div style="background:var(--white);border-radius:16px;border:2px solid ${isDone?'#bbf7d0':isActive?'var(--olive)':'var(--border)'};margin-bottom:14px;overflow:hidden">
+      <div style="background:${headerColor};padding:10px 14px;display:flex;align-items:center;justify-content:space-between">
+        <div style="display:flex;align-items:center;gap:8px">
+          <div style="background:rgba(255,255,255,.2);color:#fff;border-radius:50%;width:26px;height:26px;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:900">${orderNum}</div>
+          <div style="font-size:13px;font-weight:900;color:#fff">طلب #${o.id}</div>
+        </div>
+        <div style="font-size:11px;background:rgba(255,255,255,.2);color:#fff;padding:3px 10px;border-radius:100px;font-weight:800">${isDone?'✅ مسلّم':isActive?'🛵 في الطريق':'⏳ في الانتظار'}</div>
       </div>
       <div style="padding:14px">
         <div style="background:var(--cream);border-radius:10px;padding:10px 12px;margin-bottom:10px">
@@ -8041,10 +8366,14 @@ function renderAgentOrders() {
             <span style="font-size:15px;font-weight:900;color:var(--olive)">${o.total||0} ج.م</span>
           </div>
         </div>
-        <div style="display:flex;gap:8px">
-          ${!isActive?`<button onclick="startAgentDelivery('${o.id}')" style="flex:1;padding:12px;background:linear-gradient(135deg,#f59e0b,#d97706);color:#fff;border-radius:10px;font-size:13px;font-weight:900;border:none;cursor:pointer">🛵 في الطريق إليك الآن</button>`:`<button onclick="stopAgentDelivery('${o.id}')" style="flex:1;padding:12px;background:var(--olive-ultra);color:var(--olive-dark);border-radius:10px;font-size:13px;font-weight:800;border:1.5px solid var(--olive);cursor:pointer">⏸️ إيقاف المشاركة</button>`}
+        ${!isDone ? `<div style="display:flex;gap:8px">
+          ${!isActive
+            ? `<button onclick="startAgentDelivery('${o.id}')" style="flex:1;padding:12px;background:linear-gradient(135deg,#f59e0b,#d97706);color:#fff;border-radius:10px;font-size:13px;font-weight:900;border:none;cursor:pointer">🛵 في الطريق إليك الآن</button>`
+            : `<button onclick="stopAgentDelivery('${o.id}')" style="flex:1;padding:12px;background:var(--olive-ultra);color:var(--olive-dark);border-radius:10px;font-size:13px;font-weight:800;border:1.5px solid var(--olive);cursor:pointer">⏸️ إيقاف المشاركة</button>`}
           <button onclick="agentMarkDelivered('${o.id}')" style="padding:12px 14px;background:var(--olive);color:#fff;border-radius:10px;font-size:13px;font-weight:800;border:none;cursor:pointer">✅ تم التسليم</button>
-        </div>
+        </div>` : `<div style="background:var(--olive-ultra);border-radius:10px;padding:10px;text-align:center;font-size:12px;font-weight:800;color:var(--olive-dark)">
+          ✅ تم التسليم ${o.deliveredAt?'· '+new Date(o.deliveredAt).toLocaleTimeString('ar-EG',{hour:'2-digit',minute:'2-digit'}):''}
+        </div>`}
       </div>
     </div>`;
   }).join('');
@@ -8206,6 +8535,253 @@ function startAdminAgentsTracking() {
 
 // ===== تحديث رابط التتبع — تم دمجه في sendStatusWhatsapp أعلاه =====
 
+
+// ============================================================
+// AGENT REPORTS — تقارير المندوبين
+// ============================================================
+function renderAgentReports() {
+  const el = document.getElementById('agentReportsList');
+  if (!el) return;
+  const filter = document.getElementById('agentReportFilter')?.value || 'today';
+  const now = new Date();
+
+  const inRange = (dateStr) => {
+    if (!dateStr) return false;
+    const d = new Date(dateStr);
+    if (filter === 'today') return d.toDateString() === now.toDateString();
+    if (filter === 'week') return (now - d) <= 7 * 24 * 3600 * 1000;
+    if (filter === 'month') return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
+    return true;
+  };
+
+  if (!AGENTS.length) {
+    el.innerHTML = '<div style="text-align:center;padding:20px;color:var(--text-muted);font-size:13px">لا يوجد مندوبون</div>';
+    return;
+  }
+
+  el.innerHTML = AGENTS.map(ag => {
+    const agOrders = ordersData.filter(o => o.agent?.id === ag.id && o.status === 'delivered' && inRange(o.deliveredAt || o.clientConfirmedAt));
+    const ratings = (ag.ratings || []).filter(r => inRange(r.ratedAt));
+    const avgRating = ratings.length ? (ratings.reduce((s, r) => s + r.stars, 0) / ratings.length) : 0;
+    const complaints = ratings.filter(r => r.stars <= 2 || r.comment);
+    const starsStr = avgRating > 0 ? '⭐'.repeat(Math.round(avgRating)) : '—';
+    const complaintBg = complaints.length ? '#fee2e2' : 'var(--cream)';
+    const complaintColor = complaints.length ? '#dc2626' : 'var(--text-muted)';
+
+    return `
+    <div style="background:var(--white);border-radius:14px;border:1.5px solid var(--border);padding:14px;margin-bottom:10px">
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:10px">
+        <div style="width:44px;height:44px;border-radius:50%;background:linear-gradient(135deg,var(--olive),var(--olive-light));display:flex;align-items:center;justify-content:center;font-size:20px;color:#fff;flex-shrink:0">🛵</div>
+        <div style="flex:1">
+          <div style="font-size:15px;font-weight:900;color:var(--dark)">${ag.name}</div>
+          <div style="font-size:11px;color:var(--text-muted);direction:ltr">${ag.phone}</div>
+        </div>
+        <div style="text-align:center">
+          <div style="font-size:18px">${starsStr}</div>
+          <div style="font-size:10px;color:var(--text-muted)">${avgRating > 0 ? avgRating.toFixed(1) + ' / 5' : 'لا تقييم'}</div>
+        </div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:${complaints.length ? '10px' : '0'}">
+        <div style="background:var(--olive-ultra);border-radius:10px;padding:8px;text-align:center">
+          <div style="font-size:18px;font-weight:900;color:var(--olive)">${agOrders.length}</div>
+          <div style="font-size:10px;color:var(--text-muted)">طلبات مسلّمة</div>
+        </div>
+        <div style="background:#e0f2fe;border-radius:10px;padding:8px;text-align:center">
+          <div style="font-size:18px;font-weight:900;color:#0284c7">${ratings.length}</div>
+          <div style="font-size:10px;color:var(--text-muted)">التقييمات</div>
+        </div>
+        <div style="background:${complaintBg};border-radius:10px;padding:8px;text-align:center">
+          <div style="font-size:18px;font-weight:900;color:${complaintColor}">${complaints.length}</div>
+          <div style="font-size:10px;color:var(--text-muted)">شكاوى</div>
+        </div>
+      </div>
+      ${complaints.length ? `<div style="background:#fff5f5;border-radius:10px;padding:10px;border:1px solid #fca5a5">
+        <div style="font-size:11px;font-weight:800;color:#dc2626;margin-bottom:6px">⚠️ ملاحظات العملاء</div>
+        ${complaints.map(r => `<div style="font-size:11px;color:var(--dark);padding:4px 0;border-bottom:1px dashed #fca5a5">${'⭐'.repeat(r.stars)} ${r.comment ? '— ' + r.comment : ''} <span style="color:var(--text-muted)">${new Date(r.ratedAt).toLocaleDateString('ar-EG')}</span></div>`).join('')}
+      </div>` : ''}
+    </div>`;
+  }).join('');
+}
+
+// ============================================================
+// AUTO BACKUP SYSTEM — نظام النسخ الاحتياطي التلقائي
+// ============================================================
+
+const AUTO_BACKUP_INTERVAL = 24 * 60 * 60 * 1000;
+const AUTO_BACKUP_MAX_COPIES = 7;
+let _autoBackupTimer = null;
+
+function _buildBackupData() {
+  const users = loadData('zz_users', []);
+  const agents = loadData('zz_agents', []);
+  return {
+    _meta: { version: BACKUP_VERSION, appVersion: APP_VERSION, exportDate: new Date().toISOString(), type: 'auto', restaurant: RESTAURANT.name },
+    menu: MENU, settings: { ...SETTINGS }, addons: ADDONS, spicySettings: SPICY_SETTINGS,
+    offers: OFFERS, orders: ordersData, orderHistory, bookings: bookingsData,
+    users, agents, ads: loadData('zz_ads', []), vipCustomers: VIP_CUSTOMERS,
+    usedOffers, favCounts: loadData('zz_fav_counts', {}), mainGroups: MAIN_GROUPS
+  };
+}
+
+async function runAutoBackup(manual = false) {
+  if (!db || !fbConnected) { console.warn('[AutoBackup] skipped — no connection'); return false; }
+  try {
+    const data = _buildBackupData();
+    const key = 'backup_' + new Date().toISOString().replace(/[:.]/g,'-').slice(0,19);
+    const meta = { key, date: new Date().toISOString(), dateAr: new Date().toLocaleString('ar-EG'), ordersCount: ordersData.length, menuItemsCount: Object.values(MENU).reduce((s,c)=>s+(c.items||[]).length,0), manual };
+
+    // حفظ meta في Firebase
+    await db.ref('auto_backups/' + key + '/_meta').set(meta);
+
+    // حفظ محلي كـ fallback
+    const localBackups = loadData('zz_auto_backups', []);
+    localBackups.unshift({ ...meta, data });
+    if (localBackups.length > AUTO_BACKUP_MAX_COPIES) localBackups.length = AUTO_BACKUP_MAX_COPIES;
+    saveData('zz_auto_backups', localBackups);
+    saveData('zz_last_auto_backup', new Date().toISOString());
+    _updateAutoBackupUI();
+
+    // حذف النسخ القديمة من Firebase
+    db.ref('auto_backups').orderByKey().once('value', snap => {
+      if (!snap.exists()) return;
+      const keys = [];
+      snap.forEach(child => keys.push(child.key));
+      if (keys.length > AUTO_BACKUP_MAX_COPIES) {
+        keys.slice(0, keys.length - AUTO_BACKUP_MAX_COPIES).forEach(k => db.ref('auto_backups/'+k).remove().catch(()=>{}));
+      }
+    });
+
+    if (manual) showNotif('✅ تم حفظ النسخة الاحتياطية بنجاح');
+    console.log('[AutoBackup] ✅ Saved:', key);
+    return true;
+  } catch(e) {
+    console.error('[AutoBackup] Failed:', e);
+    if (manual) showNotif('❌ فشل حفظ النسخة الاحتياطية');
+    return false;
+  }
+}
+
+function toggleAutoBackup() {
+  const toggle = document.getElementById('autoBackupToggle');
+  const isOn = toggle?.classList.toggle('on');
+  saveData('zz_auto_backup_enabled', isOn);
+  if (isOn) { _startAutoBackupTimer(); runAutoBackup(false); showNotif('✅ تم تفعيل النسخ الاحتياطي التلقائي'); }
+  else { _stopAutoBackupTimer(); showNotif('⏸️ تم إيقاف النسخ الاحتياطي التلقائي'); }
+  _updateAutoBackupUI();
+}
+
+function _startAutoBackupTimer() {
+  _stopAutoBackupTimer();
+  _autoBackupTimer = setInterval(() => { if (adminRoleType === 'admin') runAutoBackup(false); }, AUTO_BACKUP_INTERVAL);
+}
+
+function _stopAutoBackupTimer() {
+  if (_autoBackupTimer) { clearInterval(_autoBackupTimer); _autoBackupTimer = null; }
+}
+
+function toggleUpsellSetting() {
+  const toggle = document.getElementById('upsellToggle');
+  const isOn = toggle?.classList.toggle('on');
+  saveData('zz_upsell_enabled', isOn);
+  showNotif(isOn ? '✅ تم تفعيل اقتراحات الأصناف' : '⏸️ تم إيقاف اقتراحات الأصناف');
+}
+
+function _initUpsellToggle() {
+  const enabled = loadData('zz_upsell_enabled', true);
+  const toggle = document.getElementById('upsellToggle');
+  if (toggle) toggle.classList.toggle('on', enabled);
+}
+
+function _updateAutoBackupUI() {
+  const enabled = loadData('zz_auto_backup_enabled', false);
+  const lastBackup = loadData('zz_last_auto_backup', null);
+  const toggle = document.getElementById('autoBackupToggle');
+  const infoDiv = document.getElementById('autoBackupInfo');
+  const listDiv = document.getElementById('autoBackupList');
+  const statusText = document.getElementById('autoBackupStatusText');
+  const lastTimeEl = document.getElementById('lastAutoBackupTime');
+
+  if (toggle) toggle.classList.toggle('on', enabled);
+  if (infoDiv) infoDiv.style.display = enabled ? 'block' : 'none';
+  if (listDiv) listDiv.style.display = enabled ? 'block' : 'none';
+  if (statusText) statusText.textContent = enabled ? 'مفعّل — كل 24 ساعة تلقائياً ✅' : 'موقوف — فعّله لحماية بياناتك';
+  if (lastTimeEl && lastBackup) lastTimeEl.textContent = 'آخر backup: ' + new Date(lastBackup).toLocaleString('ar-EG');
+
+  const itemsEl = document.getElementById('autoBackupItems');
+  if (!itemsEl) return;
+  const localBackups = loadData('zz_auto_backups', []);
+  if (!localBackups.length) {
+    itemsEl.innerHTML = '<div style="font-size:11px;color:var(--text-muted);text-align:center;padding:8px">لا توجد نسخ محفوظة بعد</div>';
+    return;
+  }
+  itemsEl.innerHTML = localBackups.map((b, i) => `
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 10px;background:var(--cream);border-radius:8px;margin-bottom:6px">
+      <div>
+        <div style="font-size:12px;font-weight:800;color:var(--dark)">${b.manual ? '💾 يدوي' : '🔄 تلقائي'} — ${new Date(b.date).toLocaleDateString('ar-EG')}</div>
+        <div style="font-size:10px;color:var(--text-muted)">${new Date(b.date).toLocaleTimeString('ar-EG',{hour:'2-digit',minute:'2-digit'})} · ${b.ordersCount||0} طلب · ${b.menuItemsCount||0} صنف</div>
+      </div>
+      <div style="display:flex;gap:6px">
+        <button onclick="downloadAutoBackup(${i})" style="padding:5px 10px;background:var(--olive-ultra);color:var(--olive-dark);border:1px solid var(--olive);border-radius:7px;font-size:11px;font-weight:700;cursor:pointer" title="تنزيل">⬇️</button>
+        <button onclick="restoreAutoBackup(${i})" style="padding:5px 10px;background:#e0f2fe;color:#0284c7;border:1px solid #7dd3fc;border-radius:7px;font-size:11px;font-weight:700;cursor:pointer" title="استعادة">↩️</button>
+      </div>
+    </div>`).join('');
+}
+
+function downloadAutoBackup(idx) {
+  const backups = loadData('zz_auto_backups', []);
+  if (!backups[idx]?.data) { showNotif('❌ البيانات غير متاحة'); return; }
+  const json = JSON.stringify(backups[idx].data, null, 2);
+  const blob = new Blob([json], {type:'application/json;charset=utf-8'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'zamzam_auto_backup_' + new Date(backups[idx].date).toISOString().slice(0,16).replace(/[T:]/g,'_') + '.json';
+  a.click(); URL.revokeObjectURL(url);
+}
+
+function restoreAutoBackup(idx) {
+  const backups = loadData('zz_auto_backups', []);
+  if (!backups[idx]?.data) { showNotif('❌ البيانات غير متاحة'); return; }
+  if (!confirm('استعادة النسخة من ' + new Date(backups[idx].date).toLocaleString('ar-EG') + '؟\nسيتم استبدال البيانات الحالية.')) return;
+  _executeImportFromData(backups[idx].data, 'replace');
+}
+
+function _executeImportFromData(data, mode) {
+  try {
+    if (!_validateBackupFile(data)) { showNotif('❌ ملف Backup غير صالح'); return; }
+    const d = _migrateBackupData(data);
+    MENU = d.menu || MENU;
+    SETTINGS = { ...SETTINGS, ...d.settings };
+    ADDONS = d.addons || ADDONS;
+    if (d.spicySettings) SPICY_SETTINGS = { ...SPICY_SETTINGS, ...d.spicySettings };
+    OFFERS = d.offers || OFFERS;
+    ordersData = d.orders || [];
+    orderHistory = d.orderHistory || [];
+    bookingsData = d.bookings || [];
+    VIP_CUSTOMERS = d.vipCustomers || {};
+    usedOffers = d.usedOffers || {};
+    if (d.mainGroups && Object.keys(d.mainGroups).length > 0) { MAIN_GROUPS = d.mainGroups; saveData('zz_main_groups', MAIN_GROUPS); }
+    syncWorkHoursWithMainGroups();
+    saveData('zz_menu', MENU); saveData('zz_settings', SETTINGS); saveData('zz_addons', ADDONS);
+    saveData('zz_offers', OFFERS); saveData('zz_orders', ordersData); saveData('zz_order_history', orderHistory);
+    saveData('zz_bookings', bookingsData); saveData('zz_vip_customers', VIP_CUSTOMERS); saveData('zz_used_offers', usedOffers);
+    if (d.agents) saveData('zz_agents', d.agents);
+    if (d.users) saveData('zz_users', d.users);
+    _fullRebuildAfterImport();
+    showNotif('✅ تم استعادة النسخة الاحتياطية بنجاح');
+  } catch(e) { showNotif('❌ فشل الاستعادة: ' + e.message); }
+}
+
+function initAutoBackup() {
+  const enabled = loadData('zz_auto_backup_enabled', false);
+  if (enabled && adminRoleType === 'admin') {
+    _startAutoBackupTimer();
+    const lastBackup = loadData('zz_last_auto_backup', null);
+    if (!lastBackup || (Date.now() - new Date(lastBackup).getTime()) > AUTO_BACKUP_INTERVAL) {
+      setTimeout(() => runAutoBackup(false), 5000);
+    }
+  }
+}
 
 async function loadRatingsFromFirebase() {
   if (!db) return;
