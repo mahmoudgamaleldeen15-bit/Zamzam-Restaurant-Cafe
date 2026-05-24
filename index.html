@@ -9243,15 +9243,20 @@ const MAIN_GROUPS_DEFAULTS = {
 
 let MAIN_GROUPS = loadData('zz_main_groups', null);
 if (!MAIN_GROUPS) {
-  MAIN_GROUPS = JSON.parse(JSON.stringify(MAIN_GROUPS_DEFAULTS));
+  // لو مفيش بيانات خالص — ابدأ بـ المطعم فقط كـ default واحد
+  MAIN_GROUPS = {
+    restaurant: { label: 'المطعم', emoji: '🍽️', order: 1, keywords: MAIN_GROUPS_DEFAULTS.restaurant.keywords }
+  };
   saveData('zz_main_groups', MAIN_GROUPS);
 } else {
-  // إضافة order لو مش موجود
+  // تأكد من وجود order بس — بدون إضافة أقسام جديدة
   let changed = false;
-  Object.entries(MAIN_GROUPS_DEFAULTS).forEach(([k, v]) => {
-    if (!MAIN_GROUPS[k]) { MAIN_GROUPS[k] = { ...v }; changed = true; }
-    else if (MAIN_GROUPS[k].order == null) { MAIN_GROUPS[k].order = v.order; changed = true; }
-    if (!MAIN_GROUPS[k].keywords) { MAIN_GROUPS[k].keywords = v.keywords || []; changed = true; }
+  Object.entries(MAIN_GROUPS).forEach(([k, v]) => {
+    if (v.order == null) { MAIN_GROUPS[k].order = Object.keys(MAIN_GROUPS).indexOf(k) + 1; changed = true; }
+    if (!MAIN_GROUPS[k].keywords) {
+      MAIN_GROUPS[k].keywords = MAIN_GROUPS_DEFAULTS[k]?.keywords || [];
+      changed = true;
+    }
   });
   if (changed) saveData('zz_main_groups', MAIN_GROUPS);
 }
@@ -9823,15 +9828,21 @@ function moveMainGroup(key, dir) {
   if (idx < 0) return;
   const newIdx = idx + dir;
   if (newIdx < 0 || newIdx >= sorted.length) return;
-  // Swap orders
-  const myOrder = MAIN_GROUPS[sorted[idx][0]].order;
+
+  // تأكد إن كل الـ orders متسلسلة قبل الـ swap
+  sorted.forEach(([k], i) => { MAIN_GROUPS[k].order = i + 1; });
+
+  // Swap
   const otherKey = sorted[newIdx][0];
-  MAIN_GROUPS[sorted[idx][0]].order = MAIN_GROUPS[otherKey].order;
+  const myOrder = MAIN_GROUPS[key].order;
+  MAIN_GROUPS[key].order = MAIN_GROUPS[otherKey].order;
   MAIN_GROUPS[otherKey].order = myOrder;
+
   saveMainGroups();
   syncWorkHoursWithMainGroups();
   renderMainGroupsManagerList();
   renderMainGroups();
+  showNotif('✓ تم تغيير الترتيب');
 }
 
 function openAddMainGroupForm() {
