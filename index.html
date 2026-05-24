@@ -1448,55 +1448,7 @@ input,select,textarea{font-family:inherit;}
       <div class="settings-row"><div class="info"><strong>تنبيهات الطلبات</strong><span>إشعارات الحالة</span></div><div class="toggle-sw on" onclick="this.classList.toggle('on')"></div></div>
     </div>
 
-    <div style="padding:12px 16px 6px;font-size:14px;font-weight:800;color:var(--text-muted)">🔔 إشعارات الجهاز (Push)</div>
-    <div class="settings-section">
-      <div class="settings-row" style="flex-wrap:wrap;gap:8px">
-        <div class="info">
-          <strong>إشعارات الطلبات الجديدة</strong>
-          <span id="pushStatusText">تصلك إشعارات حتى لو المتصفح مقفول</span>
-        </div>
-        <button onclick="activatePushNotifications()" id="pushActivateBtn"
-          style="padding:8px 16px;background:linear-gradient(135deg,#7c3aed,#5b21b6);color:#fff;border-radius:10px;font-size:12px;font-weight:800;border:none;cursor:pointer;white-space:nowrap">
-          🔔 تفعيل الإشعارات
-        </button>
-      </div>
-      <div id="pushStatusRow" style="display:none;padding:8px 14px 12px;font-size:12px;color:var(--olive-dark);background:var(--olive-ultra);border-top:1px solid var(--border)">
-        ✅ الإشعارات مفعّلة على هذا الجهاز — ستصلك طلبات جديدة فوراً حتى لو التطبيق مقفول
-      </div>
-    </div>
-
-    <div style="padding:12px 16px 6px;font-size:14px;font-weight:800;color:var(--text-muted)">💡 Upsell / اقتراحات الأصناف</div>
-    <div class="settings-section">
-      <div class="settings-row">
-        <div class="info">
-          <strong>اقتراح أصناف عند الإضافة</strong>
-          <span>يظهر للعميل أصناف مكملة عند إضافة أي صنف للسلة</span>
-        </div>
-        <div class="toggle-sw on" id="upsellToggle" onclick="toggleUpsellSetting()"></div>
-      </div>
-    </div>
-
-    <div style="padding:12px 16px 6px;font-size:14px;font-weight:800;color:var(--text-muted)">💾 النسخ الاحتياطي التلقائي</div>
-    <div class="settings-section">
-      <div class="settings-row" style="flex-wrap:wrap;gap:8px">
-        <div class="info">
-          <strong>Backup تلقائي يومي</strong>
-          <span id="autoBackupStatusText">كل 24 ساعة — يحفظ في Firebase</span>
-        </div>
-        <div class="toggle-sw" id="autoBackupToggle" onclick="toggleAutoBackup()"></div>
-      </div>
-      <div id="autoBackupInfo" style="padding:0 14px 12px;display:none">
-        <div style="font-size:11px;color:var(--text-muted);margin-bottom:8px" id="lastAutoBackupTime">آخر backup: لم يتم بعد</div>
-        <button onclick="runManualAutoBackup()" style="width:100%;padding:9px;background:var(--olive-ultra);color:var(--olive-dark);border:1.5px solid var(--olive);border-radius:9px;font-size:12px;font-weight:800;cursor:pointer">
-          💾 حفظ backup الآن
-        </button>
-      </div>
-      <!-- قائمة آخر 7 Backups -->
-      <div id="autoBackupList" style="padding:0 14px 12px;display:none">
-        <div style="font-size:11px;font-weight:800;color:var(--text-muted);margin-bottom:8px">📋 آخر النسخ الاحتياطية</div>
-        <div id="autoBackupItems"></div>
-      </div>
-    </div>
+    <div style="padding:12px 16px 6px;font-size:14px;font-weight:800;color:var(--text-muted)">اللغة</div>
     <div class="settings-section">
       <div class="settings-row"><div class="info"><strong>اللغة</strong><span>Language</span></div>
         <select class="settings-input" style="width:100px">
@@ -1728,6 +1680,14 @@ input,select,textarea{font-family:inherit;}
 
     <!-- CASHIER SHEET TAB -->
     <div id="tab-cashier" style="display:none">
+      <!-- زر إشعارات للكاشير — يظهر لو مش مفعّل -->
+      <div id="cashierPushBanner" style="display:none;margin:8px 12px 0;background:linear-gradient(135deg,#7c3aed,#5b21b6);border-radius:10px;padding:10px 14px;display:flex;align-items:center;justify-content:space-between;gap:10px">
+        <div style="font-size:12px;color:#fff;font-weight:700">🔔 فعّل الإشعارات لاستقبال الطلبات حتى لو التطبيق مقفول</div>
+        <button onclick="activatePushNotifications();document.getElementById('cashierPushBanner').style.display='none'"
+          style="padding:6px 12px;background:rgba(255,255,255,.2);color:#fff;border:1px solid rgba(255,255,255,.4);border-radius:8px;font-size:11px;font-weight:800;cursor:pointer;white-space:nowrap;flex-shrink:0">
+          تفعيل
+        </button>
+      </div>
       <div class="cashier-search-bar">
         <input type="search" id="cashierSearch" placeholder="🔍 ابحث بالاسم أو الهاتف أو كود الطلب..." oninput="filterCashierLive(this.value)" inputmode="search"/>
       </div>
@@ -1958,7 +1918,57 @@ input,select,textarea{font-family:inherit;}
 
 
     <div id="tab-settings" style="display:none">
-      <div style="padding:0 16px 8px;font-size:15px;font-weight:800;color:var(--dark)" data-admin-only>🕐 مواعيد العمل</div>
+      <!-- 🔔 إشعارات الجهاز — أدمن وكاشير فقط -->
+      <div style="padding:12px 16px 6px;font-size:14px;font-weight:800;color:var(--text-muted)">🔔 إشعارات الجهاز (Push)</div>
+      <div class="settings-section">
+        <div class="settings-row" style="flex-wrap:wrap;gap:8px">
+          <div class="info">
+            <strong>إشعارات الطلبات الجديدة</strong>
+            <span id="pushStatusText">تصلك إشعارات حتى لو المتصفح مقفول</span>
+          </div>
+          <button onclick="activatePushNotifications()" id="pushActivateBtn"
+            style="padding:8px 16px;background:linear-gradient(135deg,#7c3aed,#5b21b6);color:#fff;border-radius:10px;font-size:12px;font-weight:800;border:none;cursor:pointer;white-space:nowrap">
+            🔔 تفعيل الإشعارات
+          </button>
+        </div>
+        <div id="pushStatusRow" style="display:none;padding:8px 14px 12px;font-size:12px;color:var(--olive-dark);background:var(--olive-ultra);border-top:1px solid var(--border)">
+          ✅ الإشعارات مفعّلة على هذا الجهاز — ستصلك طلبات جديدة فوراً حتى لو التطبيق مقفول
+        </div>
+      </div>
+
+      <!-- 💡 Upsell — أدمن فقط -->
+      <div style="padding:12px 16px 6px;font-size:14px;font-weight:800;color:var(--text-muted)" data-admin-only>💡 Upsell / اقتراحات الأصناف</div>
+      <div class="settings-section" data-admin-only>
+        <div class="settings-row">
+          <div class="info">
+            <strong>اقتراح أصناف عند الإضافة</strong>
+            <span>يظهر للعميل أصناف مكملة عند إضافة أي صنف للسلة</span>
+          </div>
+          <div class="toggle-sw on" id="upsellToggle" onclick="toggleUpsellSetting()"></div>
+        </div>
+      </div>
+
+      <!-- 💾 Auto Backup — أدمن فقط -->
+      <div style="padding:12px 16px 6px;font-size:14px;font-weight:800;color:var(--text-muted)" data-admin-only>💾 النسخ الاحتياطي التلقائي</div>
+      <div class="settings-section" data-admin-only>
+        <div class="settings-row" style="flex-wrap:wrap;gap:8px">
+          <div class="info">
+            <strong>Backup تلقائي يومي</strong>
+            <span id="autoBackupStatusText">كل 24 ساعة — يحفظ في Firebase</span>
+          </div>
+          <div class="toggle-sw" id="autoBackupToggle" onclick="toggleAutoBackup()"></div>
+        </div>
+        <div id="autoBackupInfo" style="padding:0 14px 12px;display:none">
+          <div style="font-size:11px;color:var(--text-muted);margin-bottom:8px" id="lastAutoBackupTime">آخر backup: لم يتم بعد</div>
+          <button onclick="runManualAutoBackup()" style="width:100%;padding:9px;background:var(--olive-ultra);color:var(--olive-dark);border:1.5px solid var(--olive);border-radius:9px;font-size:12px;font-weight:800;cursor:pointer">
+            💾 حفظ backup الآن
+          </button>
+        </div>
+        <div id="autoBackupList" style="padding:0 14px 12px;display:none">
+          <div style="font-size:11px;font-weight:800;color:var(--text-muted);margin-bottom:8px">📋 آخر النسخ الاحتياطية</div>
+          <div id="autoBackupItems"></div>
+        </div>
+      </div>
       <div class="settings-section" data-admin-only>
         <div style="padding:12px 16px">
           <div style="font-size:12px;color:var(--text-muted);margin-bottom:10px;line-height:1.6">حدد مواعيد العمل لكل قسم رئيسي. خارج هذه الأوقات لا يتم استقبال الطلبات.</div>
@@ -2037,9 +2047,33 @@ input,select,textarea{font-family:inherit;}
           <a href="https://maps.app.goo.gl/fC55jgZLQoTpqksz6" target="_blank" style="display:block;margin-top:8px;text-align:center;color:var(--olive);font-size:13px;font-weight:700">📍 فتح في خرائط جوجل</a>
         </div>
       </div>
-      <div style="padding:0 16px 8px;font-size:15px;font-weight:800;color:var(--dark)" data-admin-only>🔐 كلمات المرور</div>
+      <div style="padding:0 16px 8px;font-size:15px;font-weight:800;color:var(--dark)" data-admin-only>🔐 الأمان وكلمات المرور</div>
       <div class="settings-section" data-admin-only>
-        <div class="settings-row"><div class="info"><strong>باسورد المدير</strong><span>Admin Password</span></div><input class="settings-input" type="password" id="newAdminPass" placeholder="تغيير الباسورد"/></div>
+        <!-- رقم OTP -->
+        <div class="settings-row" style="flex-wrap:wrap;gap:8px">
+          <div class="info">
+            <strong>📱 رقم واتساب OTP</strong>
+            <span id="otpPhoneDisplay">+201508613866</span>
+          </div>
+          <button onclick="openSecurityModal('otp_phone')" style="padding:7px 14px;background:var(--olive-ultra);color:var(--olive-dark);border:1.5px solid var(--olive);border-radius:9px;font-size:12px;font-weight:800;cursor:pointer">تغيير</button>
+        </div>
+        <!-- Emergency Code -->
+        <div class="settings-row" style="flex-wrap:wrap;gap:8px">
+          <div class="info">
+            <strong>🆘 الكود الاحتياطي</strong>
+            <span style="font-size:11px">يُستخدم لو فقدت الوصول للواتساب</span>
+          </div>
+          <button onclick="openSecurityModal('emergency_code')" style="padding:7px 14px;background:var(--olive-ultra);color:var(--olive-dark);border:1.5px solid var(--olive);border-radius:9px;font-size:12px;font-weight:800;cursor:pointer">تغيير</button>
+        </div>
+        <!-- باسورد الأدمن -->
+        <div class="settings-row" style="flex-wrap:wrap;gap:8px">
+          <div class="info">
+            <strong>🔑 باسورد المدير</strong>
+            <span>Admin Password</span>
+          </div>
+          <button onclick="openSecurityModal('admin_pass')" style="padding:7px 14px;background:linear-gradient(135deg,#dc2626,#ef4444);color:#fff;border-radius:9px;font-size:12px;font-weight:800;cursor:pointer;border:none">تغيير 🔒</button>
+        </div>
+        <!-- باسورد الكاشير -->
         <div class="settings-row"><div class="info"><strong>باسورد الكاشير 1</strong></div><input class="settings-input" type="password" id="newCashier1" placeholder="باسورد 1"/></div>
         <div class="settings-row"><div class="info"><strong>باسورد الكاشير 2</strong></div><input class="settings-input" type="password" id="newCashier2" placeholder="باسورد 2"/></div>
       </div>
@@ -2048,6 +2082,15 @@ input,select,textarea{font-family:inherit;}
         <button class="btn-primary btn-danger" onclick="doLogout()">تسجيل الخروج</button>
       </div>
     </div>
+  </div>
+</div>
+
+<!-- ===== MODAL: SECURITY OTP ===== -->
+<div class="modal-overlay" id="securityModal">
+  <div class="modal-box">
+    <button class="modal-close" onclick="closeModal('securityModal')">✕</button>
+    <h3 id="secModalTitle">🔐 تغيير آمن</h3>
+    <div id="secModalContent"></div>
   </div>
 </div>
 
@@ -4129,7 +4172,14 @@ function switchAdminTab(tab, el) {
     if (tabEl) tabEl.style.display = t === tab ? 'block' : 'none';
   });
   if (tab === 'orders') renderAdminOrders();
-  if (tab === 'cashier') renderCashierSheet();
+  if (tab === 'cashier') {
+    renderCashierSheet();
+    // إظهار بانر الإشعارات للكاشير لو مش مفعّلة
+    const banner = document.getElementById('cashierPushBanner');
+    if (banner && adminRoleType === 'cashier' && Notification.permission !== 'granted') {
+      banner.style.display = 'flex';
+    }
+  }
   if (tab === 'bookings') renderAdminBookings();
   if (tab === 'menu') { renderMenuManage(); renderCatSelects(); }
   if (tab === 'addons') { renderAddonsAdmin(); renderSpicyCatToggles(); }
@@ -5206,6 +5256,9 @@ function loadSettingsUI() {
   if (el('tablesCount')) el('tablesCount').value = SETTINGS.tablesCount || 16;
   if (el('adminPhoneSetting')) el('adminPhoneSetting').value = SETTINGS.adminPhone || SETTINGS.waNum || '';
   if (el('complaintPhoneSetting')) el('complaintPhoneSetting').value = SETTINGS.complaintPhone || '';
+  // تحديث رقم OTP
+  const otpEl = el('otpPhoneDisplay');
+  if (otpEl) otpEl.textContent = '+' + getSecOtpPhone();
   renderZonesAdmin();
   renderEwalletsAdmin();
   // ✅ تحميل WORK_HOURS من localStorage دائماً قبل الرسم
@@ -8672,6 +8725,140 @@ function _secretAdminTap() {
 
 
 
+// ============================================================
+// SECURITY SYSTEM — OTP + Emergency Code لتغيير الباسورد
+// ============================================================
+
+const SEC_DEFAULTS = { otpPhone: '201508613866', emergencyCode: 'ZZ@2024!Admin' };
+let _secAction = null;
+let _secOtpCode = null;
+let _secOtpTimer = null;
+let _secVerified = false;
+
+function getSecOtpPhone() { return loadData('zz_sec_otp_phone', SEC_DEFAULTS.otpPhone); }
+function getSecEmergencyCode() { return loadData('zz_sec_emergency_code', SEC_DEFAULTS.emergencyCode); }
+
+function openSecurityModal(action) {
+  _secAction = action; _secVerified = false; _secOtpCode = null;
+  if (_secOtpTimer) clearInterval(_secOtpTimer);
+  const titles = { admin_pass:'🔑 تغيير باسورد المدير', otp_phone:'📱 تغيير رقم OTP', emergency_code:'🆘 تغيير الكود الاحتياطي' };
+  document.getElementById('secModalTitle').textContent = titles[action] || '🔐 تغيير آمن';
+  _renderSecStep1();
+  openModal('securityModal');
+}
+
+function _renderSecStep1() {
+  const phone = getSecOtpPhone();
+  const masked = '+' + phone.slice(0,3) + '****' + phone.slice(-4);
+  document.getElementById('secModalContent').innerHTML = `
+    <div style="background:var(--olive-ultra);border-radius:10px;padding:12px 14px;margin-bottom:16px;font-size:12px;color:var(--olive-dark);line-height:1.7">🔒 لحماية حسابك، نحتاج التحقق من هويتك أولاً.</div>
+    <div style="font-size:13px;font-weight:800;color:var(--dark);margin-bottom:10px">اختر طريقة التحقق:</div>
+    <div onclick="_secSendOTP()" style="background:var(--white);border:2px solid var(--olive);border-radius:14px;padding:14px;margin-bottom:10px;cursor:pointer;display:flex;align-items:center;gap:12px">
+      <div style="font-size:28px">📱</div>
+      <div><div style="font-size:14px;font-weight:800;color:var(--dark)">OTP على واتساب</div><div style="font-size:11px;color:var(--text-muted)">سيُرسل كود على ${masked}</div></div>
+      <div style="margin-right:auto;font-size:18px">←</div>
+    </div>
+    <div onclick="_renderSecEmergency()" style="background:var(--white);border:1.5px solid var(--border);border-radius:14px;padding:14px;cursor:pointer;display:flex;align-items:center;gap:12px">
+      <div style="font-size:28px">🆘</div>
+      <div><div style="font-size:14px;font-weight:800;color:var(--dark)">الكود الاحتياطي</div><div style="font-size:11px;color:var(--text-muted)">استخدم كودك الاحتياطي السري</div></div>
+      <div style="margin-right:auto;font-size:18px">←</div>
+    </div>`;
+}
+
+function _secSendOTP() {
+  _secOtpCode = String(Math.floor(100000 + Math.random() * 900000));
+  const phone = getSecOtpPhone();
+  const msg = `🔐 *Zamzam Security*\n\nكود التحقق:\n*${_secOtpCode}*\n\n⏱️ صالح 5 دقائق\nلا تشاركه مع أحد.`;
+  window.open('https://wa.me/' + phone + '?text=' + encodeURIComponent(msg), '_blank');
+  let countdown = 300;
+  document.getElementById('secModalContent').innerHTML = `
+    <div style="text-align:center;margin-bottom:16px">
+      <div style="font-size:40px;margin-bottom:8px">📱</div>
+      <div style="font-size:14px;font-weight:800;color:var(--dark)">تم فتح واتساب</div>
+      <div style="font-size:12px;color:var(--text-muted);margin-top:4px">أدخل الكود المكوّن من 6 أرقام</div>
+    </div>
+    <input type="tel" id="secOtpInput" maxlength="6" inputmode="numeric" placeholder="xxxxxx"
+      style="width:100%;padding:14px;text-align:center;font-size:22px;font-weight:900;letter-spacing:8px;border:2px solid var(--border);border-radius:12px;outline:none;box-sizing:border-box;margin-bottom:8px"/>
+    <div style="text-align:center;font-size:11px;color:var(--text-muted);margin-bottom:14px">⏱️ ينتهي خلال: <span id="secCountdown" style="font-weight:800;color:var(--olive)">5:00</span></div>
+    <button onclick="_secVerifyOTP()" class="btn-primary">✓ تحقق من الكود</button>
+    <button onclick="_renderSecStep1()" style="width:100%;padding:10px;background:none;color:var(--text-muted);font-size:13px;border:none;cursor:pointer;margin-top:6px">← رجوع</button>`;
+  if (_secOtpTimer) clearInterval(_secOtpTimer);
+  _secOtpTimer = setInterval(() => {
+    countdown--;
+    const el = document.getElementById('secCountdown');
+    if (!el) { clearInterval(_secOtpTimer); return; }
+    const m = Math.floor(countdown/60), s = countdown%60;
+    el.textContent = m+':'+String(s).padStart(2,'0');
+    if (countdown <= 0) { clearInterval(_secOtpTimer); el.textContent='انتهى'; el.style.color='var(--red)'; _secOtpCode=null; }
+  }, 1000);
+  setTimeout(() => document.getElementById('secOtpInput')?.focus(), 300);
+}
+
+function _secVerifyOTP() {
+  const entered = document.getElementById('secOtpInput')?.value?.trim();
+  if (!_secOtpCode) { showNotif('❌ انتهت صلاحية الكود'); return; }
+  if (entered !== _secOtpCode) { document.getElementById('secOtpInput').style.border='2px solid var(--red)'; showNotif('❌ الكود غير صحيح'); return; }
+  clearInterval(_secOtpTimer); _secVerified = true; _renderSecChangeForm();
+}
+
+function _renderSecEmergency() {
+  document.getElementById('secModalContent').innerHTML = `
+    <div style="text-align:center;margin-bottom:16px"><div style="font-size:40px;margin-bottom:8px">🆘</div><div style="font-size:14px;font-weight:800;color:var(--dark)">أدخل الكود الاحتياطي</div></div>
+    <input type="password" id="secEmergencyInput" placeholder="الكود الاحتياطي السري"
+      style="width:100%;padding:13px;font-size:15px;border:2px solid var(--border);border-radius:12px;outline:none;box-sizing:border-box;margin-bottom:14px;text-align:center"/>
+    <button onclick="_secVerifyEmergency()" class="btn-primary">✓ تحقق</button>
+    <button onclick="_renderSecStep1()" style="width:100%;padding:10px;background:none;color:var(--text-muted);font-size:13px;border:none;cursor:pointer;margin-top:6px">← رجوع</button>`;
+  setTimeout(() => document.getElementById('secEmergencyInput')?.focus(), 300);
+}
+
+function _secVerifyEmergency() {
+  const entered = document.getElementById('secEmergencyInput')?.value?.trim();
+  if (entered !== getSecEmergencyCode()) { document.getElementById('secEmergencyInput').style.border='2px solid var(--red)'; showNotif('❌ الكود الاحتياطي غير صحيح'); return; }
+  _secVerified = true; _renderSecChangeForm();
+}
+
+function _renderSecChangeForm() {
+  const forms = {
+    admin_pass: `<div style="background:#d1fae5;border-radius:10px;padding:10px 14px;margin-bottom:14px;font-size:12px;color:#065f46;font-weight:700">✅ تم التحقق — أدخل الباسورد الجديد</div>
+      <div class="field"><label>باسورد المدير الجديد</label><input type="password" id="secNewVal" placeholder="••••••••" style="width:100%;padding:13px;border:1.5px solid var(--border);border-radius:12px;font-size:15px;outline:none;box-sizing:border-box"/></div>
+      <div class="field"><label>تأكيد الباسورد</label><input type="password" id="secNewVal2" placeholder="••••••••" style="width:100%;padding:13px;border:1.5px solid var(--border);border-radius:12px;font-size:15px;outline:none;box-sizing:border-box"/></div>`,
+    otp_phone: `<div style="background:#d1fae5;border-radius:10px;padding:10px 14px;margin-bottom:14px;font-size:12px;color:#065f46;font-weight:700">✅ تم التحقق — أدخل الرقم الجديد</div>
+      <div class="field"><label>رقم واتساب الجديد (بكود الدولة)</label><input type="tel" id="secNewVal" placeholder="201xxxxxxxxx" style="width:100%;padding:13px;border:1.5px solid var(--border);border-radius:12px;font-size:15px;direction:ltr;outline:none;box-sizing:border-box"/></div>`,
+    emergency_code: `<div style="background:#d1fae5;border-radius:10px;padding:10px 14px;margin-bottom:14px;font-size:12px;color:#065f46;font-weight:700">✅ تم التحقق — أدخل الكود الجديد</div>
+      <div class="field"><label>الكود الاحتياطي الجديد (8 أحرف على الأقل)</label><input type="text" id="secNewVal" placeholder="كود سري قوي" style="width:100%;padding:13px;border:1.5px solid var(--border);border-radius:12px;font-size:15px;outline:none;box-sizing:border-box"/></div>`
+  };
+  document.getElementById('secModalContent').innerHTML = (forms[_secAction]||'') +
+    `<button onclick="_secSaveChange()" class="btn-primary" style="margin-top:8px">💾 حفظ التغيير</button>`;
+}
+
+function _secSaveChange() {
+  if (!_secVerified) { showNotif('❌ غير مصرح'); return; }
+  const val = document.getElementById('secNewVal')?.value?.trim();
+  const val2 = document.getElementById('secNewVal2')?.value?.trim();
+  if (!val) { showNotif('❌ أدخل القيمة الجديدة'); return; }
+  if (_secAction === 'admin_pass') {
+    if (val.length < 6) { showNotif('❌ الباسورد قصير جداً'); return; }
+    if (val !== val2) { showNotif('❌ الباسوردان غير متطابقان'); return; }
+    saveData('zz_admin_pass', val);
+    if (db) fbUpdate('config', { adminPass: val }).catch(() => {});
+    showNotif('✅ تم تغيير باسورد المدير بنجاح');
+  } else if (_secAction === 'otp_phone') {
+    const cleaned = val.replace(/\D/g,'');
+    if (cleaned.length < 10) { showNotif('❌ الرقم غير صحيح'); return; }
+    saveData('zz_sec_otp_phone', cleaned);
+    const el = document.getElementById('otpPhoneDisplay');
+    if (el) el.textContent = '+' + cleaned;
+    showNotif('✅ تم تغيير رقم OTP بنجاح');
+  } else if (_secAction === 'emergency_code') {
+    if (val.length < 8) { showNotif('❌ الكود قصير جداً'); return; }
+    saveData('zz_sec_emergency_code', val);
+    showNotif('✅ تم تغيير الكود الاحتياطي بنجاح');
+  }
+  _secVerified = false; _secOtpCode = null;
+  closeModal('securityModal');
+}
+
+// ============================================================
 const AUTO_BACKUP_INTERVAL = 24 * 60 * 60 * 1000;
 const AUTO_BACKUP_MAX_COPIES = 7;
 let _autoBackupTimer = null;
