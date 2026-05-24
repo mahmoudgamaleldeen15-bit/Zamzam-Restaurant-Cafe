@@ -275,6 +275,9 @@ input,select,textarea{font-family:inherit;}
 /* ===== PRODUCT MODAL ===== */
 .product-modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:300;display:none;align-items:flex-end;}
 .product-modal-overlay.open{display:flex;}
+/* إخفاء Product Modal لما شاشة الأدمن active */
+#adminLogin.active ~ * .product-modal-overlay,
+#adminPanel.active ~ * .product-modal-overlay { display:none !important; }
 .product-modal{background:var(--white);width:100%;max-height:92vh;border-radius:24px 24px 0 0;overflow-y:auto;animation:slideUp .3s ease;}
 .pm-img{width:100%;height:200px;background:linear-gradient(135deg,var(--olive-pale),var(--cream));display:flex;align-items:center;justify-content:center;font-size:80px;}
 .pm-body{padding:20px;}
@@ -1207,6 +1210,9 @@ input,select,textarea{font-family:inherit;}
     <div id="upsellItems" style="display:flex;gap:10px;overflow-x:auto;padding-bottom:4px"></div>
   </div>
 </div>
+
+<!-- ===== PRODUCT MODAL ===== -->
+<div class="product-modal-overlay" id="productModal" onclick="closePM(event)">
   <div class="product-modal">
     <div class="pm-img" id="pmImg">🍕</div>
     <div class="pm-body">
@@ -2643,6 +2649,12 @@ let _pwaInstallPrompt=null;
 // INIT
 // ============================================================
 window.onload = () => {
+  // ===== إغلاق أي overlays مفتوحة عند بدء التطبيق =====
+  document.getElementById('productModal')?.classList.remove('open');
+  const upsellOverlay = document.getElementById('upsellOverlay');
+  if (upsellOverlay) upsellOverlay.style.display = 'none';
+  document.querySelectorAll('.sheet-overlay.open, .modal-overlay.open').forEach(s => s.classList.remove('open'));
+
   // Set min date for booking
   const bookDateEl = document.getElementById('bookDate');
   if (bookDateEl) bookDateEl.min = new Date().toISOString().split('T')[0];
@@ -2682,7 +2694,12 @@ window.onload = () => {
     const hash = window.location.hash.replace('#','').toLowerCase();
     const PROTECTED_ROLES = ['admin', 'cashier', 'pickup'];
     if (PROTECTED_ROLES.includes(hash)) {
-      // إظهار Admin Login فوراً بدون أي تأخير
+      // إغلاق كل حاجة فوراً
+      document.getElementById('productModal')?.classList.remove('open');
+      const upsellOverlay = document.getElementById('upsellOverlay');
+      if (upsellOverlay) upsellOverlay.style.display = 'none';
+      document.querySelectorAll('.sheet-overlay.open, .modal-overlay.open').forEach(s => s.classList.remove('open'));
+      // إظهار Admin Login فوراً
       document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
       document.getElementById('adminLogin')?.classList.add('active');
       const roleEl = document.getElementById('adminRole');
@@ -2771,20 +2788,16 @@ window.onload = () => {
 // SCREEN NAVIGATION
 // ============================================================
 function showScreen(id) {
-  // إغلاق كل الـ overlays والـ sheets قبل تغيير الشاشة
-  document.querySelectorAll('.sheet-overlay.open, .modal-overlay.open').forEach(s => s.classList.remove('open'));
-
-  // إغلاق Upsell
+  // ① إغلاق Product Modal
+  document.getElementById('productModal')?.classList.remove('open');
+  // ② إغلاق Upsell
   const upsellOverlay = document.getElementById('upsellOverlay');
   const upsellPopup = document.getElementById('upsellPopup');
   if (upsellOverlay) upsellOverlay.style.display = 'none';
   if (upsellPopup) upsellPopup.style.transform = 'translateY(100%)';
-
-  // إغلاق Product Modal
-  const pm = document.getElementById('productModal');
-  if (pm) pm.classList.remove('open');
-
-  // تغيير الشاشة
+  // ③ إغلاق كل الـ sheets والـ modals
+  document.querySelectorAll('.sheet-overlay.open, .modal-overlay.open').forEach(s => s.classList.remove('open'));
+  // ④ تغيير الشاشة
   document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
   document.getElementById(id)?.classList.add('active');
 }
