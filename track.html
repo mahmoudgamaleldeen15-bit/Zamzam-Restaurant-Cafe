@@ -97,6 +97,28 @@ body{font-family:Cairo,sans-serif;background:#f5f5f0;min-height:100vh;direction:
   <div style="font-size:13px;opacity:.9">نتمنى لك تجربة ممتعة ❤️</div>
 </div>
 
+<!-- تقييم المندوب في track.html -->
+<div id="trackRatingBox" style="display:none;background:#fff;margin:0 16px 16px;border-radius:14px;border:1.5px solid #e5e7eb;padding:18px;text-align:center;box-shadow:0 2px 10px rgba(0,0,0,.06)">
+  <div style="font-size:22px;margin-bottom:6px">🛵</div>
+  <div style="font-size:15px;font-weight:900;color:#1a1a1a;margin-bottom:4px">كيف كانت تجربتك مع المندوب؟</div>
+  <div style="font-size:12px;color:#6b7280;margin-bottom:14px">تقييمك يساعدنا على تحسين الخدمة</div>
+  <div id="trackStarsInput" style="display:flex;justify-content:center;gap:8px;margin-bottom:14px">
+    <span onclick="setTrackRating(1)" style="font-size:32px;cursor:pointer;filter:grayscale(1);transition:.2s">⭐</span>
+    <span onclick="setTrackRating(2)" style="font-size:32px;cursor:pointer;filter:grayscale(1);transition:.2s">⭐</span>
+    <span onclick="setTrackRating(3)" style="font-size:32px;cursor:pointer;filter:grayscale(1);transition:.2s">⭐</span>
+    <span onclick="setTrackRating(4)" style="font-size:32px;cursor:pointer;filter:grayscale(1);transition:.2s">⭐</span>
+    <span onclick="setTrackRating(5)" style="font-size:32px;cursor:pointer;filter:grayscale(1);transition:.2s">⭐</span>
+  </div>
+  <textarea id="trackRatingComment" placeholder="تعليق اختياري..." rows="2"
+    style="width:100%;padding:10px 12px;border:1.5px solid #e5e7eb;border-radius:10px;font-size:13px;resize:none;outline:none;margin-bottom:10px;box-sizing:border-box;font-family:inherit"></textarea>
+  <button id="trackRatingBtn" onclick="submitTrackRating()"
+    style="width:100%;padding:12px;background:linear-gradient(135deg,#4a7c2f,#6a9b4a);color:#fff;border-radius:10px;font-size:14px;font-weight:900;border:none;cursor:pointer;margin-bottom:8px">
+    إرسال التقييم ⭐
+  </button>
+  <button onclick="document.getElementById('trackRatingBox').style.display='none'"
+    style="width:100%;padding:8px;background:none;color:#9ca3af;font-size:12px;border:none;cursor:pointer">تخطي</button>
+</div>
+
 <div class="update" id="updTime" style="display:none">📍 آخر تحديث: <span id="updVal">—</span></div>
 
 <!-- Popup: المندوب خرج -->
@@ -243,13 +265,21 @@ function updateUI(order) {
     // لسه مش خرج — prevOutAt يفضل null
   }
 
-  // Delivered
+  // Delivered — إظهار تقييم المندوب
   if (st === 'delivered') {
     document.getElementById('map').style.display = 'none';
     document.getElementById('noLoc').style.display = 'none';
     document.getElementById('delivBanner').style.display = 'block';
     document.getElementById('updTime').style.display = 'none';
     if (currentAgentId) db.ref('agents_location/' + currentAgentId).off();
+    // إظهار تقييم المندوب
+    var ratingBox = document.getElementById('trackRatingBox');
+    if (ratingBox && !ratingBox.dataset.shown && agent) {
+      ratingBox.style.display = 'block';
+      ratingBox.dataset.agentId = agent.id || '';
+      ratingBox.dataset.agentName = agent.name || '';
+      ratingBox.dataset.shown = '1';
+    }
     return;
   }
 
@@ -289,6 +319,39 @@ function updateUI(order) {
 
 function closeAgentOutPopup() {
   document.getElementById('agentOutPopup').classList.remove('show');
+}
+
+var _trackRating = 0;
+function setTrackRating(stars) {
+  _trackRating = stars;
+  document.querySelectorAll('#trackStarsInput span').forEach(function(s, i) {
+    s.style.filter = i < stars ? 'none' : 'grayscale(1)';
+    s.style.transform = i < stars ? 'scale(1.15)' : 'scale(1)';
+  });
+}
+
+function submitTrackRating() {
+  if (!_trackRating) { alert('اختر عدد النجوم أولاً ⭐'); return; }
+  var box = document.getElementById('trackRatingBox');
+  var agentId = box && box.dataset.agentId;
+  var agentName = box && box.dataset.agentName || '';
+  var comment = document.getElementById('trackRatingComment').value.trim();
+  if (!agentId) return;
+
+  var rating = {
+    stars: _trackRating, comment: comment,
+    orderId: orderId, agentId: agentId, agentName: agentName,
+    ratedAt: new Date().toISOString(),
+    date: new Date().toLocaleDateString('ar-EG'),
+    source: 'track'
+  };
+
+  // حفظ في Firebase
+  db.ref('agent_ratings/' + agentId + '/' + orderId).set(rating).then(function() {
+    box.innerHTML = '<div style="text-align:center;padding:16px"><div style="font-size:36px;margin-bottom:8px">' + '⭐'.repeat(_trackRating) + '</div><div style="font-size:14px;font-weight:900;color:#16a34a">شكراً على تقييمك! 🙏</div></div>';
+  }).catch(function() {
+    box.innerHTML = '<div style="text-align:center;padding:16px;color:#16a34a;font-weight:900">✅ تم إرسال التقييم!</div>';
+  });
 }
 
 function drawMap(loc) {
