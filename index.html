@@ -7886,16 +7886,25 @@ async function fbUpdateOrderStatus(orderId, status) { await fbUpdate('orders/' +
 async function fbSaveBooking(booking) { await fbSet('bookings/' + booking.id, booking); }
 async function fbSaveMenu() {
   if (!db) { console.warn('[fbSaveMenu] db not ready'); return; }
-  if (!fbConnected) { console.warn('[fbSaveMenu] not connected to Firebase'); return; }
-  console.log('[fbSaveMenu] Saving menu to Firebase...', Object.keys(MENU).length, 'cats');
+  if (!fbConnected) { console.warn('[fbSaveMenu] not connected'); return; }
+  // تنظيف الـ undefined من MENU قبل الحفظ
+  const cleanMenu = JSON.parse(JSON.stringify(MENU, (k, v) => v === undefined ? null : v));
+  // حذف الـ null من image
+  Object.values(cleanMenu).forEach(cat => {
+    (cat.items || []).forEach(item => {
+      if (item.image === null || item.image === undefined || item.image === '') delete item.image;
+    });
+    if (cat.image === null || cat.image === undefined || cat.image === '') delete cat.image;
+  });
+  console.log('[fbSaveMenu] Saving...', Object.keys(cleanMenu).length, 'cats');
   try {
-    await db.ref('menu').set(MENU);
+    await db.ref('menu').set(cleanMenu);
     console.log('[fbSaveMenu] ✅ Saved successfully');
   } catch(e) {
     console.error('[fbSaveMenu] Failed:', e);
     await new Promise(r => setTimeout(r, 1000));
     try {
-      await db.ref('menu').set(MENU);
+      await db.ref('menu').set(cleanMenu);
       console.log('[fbSaveMenu] ✅ Saved on retry');
     } catch(e2) {
       console.error('[fbSaveMenu] Retry failed:', e2);
