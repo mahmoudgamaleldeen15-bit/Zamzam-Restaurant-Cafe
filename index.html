@@ -2951,7 +2951,9 @@ function loadVIPAutoSettingsUI() {
 let deliveryType='delivery', paymentType='cash', paymentTypeLabel='💵 كاش';
 let currentPM=null, pmQtyVal=1, pmSelectedSize=null, pmSelectedExtras=new Set(), pmSpicy='normal';
 let gpsCoords=null, lastOrderActive=false, currentFilter='all', searchQuery='';
-let adminRoleType=null, currentOrderNum=null, _cashierViewedCurrentOrder=false;
+let adminRoleType=null, _cashierViewedCurrentOrder=false;
+// currentOrderNum — بيتحفظ في localStorage عشان يتستعاد لو التطبيق اتقفل
+let currentOrderNum = loadData('zz_current_order_num', null);
 let appliedDiscount=0, appliedCouponId=null;
 let priceTypeMode='single';
 let selectedTableNum=null;
@@ -3165,12 +3167,57 @@ function openScreen(id) {
         </div>`;
       }
     } else {
-      // يوجد طلب نشط — نحمّل حالته من Firebase
-      if (db && currentOrderNum) {
+      // يوجد رقم طلب محفوظ — حمّل حالته من Firebase أو local
+      const localOrder = ordersData.find(o => o.id === currentOrderNum);
+      if (localOrder) {
+        // لو الطلب انتهى — امسح currentOrderNum
+        if (localOrder.status === 'delivered' || localOrder.status === 'cancelled') {
+          currentOrderNum = null;
+          saveData('zz_current_order_num', null);
+          if (orderCard) {
+            orderCard.innerHTML = `<div class="track-no-order-state">
+              <div class="track-no-order-icon">✅</div>
+              <div class="track-no-order-title">${localOrder.status === 'delivered' ? 'تم تسليم طلبك بنجاح! 🎉' : 'تم إلغاء الطلب'}</div>
+              <div class="track-no-order-sub">يمكنك تقديم طلب جديد في أي وقت.</div>
+              <button onclick="openSheet('cartSheet')" style="margin-top:20px;padding:12px 24px;background:linear-gradient(135deg,var(--olive),var(--olive-light));color:#fff;border-radius:12px;font-size:14px;font-weight:800;border:none;cursor:pointer">🛒 اطلب الآن</button>
+            </div>`;
+          }
+        } else {
+          updateTrackingStatus(localOrder.status, localOrder.outAt);
+        }
+      } else if (db) {
+        // مش موجود locally — جرّب Firebase
         db.ref('orders/' + currentOrderNum).get().then(snap => {
           if (snap.exists()) {
             const ord = snap.val();
-            if (ord) updateTrackingStatus(ord.status);
+            if (ord) {
+              if (ord.status === 'delivered' || ord.status === 'cancelled') {
+                currentOrderNum = null;
+                saveData('zz_current_order_num', null);
+                if (orderCard) {
+                  orderCard.innerHTML = `<div class="track-no-order-state">
+                    <div class="track-no-order-icon">${ord.status === 'delivered' ? '✅' : '❌'}</div>
+                    <div class="track-no-order-title">${ord.status === 'delivered' ? 'تم تسليم طلبك بنجاح! 🎉' : 'تم إلغاء الطلب'}</div>
+                    <div class="track-no-order-sub">يمكنك تقديم طلب جديد في أي وقت.</div>
+                    <button onclick="openSheet('cartSheet')" style="margin-top:20px;padding:12px 24px;background:linear-gradient(135deg,var(--olive),var(--olive-light));color:#fff;border-radius:12px;font-size:14px;font-weight:800;border:none;cursor:pointer">🛒 اطلب الآن</button>
+                  </div>`;
+                }
+              } else {
+                updateTrackingStatus(ord.status, ord.outAt);
+              }
+            }
+          } else {
+            // الطلب مش موجود في Firebase — امسح الرقم المحفوظ
+            currentOrderNum = null;
+            saveData('zz_current_order_num', null);
+            if (orderCard) {
+              orderCard.innerHTML = `<div class="track-no-order-state">
+                <div class="track-no-order-icon">📋</div>
+                <div class="track-no-order-title">لا يوجد طلب نشط حالياً 🕘</div>
+                <div class="track-no-order-sub">عند تأكيد طلبك سيبدأ عرض مراحل التتبع هنا مباشرة.</div>
+                <button onclick="openSheet('cartSheet')" style="margin-top:20px;padding:12px 24px;background:linear-gradient(135deg,var(--olive),var(--olive-light));color:#fff;border-radius:12px;font-size:14px;font-weight:800;border:none;cursor:pointer">🛒 اطلب الآن</button>
+              </div>`;
+            }
           }
         }).catch(()=>{});
       }
@@ -4114,6 +4161,7 @@ function placeOrder() {
   }
   const orderNum = 'ZZ-' + String(Date.now()).slice(-6);
   currentOrderNum = orderNum;
+  saveData('zz_current_order_num', orderNum); // 💾 حفظ فوري عشان يتستعاد لو التطبيق اتقفل
   _cashierViewedCurrentOrder = false; // يُعاد تعيينه عند فتح الكاشير للطلب فعلياً
   const subtotal = cartSubtotal();
   const autoDisc = calcAutoDiscount();
@@ -4299,6 +4347,13 @@ function updateTrackingStatus(status, outAt) {
     if (t3) t3.textContent = 'الطلب جاهز ✓';
     if (t4) t4.textContent = 'خرج للتوصيل ✓';
     if (t5) t5.textContent = 'تم التسليم 🎉';
+    // مسح الطلب من localStorage بعد 5 دقائق عشان التتبع يظهر صح لو فتح التطبيق بعدين
+    setTimeout(() => {
+      if (currentOrderNum) {
+        currentOrderNum = null;
+        saveData('zz_current_order_num', null);
+      }
+    }, 5 * 60 * 1000);
   }
 }
 
@@ -7320,6 +7375,7 @@ function cancelOrderFromReview() {
   saveData('zz_order_history', orderHistory);
   // No need to fbRemove since we never sent it
   currentOrderNum = null;
+  saveData('zz_current_order_num', null);
   closeOrderReview();
   openScreen('app');
   showNotif('✓ تم إلغاء الطلب بنجاح');
@@ -7337,6 +7393,7 @@ function editOrderFromReview() {
   saveData('zz_orders', ordersData);
   saveData('zz_order_history', orderHistory);
   currentOrderNum = null;
+  saveData('zz_current_order_num', null);
   _pendingOrderForReview = null;
   updateCartUI();
   openScreen('app');
