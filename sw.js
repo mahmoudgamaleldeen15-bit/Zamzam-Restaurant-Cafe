@@ -3,7 +3,7 @@
 // Firebase Cloud Messaging + Offline Cache + Background Sync
 // ============================================================
 
-const CACHE_NAME = 'zamzam-cache-v1';
+const CACHE_NAME = 'zamzam-cache-v2';
 const FIREBASE_CONFIG = {
   apiKey: "AIzaSyB1x64GzJFU2yRll59RoGN6yzOBg7WeRS4",
   authDomain: "zamzam-restaurant-cafe.firebaseapp.com",
