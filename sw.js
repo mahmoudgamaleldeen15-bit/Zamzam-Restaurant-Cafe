@@ -1,22 +1,66 @@
 // ============================================================
-// ZAMZAM RESTAURANT — Service Worker v1.0
+// ZAMZAM RESTAURANT — Service Worker v2.0
 // Firebase Cloud Messaging + Offline Cache + Background Sync
 // ============================================================
 
 const CACHE_NAME = 'zamzam-cache-v2';
-const FIREBASE_CONFIG = {
-  apiKey: "AIzaSyB1x64GzJFU2yRll59RoGN6yzOBg7WeRS4",
-  authDomain: "zamzam-restaurant-cafe.firebaseapp.com",
-  databaseURL: "https://zamzam-restaurant-cafe-default-rtdb.firebaseio.com",
-  projectId: "zamzam-restaurant-cafe",
-  storageBucket: "zamzam-restaurant-cafe.appspot.com",
-  messagingSenderId: "669077377507",
-  appId: "1:669077377507:web:d308d8bdc3047b719bd0d6"
-};
+
+// ====== Firebase Messaging Background Support ======
+// لازم نستورد Firebase SDK عشان الـ background push يشتغل
+try {
+  importScripts('https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js');
+  importScripts('https://www.gstatic.com/firebasejs/10.12.0/firebase-messaging-compat.js');
+
+  const FIREBASE_CONFIG = {
+    apiKey: "AIzaSyB1x64GzJFU2yRll59RoGN6yzOBg7WeRS4",
+    authDomain: "zamzam-restaurant-cafe.firebaseapp.com",
+    databaseURL: "https://zamzam-restaurant-cafe-default-rtdb.firebaseio.com",
+    projectId: "zamzam-restaurant-cafe",
+    storageBucket: "zamzam-restaurant-cafe.appspot.com",
+    messagingSenderId: "669077377507",
+    appId: "1:669077377507:web:d308d8bdc3047b719bd0d6"
+  };
+
+  firebase.initializeApp(FIREBASE_CONFIG);
+  const messaging = firebase.messaging();
+
+  // ====== استقبال Push لما التطبيق مقفول (Background / Closed) ======
+  messaging.onBackgroundMessage(payload => {
+    console.log('[SW] Background FCM message:', payload);
+    const { title, body } = payload.notification || {};
+    const data = payload.data || {};
+
+    const notifTitle = title || '🔔 زمزم — إشعار جديد';
+    const notifBody  = body  || '';
+    const icon = 'https://res.cloudinary.com/dk3xw0x5v/image/upload/v1778698476/Gemini_Generated_Image_1%D8%BA%D8%BAix4ur1ix4ur1ix4_x2fzvd_zgujcf.png';
+    const tag  = data.tag || 'zamzam-bg-' + Date.now();
+    const url  = data.url || data.click_action || '/';
+
+    return self.registration.showNotification(notifTitle, {
+      body:              notifBody,
+      icon,
+      badge:             icon,
+      tag,
+      requireInteraction: true,
+      vibrate:           [400, 100, 400, 100, 600],
+      data:              { url, orderId: data.orderId, type: data.type, ...data },
+      actions: data.type === 'new_order' ? [
+        { action: 'open',    title: '📋 فتح الطلب' },
+        { action: 'dismiss', title: '✕ إغلاق'      }
+      ] : [
+        { action: 'open', title: '📋 فتح التطبيق' }
+      ]
+    });
+  });
+
+  console.log('[SW] ✅ Firebase Messaging background handler registered');
+} catch(e) {
+  console.warn('[SW] Firebase Messaging not available — using fallback push handler:', e.message);
+}
 
 // ====== INSTALL — Cache الأصول الأساسية ======
 self.addEventListener('install', e => {
-  console.log('[SW] Installing...');
+  console.log('[SW] Installing v2...');
   e.waitUntil(
     caches.open(CACHE_NAME).then(cache => {
       return cache.addAll([
