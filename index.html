@@ -2106,7 +2106,7 @@ input,select,textarea{font-family:inherit;}
     <button class="modal-close" onclick="closeModal('salesReportModal')">✕</button>
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:8px">
       <h3 style="margin:0">📊 تقرير المبيعات</h3>
-      <button onclick="exportSalesReport()" style="padding:7px 12px;background:var(--olive);color:#fff;border-radius:10px;font-size:12px;font-weight:800">⬇️ CSV</button>
+      <button onclick="exportCustomersCSV()" style="padding:7px 12px;background:var(--olive);color:#fff;border-radius:10px;font-size:12px;font-weight:800">⬇️ CSV</button>
     </div>
     <!-- Report Tabs -->
     <div style="display:flex;background:var(--border);border-radius:10px;padding:3px;margin-bottom:12px">
@@ -5884,10 +5884,14 @@ function buildCustomerStats(period) {
   const map = {};
   orders.forEach(o => {
     const key = o.phone || o.name;
-    if (!map[key]) map[key] = { name: o.name, phone: o.phone || '—', count: 0, total: 0, lastOrder: 0 };
+    if (!map[key]) map[key] = { name: o.name, phone: o.phone || '—', count: 0, total: 0, lastOrder: 0, lastOrderDate: '—' };
     map[key].count++;
     map[key].total += o.total || 0;
-    if ((o.timestamp || 0) > map[key].lastOrder) map[key].lastOrder = o.timestamp || 0;
+    const ts = o.timestamp || 0;
+    if (ts > map[key].lastOrder) {
+      map[key].lastOrder = ts;
+      map[key].lastOrderDate = o.date || (ts ? new Date(ts).toLocaleDateString('ar-EG') : '—');
+    }
   });
   return Object.values(map);
 }
@@ -6022,8 +6026,44 @@ function getVIPDiscount() {
   return Math.round(cartSubtotal() * vip.discount / 100);
 }
 
+function exportCustomersCSV() {
+  const period = document.getElementById('custReportPeriod')?.value || 'all';
+  const sort = document.getElementById('custReportSort')?.value || 'total';
+  let customers = buildCustomerStats(period);
+  if (!customers.length) { showNotif('❌ لا توجد بيانات للتصدير'); return; }
+
+  customers.sort((a,b) => sort === 'count' ? b.count - a.count : sort === 'avg' ? (b.total/b.count) - (a.total/a.count) : b.total - a.total);
+
+  const rows = [['#','الاسم','الهاتف','إجمالي الطلبات','إجمالي المشتريات (ج.م)','متوسط الطلب','آخر طلب','VIP','خصم VIP']];
+  customers.forEach((c, i) => {
+    const isVip = !!VIP_CUSTOMERS[c.phone];
+    const vipDiscount = isVip ? (VIP_CUSTOMERS[c.phone]?.discount || 0) + '%' : '—';
+    const avg = c.count ? Math.round(c.total / c.count) : 0;
+    rows.push([
+      i + 1,
+      c.name || '—',
+      c.phone || '—',
+      c.count,
+      c.total,
+      avg,
+      c.lastOrderDate || '—',
+      isVip ? 'VIP ⭐' : '—',
+      vipDiscount
+    ]);
+  });
+
+  const csv = rows.map(r => r.map(v => `"${String(v).replace(/"/g,'""')}"`).join(',')).join('\n');
+  const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `zamzam_customers_${new Date().toISOString().slice(0,10)}.csv`;
+  a.click();
+  URL.revokeObjectURL(url);
+  showNotif(`✓ تم تصدير ${customers.length} عميل`);
+}
+
 function exportSalesReport() {
-  const period = document.getElementById('reportPeriod')?.value || 'today';
   const statusFilter = document.getElementById('reportStatus')?.value || 'delivered';
   let orders = filterOrdersByPeriod(period);
   if (statusFilter === 'delivered') orders = orders.filter(o => o.status === 'delivered');
