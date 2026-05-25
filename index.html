@@ -5010,15 +5010,17 @@ async function saveItem() {
   closeModal('addItemModal');
   renderMenuManage();
   renderMenu();
-  showNotif('✅ تم إضافة الصنف بنجاح');
-  // Then save to Firebase in background
+
+  // Save to Firebase — مع إظهار حالة الحفظ
   _menuWriteLock = true;
   try {
     await fbSaveMenu();
+    showNotif('✅ تم حفظ الصنف في Firebase بنجاح');
   } catch(e) {
+    console.error('fbSaveMenu failed:', e);
     showNotif('⚠️ تم الحفظ محلياً — تحقق من الاتصال بالإنترنت');
   } finally {
-    setTimeout(() => { _menuWriteLock = false; }, 3000);
+    setTimeout(() => { _menuWriteLock = false; }, 2000);
     if (saveBtn) { saveBtn.textContent = '💾 حفظ الصنف'; saveBtn.disabled = false; }
   }
 }
@@ -5057,17 +5059,21 @@ function saveCategory() {
   const delivMode = document.getElementById('catDeliveryToggle')?.classList.contains('on') ? 'delivery' : 'pickup_only';
   const key = 'cat_' + Date.now();
   MENU[key] = { label: emoji + ' ' + name, emoji, image: catImageData||undefined, allowAddons, mainGroup, deliveryMode: delivMode, items: [] };
-  // حفظ فوري مع تحديث الواجهة مباشرة
   saveData('zz_menu', MENU);
   renderCatSelects();
   renderMenuManage();
   renderMenu();
   renderMainGroups();
-  // حفظ Firebase بشكل منفصل
-  _menuWriteLock = true;
-  fbSaveMenu().finally(() => { setTimeout(() => { _menuWriteLock = false; }, 2000); });
   closeModal('addCatModal');
-  showNotif('✓ تم إضافة القسم');
+  // حفظ Firebase مع تأكيد
+  _menuWriteLock = true;
+  fbSaveMenu().then(() => {
+    showNotif('✅ تم إضافة القسم وحفظه في Firebase');
+  }).catch(() => {
+    showNotif('⚠️ تم الحفظ محلياً — تحقق من الاتصال');
+  }).finally(() => {
+    setTimeout(() => { _menuWriteLock = false; }, 2000);
+  });
 }
 
 // ============================================================
