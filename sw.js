@@ -1,78 +1,22 @@
 // ============================================================
 // ZAMZAM RESTAURANT — Service Worker v2.0
-// Firebase Cloud Messaging + Offline Cache + Background Sync
+// Offline Cache + Push Notifications
 // ============================================================
 
 const CACHE_NAME = 'zamzam-cache-v2';
 
-// ====== Firebase Messaging Background Support ======
-// لازم نستورد Firebase SDK عشان الـ background push يشتغل
-try {
-  importScripts('https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js');
-  importScripts('https://www.gstatic.com/firebasejs/10.12.0/firebase-messaging-compat.js');
-
-  const FIREBASE_CONFIG = {
-    apiKey: "AIzaSyB1x64GzJFU2yRll59RoGN6yzOBg7WeRS4",
-    authDomain: "zamzam-restaurant-cafe.firebaseapp.com",
-    databaseURL: "https://zamzam-restaurant-cafe-default-rtdb.firebaseio.com",
-    projectId: "zamzam-restaurant-cafe",
-    storageBucket: "zamzam-restaurant-cafe.appspot.com",
-    messagingSenderId: "669077377507",
-    appId: "1:669077377507:web:d308d8bdc3047b719bd0d6"
-  };
-
-  firebase.initializeApp(FIREBASE_CONFIG);
-  const messaging = firebase.messaging();
-
-  // ====== استقبال Push لما التطبيق مقفول (Background / Closed) ======
-  messaging.onBackgroundMessage(payload => {
-    console.log('[SW] Background FCM message:', payload);
-    const { title, body } = payload.notification || {};
-    const data = payload.data || {};
-
-    const notifTitle = title || '🔔 زمزم — إشعار جديد';
-    const notifBody  = body  || '';
-    const icon = 'https://res.cloudinary.com/dk3xw0x5v/image/upload/v1778698476/Gemini_Generated_Image_1%D8%BA%D8%BAix4ur1ix4ur1ix4_x2fzvd_zgujcf.png';
-    const tag  = data.tag || 'zamzam-bg-' + Date.now();
-    const url  = data.url || data.click_action || '/';
-
-    return self.registration.showNotification(notifTitle, {
-      body:              notifBody,
-      icon,
-      badge:             icon,
-      tag,
-      requireInteraction: true,
-      vibrate:           [400, 100, 400, 100, 600],
-      data:              { url, orderId: data.orderId, type: data.type, ...data },
-      actions: data.type === 'new_order' ? [
-        { action: 'open',    title: '📋 فتح الطلب' },
-        { action: 'dismiss', title: '✕ إغلاق'      }
-      ] : [
-        { action: 'open', title: '📋 فتح التطبيق' }
-      ]
-    });
-  });
-
-  console.log('[SW] ✅ Firebase Messaging background handler registered');
-} catch(e) {
-  console.warn('[SW] Firebase Messaging not available — using fallback push handler:', e.message);
-}
-
-// ====== INSTALL — Cache الأصول الأساسية ======
+// ====== INSTALL ======
 self.addEventListener('install', e => {
   console.log('[SW] Installing v2...');
   e.waitUntil(
     caches.open(CACHE_NAME).then(cache => {
-      return cache.addAll([
-        '/',
-        '/index.html'
-      ]).catch(() => {}); // تجاهل لو بعض الملفات مش موجودة
+      return cache.addAll(['/', '/index.html']).catch(() => {});
     })
   );
   self.skipWaiting();
 });
 
-// ====== ACTIVATE — حذف الـ Cache القديم ======
+// ====== ACTIVATE ======
 self.addEventListener('activate', e => {
   console.log('[SW] Activating...');
   e.waitUntil(
@@ -83,9 +27,8 @@ self.addEventListener('activate', e => {
   self.clients.claim();
 });
 
-// ====== FETCH — Offline Support (Network First) ======
+// ====== FETCH — Offline Support ======
 self.addEventListener('fetch', e => {
-  // تجاهل Firebase requests والـ APIs
   if (
     e.request.url.includes('firebaseio.com') ||
     e.request.url.includes('googleapis.com') ||
@@ -97,7 +40,6 @@ self.addEventListener('fetch', e => {
   e.respondWith(
     fetch(e.request)
       .then(res => {
-        // Cache نسخة من الـ HTML الرئيسية
         if (e.request.mode === 'navigate' || e.request.url.endsWith('.html')) {
           const clone = res.clone();
           caches.open(CACHE_NAME).then(cache => cache.put(e.request, clone));
@@ -105,10 +47,8 @@ self.addEventListener('fetch', e => {
         return res;
       })
       .catch(() => {
-        // Offline: رجّع من الـ Cache
         return caches.match(e.request).then(cached => {
           if (cached) return cached;
-          // لو navigation request وملوقتوش → رجّع الـ index
           if (e.request.mode === 'navigate') {
             return caches.match('/') || caches.match('/index.html');
           }
@@ -117,31 +57,27 @@ self.addEventListener('fetch', e => {
   );
 });
 
-// ====== PUSH — إشعارات من Firebase Cloud Messaging ======
+// ====== PUSH — إشعارات ======
 self.addEventListener('push', e => {
-  console.log('[SW] Push received:', e.data?.text());
+  console.log('[SW] Push received');
   let data = {};
   try { data = e.data?.json() || {}; } catch { data = { title: '🔔 إشعار جديد', body: e.data?.text() || '' }; }
 
-  const title = data.title || data.notification?.title || '🔔 زمزم — إشعار جديد';
+  const title = data.title || data.notification?.title || '🔔 زمزم';
   const body  = data.body  || data.notification?.body  || '';
-  const icon  = data.icon  || 'https://res.cloudinary.com/dk3xw0x5v/image/upload/v1778698476/Gemini_Generated_Image_1%D8%BA%D8%BAix4ur1ix4ur1ix4_x2fzvd_zgujcf.png';
-  const badge = icon;
+  const icon  = 'https://res.cloudinary.com/dk3xw0x5v/image/upload/v1778698476/Gemini_Generated_Image_1%D8%BA%D8%BAix4ur1ix4ur1ix4_x2fzvd_zgujcf.png';
   const tag   = data.tag || 'zamzam-push-' + Date.now();
-  const url   = data.url || data.click_action || '/';
+  const url   = data.url || '/';
 
   e.waitUntil(
     self.registration.showNotification(title, {
-      body,
-      icon,
-      badge,
-      tag,
+      body, icon, badge: icon, tag,
       requireInteraction: true,
       vibrate: [400, 100, 400, 100, 600],
       data: { url, orderId: data.orderId, type: data.type },
       actions: data.type === 'new_order' ? [
         { action: 'open',    title: '📋 فتح الطلب' },
-        { action: 'dismiss', title: '✕ إغلاق'      }
+        { action: 'dismiss', title: '✕ إغلاق' }
       ] : [
         { action: 'open', title: '📋 فتح التطبيق' }
       ]
@@ -149,17 +85,13 @@ self.addEventListener('push', e => {
   );
 });
 
-// ====== NOTIFICATION CLICK — فتح التطبيق عند الضغط ======
+// ====== NOTIFICATION CLICK ======
 self.addEventListener('notificationclick', e => {
   e.notification.close();
   const { url, orderId, type } = e.notification.data || {};
-  const targetUrl = url || '/';
-
   if (e.action === 'dismiss') return;
-
   e.waitUntil(
     clients.matchAll({ type: 'window', includeUncontrolled: true }).then(clientList => {
-      // لو التطبيق مفتوح بالفعل — بعت رسالة ليه
       for (const client of clientList) {
         if (client.url.includes(self.location.origin)) {
           client.focus();
@@ -167,17 +99,14 @@ self.addEventListener('notificationclick', e => {
           return;
         }
       }
-      // لو مش مفتوح — افتحه
-      return clients.openWindow(targetUrl + (orderId ? '#order-' + orderId : ''));
+      return clients.openWindow(url || '/');
     })
   );
 });
 
-// ====== MESSAGE — استقبال رسائل من الـ App ======
+// ====== MESSAGE ======
 self.addEventListener('message', e => {
   if (e.data?.type === 'SKIP_WAITING') self.skipWaiting();
-
-  // إرسال Push notification داخلي (من نفس الجهاز)
   if (e.data?.type === 'SHOW_NOTIFICATION') {
     const { title, body, icon, tag, data: notifData } = e.data.payload || {};
     self.registration.showNotification(title || '🔔 زمزم', {
@@ -191,4 +120,4 @@ self.addEventListener('message', e => {
   }
 });
 
-console.log('[SW] Zamzam Service Worker loaded ✅');
+console.log('[SW] Zamzam Service Worker v2 loaded ✅');
