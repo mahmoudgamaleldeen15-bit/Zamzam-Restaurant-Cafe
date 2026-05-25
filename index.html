@@ -7601,27 +7601,14 @@ function setupFirebaseListeners() {
     if (_menuWriteLock) return;
     if (snap.exists() && fbConnected) {
       const incoming = snap.val();
-      // Firebase دايماً يـ override الـ Default
-      // بس لو الأدمن حفظ بيانات محلية أحدث — نحترمها
-      const localIsDefault = !loadData('zz_menu_from_firebase', false);
-      let shouldUpdate = true;
-      if (!localIsDefault && incoming && MENU) {
-        const incomingCatCount = Object.keys(incoming).length;
-        const localCatCount = Object.keys(MENU).length;
-        const incomingCount = Object.values(incoming).reduce((s,c)=>s+((c.items||[]).length),0);
-        const localCount = Object.values(MENU).reduce((s,c)=>s+((c.items||[]).length),0);
-        if (localCatCount > incomingCatCount && localCount >= incomingCount) shouldUpdate = false;
-        if (localCount > incomingCount && localCatCount >= incomingCatCount) shouldUpdate = false;
-      }
-      if (shouldUpdate) {
-        MENU = incoming;
-        saveData('zz_menu', MENU);
-        saveData('zz_menu_from_firebase', true); // علّم إن البيانات جاية من Firebase
-        if (document.getElementById('app')?.classList.contains('active')) renderMenu();
-        if (document.getElementById('adminPanel')?.classList.contains('active')) {
-          renderMenuManage();
-          renderCatSelects();
-        }
+      // Firebase دايماً هو المرجع الصح — بدون أي مقارنة
+      MENU = incoming;
+      saveData('zz_menu', MENU);
+      saveData('zz_menu_from_firebase', true);
+      if (document.getElementById('app')?.classList.contains('active')) renderMenu();
+      if (document.getElementById('adminPanel')?.classList.contains('active')) {
+        renderMenuManage();
+        renderCatSelects();
       }
     }
   });
@@ -9952,22 +9939,33 @@ function saveMainGroupForm() {
 function deleteMainGroup(key) {
   const g = MAIN_GROUPS[key];
   if (!g) return;
+
   // فحص هل في أقسام فرعية مرتبطة
   const linked = Object.keys(MENU).filter(cat => {
     if (MENU[cat]?.mainGroup === key) return true;
     return getCatMainGroup(cat, MENU[cat]?.label||'') === key;
   });
-  const warn = linked.length > 0 ? `\n\n⚠️ يوجد ${linked.length} قسم فرعي مرتبط به — ستظهر بدون قسم رئيسي.` : '';
+
+  const warn = linked.length > 0
+    ? `\n\n⚠️ يوجد ${linked.length} قسم فرعي مرتبط به.\nالأصناف لن تُحذف — ستظهر تحت "الكل" فقط.`
+    : '';
+
   if (!confirm(`حذف القسم الرئيسي "${g.emoji} ${g.label}"؟${warn}`)) return;
+
+  // مسح القسم الرئيسي فقط — بدون مس الأصناف أو MENU
   delete MAIN_GROUPS[key];
   if (WORK_HOURS[key]) { delete WORK_HOURS[key]; saveData('zz_work_hours', WORK_HOURS); }
   if (currentMainGroup === key) currentMainGroup = null;
+
+  // حفظ في Firebase — القسم الرئيسي فقط
   saveMainGroups();
+
+  // تحديث الواجهة بدون إعادة تحميل المنيو من Firebase
   renderMainGroupsManagerList();
   renderMainGroups();
   renderCategories();
   renderWorkHoursAdmin();
-  showNotif('✓ تم حذف القسم الرئيسي');
+  showNotif('✓ تم حذف القسم الرئيسي — الأصناف محفوظة');
 }
 
 // مزامنة WORK_HOURS مع MAIN_GROUPS — أضف أي مجموعة جديدة لم تكن موجودة
