@@ -7885,14 +7885,21 @@ async function fbSaveOrder(order) {
 async function fbUpdateOrderStatus(orderId, status) { await fbUpdate('orders/' + orderId, { status }); }
 async function fbSaveBooking(booking) { await fbSet('bookings/' + booking.id, booking); }
 async function fbSaveMenu() {
-  if (!db) return;
+  if (!db) { console.warn('[fbSaveMenu] db not ready'); return; }
+  if (!fbConnected) { console.warn('[fbSaveMenu] not connected to Firebase'); return; }
+  console.log('[fbSaveMenu] Saving menu to Firebase...', Object.keys(MENU).length, 'cats');
   try {
-    await fbSet('menu', MENU);
+    await db.ref('menu').set(MENU);
+    console.log('[fbSaveMenu] ✅ Saved successfully');
   } catch(e) {
-    // Retry once after 1 second
-    console.warn('fbSaveMenu retry:', e);
+    console.error('[fbSaveMenu] Failed:', e);
     await new Promise(r => setTimeout(r, 1000));
-    try { await fbSet('menu', MENU); } catch(e2) { console.error('fbSaveMenu failed:', e2); }
+    try {
+      await db.ref('menu').set(MENU);
+      console.log('[fbSaveMenu] ✅ Saved on retry');
+    } catch(e2) {
+      console.error('[fbSaveMenu] Retry failed:', e2);
+    }
   }
 }
 async function fbSaveSettings() { await fbSet('settings', SETTINGS); }
