@@ -2138,23 +2138,62 @@ input,select,textarea{font-family:inherit;}
           <label>تفعيل VIP التلقائي</label>
           <div class="toggle-sw" id="vipAutoEnabled" onclick="this.classList.toggle('on')"></div>
         </div>
+
+        <!-- شروط الحصول على VIP -->
+        <div style="font-size:11px;font-weight:800;color:#92400e;margin:10px 0 6px">🏆 شروط الحصول على VIP</div>
         <div class="vip-limit-row">
           <label>🛒 عدد الطلبات للترقية</label>
-          <input type="number" class="vip-limit-input" id="vipOrdersLimit" value="20" min="1" placeholder="20"/>
+          <input type="number" class="vip-limit-input" id="vipOrdersLimit" value="5" min="1" placeholder="5"/>
         </div>
         <div class="vip-limit-row">
-          <label>💰 إجمالى المشتريات (ج.م)</label>
+          <label>⏱️ خلال كام يوم؟</label>
+          <input type="number" class="vip-limit-input" id="vipPeriodDays" value="30" min="1" placeholder="30"/>
+        </div>
+        <div class="vip-limit-row">
+          <label>💰 أو إجمالى مشتريات (ج.م)</label>
           <input type="number" class="vip-limit-input" id="vipAmountLimit" value="10000" min="1" placeholder="10000"/>
         </div>
         <div class="vip-limit-row">
           <label>🏷️ نسبة الخصم الافتراضية (%)</label>
           <input type="number" class="vip-limit-input" id="vipDefaultDiscount" value="10" min="1" max="100" placeholder="10"/>
         </div>
+
+        <!-- قواعد التجديد والسحب -->
+        <div style="font-size:11px;font-weight:800;color:#92400e;margin:10px 0 6px">🔄 قواعد التجديد والسحب</div>
+        <div class="vip-limit-row">
+          <label>📅 تجديد VIP كل (يوم)</label>
+          <input type="number" class="vip-limit-input" id="vipRenewalDays" value="30" min="1" placeholder="30"/>
+        </div>
+        <div class="vip-limit-row">
+          <label>🛒 أقل طلبات للحفاظ على VIP</label>
+          <input type="number" class="vip-limit-input" id="vipWithdrawOrders" value="3" min="1" placeholder="3"/>
+        </div>
+        <div class="vip-limit-row">
+          <label>⚠️ تحذير قبل السحب بـ (يوم)</label>
+          <input type="number" class="vip-limit-input" id="vipWarningDays" value="7" min="1" placeholder="7"/>
+        </div>
+        <div class="vip-limit-row">
+          <label>❌ سحب VIP تلقائي</label>
+          <div class="toggle-sw on" id="vipAutoWithdraw" onclick="this.classList.toggle('on')"></div>
+        </div>
+
+        <div class="vip-limit-row">
+          <label>❌ سحب VIP بالمشتريات بعد (شهر) بدون طلب</label>
+          <input type="number" class="vip-limit-input" id="vipAmountInactivityMonths" value="12" min="1" placeholder="12"/>
+        </div>
+        <div class="vip-limit-row">
+          <label>⚠️ تحذير عميل المشتريات بعد (شهر)</label>
+          <input type="number" class="vip-limit-input" id="vipAmountWarningMonths" value="6" min="1" placeholder="6"/>
+        </div>
+
+        <div style="background:#fff8e1;border-radius:8px;padding:8px;margin:8px 0;font-size:11px;color:#92400e;line-height:1.7">
+          📌 مثال: العميل يحتاج <strong id="vipExampleOrders">5</strong> طلبات في <strong id="vipExampleDays">30</strong> يوم للترقية، ويحتاج <strong id="vipExampleWithdraw">3</strong> طلبات كل <strong id="vipExampleRenewal">30</strong> يوم للحفاظ عليها
+        </div>
+
         <div style="display:flex;gap:8px;margin-top:12px">
           <button onclick="saveVIPAutoSettings()" style="flex:1;padding:10px;background:linear-gradient(135deg,#f59e0b,#d97706);color:#fff;border-radius:10px;font-size:13px;font-weight:800;border:none;cursor:pointer">💾 حفظ الإعدادات</button>
           <button onclick="autoCheckVIPLimits()" style="flex:1;padding:10px;background:linear-gradient(135deg,var(--olive),var(--olive-light));color:#fff;border-radius:10px;font-size:13px;font-weight:800;border:none;cursor:pointer">⭐ تطبيق الآن</button>
         </div>
-        <div style="font-size:11px;color:#92400e;margin-top:8px;text-align:center">يتم الترقية عند تحقيق أي شرط من الشرطين</div>
       </div>
 
       <!-- VIP Benefits Management Panel -->
@@ -2632,37 +2671,221 @@ let bookingsData = loadData('zz_bookings', []);
 let cart=[], currentUser=null, favs=new Set(loadData('zz_favs',[]));
 let favCounts = loadData('zz_fav_counts', {}); // {itemId: globalCount}
 let VIP_CUSTOMERS = loadData('zz_vip_customers', {}); // {phone: {discount, since}}
-let VIP_AUTO_SETTINGS = loadData('zz_vip_auto_settings', { enabled: false, ordersLimit: 20, amountLimit: 10000, defaultDiscount: 10 });
+let VIP_AUTO_SETTINGS = loadData('zz_vip_auto_settings', {
+  enabled: false,
+  ordersLimit: 20,
+  amountLimit: 10000,
+  defaultDiscount: 10,
+  periodDays: 30,        // المدة الزمنية للحساب
+  renewalDays: 30,       // كل كام يوم يتجدد
+  warningDays: 7,        // تحذير قبل كام يوم من السحب
+  withdrawOrders: 3,     // أقل عدد طلبات للحفاظ على VIP
+  autoWithdraw: true     // سحب تلقائي
+});
 
-// تحقق تلقائي من عملاء VIP بناءً على Limits
+// تحقق تلقائي من عملاء VIP بناءً على Limits والمدة الزمنية
 function autoCheckVIPLimits() {
   if (!VIP_AUTO_SETTINGS.enabled) return;
-  const customers = buildCustomerStats('all');
+  const periodDays = VIP_AUTO_SETTINGS.periodDays || 30;
+  const now = new Date();
+  const periodStart = new Date(now - periodDays * 24 * 3600 * 1000);
+
+  // فلتر الطلبات في المدة المحددة فقط
+  const recentOrders = ordersData.filter(o => {
+    if (!o.timestamp && !o.createdAt) return false;
+    const d = new Date(o.timestamp || o.createdAt);
+    return d >= periodStart && o.status !== 'cancelled';
+  });
+
+  // تجميع إحصائيات العملاء في المدة
+  const customerStats = {};
+  recentOrders.forEach(o => {
+    const phone = (o.whatsapp || o.phone || '').replace(/\D/g, '');
+    if (!phone) return;
+    if (!customerStats[phone]) customerStats[phone] = { phone, name: o.name || '', count: 0, total: 0 };
+    customerStats[phone].count++;
+    customerStats[phone].total += Number(o.total) || 0;
+  });
+
   let promoted = 0;
-  customers.forEach(c => {
-    if (!c.phone || VIP_CUSTOMERS[c.phone]) return; // بالفعل VIP
+  Object.values(customerStats).forEach(c => {
+    if (VIP_CUSTOMERS[c.phone]) return; // بالفعل VIP
     const meetsOrders = VIP_AUTO_SETTINGS.ordersLimit > 0 && c.count >= VIP_AUTO_SETTINGS.ordersLimit;
     const meetsAmount = VIP_AUTO_SETTINGS.amountLimit > 0 && c.total >= VIP_AUTO_SETTINGS.amountLimit;
     if (meetsOrders || meetsAmount) {
-      VIP_CUSTOMERS[c.phone] = { name: c.name, discount: Number(VIP_AUTO_SETTINGS.defaultDiscount) || 10, since: new Date().toLocaleDateString('ar-EG'), auto: true };
-      if (db) db.ref('vip_customers/' + c.phone.replace(/[^0-9]/g,'')).set(VIP_CUSTOMERS[c.phone]).catch(()=>{});
+      VIP_CUSTOMERS[c.phone] = {
+        name: c.name,
+        discount: Number(VIP_AUTO_SETTINGS.defaultDiscount) || 10,
+        since: now.toLocaleDateString('ar-EG'),
+        sinceDate: now.toISOString(),
+        lastRenewed: now.toISOString(),
+        auto: true,
+        promotedByAmount: meetsAmount && !meetsOrders, // علّم لو ترقية بالمشتريات
+        ordersInPeriod: c.count,
+        totalInPeriod: c.total
+      };
+      if (db) db.ref('vip_customers/' + c.phone).set(VIP_CUSTOMERS[c.phone]).catch(() => {});
       promoted++;
+      // رسالة واتساب ترحيب
+      _sendVIPWelcomeMsg(c.phone, c.name);
     }
   });
+
   if (promoted > 0) {
     saveData('zz_vip_customers', VIP_CUSTOMERS);
     showNotif(`⭐ تم ترقية ${promoted} عميل إلى VIP تلقائياً`);
+  }
+
+  // تحقق من التجديد والسحب
+  if (VIP_AUTO_SETTINGS.autoWithdraw) _checkVIPRenewalAndWithdraw(customerStats);
+}
+
+function _checkVIPRenewalAndWithdraw(currentStats) {
+  const now = new Date();
+  const warningDays = VIP_AUTO_SETTINGS.warningDays || 7;
+  const renewalDays = VIP_AUTO_SETTINGS.renewalDays || 30;
+  const withdrawOrders = VIP_AUTO_SETTINGS.withdrawOrders || 3;
+  const amountInactivityMonths = VIP_AUTO_SETTINGS.amountInactivityMonths || 12;
+  const amountWarningMonths = VIP_AUTO_SETTINGS.amountWarningMonths || 6;
+
+  Object.entries(VIP_CUSTOMERS).forEach(([phone, vip]) => {
+    if (!vip.auto) return;
+
+    const stats = currentStats[phone] || { count: 0, total: 0 };
+    const isAmountBased = vip.promotedByAmount === true;
+
+    if (isAmountBased) {
+      // ===== عميل VIP بالمشتريات =====
+      // قاعدة: طلب واحد كل 6 شهور — وإلا تحذير
+      // سحب لو قعد 12 شهر بدون طلب
+      const lastOrder = ordersData
+        .filter(o => (o.whatsapp||o.phone||'').replace(/\D/g,'') === phone && o.status !== 'cancelled')
+        .sort((a,b) => new Date(b.timestamp||b.createdAt||0) - new Date(a.timestamp||a.createdAt||0))[0];
+
+      const lastOrderDate = lastOrder ? new Date(lastOrder.timestamp || lastOrder.createdAt) : new Date(vip.sinceDate || now);
+      const monthsInactive = (now - lastOrderDate) / (30 * 24 * 3600 * 1000);
+
+      if (monthsInactive >= amountInactivityMonths) {
+        // سحب VIP بعد 12 شهر بدون طلب
+        const name = vip.name || '';
+        delete VIP_CUSTOMERS[phone];
+        if (db) db.ref('vip_customers/' + phone).remove().catch(() => {});
+        _sendVIPWithdrawMsg(phone, name, true);
+        showNotif(`⚠️ تم سحب VIP من ${name} — غياب أكثر من ${amountInactivityMonths} شهر`);
+      } else if (monthsInactive >= amountWarningMonths && !vip.amountWarningSent) {
+        // تحذير بعد 6 شهور
+        const monthsLeft = Math.ceil(amountInactivityMonths - monthsInactive);
+        _sendVIPAmountWarningMsg(phone, vip.name || '', monthsLeft);
+        VIP_CUSTOMERS[phone].amountWarningSent = true;
+        if (db) db.ref('vip_customers/' + phone).update({ amountWarningSent: true }).catch(() => {});
+      }
+
+    } else {
+      // ===== عميل VIP بالطلبات =====
+      const lastRenewed = new Date(vip.lastRenewed || vip.sinceDate || now);
+      const daysSinceRenew = (now - lastRenewed) / (24 * 3600 * 1000);
+
+      if (daysSinceRenew >= renewalDays) {
+        const meetsOrders = stats.count >= withdrawOrders;
+        if (meetsOrders) {
+          // تجديد
+          VIP_CUSTOMERS[phone].lastRenewed = now.toISOString();
+          VIP_CUSTOMERS[phone].warningSent = false;
+          VIP_CUSTOMERS[phone].ordersInPeriod = stats.count;
+          if (db) db.ref('vip_customers/' + phone).update({ lastRenewed: now.toISOString(), warningSent: false }).catch(() => {});
+        } else {
+          // سحب
+          const name = vip.name || '';
+          delete VIP_CUSTOMERS[phone];
+          if (db) db.ref('vip_customers/' + phone).remove().catch(() => {});
+          _sendVIPWithdrawMsg(phone, name, false);
+          showNotif(`⚠️ تم سحب VIP من ${name} — لم يحقق شروط التجديد`);
+        }
+      } else {
+        // تحذير قبل انتهاء الفترة
+        const daysLeft = renewalDays - daysSinceRenew;
+        if (daysLeft <= warningDays && !vip.warningSent) {
+          const neededOrders = Math.max(0, withdrawOrders - stats.count);
+          if (neededOrders > 0) {
+            _sendVIPWarningMsg(phone, vip.name || '', Math.ceil(daysLeft), neededOrders);
+            VIP_CUSTOMERS[phone].warningSent = true;
+            if (db) db.ref('vip_customers/' + phone).update({ warningSent: true }).catch(() => {});
+          }
+        }
+      }
+    }
+  });
+  saveData('zz_vip_customers', VIP_CUSTOMERS);
+}
+
+function _sendVIPWelcomeMsg(phone, name) {
+  // الرسالة بتتبعت من واتساب — مش تلقائي
+}
+
+function _sendVIPAmountWarningMsg(phone, name, monthsLeft) {
+  const wa = normalizePhoneForWA(phone);
+  if (!wa) return;
+  const msg = `تنبيه لعميلنا المميز *${name}* ⚠️\n\nعضويتك الـ VIP ستنتهي خلال *${monthsLeft} أشهر* إذا لم تقم بطلب جديد!\n\n🎁 لا تفوّت مزاياك الحصرية — نحن في انتظار طلبك!\n\n*${RESTAURANT.name}* 🍽️`;
+  window.open('https://wa.me/' + wa + '?text=' + encodeURIComponent(msg), '_blank');
+}
+
+function _sendVIPWarningMsg(phone, name, daysLeft, neededOrders) {
+  const wa = normalizePhoneForWA(phone);
+  if (!wa) return;
+  const msg = `تنبيه مهم لعميلنا *${name}* ⚠️\n\nعضويتك الـ VIP ستنتهي خلال *${daysLeft} أيام*!\n\nأنت تحتاج *${neededOrders} طلبات إضافية* للحفاظ على مزاياك.\n\n🎁 لا تفوّت مزايا VIP الحصرية!\n\n*${RESTAURANT.name}* 🍽️`;
+  window.open('https://wa.me/' + wa + '?text=' + encodeURIComponent(msg), '_blank');
+}
+
+function _sendVIPWithdrawMsg(phone, name, isAmountBased) {
+  const wa = normalizePhoneForWA(phone);
+  if (!wa) return;
+  const msg = isAmountBased
+    ? `عزيزنا *${name}*\n\nانتهت عضويتك الـ VIP بسبب طول فترة الغياب 😔\n\nيمكنك استعادتها بإتمام ${VIP_AUTO_SETTINGS.ordersLimit || 5} طلبات في ${VIP_AUTO_SETTINGS.periodDays || 30} يوم.\n\n💪 نتطلع لعودتك!\n\n*${RESTAURANT.name}* 🍽️`
+    : `عزيزنا *${name}*\n\nانتهت عضويتك الـ VIP 😔\n\nيمكنك استعادتها بإتمام ${VIP_AUTO_SETTINGS.ordersLimit || 5} طلبات في ${VIP_AUTO_SETTINGS.periodDays || 30} يوم.\n\n💪 نتطلع لخدمتك!\n\n*${RESTAURANT.name}* 🍽️`;
+  window.open('https://wa.me/' + wa + '?text=' + encodeURIComponent(msg), '_blank');
+}
+
+function _updateVIPExample() {
+  const orders = document.getElementById('vipOrdersLimit')?.value || 5;
+  const days = document.getElementById('vipPeriodDays')?.value || 30;
+  const withdraw = document.getElementById('vipWithdrawOrders')?.value || 3;
+  const renewal = document.getElementById('vipRenewalDays')?.value || 30;
+  const e1 = document.getElementById('vipExampleOrders'); if (e1) e1.textContent = orders;
+  const e2 = document.getElementById('vipExampleDays'); if (e2) e2.textContent = days;
+  const e3 = document.getElementById('vipExampleWithdraw'); if (e3) e3.textContent = withdraw;
+  const e4 = document.getElementById('vipExampleRenewal'); if (e4) e4.textContent = renewal;
+}
+
+// تشغيل فحص VIP كل 24 ساعة تلقائياً
+function initVIPAutoCheck() {
+  if (!VIP_AUTO_SETTINGS.enabled) return;
+  const lastCheck = loadData('zz_vip_last_check', null);
+  const now = Date.now();
+  if (!lastCheck || (now - new Date(lastCheck).getTime()) > 24 * 3600 * 1000) {
+    setTimeout(() => {
+      autoCheckVIPLimits();
+      saveData('zz_vip_last_check', new Date().toISOString());
+    }, 5000);
   }
 }
 
 function saveVIPAutoSettings() {
   const enabled = document.getElementById('vipAutoEnabled')?.classList.contains('on') || false;
-  const ordersLimit = Number(document.getElementById('vipOrdersLimit')?.value) || 20;
+  const ordersLimit = Number(document.getElementById('vipOrdersLimit')?.value) || 5;
   const amountLimit = Number(document.getElementById('vipAmountLimit')?.value) || 10000;
   const defaultDiscount = Number(document.getElementById('vipDefaultDiscount')?.value) || 10;
-  VIP_AUTO_SETTINGS = { enabled, ordersLimit, amountLimit, defaultDiscount };
+  const periodDays = Number(document.getElementById('vipPeriodDays')?.value) || 30;
+  const renewalDays = Number(document.getElementById('vipRenewalDays')?.value) || 30;
+  const warningDays = Number(document.getElementById('vipWarningDays')?.value) || 7;
+  const withdrawOrders = Number(document.getElementById('vipWithdrawOrders')?.value) || 3;
+  const autoWithdraw = document.getElementById('vipAutoWithdraw')?.classList.contains('on') || false;
+
+  const amountInactivityMonths = Number(document.getElementById('vipAmountInactivityMonths')?.value) || 12;
+  const amountWarningMonths = Number(document.getElementById('vipAmountWarningMonths')?.value) || 6;
+
+  VIP_AUTO_SETTINGS = { enabled, ordersLimit, amountLimit, defaultDiscount, periodDays, renewalDays, warningDays, withdrawOrders, autoWithdraw, amountInactivityMonths, amountWarningMonths };
   saveData('zz_vip_auto_settings', VIP_AUTO_SETTINGS);
-  if (db) fbUpdate('config', { vipAutoSettings: VIP_AUTO_SETTINGS }).catch(()=>{});
+  if (db) fbUpdate('config', { vipAutoSettings: VIP_AUTO_SETTINGS }).catch(() => {});
   if (enabled) autoCheckVIPLimits();
   showNotif('✓ تم حفظ إعدادات VIP التلقائي');
 }
@@ -2671,11 +2894,21 @@ function loadVIPAutoSettingsUI() {
   const el = document.getElementById('vipAutoEnabled');
   if (el) el.classList.toggle('on', !!VIP_AUTO_SETTINGS.enabled);
   const ol = document.getElementById('vipOrdersLimit');
-  if (ol) ol.value = VIP_AUTO_SETTINGS.ordersLimit || 20;
+  if (ol) ol.value = VIP_AUTO_SETTINGS.ordersLimit || 5;
   const al = document.getElementById('vipAmountLimit');
   if (al) al.value = VIP_AUTO_SETTINGS.amountLimit || 10000;
   const dd = document.getElementById('vipDefaultDiscount');
   if (dd) dd.value = VIP_AUTO_SETTINGS.defaultDiscount || 10;
+  const pd = document.getElementById('vipPeriodDays');
+  if (pd) pd.value = VIP_AUTO_SETTINGS.periodDays || 30;
+  const rd = document.getElementById('vipRenewalDays');
+  if (rd) rd.value = VIP_AUTO_SETTINGS.renewalDays || 30;
+  const wd = document.getElementById('vipWarningDays');
+  if (wd) wd.value = VIP_AUTO_SETTINGS.warningDays || 7;
+  const wo = document.getElementById('vipWithdrawOrders');
+  if (wo) wo.value = VIP_AUTO_SETTINGS.withdrawOrders || 3;
+  const aw = document.getElementById('vipAutoWithdraw');
+  if (aw) aw.classList.toggle('on', !!VIP_AUTO_SETTINGS.autoWithdraw);
   renderVIPBenefitsAdmin();
   renderVIPMsgTemplates();
 }
@@ -4124,6 +4357,7 @@ function doAdminLogin() {
   // طلب إذن Desktop Notifications
   requestNotifPermission();
   initAutoBackup();
+  initVIPAutoCheck();
   openScreen('adminPanel');
 }
 function doLogout() {
