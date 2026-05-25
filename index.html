@@ -966,7 +966,7 @@ input,select,textarea{font-family:inherit;}
         <div style="font-size:17px;font-weight:800;color:var(--dark)">أهلاً بعودتك!</div>
         <div style="font-size:12px;color:var(--text-muted);margin-top:4px">أدخل رقم هاتفك لاسترجاع حسابك</div>
       </div>
-      <div class="field"><label>رقم الهاتف</label><input type="tel" id="loginPhone" placeholder="01xxxxxxxxx" inputmode="tel" oninput="previewLoginUser(this.value)"/></div>
+      <div class="field"><label>رقم الهاتف</label><input type="text" id="loginPhone" placeholder="01xxxxxxxxx" inputmode="numeric" autocomplete="new-password" readonly autocorrect="off" autocapitalize="off" spellcheck="false" onfocus="this.removeAttribute('readonly')" oninput="this.value=this.value.replace(/[^0-9]/g,'');previewLoginUser(this.value)" name="zamzam_phone_field"/></div>
       <div id="loginUserPreview" style="display:none;background:var(--olive-pale);border-radius:12px;padding:12px 14px;margin-bottom:12px;border:1.5px solid var(--olive)">
         <div style="font-size:12px;font-weight:700;color:var(--olive-dark);margin-bottom:4px">✅ تم العثور على حسابك</div>
         <div style="font-size:14px;font-weight:800;color:var(--dark)" id="loginFoundName">—</div>
@@ -1133,6 +1133,7 @@ input,select,textarea{font-family:inherit;}
     </div>
     <!-- cart-footer الآن scrollable داخل sheet-body الممتد -->
     <div class="cart-footer" style="overflow-y:auto;max-height:none;">
+      <div id="redeemPointsRow" style="display:none;margin-bottom:10px"></div>
       <div class="coupon-row">
         <input id="couponInput" placeholder="COUPON CODE" style="font-family:monospace"/>
         <button onclick="applyCoupon()">تطبيق</button>
@@ -1924,7 +1925,42 @@ input,select,textarea{font-family:inherit;}
 
 
     <div id="tab-settings" style="display:none">
-      <!-- 🔔 إشعارات الجهاز — أدمن وكاشير فقط -->
+      <!-- 🌟 نظام نقاط الولاء -->
+      <div style="padding:12px 16px 6px;font-size:14px;font-weight:800;color:var(--text-muted)">🌟 نظام نقاط الولاء</div>
+      <div class="settings-section">
+        <div class="settings-row">
+          <div class="info"><strong>تفعيل نقاط الولاء</strong><span>العملاء يكسبون نقاط مع كل طلب</span></div>
+          <div class="toggle-sw" id="loyaltyEnabled" onclick="this.classList.toggle('on')"></div>
+        </div>
+        <div class="settings-row">
+          <div class="info"><strong>للكل أم VIP بس؟</strong></div>
+          <select id="loyaltyForAll" class="settings-input" style="width:110px">
+            <option value="all">للكل</option>
+            <option value="vip">VIP فقط</option>
+          </select>
+        </div>
+        <div class="settings-row">
+          <div class="info"><strong>🌟 نقطة لكل كام جنيه؟</strong></div>
+          <input type="number" id="loyaltyPointsPerPound" value="1" min="1" class="settings-input" style="width:80px"/>
+        </div>
+        <div class="settings-row">
+          <div class="info"><strong>🎁 كام نقطة = كام جنيه خصم؟</strong><span id="loyaltyExample" style="color:var(--olive)">1000 نقطة = 50 جنيه</span></div>
+        </div>
+        <div class="settings-row" style="padding-right:16px;gap:8px">
+          <input type="number" id="loyaltyThreshold" value="1000" min="1" class="settings-input" style="width:90px" placeholder="1000 نقطة"/>
+          <span style="font-size:13px">=</span>
+          <input type="number" id="loyaltyRedeemValue" value="50" min="1" class="settings-input" style="width:90px" placeholder="50 جنيه"/>
+        </div>
+        <div class="settings-row">
+          <div class="info"><strong>⏱️ صلاحية النقاط (شهور)</strong></div>
+          <input type="number" id="loyaltyExpiryMonths" value="12" min="1" class="settings-input" style="width:80px"/>
+        </div>
+        <div class="settings-row">
+          <div class="info"><strong>📊 أقصى خصم من الفاتورة (%)</strong></div>
+          <input type="number" id="loyaltyMaxRedeem" value="50" min="1" max="100" class="settings-input" style="width:80px"/>
+        </div>
+        <button onclick="saveLoyaltySettings()" class="btn-primary" style="margin:8px 14px">💾 حفظ إعدادات النقاط</button>
+      </div>
       <div style="padding:12px 16px 6px;font-size:14px;font-weight:800;color:var(--text-muted)">🔔 إشعارات الجهاز (Push)</div>
       <div class="settings-section">
         <div class="settings-row" style="flex-wrap:wrap;gap:8px">
@@ -3174,37 +3210,54 @@ function switchAuthTab(t) {
 
 // Preview existing user when typing phone in login
 let _previewTimer = null;
+let _previewHideTimer = null;
 const _INVALID_NAMES_PREVIEW = ['عميل', 'مجهول', 'زائر', 'guest', 'unknown', ''];
 async function previewLoginUser(phone) {
   const preview = document.getElementById('loginUserPreview');
   const nameEl = document.getElementById('loginFoundName');
   if (!preview || !nameEl) return;
-  if (!phone || phone.replace(/[^0-9]/g,'').length < 10) { preview.style.display = 'none'; return; }
 
-  // Step 1: Local lookup
-  const users = loadData('zz_users', []);
   const cleanPhone = phone.replace(/[^0-9]/g,'');
-  let found = users.find(u => (u.phone||'').replace(/[^0-9]/g,'') === cleanPhone);
 
-  if (found && found.name && !_INVALID_NAMES_PREVIEW.includes((found.name||'').trim().toLowerCase())) {
-    nameEl.textContent = found.name;
-    preview.style.display = 'block';
+  // لو الرقم ناقص — اخفي الـ preview بعد شوية
+  if (!phone || cleanPhone.length < 10) {
+    clearTimeout(_previewTimer);
+    clearTimeout(_previewHideTimer);
+    _previewHideTimer = setTimeout(() => { preview.style.display = 'none'; }, 300);
     return;
   }
 
-  // Step 2: Debounced Firebase lookup
+  // Step 1: Local lookup — فوري بس بعد استقرار الكتابة
   clearTimeout(_previewTimer);
   _previewTimer = setTimeout(async () => {
+    // تأكد إن الرقم لسه هو نفسه
+    const currentVal = document.getElementById('loginPhone')?.value?.replace(/[^0-9]/g,'') || '';
+    if (currentVal !== cleanPhone) return;
+
+    const users = loadData('zz_users', []);
+    let found = users.find(u => (u.phone||'').replace(/[^0-9]/g,'') === cleanPhone);
+    if (found && found.name && !_INVALID_NAMES_PREVIEW.includes((found.name||'').trim().toLowerCase())) {
+      clearTimeout(_previewHideTimer);
+      nameEl.textContent = found.name;
+      preview.style.display = 'block';
+      return;
+    }
+
+    // Step 2: Firebase lookup
     if (!db) return;
     try {
       const snap = await db.ref('users/' + cleanPhone).get();
+      // تأكد تاني إن المستخدم لسه كاتب نفس الرقم
+      const finalVal = document.getElementById('loginPhone')?.value?.replace(/[^0-9]/g,'') || '';
+      if (finalVal !== cleanPhone) return;
+
       if (snap.exists()) {
         const fbUser = snap.val();
         const realName = fbUser && fbUser.name && !_INVALID_NAMES_PREVIEW.includes((fbUser.name||'').trim().toLowerCase());
         if (realName) {
+          clearTimeout(_previewHideTimer);
           nameEl.textContent = fbUser.name;
           preview.style.display = 'block';
-          // Cache locally
           const u2 = loadData('zz_users', []);
           const existI = u2.findIndex(u => (u.phone||'').replace(/[^0-9]/g,'') === cleanPhone);
           if (existI >= 0) u2[existI] = fbUser; else u2.push(fbUser);
@@ -3216,7 +3269,7 @@ async function previewLoginUser(phone) {
         preview.style.display = 'none';
       }
     } catch(e) { preview.style.display = 'none'; }
-  }, 500);
+  }, 450); // 450ms
 }
 // ===== OTP SYSTEM =====
 let _otpPending = null; // {code, user, isLogin, timer}
@@ -3910,6 +3963,27 @@ function renderCartSheet() {
   const noteEl = document.getElementById('activeOfferNote');
   if (noteEl && active.length) { noteEl.style.display = 'block'; noteEl.textContent = '🎉 عروض مفعّلة: ' + active.map(o => o.name).join(', '); }
   else if (noteEl) noteEl.style.display = 'none';
+
+  // زر صرف النقاط
+  const redeemEl = document.getElementById('redeemPointsRow');
+  if (redeemEl && LOYALTY_SETTINGS.enabled && currentUser?.phone) {
+    const points = getLoyaltyPoints(currentUser.phone);
+    const threshold = LOYALTY_SETTINGS.redeemThreshold || 1000;
+    const canRedeem = points >= threshold;
+    const value = calcPointsValue(points);
+    redeemEl.style.display = 'block';
+    redeemEl.innerHTML = canRedeem ? `
+      <div style="background:linear-gradient(135deg,#fef3c7,#fff8e1);border:1.5px solid #f59e0b;border-radius:12px;padding:10px 14px;display:flex;align-items:center;justify-content:space-between">
+        <div>
+          <div style="font-size:12px;font-weight:800;color:#92400e">🌟 رصيدك: ${points} نقطة</div>
+          <div style="font-size:11px;color:#b45309">تساوي ${value} جنيه خصم</div>
+        </div>
+        <button onclick="applyLoyaltyDiscount()" style="padding:7px 14px;background:linear-gradient(135deg,#f59e0b,#d97706);color:#fff;border-radius:9px;font-size:12px;font-weight:800;border:none;cursor:pointer">صرف نقاطي</button>
+      </div>` : `
+      <div style="background:var(--cream);border-radius:12px;padding:10px 14px;text-align:center;font-size:11px;color:var(--text-muted)">
+        🌟 رصيدك: ${points} نقطة — تحتاج ${threshold - points} نقطة أخرى للصرف
+      </div>`;
+  } else if (redeemEl) redeemEl.style.display = 'none';
 }
 function openSheet(id) { document.getElementById(id).classList.add('open'); if (id === 'cartSheet') { renderCartSheet(); renderZoneChips(); renderPaymentOptions(); } }
 function closeSheet(id, e) { if (e && e.target !== document.getElementById(id)) return; document.getElementById(id).classList.remove('open'); }
@@ -4340,6 +4414,17 @@ function calcDist(lat, lng) {
 // ADMIN AUTH & ROLES
 // ============================================================
 function openAdminLogin() { showScreen('adminLogin'); document.getElementById('adminPass').value = ''; }
+
+function openClientLogin() {
+  showScreen('login');
+  setTimeout(() => {
+    const el = document.getElementById('loginPhone');
+    if (el) {
+      el.setAttribute('readonly', true);
+      el.value = '';
+    }
+  }, 100);
+}
 function doAdminLogin() {
   const pass = document.getElementById('adminPass').value;
   const role = document.getElementById('adminRole').value;
@@ -4436,7 +4521,7 @@ function switchAdminTab(tab, el) {
   if (tab === 'menu') { renderMenuManage(); renderCatSelects(); }
   if (tab === 'addons') { renderAddonsAdmin(); renderSpicyCatToggles(); }
   if (tab === 'offers') renderOffersAdmin();
-  if (tab === 'settings') { loadSettingsUI(); _updatePushStatusUI(); _updateAutoBackupUI(); _initUpsellToggle(); }
+  if (tab === 'settings') { loadSettingsUI(); _updatePushStatusUI(); _updateAutoBackupUI(); _initUpsellToggle(); loadLoyaltySettingsUI(); }
   if (tab === 'ads') renderAdsAdmin();
   if (tab === 'agents') { renderAgentsAdmin(); renderAgentReports(); startAdminAgentsTracking(); }
   if (tab === 'stats') { loadRatingsFromFirebase(); renderStatsTab(); }
@@ -7204,8 +7289,12 @@ function confirmFinalOrder() {
   const order = _pendingOrderForReview;
   // NOW send to Firebase — cashier sees it
   fbSaveOrder(order);
-  // VIP points notification
-  if (currentUser?.phone && VIP_CUSTOMERS[currentUser.phone]) addVIPPoints(order.total||0);
+  // كسب نقاط الولاء — للكل أو VIP حسب الإعداد
+  if (currentUser?.phone) {
+    earnLoyaltyPoints(order.total || 0, currentUser.phone, currentUser.name || '');
+  }
+  // إعادة تعيين خصم النقاط
+  _loyaltyDiscountApplied = 0;
   closeOrderReview();
   showNotif('✅ تم إرسال الطلب للكاشير بنجاح');
   // إرسال واتساب هنا فقط — بعد التأكيد النهائي
@@ -9232,6 +9321,62 @@ function _stopAutoBackupTimer() {
   if (_autoBackupTimer) { clearInterval(_autoBackupTimer); _autoBackupTimer = null; }
 }
 
+let _loyaltyDiscountApplied = 0; // قيمة خصم النقاط المطبق
+
+function applyLoyaltyDiscount() {
+  if (!currentUser?.phone) { showNotif('❌ سجّل دخولك أولاً'); return; }
+  const subtotal = cart.reduce((s, c) => s + c.price * c.qty, 0);
+  const discount = redeemLoyaltyPoints(currentUser.phone, subtotal);
+  if (discount <= 0) { showNotif('❌ رصيد النقاط غير كافي للصرف'); return; }
+  _loyaltyDiscountApplied = discount;
+  appliedDiscount = Math.max(appliedDiscount, discount);
+  updateCartUI();
+  renderCartSheet();
+  showNotif(`✅ تم تطبيق خصم ${discount} جنيه من نقاطك!`);
+}
+
+function saveLoyaltySettings() {
+  LOYALTY_SETTINGS = {
+    enabled: document.getElementById('loyaltyEnabled')?.classList.contains('on') || false,
+    forAll: document.getElementById('loyaltyForAll')?.value !== 'vip',
+    pointsPerPound: Number(document.getElementById('loyaltyPointsPerPound')?.value) || 1,
+    redeemThreshold: Number(document.getElementById('loyaltyThreshold')?.value) || 1000,
+    redeemValue: Number(document.getElementById('loyaltyRedeemValue')?.value) || 50,
+    expiryMonths: Number(document.getElementById('loyaltyExpiryMonths')?.value) || 12,
+    maxRedeemPercent: Number(document.getElementById('loyaltyMaxRedeem')?.value) || 50
+  };
+  saveData('zz_loyalty_settings', LOYALTY_SETTINGS);
+  if (db) fbUpdate('config', { loyaltySettings: LOYALTY_SETTINGS }).catch(() => {});
+  _updateLoyaltyExample();
+  showNotif('✅ تم حفظ إعدادات نقاط الولاء');
+}
+
+function _updateLoyaltyExample() {
+  const threshold = document.getElementById('loyaltyThreshold')?.value || 1000;
+  const value = document.getElementById('loyaltyRedeemValue')?.value || 50;
+  const el = document.getElementById('loyaltyExample');
+  if (el) el.textContent = `${threshold} نقطة = ${value} جنيه`;
+}
+
+function loadLoyaltySettingsUI() {
+  const s = LOYALTY_SETTINGS;
+  const toggle = document.getElementById('loyaltyEnabled');
+  if (toggle) toggle.classList.toggle('on', !!s.enabled);
+  const forAll = document.getElementById('loyaltyForAll');
+  if (forAll) forAll.value = s.forAll ? 'all' : 'vip';
+  const ppp = document.getElementById('loyaltyPointsPerPound');
+  if (ppp) ppp.value = s.pointsPerPound || 1;
+  const thresh = document.getElementById('loyaltyThreshold');
+  if (thresh) thresh.value = s.redeemThreshold || 1000;
+  const rv = document.getElementById('loyaltyRedeemValue');
+  if (rv) rv.value = s.redeemValue || 50;
+  const exp = document.getElementById('loyaltyExpiryMonths');
+  if (exp) exp.value = s.expiryMonths || 12;
+  const max = document.getElementById('loyaltyMaxRedeem');
+  if (max) max.value = s.maxRedeemPercent || 50;
+  _updateLoyaltyExample();
+}
+
 function toggleUpsellSetting() {
   const toggle = document.getElementById('upsellToggle');
   const isOn = toggle?.classList.toggle('on');
@@ -9780,7 +9925,15 @@ function updateVIPWelcomeBanner() {
   if (!vip) {
     if (topbarWrap) topbarWrap.innerHTML = '';
     if (banner) banner.classList.remove('show');
-    if (loyaltyWrap) loyaltyWrap.style.display = 'none';
+    // بطاقة النقاط للعملاء العاديين لو النظام مفعّل للكل
+    if (loyaltyWrap) {
+      if (LOYALTY_SETTINGS.enabled && LOYALTY_SETTINGS.forAll) {
+        loyaltyWrap.style.display = 'block';
+        loyaltyWrap.innerHTML = renderLoyaltyCard(currentUser.phone);
+      } else {
+        loyaltyWrap.style.display = 'none';
+      }
+    }
     if (heroBannerWrap) heroBannerWrap.innerHTML = `<div class="hero-banner" id="regularHeroBanner"><div class="hero-text"><h2>أشهى المأكولات 🍽️</h2><p>طازج يومياً • توصيل سريع</p><div class="hero-btn">اطلب الآن</div></div><div class="hero-emoji">🍽️</div></div>`;
     return;
   }
@@ -9811,7 +9964,7 @@ function updateVIPWelcomeBanner() {
       </div>
     </div>`;
 
-  // 3) VIP Loyalty Card (نقاط + مزايا)
+  // 3) بطاقة النقاط للـ VIP
   if (loyaltyWrap) {
     loyaltyWrap.style.display = 'block';
     const benefitChips = VIP_BENEFITS.filter(b=>b.enabled).map(b=>{
@@ -9819,14 +9972,18 @@ function updateVIPWelcomeBanner() {
       const labels = {disc:`خصم ${b.value}%`,free_del:'توصيل مجاني',priority:'أولوية',late:'Late Night',gift:`هدية ×${b.value}`,monthly:`كوبون ${b.value}`,exclusive:'عروض خاصة',support:'دعم VIP'};
       return `<div class="vip-benefit-chip"><div class="vip-benefit-chip-icon">${icons[b.id]||'⭐'}</div><div class="vip-benefit-chip-text">${labels[b.id]||b.label}</div></div>`;
     }).join('');
-    loyaltyWrap.innerHTML = `
+
+    // بطاقة نقاط الولاء الجديدة
+    const loyaltyCard = LOYALTY_SETTINGS.enabled ? renderLoyaltyCard(currentUser.phone) : '';
+
+    loyaltyWrap.innerHTML = loyaltyCard + `
       <div class="vip-loyalty-card">
         <div style="position:relative;z-index:1">
           <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
             <div>
-              <div style="font-size:12px;opacity:.8;font-weight:700">نقاط الولاء</div>
-              <div style="font-size:24px;font-weight:900;font-family:'Playfair Display',serif">${points} نقطة</div>
-              ${nextRewardIn > 0 ? `<div style="font-size:10px;opacity:.75">${nextRewardIn} نقطة للهدية التالية</div>` : `<div style="font-size:10px;background:rgba(255,255,255,.25);border-radius:100px;padding:2px 8px;display:inline-block">🎁 مؤهل للهدية!</div>`}
+              <div style="font-size:12px;opacity:.8;font-weight:700">عضوية VIP 👑</div>
+              <div style="font-size:18px;font-weight:900">${currentUser.name}</div>
+              <div style="font-size:10px;opacity:.75">عضو منذ: ${vip.since||'—'}</div>
             </div>
             <div class="vip-points-circle">
               <div class="vip-points-num">${disc}%</div>
@@ -9845,29 +10002,157 @@ function updateVIPWelcomeBanner() {
 function isVIPPriorityEnabled() { return VIP_BENEFITS.find(b=>b.id==='priority')?.enabled||false; }
 
 // ============================================================
-// VIP POINTS & REWARDS SYSTEM
 // ============================================================
+// LOYALTY POINTS SYSTEM — نظام نقاط الولاء الكامل
+// ============================================================
+
+const LOYALTY_DEFAULTS = {
+  enabled: false,
+  forAll: true,          // للكل أم VIP بس
+  pointsPerPound: 1,     // نقطة لكل جنيه
+  redeemThreshold: 1000, // الحد الأدنى للصرف
+  redeemValue: 50,       // قيمة 1000 نقطة بالجنيه
+  expiryMonths: 12,      // صلاحية النقاط
+  maxRedeemPercent: 50   // أقصى نسبة خصم من الفاتورة
+};
+
+let LOYALTY_SETTINGS = loadData('zz_loyalty_settings', { ...LOYALTY_DEFAULTS });
+
+function getLoyaltyPoints(phone) {
+  if (!phone) return 0;
+  const p = (phone || '').replace(/\D/g,'');
+  const data = loadData('zz_loyalty_' + p, { points: 0, earned: 0, redeemed: 0, lastEarned: null });
+  return data.points || 0;
+}
+
+function getLoyaltyData(phone) {
+  const p = (phone || '').replace(/\D/g,'');
+  return loadData('zz_loyalty_' + p, { points: 0, earned: 0, redeemed: 0, lastEarned: null });
+}
+
+function saveLoyaltyData(phone, data) {
+  const p = (phone || '').replace(/\D/g,'');
+  saveData('zz_loyalty_' + p, data);
+  if (db) db.ref('loyalty/' + p).set(data).catch(() => {});
+}
+
+// كسب نقاط بعد إتمام الطلب
+function earnLoyaltyPoints(orderTotal, phone, name) {
+  if (!LOYALTY_SETTINGS.enabled) return 0;
+  if (!phone) return 0;
+
+  // تحقق هل العميل مؤهل
+  const isVip = !!VIP_CUSTOMERS[(phone||'').replace(/\D/g,'')];
+  if (!LOYALTY_SETTINGS.forAll && !isVip) return 0;
+
+  const earned = Math.floor((orderTotal || 0) * (LOYALTY_SETTINGS.pointsPerPound || 1));
+  if (earned <= 0) return 0;
+
+  const data = getLoyaltyData(phone);
+  data.points = (data.points || 0) + earned;
+  data.earned = (data.earned || 0) + earned;
+  data.lastEarned = new Date().toISOString();
+  data.name = name || data.name || '';
+  saveLoyaltyData(phone, data);
+
+  showNotif(`🌟 كسبت ${earned} نقطة! رصيدك: ${data.points} نقطة`);
+  return earned;
+}
+
+// حساب قيمة النقاط بالجنيه
+function calcPointsValue(points) {
+  const threshold = LOYALTY_SETTINGS.redeemThreshold || 1000;
+  const value = LOYALTY_SETTINGS.redeemValue || 50;
+  return Math.floor(points / threshold) * value;
+}
+
+// صرف النقاط
+function redeemLoyaltyPoints(phone, cartTotal) {
+  if (!LOYALTY_SETTINGS.enabled) return 0;
+  const points = getLoyaltyPoints(phone);
+  const threshold = LOYALTY_SETTINGS.redeemThreshold || 1000;
+  if (points < threshold) return 0;
+
+  const maxDiscount = Math.floor(cartTotal * (LOYALTY_SETTINGS.maxRedeemPercent || 50) / 100);
+  const pointsValue = calcPointsValue(points);
+  const discount = Math.min(pointsValue, maxDiscount);
+
+  if (discount <= 0) return 0;
+
+  // خصم النقاط
+  const usedPoints = Math.ceil(discount / (LOYALTY_SETTINGS.redeemValue / LOYALTY_SETTINGS.redeemThreshold));
+  const data = getLoyaltyData(phone);
+  data.points = Math.max(0, (data.points || 0) - usedPoints);
+  data.redeemed = (data.redeemed || 0) + usedPoints;
+  saveLoyaltyData(phone, data);
+
+  return discount;
+}
+
+// واجهة العميل — بطاقة النقاط
+function renderLoyaltyCard(phone) {
+  if (!LOYALTY_SETTINGS.enabled) return '';
+  const isVip = !!VIP_CUSTOMERS[(phone||'').replace(/\D/g,'')];
+  if (!LOYALTY_SETTINGS.forAll && !isVip) return '';
+
+  const points = getLoyaltyPoints(phone);
+  const threshold = LOYALTY_SETTINGS.redeemThreshold || 1000;
+  const value = LOYALTY_SETTINGS.redeemValue || 50;
+  const progress = Math.min(100, Math.floor((points % threshold) / threshold * 100));
+  const pointsToNext = threshold - (points % threshold);
+  const canRedeem = points >= threshold;
+  const totalValue = calcPointsValue(points);
+
+  return `
+  <div style="background:linear-gradient(135deg,#1a1a2e,#16213e,#0f3460);border-radius:16px;padding:16px;margin:12px 16px;color:#fff;position:relative;overflow:hidden">
+    <div style="position:absolute;top:-20px;right:-20px;width:100px;height:100px;background:rgba(245,158,11,.1);border-radius:50%"></div>
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+      <div>
+        <div style="font-size:11px;opacity:.7;margin-bottom:2px">🌟 نقاط الولاء</div>
+        <div style="font-size:26px;font-weight:900;color:#f59e0b">${points.toLocaleString()}</div>
+        <div style="font-size:11px;opacity:.7">نقطة</div>
+      </div>
+      ${canRedeem ? `
+      <div style="text-align:center;background:rgba(245,158,11,.2);border:1.5px solid #f59e0b;border-radius:12px;padding:8px 12px">
+        <div style="font-size:11px;opacity:.8;margin-bottom:2px">يمكنك صرف</div>
+        <div style="font-size:18px;font-weight:900;color:#f59e0b">${totalValue} ج</div>
+        <div style="font-size:10px;opacity:.7">خصم على فاتورتك</div>
+      </div>` : `
+      <div style="text-align:center">
+        <div style="font-size:11px;opacity:.7;margin-bottom:4px">متبقي للصرف</div>
+        <div style="font-size:20px;font-weight:900;color:#f59e0b">${pointsToNext}</div>
+        <div style="font-size:10px;opacity:.7">نقطة</div>
+      </div>`}
+    </div>
+    <div style="background:rgba(255,255,255,.1);border-radius:100px;height:6px;margin-bottom:6px">
+      <div style="background:linear-gradient(90deg,#f59e0b,#fcd34d);height:6px;border-radius:100px;width:${progress}%;transition:.5s"></div>
+    </div>
+    <div style="display:flex;justify-content:space-between;font-size:10px;opacity:.6">
+      <span>${points % threshold} / ${threshold} نقطة</span>
+      <span>${value} ج.م لكل ${threshold} نقطة</span>
+    </div>
+  </div>`;
+}
+
 function getVIPPoints() {
   if (!currentUser?.phone) return 0;
-  // النقاط = مجموع قيم الطلبات المكتملة ÷ 10
-  const myOrders = ordersData.filter(o => o.phone === currentUser.phone && o.status === 'delivered');
-  return Math.floor(myOrders.reduce((s,o) => s + (o.total||0), 0) / 10);
+  return getLoyaltyPoints(currentUser.phone);
 }
 
 function getVIPNextReward() {
-  if (!currentUser?.phone) return 100;
-  const giftBenefit = VIP_BENEFITS.find(b => b.id === 'gift' && b.enabled);
-  if (!giftBenefit) return 0;
-  const threshold = Number(giftBenefit.value) * 10; // كل طلب = 10 نقطة × عدد الطلبات
-  const pts = getVIPPoints();
-  return Math.max(0, threshold - (pts % threshold));
+  if (!currentUser?.phone) return LOYALTY_SETTINGS.redeemThreshold || 1000;
+  const points = getLoyaltyPoints(currentUser.phone);
+  const threshold = LOYALTY_SETTINGS.redeemThreshold || 1000;
+  return Math.max(0, threshold - (points % threshold));
 }
 
 function addVIPPoints(orderTotal) {
-  // يُستدعى عند تأكيد الطلب
-  const pointsEarned = Math.floor(orderTotal / 10);
-  if (pointsEarned > 0) showNotif(`⭐ كسبت ${pointsEarned} نقطة VIP على طلبك!`);
+  if (currentUser?.phone) {
+    earnLoyaltyPoints(orderTotal, currentUser.phone, currentUser.name);
+  }
 }
+
+
 
 // ============================================================
 // IMAGE UPLOAD — Item & Category Image Support
