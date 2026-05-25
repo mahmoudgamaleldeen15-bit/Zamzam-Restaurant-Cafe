@@ -3194,8 +3194,68 @@ function openScreen(id) {
       }
     }
   }
-  if (id === 'tracking') { setTimeout(_checkClientPushBanner, 500);
-    loadTrackingScreen();
+  if (id === 'tracking') {
+    setTimeout(_checkClientPushBanner, 500);
+    // عرض التتبع — نجيب الطلب من currentOrderNum أو من Firebase
+    const orderCard = document.querySelector('#tracking .order-card');
+    if (currentOrderNum) {
+      // موجود محلياً — نحمّل من Firebase للتأكد
+      if (db) {
+        db.ref('orders/' + currentOrderNum).get().then(snap => {
+          if (snap.exists()) {
+            const ord = snap.val();
+            if (ord && ord.status !== 'delivered' && ord.status !== 'cancelled') {
+              const tnEl = document.getElementById('trackOrderNum');
+              if (tnEl) tnEl.textContent = 'طلب رقم #' + ord.id;
+              updateTrackingStatus(ord.status, ord.outAt);
+            } else {
+              currentOrderNum = null;
+              saveData('zz_current_order_num', null);
+              if (db && currentUser && currentUser.phone) {
+                var _ph = (currentUser.phone||'').replace(/[^0-9]/g,'');
+                db.ref('user_sessions/' + _ph + '/currentOrderNum').remove().catch(function(){});
+              }
+              if (orderCard) orderCard.innerHTML = `<div class="track-no-order-state"><div class="track-no-order-icon">📋</div><div class="track-no-order-title">لا يوجد طلب نشط حالياً 🕘</div><div class="track-no-order-sub">عند تأكيد طلبك سيبدأ عرض مراحل التتبع هنا مباشرة.</div><button onclick="openSheet('cartSheet')" style="margin-top:20px;padding:12px 24px;background:linear-gradient(135deg,var(--olive),var(--olive-light));color:#fff;border-radius:12px;font-size:14px;font-weight:800;border:none;cursor:pointer">🛒 اطلب الآن</button></div>`;
+            }
+          }
+        }).catch(function(){});
+      }
+    } else if (db && currentUser && currentUser.phone) {
+      // مش موجود محلياً — نجيب من user_sessions في Firebase
+      var _cleanPh = (currentUser.phone||'').replace(/[^0-9]/g,'');
+      db.ref('user_sessions/' + _cleanPh + '/currentOrderNum').get().then(function(snap) {
+        if (snap.exists() && snap.val()) {
+          var fbNum = snap.val();
+          // تحقق من الطلب في Firebase
+          db.ref('orders/' + fbNum).get().then(function(oSnap) {
+            if (oSnap.exists()) {
+              var ord = oSnap.val();
+              if (ord && ord.status !== 'delivered' && ord.status !== 'cancelled') {
+                currentOrderNum = fbNum;
+                saveData('zz_current_order_num', fbNum);
+                var tnEl = document.getElementById('trackOrderNum');
+                if (tnEl) tnEl.textContent = 'طلب رقم #' + fbNum;
+                updateTrackingStatus(ord.status, ord.outAt);
+              } else {
+                db.ref('user_sessions/' + _cleanPh + '/currentOrderNum').remove().catch(function(){});
+                if (orderCard) orderCard.innerHTML = `<div class="track-no-order-state"><div class="track-no-order-icon">📋</div><div class="track-no-order-title">لا يوجد طلب نشط حالياً 🕘</div><div class="track-no-order-sub">عند تأكيد طلبك سيبدأ عرض مراحل التتبع هنا مباشرة.</div><button onclick="openSheet('cartSheet')" style="margin-top:20px;padding:12px 24px;background:linear-gradient(135deg,var(--olive),var(--olive-light));color:#fff;border-radius:12px;font-size:14px;font-weight:800;border:none;cursor:pointer">🛒 اطلب الآن</button></div>`;
+              }
+            } else {
+              db.ref('user_sessions/' + _cleanPh + '/currentOrderNum').remove().catch(function(){});
+              if (orderCard) orderCard.innerHTML = `<div class="track-no-order-state"><div class="track-no-order-icon">📋</div><div class="track-no-order-title">لا يوجد طلب نشط حالياً 🕘</div><div class="track-no-order-sub">عند تأكيد طلبك سيبدأ عرض مراحل التتبع هنا مباشرة.</div><button onclick="openSheet('cartSheet')" style="margin-top:20px;padding:12px 24px;background:linear-gradient(135deg,var(--olive),var(--olive-light));color:#fff;border-radius:12px;font-size:14px;font-weight:800;border:none;cursor:pointer">🛒 اطلب الآن</button></div>`;
+            }
+          }).catch(function(){
+            if (orderCard) orderCard.innerHTML = `<div class="track-no-order-state"><div class="track-no-order-icon">📋</div><div class="track-no-order-title">لا يوجد طلب نشط حالياً 🕘</div><div class="track-no-order-sub">عند تأكيد طلبك سيبدأ عرض مراحل التتبع هنا مباشرة.</div><button onclick="openSheet('cartSheet')" style="margin-top:20px;padding:12px 24px;background:linear-gradient(135deg,var(--olive),var(--olive-light));color:#fff;border-radius:12px;font-size:14px;font-weight:800;border:none;cursor:pointer">🛒 اطلب الآن</button></div>`;
+          });
+        } else {
+          if (orderCard) orderCard.innerHTML = `<div class="track-no-order-state"><div class="track-no-order-icon">📋</div><div class="track-no-order-title">لا يوجد طلب نشط حالياً 🕘</div><div class="track-no-order-sub">عند تأكيد طلبك سيبدأ عرض مراحل التتبع هنا مباشرة.</div><button onclick="openSheet('cartSheet')" style="margin-top:20px;padding:12px 24px;background:linear-gradient(135deg,var(--olive),var(--olive-light));color:#fff;border-radius:12px;font-size:14px;font-weight:800;border:none;cursor:pointer">🛒 اطلب الآن</button></div>`;
+        }
+      }).catch(function(){
+        if (orderCard) orderCard.innerHTML = `<div class="track-no-order-state"><div class="track-no-order-icon">📋</div><div class="track-no-order-title">لا يوجد طلب نشط حالياً 🕘</div><div class="track-no-order-sub">عند تأكيد طلبك سيبدأ عرض مراحل التتبع هنا مباشرة.</div><button onclick="openSheet('cartSheet')" style="margin-top:20px;padding:12px 24px;background:linear-gradient(135deg,var(--olive),var(--olive-light));color:#fff;border-radius:12px;font-size:14px;font-weight:800;border:none;cursor:pointer">🛒 اطلب الآن</button></div>`;
+      });
+    } else {
+      if (orderCard) orderCard.innerHTML = `<div class="track-no-order-state"><div class="track-no-order-icon">📋</div><div class="track-no-order-title">لا يوجد طلب نشط حالياً 🕘</div><div class="track-no-order-sub">عند تأكيد طلبك سيبدأ عرض مراحل التتبع هنا مباشرة.</div><button onclick="openSheet('cartSheet')" style="margin-top:20px;padding:12px 24px;background:linear-gradient(135deg,var(--olive),var(--olive-light));color:#fff;border-radius:12px;font-size:14px;font-weight:800;border:none;cursor:pointer">🛒 اطلب الآن</button></div>`;
+    }
   }
   if (id === 'adminPanel') { renderAdminOrders(); renderMenuManage(); renderOffersAdmin(); renderCatSelects(); loadSettingsUI(); applyRoleRestrictions(); }
   if (id === 'history') renderHistory();
@@ -3214,113 +3274,7 @@ function openScreen(id) {
   }
 }
 
-// ============================================================
-// TRACKING SCREEN LOADER — global function
-// ============================================================
-function loadTrackingScreen() {
-    const orderCard = document.querySelector('#tracking .order-card');
 
-    function _showTrackingForOrder(ordNum) {
-      if (!ordNum) {
-        if (orderCard) orderCard.innerHTML = `<div class="track-no-order-state">
-          <div class="track-no-order-icon">📋</div>
-          <div class="track-no-order-title">لا يوجد طلب نشط حالياً 🕘</div>
-          <div class="track-no-order-sub">عند تأكيد طلبك سيبدأ عرض مراحل التتبع هنا مباشرة.</div>
-          <button onclick="openSheet('cartSheet')" style="margin-top:20px;padding:12px 24px;background:linear-gradient(135deg,var(--olive),var(--olive-light));color:#fff;border-radius:12px;font-size:14px;font-weight:800;border:none;cursor:pointer">🛒 اطلب الآن</button>
-        </div>`;
-        return;
-      }
-      // جيب الطلب من Firebase مباشرة عشان تاكد من أحدث حالة
-      if (db) {
-        db.ref('orders/' + ordNum).get().then(snap => {
-          if (snap.exists()) {
-            const ord = snap.val();
-            if (ord && ord.status !== 'delivered' && ord.status !== 'cancelled') {
-              currentOrderNum = ordNum;
-              saveData('zz_current_order_num', ordNum);
-              // تحديث رقم الطلب في الشاشة
-              const tnEl = document.getElementById('trackOrderNum');
-              if (tnEl) tnEl.textContent = 'طلب رقم #' + ordNum;
-              updateTrackingStatus(ord.status, ord.outAt);
-            } else {
-              // الطلب خلص — امسح
-              currentOrderNum = null;
-              saveData('zz_current_order_num', null);
-              if (db && currentUser?.phone) {
-                const _ph = (currentUser.phone||'').replace(/[^0-9]/g,'');
-                db.ref('user_sessions/' + _ph + '/currentOrderNum').remove().catch(()=>{});
-              }
-              const st = ord?.status;
-              if (orderCard) orderCard.innerHTML = `<div class="track-no-order-state">
-                <div class="track-no-order-icon">${st === 'delivered' ? '✅' : '❌'}</div>
-                <div class="track-no-order-title">${st === 'delivered' ? 'تم تسليم طلبك بنجاح! 🎉' : 'تم إلغاء الطلب'}</div>
-                <div class="track-no-order-sub">يمكنك تقديم طلب جديد في أي وقت.</div>
-                <button onclick="openSheet('cartSheet')" style="margin-top:20px;padding:12px 24px;background:linear-gradient(135deg,var(--olive),var(--olive-light));color:#fff;border-radius:12px;font-size:14px;font-weight:800;border:none;cursor:pointer">🛒 اطلب الآن</button>
-              </div>`;
-            }
-          } else {
-            // مش موجود في Firebase خالص
-            currentOrderNum = null;
-            saveData('zz_current_order_num', null);
-            _showTrackingForOrder(null);
-          }
-        }).catch(()=>{ _showTrackingForOrder(null); });
-      }
-    }
-
-    // ← الخطوة الأولى: عرض loading مؤقت
-    if (orderCard) orderCard.innerHTML = `<div style="text-align:center;padding:40px;color:var(--text-muted)">
-      <div style="font-size:40px;margin-bottom:12px">⏳</div>
-      <div style="font-weight:700">جاري التحميل...</div>
-    </div>`;
-
-    // ← إذا currentOrderNum موجود locally — استخدمه فوراً
-    if (currentOrderNum) {
-      _showTrackingForOrder(currentOrderNum);
-    } else if (db && currentUser?.phone) {
-      // ← جيب currentOrderNum: جرّب user_sessions أولاً، وبعدين ابحث في orders مباشرة
-      const _ph = (currentUser.phone||'').replace(/[^0-9]/g,'');
-      db.ref('user_sessions/' + _ph + '/currentOrderNum').get().then(snap => {
-        if (snap.exists() && snap.val()) {
-          const fbNum = snap.val();
-          currentOrderNum = fbNum;
-          saveData('zz_current_order_num', fbNum);
-          _showTrackingForOrder(fbNum);
-        } else {
-          // مش موجود في user_sessions — ابحث في آخر 50 طلب وفلتر برقم التليفون
-          const activeStatuses = ['new', 'prep', 'ready', 'out', 'payment_pending'];
-          const myPhone = (currentUser.phone||'').replace(/\D/g,'');
-          db.ref('orders').limitToLast(50).get().then(oSnap => {
-            let foundOrder = null;
-            if (oSnap.exists()) {
-              const allOrders = [];
-              oSnap.forEach(child => { const o = child.val(); if (o) allOrders.push(o); });
-              // فلتر: طلب نشط لنفس الرقم
-              foundOrder = allOrders
-                .filter(o => {
-                  const op = (o.phone||'').replace(/\D/g,'');
-                  const ow = (o.whatsapp||'').replace(/\D/g,'');
-                  return (op === myPhone || ow === myPhone) && activeStatuses.includes(o.status);
-                })
-                .sort((a,b) => (b.timestamp||0) - (a.timestamp||0))[0] || null;
-            }
-            if (foundOrder) {
-              currentOrderNum = foundOrder.id;
-              saveData('zz_current_order_num', foundOrder.id);
-              db.ref('user_sessions/' + _ph + '/currentOrderNum').set(foundOrder.id).catch(()=>{});
-              _showTrackingForOrder(foundOrder.id);
-            } else {
-              _showTrackingForOrder(null);
-            }
-          }).catch(() => { _showTrackingForOrder(null); });
-        }
-      }).catch(() => { _showTrackingForOrder(null); });
-    } else {
-      _showTrackingForOrder(null);
-    }
-}
-
-// openScreen merged above
 
 // ============================================================
 // AUTH
