@@ -6231,16 +6231,20 @@ function exportCustomersCSV() {
 }
 
 function exportSalesReport() {
-  var statusFilter = (document.getElementById('reportStatus')||{}).value || 'delivered';
-  var period = (document.getElementById('reportPeriod')||{}).value || 'today';
+  var statusFilter = (document.getElementById('reportStatus')||{}).value || 'all';
+  var period = (document.getElementById('reportPeriod')||{}).value || 'all';
   var orders = filterOrdersByPeriod(period);
   if (statusFilter==='delivered') orders = orders.filter(function(o){return o.status==='delivered';});
-  if (!orders.length) { showNotif('لا توجد طلبات في هذه الفترة'); return; }
+  if (!orders.length) {
+    orders = ordersData.slice();
+    if (statusFilter==='delivered') orders = orders.filter(function(o){return o.status==='delivered';});
+  }
+  if (!orders.length) { showNotif('لا توجد طلبات للتصدير'); return; }
   var rows = [['#','الاسم','الهاتف','القيمة','الخصم','التوصيل','الاجمالي','النوع','الدفع','التاريخ','الوقت']];
   orders.forEach(function(o,i){
     rows.push([i+1, o.name||'-', o.phone||'-', o.subtotal||o.total, o.disc||0, o.deliveryFee||0, o.total,
       o.type==='delivery'?'توصيل':o.type==='cafe'?'كافيه':'استلام',
-      (o.payment||'كاش').split('—')[0].trim(), o.date||'-', o.time||'-']);
+      (o.payment||'كاش').replace('—','').trim(), o.date||'-', o.time||'-']);
   });
   _downloadXLS(rows, 'zamzam_sales_'+period+'_'+new Date().toISOString().slice(0,10));
   showNotif('تم تصدير '+orders.length+' طلب');
@@ -6264,10 +6268,10 @@ function _downloadXLS(rows, filename) {
 }
 
 function exportActiveReportCSV() {
-  // تصدير حسب التاب النشط
-  const salesTab = document.getElementById('reportTabSales');
-  const isCustomers = salesTab && salesTab.style.display === 'none';
-  if (isCustomers) {
+  // تصدير حسب التاب النشط — نشوف أي تاب ظاهر
+  var custTab = document.getElementById('reportTabCustomers');
+  var custVisible = custTab && (custTab.style.display !== 'none') && (custTab.offsetParent !== null || custTab.style.display === 'block');
+  if (custVisible) {
     exportCustomersCSV();
   } else {
     exportSalesReport();
