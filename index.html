@@ -6213,76 +6213,54 @@ function getVIPDiscount() {
 }
 
 function exportCustomersCSV() {
-  const period = document.getElementById('custReportPeriod')?.value || 'all';
-  const sort = document.getElementById('custReportSort')?.value || 'total';
-  // لو ordersData فاضية — جيب من Firebase أولاً
-  if (!ordersData.length) {
-    showNotif('⏳ جاري تحميل البيانات...');
-    if (db) {
-      db.ref('orders').limitToLast(500).get().then(function(snap) {
-        if (snap.exists()) {
-          snap.forEach(function(c){ const v=c.val(); if(v && !ordersData.find(o=>o.id===v.id)) ordersData.push(v); });
-        }
-        exportCustomersCSV();
-      }).catch(function(){ showNotif('❌ فشل تحميل البيانات'); });
-    } else { showNotif('❌ لا يوجد اتصال بالقاعدة'); }
-    return;
-  }
-  let customers = buildCustomerStats(period);
+  var period = (document.getElementById('custReportPeriod')||{}).value || 'all';
+  var sort = (document.getElementById('custReportSort')||{}).value || 'total';
+  var customers = buildCustomerStats(period);
   if (!customers.length) customers = buildCustomerStats('all');
-  if (!customers.length) { showNotif('❌ لا توجد بيانات للتصدير'); return; }
-
-  customers.sort((a,b) => sort === 'count' ? b.count - a.count : sort === 'avg' ? (b.total/b.count) - (a.total/a.count) : b.total - a.total);
-
-  const rows = [['#','الاسم','الهاتف','إجمالي الطلبات','إجمالي المشتريات (ج.م)','متوسط الطلب','آخر طلب','VIP','خصم VIP']];
-  customers.forEach((c, i) => {
-    const isVip = !!VIP_CUSTOMERS[c.phone];
-    const vipDiscount = isVip ? (VIP_CUSTOMERS[c.phone]?.discount || 0) + '%' : '—';
-    const avg = c.count ? Math.round(c.total / c.count) : 0;
-    rows.push([
-      i + 1,
-      c.name || '—',
-      c.phone || '—',
-      c.count,
-      c.total,
-      avg,
-      c.lastOrderDate || '—',
-      isVip ? 'VIP ⭐' : '—',
-      vipDiscount
-    ]);
+  if (!customers.length) { showNotif('لا توجد بيانات للتصدير'); return; }
+  customers.sort(function(a,b){ return sort==='count'?b.count-a.count:sort==='avg'?(b.total/b.count)-(a.total/a.count):b.total-a.total; });
+  var rows = [['#','الاسم','الهاتف','عدد الطلبات','المشتريات','المتوسط','آخر طلب','VIP','خصم']];
+  customers.forEach(function(c,i){
+    var isVip = !!VIP_CUSTOMERS[c.phone];
+    var disc = isVip?(VIP_CUSTOMERS[c.phone].discount||0)+'%':'-';
+    var avg = c.count?Math.round(c.total/c.count):0;
+    rows.push([i+1, c.name||'-', c.phone||'-', c.count, c.total, avg, c.lastOrderDate||'-', isVip?'VIP':'-', disc]);
   });
-
-  const tsv = rows.map(r => r.map(v => String(v).replace(/\t/g,' ')).join('\t')).join('\r\n');
-  const blob = new Blob(['\uFEFF' + tsv], { type: 'text/tab-separated-values;charset=utf-8' });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = 'zamzam_customers_' + new Date().toISOString().slice(0,10) + '.xls';
-  document.body.appendChild(a); a.click(); document.body.removeChild(a);
-  setTimeout(function(){ URL.revokeObjectURL(url); }, 1000);
-  showNotif('✓ تم تصدير ' + customers.length + ' عميل');
+  _downloadXLS(rows, 'zamzam_customers_'+new Date().toISOString().slice(0,10));
+  showNotif('تم تصدير '+customers.length+' عميل');
 }
 
 function exportSalesReport() {
-  const statusFilter = document.getElementById('reportStatus')?.value || 'delivered';
-  const period = document.getElementById('reportPeriod')?.value || 'today';
-  let orders = filterOrdersByPeriod(period);
-  if (statusFilter === 'delivered') orders = orders.filter(o => o.status === 'delivered');
-  const rows = [['#','الاسم','الهاتف','القيمة','الخصم','التوصيل','الإجمالى','النوع','الدفع','التاريخ','الوقت']];
-  orders.forEach((o,i) => rows.push([
-    i+1, o.name, o.phone||'—', o.subtotal||o.total, o.disc||0, o.deliveryFee||0, o.total,
-    o.type==='delivery'?'توصيل':o.type==='cafe'?'كافيه':'استلام',
-    (o.payment||'كاش').split('—')[0].trim(), o.date||'—', o.time||'—'
-  ]));
-  if (!orders.length) { showNotif('❌ لا توجد طلبات للتصدير في هذه الفترة'); return; }
-  const tsv = rows.map(r => r.map(v => String(v).replace(/\t/g,' ')).join('\t')).join('\r\n');
-  const blob = new Blob(['\uFEFF'+tsv], {type:'text/tab-separated-values;charset=utf-8'});
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a'); a.href = url;
-  a.download = 'zamzam_sales_' + period + '_' + new Date().toISOString().slice(0,10) + '.xls';
+  var statusFilter = (document.getElementById('reportStatus')||{}).value || 'delivered';
+  var period = (document.getElementById('reportPeriod')||{}).value || 'today';
+  var orders = filterOrdersByPeriod(period);
+  if (statusFilter==='delivered') orders = orders.filter(function(o){return o.status==='delivered';});
+  if (!orders.length) { showNotif('لا توجد طلبات في هذه الفترة'); return; }
+  var rows = [['#','الاسم','الهاتف','القيمة','الخصم','التوصيل','الاجمالي','النوع','الدفع','التاريخ','الوقت']];
+  orders.forEach(function(o,i){
+    rows.push([i+1, o.name||'-', o.phone||'-', o.subtotal||o.total, o.disc||0, o.deliveryFee||0, o.total,
+      o.type==='delivery'?'توصيل':o.type==='cafe'?'كافيه':'استلام',
+      (o.payment||'كاش').split('—')[0].trim(), o.date||'-', o.time||'-']);
+  });
+  _downloadXLS(rows, 'zamzam_sales_'+period+'_'+new Date().toISOString().slice(0,10));
+  showNotif('تم تصدير '+orders.length+' طلب');
+}
+
+function _downloadXLS(rows, filename) {
+  var nl = String.fromCharCode(13,10);
+  var lines = [];
+  for (var i=0; i<rows.length; i++) {
+    var cells = [];
+    for (var j=0; j<rows[i].length; j++) cells.push(String(rows[i][j]).replace(/\t/g,' '));
+    lines.push(cells.join(String.fromCharCode(9)));
+  }
+  var tsv = lines.join(nl);
+  var blob = new Blob(['\uFEFF'+tsv], {type:'text/tab-separated-values;charset=utf-8'});
+  var url = URL.createObjectURL(blob);
+  var a = document.createElement('a');
+  a.href = url; a.download = filename+'.xls';
   document.body.appendChild(a); a.click(); document.body.removeChild(a);
-  setTimeout(function(){ URL.revokeObjectURL(url); }, 1000);
-  showNotif('✓ تم تصدير ' + orders.length + ' طلب');
+  setTimeout(function(){URL.revokeObjectURL(url);}, 2000);
 }
 
 function exportActiveReportCSV() {
