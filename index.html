@@ -2142,7 +2142,7 @@ input,select,textarea{font-family:inherit;}
     <button class="modal-close" onclick="closeModal('salesReportModal')">✕</button>
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:8px">
       <h3 style="margin:0">📊 تقرير المبيعات</h3>
-      <button onclick="exportCustomersCSV()" style="padding:7px 12px;background:var(--olive);color:#fff;border-radius:10px;font-size:12px;font-weight:800">⬇️ CSV</button>
+      <button id="csvExportBtn" onclick="exportActiveReportCSV()" style="padding:7px 12px;background:var(--olive);color:#fff;border-radius:10px;font-size:12px;font-weight:800">⬇️ CSV</button>
     </div>
     <!-- Report Tabs -->
     <div style="display:flex;background:var(--border);border-radius:10px;padding:3px;margin-bottom:12px">
@@ -5543,7 +5543,7 @@ let _menuWriteLock = false;
 function saveMenu() {
   saveData("zz_menu", MENU);
   _menuWriteLock = true;
-  fbSaveMenu().finally(() => { setTimeout(() => { _menuWriteLock = false; }, 3000); });
+  fbSaveMenu().finally(() => { setTimeout(() => { _menuWriteLock = false; }, 800); });
 }
 
 // ============================================================
@@ -6251,6 +6251,7 @@ function exportCustomersCSV() {
 
 function exportSalesReport() {
   const statusFilter = document.getElementById('reportStatus')?.value || 'delivered';
+  const period = document.getElementById('reportPeriod')?.value || 'today';
   let orders = filterOrdersByPeriod(period);
   if (statusFilter === 'delivered') orders = orders.filter(o => o.status === 'delivered');
   const rows = [['#','الاسم','الهاتف','القيمة','الخصم','التوصيل','الإجمالى','النوع','الدفع','التاريخ','الوقت']];
@@ -6266,6 +6267,17 @@ function exportSalesReport() {
   a.download = `zamzam_sales_${period}_${new Date().toISOString().slice(0,10)}.csv`;
   a.click(); URL.revokeObjectURL(url);
   showNotif('✓ تم تصدير التقرير');
+}
+
+function exportActiveReportCSV() {
+  // تصدير حسب التاب النشط
+  const salesTab = document.getElementById('reportTabSales');
+  const isCustomers = salesTab && salesTab.style.display === 'none';
+  if (isCustomers) {
+    exportCustomersCSV();
+  } else {
+    exportSalesReport();
+  }
 }
 
 // ============================================================
