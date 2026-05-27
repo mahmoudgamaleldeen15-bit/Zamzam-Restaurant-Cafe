@@ -6216,6 +6216,8 @@ function exportCustomersCSV() {
   const period = document.getElementById('custReportPeriod')?.value || 'all';
   const sort = document.getElementById('custReportSort')?.value || 'total';
   let customers = buildCustomerStats(period);
+  // لو مفيش بيانات في الفترة المختارة — جرّب كل الوقت
+  if (!customers.length) customers = buildCustomerStats('all');
   if (!customers.length) { showNotif('❌ لا توجد بيانات للتصدير'); return; }
 
   customers.sort((a,b) => sort === 'count' ? b.count - a.count : sort === 'avg' ? (b.total/b.count) - (a.total/a.count) : b.total - a.total);
@@ -6238,13 +6240,13 @@ function exportCustomersCSV() {
     ]);
   });
 
-  const csv = rows.map(r => r.map(v => `"${String(v).replace(/"/g,'""')}"`).join(',')).join('\n');
+  const csv = 'sep=;\n' + rows.map(r => r.map(v => `"${String(v).replace(/"/g,'""')}"`).join(';')).join('\n');
   const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8' });
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url;
   a.download = `zamzam_customers_${new Date().toISOString().slice(0,10)}.csv`;
-  a.click();
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
   URL.revokeObjectURL(url);
   showNotif(`✓ تم تصدير ${customers.length} عميل`);
 }
@@ -6260,13 +6262,15 @@ function exportSalesReport() {
     o.type==='delivery'?'توصيل':o.type==='cafe'?'كافيه':'استلام',
     (o.payment||'كاش').split('—')[0].trim(), o.date||'—', o.time||'—'
   ]));
-  const csv = rows.map(r => r.map(v => `"${String(v).replace(/"/g,'""')}"`).join(',')).join('\n');
+  if (!orders.length) { showNotif('❌ لا توجد طلبات للتصدير في هذه الفترة'); return; }
+  const csv = 'sep=;\n' + rows.map(r => r.map(v => `"${String(v).replace(/"/g,'""')}"`).join(';')).join('\n');
   const blob = new Blob(['\uFEFF'+csv], {type:'text/csv;charset=utf-8'});
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a'); a.href = url;
   a.download = `zamzam_sales_${period}_${new Date().toISOString().slice(0,10)}.csv`;
-  a.click(); URL.revokeObjectURL(url);
-  showNotif('✓ تم تصدير التقرير');
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+  showNotif(`✓ تم تصدير ${orders.length} طلب`);
 }
 
 function exportActiveReportCSV() {
