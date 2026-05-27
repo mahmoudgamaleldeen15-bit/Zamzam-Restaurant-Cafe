@@ -2142,7 +2142,8 @@ input,select,textarea{font-family:inherit;}
     <button class="modal-close" onclick="closeModal('salesReportModal')">✕</button>
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:8px">
       <h3 style="margin:0">📊 تقرير المبيعات</h3>
-      <button id="csvExportBtn" onclick="exportActiveReportCSV()" style="padding:7px 12px;background:var(--olive);color:#fff;border-radius:10px;font-size:12px;font-weight:800">⬇️ CSV</button>
+      <button id="csvSalesBtn" onclick="exportSalesReport()" style="padding:7px 12px;background:var(--olive);color:#fff;border-radius:10px;font-size:12px;font-weight:800;display:inline-block">⬇️ مبيعات</button>
+      <button id="csvCustBtn" onclick="exportCustomersCSV()" style="padding:7px 12px;background:#6b7280;color:#fff;border-radius:10px;font-size:12px;font-weight:800;display:none">⬇️ عملاء</button>
     </div>
     <!-- Report Tabs -->
     <div style="display:flex;background:var(--border);border-radius:10px;padding:3px;margin-bottom:12px">
@@ -6048,15 +6049,21 @@ function switchReportTab(tab) {
   const custTab = document.getElementById('reportTabCustomers');
   const btnSales = document.getElementById('rTabSales');
   const btnCust = document.getElementById('rTabCustomers');
+  var csvS = document.getElementById('csvSalesBtn');
+  var csvC = document.getElementById('csvCustBtn');
   if (tab === 'sales') {
     salesTab.style.display = 'block'; custTab.style.display = 'none';
     btnSales.style.background = 'var(--white)'; btnSales.style.color = 'var(--olive-dark)'; btnSales.style.boxShadow = '0 2px 6px rgba(0,0,0,.08)';
     btnCust.style.background = 'none'; btnCust.style.color = 'var(--text-muted)'; btnCust.style.boxShadow = 'none';
+    if (csvS) csvS.style.display = 'inline-block';
+    if (csvC) csvC.style.display = 'none';
     renderSalesReport();
   } else {
     salesTab.style.display = 'none'; custTab.style.display = 'block';
     btnCust.style.background = 'var(--white)'; btnCust.style.color = 'var(--olive-dark)'; btnCust.style.boxShadow = '0 2px 6px rgba(0,0,0,.08)';
     btnSales.style.background = 'none'; btnSales.style.color = 'var(--text-muted)'; btnSales.style.boxShadow = 'none';
+    if (csvS) csvS.style.display = 'none';
+    if (csvC) csvC.style.display = 'inline-block';
     renderCustomersReport();
   }
 }
@@ -6251,15 +6258,18 @@ function exportSalesReport() {
 }
 
 function _downloadXLS(rows, filename) {
-  var nl = String.fromCharCode(13,10);
-  var lines = [];
+  // HTML Table — بيفتح في Excel منظم تلقائياً
+  var html = '<html dir="rtl"><head><meta charset="UTF-8"></head><body><table border="1">';
   for (var i=0; i<rows.length; i++) {
-    var cells = [];
-    for (var j=0; j<rows[i].length; j++) cells.push(String(rows[i][j]).replace(/\t/g,' '));
-    lines.push(cells.join(String.fromCharCode(9)));
+    html += '<tr>';
+    for (var j=0; j<rows[i].length; j++) {
+      var tag = i===0 ? 'th' : 'td';
+      html += '<'+tag+' style="white-space:nowrap">'+String(rows[i][j]).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')+'</'+tag+'>';
+    }
+    html += '</tr>';
   }
-  var tsv = lines.join(nl);
-  var blob = new Blob(['\uFEFF'+tsv], {type:'text/tab-separated-values;charset=utf-8'});
+  html += '</table></body></html>';
+  var blob = new Blob([html], {type:'application/vnd.ms-excel;charset=utf-8'});
   var url = URL.createObjectURL(blob);
   var a = document.createElement('a');
   a.href = url; a.download = filename+'.xls';
