@@ -6215,8 +6215,20 @@ function getVIPDiscount() {
 function exportCustomersCSV() {
   const period = document.getElementById('custReportPeriod')?.value || 'all';
   const sort = document.getElementById('custReportSort')?.value || 'total';
+  // لو ordersData فاضية — جيب من Firebase أولاً
+  if (!ordersData.length) {
+    showNotif('⏳ جاري تحميل البيانات...');
+    if (db) {
+      db.ref('orders').limitToLast(500).get().then(function(snap) {
+        if (snap.exists()) {
+          snap.forEach(function(c){ const v=c.val(); if(v && !ordersData.find(o=>o.id===v.id)) ordersData.push(v); });
+        }
+        exportCustomersCSV();
+      }).catch(function(){ showNotif('❌ فشل تحميل البيانات'); });
+    } else { showNotif('❌ لا يوجد اتصال بالقاعدة'); }
+    return;
+  }
   let customers = buildCustomerStats(period);
-  // لو مفيش بيانات في الفترة المختارة — جرّب كل الوقت
   if (!customers.length) customers = buildCustomerStats('all');
   if (!customers.length) { showNotif('❌ لا توجد بيانات للتصدير'); return; }
 
@@ -6240,15 +6252,15 @@ function exportCustomersCSV() {
     ]);
   });
 
-  const csv = 'sep=;\n' + rows.map(r => r.map(v => `"${String(v).replace(/"/g,'""')}"`).join(';')).join('\n');
-  const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8' });
+  const tsv = rows.map(r => r.map(v => String(v).replace(/\t/g,' ')).join('\t')).join('\r\n');
+  const blob = new Blob(['\uFEFF' + tsv], { type: 'text/tab-separated-values;charset=utf-8' });
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url;
-  a.download = `zamzam_customers_${new Date().toISOString().slice(0,10)}.csv`;
+  a.download = 'zamzam_customers_' + new Date().toISOString().slice(0,10) + '.xls';
   document.body.appendChild(a); a.click(); document.body.removeChild(a);
-  URL.revokeObjectURL(url);
-  showNotif(`✓ تم تصدير ${customers.length} عميل`);
+  setTimeout(function(){ URL.revokeObjectURL(url); }, 1000);
+  showNotif('✓ تم تصدير ' + customers.length + ' عميل');
 }
 
 function exportSalesReport() {
@@ -6263,14 +6275,14 @@ function exportSalesReport() {
     (o.payment||'كاش').split('—')[0].trim(), o.date||'—', o.time||'—'
   ]));
   if (!orders.length) { showNotif('❌ لا توجد طلبات للتصدير في هذه الفترة'); return; }
-  const csv = 'sep=;\n' + rows.map(r => r.map(v => `"${String(v).replace(/"/g,'""')}"`).join(';')).join('\n');
-  const blob = new Blob(['\uFEFF'+csv], {type:'text/csv;charset=utf-8'});
+  const tsv = rows.map(r => r.map(v => String(v).replace(/\t/g,' ')).join('\t')).join('\r\n');
+  const blob = new Blob(['\uFEFF'+tsv], {type:'text/tab-separated-values;charset=utf-8'});
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a'); a.href = url;
-  a.download = `zamzam_sales_${period}_${new Date().toISOString().slice(0,10)}.csv`;
+  a.download = 'zamzam_sales_' + period + '_' + new Date().toISOString().slice(0,10) + '.xls';
   document.body.appendChild(a); a.click(); document.body.removeChild(a);
-  URL.revokeObjectURL(url);
-  showNotif(`✓ تم تصدير ${orders.length} طلب`);
+  setTimeout(function(){ URL.revokeObjectURL(url); }, 1000);
+  showNotif('✓ تم تصدير ' + orders.length + ' طلب');
 }
 
 function exportActiveReportCSV() {
