@@ -2276,12 +2276,25 @@ input,select,textarea{font-family:inherit;}
       العملاء والإعدادات والمنيو لن تتأثر.<br/>
       <strong>هذا الإجراء لا يمكن التراجع عنه.</strong>
     </div>
-    <div class="field"><label>اكتب <strong>RESET</strong> للتأكيد</label>
-      <input type="text" id="resetConfirmInput" placeholder="اكتب RESET" style="direction:ltr;font-family:monospace;font-size:16px;letter-spacing:2px"/>
+    <!-- الخطوة 1: باسورد الأدمين -->
+    <div id="resetStep1">
+      <div class="field"><label>🔑 أدخل باسورد الأدمين أولاً</label>
+        <input type="password" id="resetAdminPass" placeholder="باسورد الأدمين" style="font-size:15px"/>
+      </div>
+      <div style="display:flex;gap:10px">
+        <button onclick="closeModal('systemResetModal')" style="flex:1;padding:13px;background:var(--cream);color:var(--text-muted);border-radius:12px;font-size:14px;font-weight:700">إلغاء</button>
+        <button onclick="verifyResetPassword()" style="flex:1;padding:13px;background:#dc2626;color:#fff;border-radius:12px;font-size:14px;font-weight:800">التالي ←</button>
+      </div>
     </div>
-    <div style="display:flex;gap:10px">
-      <button onclick="closeModal('systemResetModal')" style="flex:1;padding:13px;background:var(--cream);color:var(--text-muted);border-radius:12px;font-size:14px;font-weight:700">إلغاء</button>
-      <button onclick="executeSystemReset()" style="flex:1;padding:13px;background:var(--red);color:#fff;border-radius:12px;font-size:14px;font-weight:800">🗑️ مسح الآن</button>
+    <!-- الخطوة 2: كتابة RESET -->
+    <div id="resetStep2" style="display:none">
+      <div class="field"><label>اكتب <strong>RESET</strong> للتأكيد النهائي</label>
+        <input type="text" id="resetConfirmInput" placeholder="اكتب RESET" style="direction:ltr;font-family:monospace;font-size:16px;letter-spacing:2px"/>
+      </div>
+      <div style="display:flex;gap:10px">
+        <button onclick="closeModal('systemResetModal')" style="flex:1;padding:13px;background:var(--cream);color:var(--text-muted);border-radius:12px;font-size:14px;font-weight:700">إلغاء</button>
+        <button onclick="executeSystemReset()" style="flex:1;padding:13px;background:var(--red);color:#fff;border-radius:12px;font-size:14px;font-weight:800">🗑️ مسح الآن</button>
+      </div>
     </div>
   </div>
 </div>
@@ -5148,6 +5161,7 @@ function renderAdminBookings() {
         ${b.status !== 'arrived' && b.status !== 'cancelled' ? `<button class="action-btn" style="background:#dbeafe;color:#1e40af" onclick="markBookingArrived('${b.id}')">🙋 حضر العميل</button>` : ''}
         ${b.whatsapp ? `<button class="action-btn btn-wa" onclick="sendBookingEntryMsg('${b.id}')">💬 إذن الدخول</button>` : ''}
         ${b.status !== 'cancelled' ? `<button class="action-btn btn-cancel" onclick="cancelBooking('${b.id}')">❌ إلغاء الحجز</button>` : ''}
+        <button class="action-btn" style="background:#fce7f3;color:#9d174d" onclick="deleteBooking('${b.id}')">🗑️ حذف</button>
       </div>
     </div>`;
   }).join('');
@@ -5185,12 +5199,19 @@ function cancelBooking(id) {
   const b = bookingsData.find(x => x.id === id);
   if (b) {
     b.status = 'cancelled';
-    // 🔥 تحديث الحجز في Firebase
     fbUpdate('bookings/' + id, { status: 'cancelled' });
   }
   saveData('zz_bookings', bookingsData);
   renderAdminBookings();
   showNotif('✓ تم إلغاء الحجز');
+}
+function deleteBooking(id) {
+  if (!confirm('حذف هذا الحجز نهائياً؟ لا يمكن التراجع.')) return;
+  bookingsData = bookingsData.filter(x => x.id !== id);
+  fbRemove('bookings/' + id);
+  saveData('zz_bookings', bookingsData);
+  renderAdminBookings();
+  showNotif('✓ تم حذف الحجز نهائياً');
 }
 
 // ============================================================
@@ -6787,8 +6808,18 @@ async function executeImportBackup() {
 // SYSTEM RESET (Admin Only)
 // ============================================================
 function confirmSystemReset() {
+  if (adminRoleType !== 'admin') { showNotif('⛔ أدمن فقط'); return; }
+  document.getElementById('resetAdminPass').value = '';
   document.getElementById('resetConfirmInput').value = '';
+  document.getElementById('resetStep1').style.display = 'block';
+  document.getElementById('resetStep2').style.display = 'none';
   openModal('systemResetModal');
+}
+function verifyResetPassword() {
+  const pass = document.getElementById('resetAdminPass').value.trim();
+  if (!_verifyAuth('admin', pass)) { showNotif('❌ باسورد الأدمين غلط'); return; }
+  document.getElementById('resetStep1').style.display = 'none';
+  document.getElementById('resetStep2').style.display = 'block';
 }
 function executeSystemReset() {
   const val = document.getElementById('resetConfirmInput').value.trim();
