@@ -819,8 +819,8 @@ input,select,textarea{font-family:inherit;}
 .main-group-manager-row button:hover{opacity:.85;}
 
 /* ===== FOOD CARD WITH IMAGE SUPPORT ===== */
-.food-img-wrap{width:100%;height:110px;position:relative;overflow:hidden;border-radius:0;background:transparent;}
-.food-img-actual{width:100%;height:100%;object-fit:contain;display:block;background:transparent;}
+.food-img-wrap{width:100%;height:110px;position:relative;overflow:hidden;border-radius:0;}
+.food-img-actual{width:100%;height:100%;object-fit:cover;display:block;}
 .food-img-emoji{width:100%;height:110px;background:linear-gradient(135deg,var(--olive-pale),var(--cream));display:flex;align-items:center;justify-content:center;font-size:42px;}
 
 /* ===== IMAGE UPLOAD COMPONENT ===== */
@@ -10373,8 +10373,18 @@ function compressImage(file, maxW, maxH, quality) {
         if (width > maxW) { height = Math.round(height * maxW / width); width = maxW; }
         if (height > maxH) { width = Math.round(width * maxH / height); height = maxH; }
         canvas.width = width; canvas.height = height;
-        canvas.getContext('2d').drawImage(img, 0, 0, width, height);
-        resolve(canvas.toDataURL('image/jpeg', quality || 0.75));
+        const ctx = canvas.getContext('2d');
+        // لو PNG — نحافظ على الشفافية بدون خلفية
+        const isPng = file.type === 'image/png';
+        if (!isPng) {
+          ctx.fillStyle = '#ffffff';
+          ctx.fillRect(0, 0, width, height);
+        }
+        ctx.drawImage(img, 0, 0, width, height);
+        // PNG بتحافظ على الشفافية، JPEG للصور العادية
+        const fmt = isPng ? 'image/png' : 'image/jpeg';
+        const q = isPng ? undefined : (quality || 0.75);
+        resolve(canvas.toDataURL(fmt, q));
       };
       img.src = e.target.result;
     };
