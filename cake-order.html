@@ -496,6 +496,10 @@ body { background:var(--cream); color:var(--text); font-family:'Cairo',sans-seri
       </div>
       <img id="imgPreview" class="img-preview"/>
     </div>
+    <div id="imgActions" style="display:none;margin-top:8px;display:none;gap:8px">
+      <button type="button" onclick="changeImage()" style="flex:1;padding:8px;background:var(--cream2);border:1.5px solid var(--rose-light);border-radius:8px;font-size:12px;font-weight:700;color:var(--rose-dark);cursor:pointer;font-family:'Cairo',sans-serif">🔄 تغيير الصورة</button>
+      <button type="button" onclick="removeImage()" style="flex:1;padding:8px;background:#fff0f0;border:1.5px solid #ffb3b3;border-radius:8px;font-size:12px;font-weight:700;color:#e53e3e;cursor:pointer;font-family:'Cairo',sans-serif">🗑️ حذف الصورة</button>
+    </div>
   </div>
 
   <!-- LAYERS HEIGHT -->
@@ -539,13 +543,37 @@ body { background:var(--cream); color:var(--text); font-family:'Cairo',sans-seri
 
 <!-- ==================== STEP 4: SUMMARY ==================== -->
 <div class="step-panel" id="step4">
-  <div class="step-title"><span class="step-icon">📋</span> ملخص الطلب</div>
+  <div class="step-title"><span class="step-icon">📋</span> مراجعة الطلب</div>
+
+  <!-- COUNTDOWN -->
+  <div id="countdownBox" style="background:linear-gradient(135deg,var(--rose-dark),var(--rose));border-radius:16px;padding:16px;text-align:center;margin-bottom:16px">
+    <div style="font-size:12px;color:rgba(255,255,255,.85);margin-bottom:6px">⏳ راجع طلبك قبل الإرسال</div>
+    <div style="font-size:40px;font-weight:900;color:#fff;line-height:1" id="countdownNum">90</div>
+    <div style="font-size:11px;color:rgba(255,255,255,.75);margin-top:4px">ثانية متبقية للمراجعة</div>
+    <div style="background:rgba(255,255,255,.2);border-radius:100px;height:6px;margin-top:10px;overflow:hidden">
+      <div id="countdownBar" style="background:#fff;height:100%;border-radius:100px;width:100%;transition:width 1s linear"></div>
+    </div>
+  </div>
+
+  <!-- ACTIONS -->
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:16px">
+    <button onclick="goStep(3)" style="padding:12px;background:var(--cream2);border:1.5px solid var(--rose-light);border-radius:12px;font-size:13px;font-weight:800;color:var(--rose-dark);cursor:pointer;font-family:'Cairo',sans-serif">✏️ تعديل الطلب</button>
+    <button onclick="cancelOrder()" style="padding:12px;background:#fff0f0;border:1.5px solid #ffb3b3;border-radius:12px;font-size:13px;font-weight:800;color:#e53e3e;cursor:pointer;font-family:'Cairo',sans-serif">❌ إلغاء الطلب</button>
+  </div>
+
   <div id="summaryContent"></div>
+
   <div class="alert alert-warn">
-    ⚠️ السعر المعروض تقريبي فقط — السعر النهائي يتحدد بعد مراجعة التصميم والوزن والإضافات الخاصة من قبل فريقنا.
+    ⚠️ السعر المعروض تقريبي — السعر النهائي يتحدد بعد مراجعة التصميم والإضافات.
   </div>
   <div class="alert alert-info">
-    ✅ سيتم التواصل معك على واتساب خلال ساعات لتأكيد الطلب وتحديد السعر النهائي.
+    ✅ سيتم التواصل معك على واتساب لتأكيد الطلب وتحديد السعر النهائي.
+  </div>
+
+  <!-- SCREENSHOT HINT -->
+  <div style="background:linear-gradient(135deg,#f0fff4,#dcfce7);border:1.5px solid #86efac;border-radius:12px;padding:12px;text-align:center;margin-top:8px">
+    <div style="font-size:13px;font-weight:800;color:#166534;margin-bottom:4px">📸 نصيحة</div>
+    <div style="font-size:11px;color:#15803d;line-height:1.6">خذ screenshot لملخص الطلب الآن — ستحتاجه للمطابقة عند الاستلام</div>
   </div>
 </div>
 
@@ -553,7 +581,22 @@ body { background:var(--cream); color:var(--text); font-family:'Cairo',sans-seri
 <div class="success-screen" id="successScreen">
   <div class="success-icon">🎉</div>
   <div style="font-size:22px;font-weight:900;color:var(--dark);margin:16px 0 8px">تم إرسال طلبك!</div>
-  <div style="font-size:14px;color:var(--text2);line-height:1.8;margin-bottom:24px">شكراً لثقتك في زمزم ديزرت 🎂<br/>سيتواصل معك فريقنا على واتساب قريباً لتأكيد طلبك</div>
+  <div style="font-size:14px;color:var(--text2);line-height:1.8;margin-bottom:16px">شكراً لثقتك في زمزم ديزرت 🎂<br/>سيتواصل معك فريقنا على واتساب قريباً لتأكيد طلبك</div>
+
+  <!-- IMAGE SEND SECTION -->
+  <div id="imgSendSection" style="display:none;background:#fff8f0;border:1.5px solid var(--rose-light);border-radius:14px;padding:14px;margin-bottom:16px;text-align:center">
+    <div style="font-size:13px;font-weight:800;color:var(--rose-dark);margin-bottom:8px">📸 أرسل الصورة المرجعية على واتساب</div>
+    <img id="imgSendPreview" style="width:80px;height:80px;object-fit:cover;border-radius:10px;margin-bottom:8px"/>
+    <div style="font-size:11px;color:var(--text2);margin-bottom:10px">افتح واتساب وأرسل الصورة دي مع نفس الرسالة</div>
+    <button onclick="sendImageWhatsApp()" style="width:100%;padding:10px;background:linear-gradient(135deg,#25d366,#128c7e);color:#fff;border-radius:10px;font-size:13px;font-weight:800;border:none;cursor:pointer;font-family:'Cairo',sans-serif">📱 فتح واتساب لإرسال الصورة</button>
+  </div>
+
+  <!-- SCREENSHOT REMINDER -->
+  <div style="background:#f0fff4;border:1.5px solid #86efac;border-radius:12px;padding:12px;margin-bottom:16px">
+    <div style="font-size:12px;font-weight:800;color:#166534;margin-bottom:4px">📸 لا تنسى!</div>
+    <div style="font-size:11px;color:#15803d;line-height:1.6">خذ screenshot لهذه الشاشة — ستحتاجها للمطابقة عند استلام التورتة ✅</div>
+  </div>
+
   <button onclick="resetForm()" style="padding:14px 32px;background:linear-gradient(135deg,var(--rose),var(--rose-dark));color:#fff;border-radius:12px;font-size:14px;font-weight:800;border:none;cursor:pointer;font-family:'Cairo',sans-serif">طلب جديد 🎂</button>
   <div style="margin-top:16px">
     <a href="https://wa.me/201158973728" style="font-size:13px;color:var(--rose);font-weight:700;text-decoration:none">تواصل معنا مباشرة على واتساب 📱</a>
@@ -628,7 +671,7 @@ let order = {
   orderType:'pickup', clientAddress:'', clientLandmark:'',
   size:'', sizePrice:0,
   layers:'دور واحد',
-  layerHeight:'3 طبقات',
+  layerHeight:'3 طبقات (ارتفاع عادي)',
   topping:'', toppingHalf1:'', toppingHalf2:'', isHalfHalf:false,
   sponge:'',
   filling:'بدون حشو',
@@ -666,10 +709,12 @@ function goStep(n) {
     document.getElementById('progressWrap').style.display = 'none';
   } else if (currentStep === 4) {
     buildSummary();
-    btnNext.textContent = '📱 إرسال على واتساب';
+    btnNext.textContent = '✅ تأكيد وإرسال الطلب';
     btnNext.className = 'btn-next gold';
     btnNext.style.display = 'block';
     document.getElementById('progressWrap').style.display = 'block';
+    // Start 90-second countdown
+    setTimeout(startCountdown, 300);
   } else {
     btnNext.textContent = 'التالي ←';
     btnNext.className = 'btn-next';
@@ -686,6 +731,7 @@ function goNext() {
 }
 
 function goBack() {
+  clearInterval(countdownTimer);
   if (currentStep > 0) goStep(currentStep - 1);
 }
 
@@ -821,11 +867,27 @@ function handleImgUpload(input) {
   const reader = new FileReader();
   reader.onload = e => {
     order.imgBase64 = e.target.result;
+    order.imgName = file.name;
     document.getElementById('imgPreview').src = e.target.result;
     document.getElementById('imgPreview').style.display = 'block';
     document.getElementById('imgUploadContent').style.display = 'none';
+    document.getElementById('imgActions').style.display = 'flex';
   };
   reader.readAsDataURL(file);
+}
+
+function changeImage() {
+  document.getElementById('imgFileInput').click();
+}
+
+function removeImage() {
+  order.imgBase64 = '';
+  order.imgName = '';
+  document.getElementById('imgPreview').style.display = 'none';
+  document.getElementById('imgUploadContent').style.display = 'block';
+  document.getElementById('imgActions').style.display = 'none';
+  document.getElementById('imgFileInput').value = '';
+  showToast('✅ تم حذف الصورة');
 }
 
 // ============================================================
@@ -836,13 +898,27 @@ function buildSummary() {
     ? `نصف ${document.getElementById('half1')?.value||''} + نصف ${document.getElementById('half2')?.value||''}`
     : order.topping || 'لم يُحدد';
 
+  // حساب هل فيه إضافات بتأثر على السعر
+  // السعر يظهر بس لو الطلب عادي بدون أي إضافات
+  const layerH = document.querySelector('#layerHeightGrid .option-btn.selected')?.textContent?.trim() || '';
+  const hasExtras = (
+    (layerH && !layerH.includes('3 طبقات')) ||
+    (order.filling && order.filling !== 'بدون حشو') ||
+    (order.deco && (order.deco.includes('3D') || order.deco.includes('خاص'))) ||
+    (order.layers && order.layers !== 'دور واحد') ||
+    order.imgBase64
+  );
+  const priceDisplay = hasExtras
+    ? '<div class="price-main" style="font-size:18px;line-height:1.4">يُحدد السعر النهائي<br/>بالتنسيق مع المسئول 📞</div>'
+    : `<div class="price-main">${order.sizePrice ? '~'+order.sizePrice+' ج.م' : 'حسب الاتفاق'}</div>`;
+
   const rows = [
     ['👤 الاسم', order.clientName],
     ['📱 الهاتف', order.clientPhone],
     ['💬 واتساب', order.clientWa],
     ['📅 تاريخ الاستلام', order.clientDate],
     ['⏰ وقت الاستلام', order.clientTime],
-    ['👥 عدد الأشخاص', order.persons + ' شخص'],
+
     ['📐 المقاس', order.size || '—'],
     ['🎂 عدد الأدوار', order.layers],
     ['🍫 التوبينج', toppingText],
@@ -854,9 +930,9 @@ function buildSummary() {
   ];
 
   let html = `<div class="price-box">
-    <div style="font-size:13px;opacity:.9;margin-bottom:4px">السعر التقريبي</div>
-    <div class="price-main">${order.sizePrice ? '~'+order.sizePrice+' ج.م' : 'حسب الاتفاق'}</div>
-    <div class="price-note">السعر النهائي يتحدد بعد مراجعة التصميم والإضافات</div>
+    <div style="font-size:13px;opacity:.9;margin-bottom:4px">${hasExtras ? '💬 السعر' : '💰 السعر التقريبي'}</div>
+    ${priceDisplay}
+    <div class="price-note">${hasExtras ? 'بعض الإضافات المختارة تستلزم تسعيراً خاصاً' : 'السعر النهائي يتحدد بعد مراجعة التصميم'}</div>
   </div>
   <div class="card">`;
 
@@ -940,9 +1016,18 @@ function submitOrder() {
   document.querySelectorAll('.step-panel').forEach(p=>p.classList.remove('active'));
   document.getElementById('navBtns').style.display = 'none';
   document.getElementById('adminToggleWrap').style.display = 'none';
-  document.getElementById('successScreen').classList.add('show');
 
-  // Open WhatsApp
+  // Build success screen content
+  const successEl = document.getElementById('successScreen');
+  successEl.classList.add('show');
+
+  // If image exists - show separate send button
+  if (order.imgBase64) {
+    document.getElementById('imgSendSection').style.display = 'block';
+    document.getElementById('imgSendPreview').src = order.imgBase64;
+  }
+
+  // Open WhatsApp with text first (no image in URL to avoid breaking)
   setTimeout(() => { window.open(waUrl, '_blank'); }, 500);
 }
 
@@ -1006,6 +1091,54 @@ function loadAdminOrders() {
 // ============================================================
 // TOAST
 // ============================================================
+// ============================================================
+// COUNTDOWN — 90 seconds review timer
+// ============================================================
+let countdownTimer = null;
+let countdownSec = 90;
+
+function startCountdown() {
+  countdownSec = 90;
+  clearInterval(countdownTimer);
+  const numEl = document.getElementById('countdownNum');
+  const barEl = document.getElementById('countdownBar');
+  if (!numEl) return;
+  numEl.textContent = countdownSec;
+  if (barEl) barEl.style.width = '100%';
+
+  countdownTimer = setInterval(function() {
+    countdownSec--;
+    if (numEl) numEl.textContent = countdownSec;
+    if (barEl) barEl.style.width = (countdownSec / 90 * 100) + '%';
+    if (countdownSec <= 10 && numEl) numEl.style.color = '#ffcccc';
+    if (countdownSec <= 0) {
+      clearInterval(countdownTimer);
+      // Auto submit when countdown ends
+      var box = document.getElementById('countdownBox');
+      if (box) {
+        box.innerHTML = '<div style="font-size:13px;font-weight:800;color:#fff">⏰ انتهى وقت المراجعة — سيتم الإرسال تلقائياً</div>';
+        box.style.background = '#166534';
+      }
+      setTimeout(function() { submitOrder(); }, 1500);
+    }
+  }, 1000);
+}
+
+function cancelOrder() {
+  clearInterval(countdownTimer);
+  if (confirm('هل تريد إلغاء الطلب؟')) {
+    resetForm();
+    showToast('تم إلغاء الطلب');
+  } else {
+    startCountdown();
+  }
+}
+
+function sendImageWhatsApp() {
+  const waNum = WA_NUM().replace(/[^0-9]/g,'');
+  window.open('https://api.whatsapp.com/send?phone=' + waNum + '&text=' + encodeURIComponent('📸 الصورة المرجعية للطلب'), '_blank');
+}
+
 let toastTimer;
 function showToast(msg) {
   const el = document.getElementById('toastEl');
