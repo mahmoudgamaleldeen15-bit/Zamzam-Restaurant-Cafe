@@ -1,0 +1,963 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>طلب تورتة سبيشيال 🎂 — زمزم ديزرت</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+:root {
+  --rose: #e91e8c;
+  --rose-dark: #c2185b;
+  --rose-light: #f48fb1;
+  --gold: #c8973a;
+  --gold-light: #e8b84b;
+  --cream: #fdf6f0;
+  --cream2: #fef0f5;
+  --dark: #1a0a12;
+  --text: #3d1a2e;
+  --text2: #7b4a65;
+  --border: #f0d0e0;
+  --white: #ffffff;
+  --green: #2ecc71;
+  --r: 16px;
+}
+* { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+html { font-size:15px; scroll-behavior:smooth; }
+body { background:var(--cream); color:var(--text); font-family:'Cairo',sans-serif; min-height:100vh; overflow-x:hidden; }
+
+/* ======= HERO ======= */
+.hero {
+  background:linear-gradient(145deg,#1a0a12 0%,#3d0a28 50%,#1a0a12 100%);
+  padding:30px 20px 24px;
+  text-align:center;
+  position:relative;
+  overflow:hidden;
+}
+.hero::before {
+  content:'';
+  position:absolute;
+  inset:0;
+  background:radial-gradient(ellipse at 50% 0%,rgba(232,184,75,.15) 0%,transparent 70%);
+  pointer-events:none;
+}
+.hero-sparkles {
+  position:absolute;
+  inset:0;
+  pointer-events:none;
+  overflow:hidden;
+}
+.sparkle {
+  position:absolute;
+  width:4px;
+  height:4px;
+  background:var(--gold-light);
+  border-radius:50%;
+  animation:twinkle 3s ease-in-out infinite;
+}
+.sparkle:nth-child(1){top:15%;left:10%;animation-delay:0s}
+.sparkle:nth-child(2){top:30%;left:25%;animation-delay:.5s;width:6px;height:6px}
+.sparkle:nth-child(3){top:10%;left:70%;animation-delay:1s}
+.sparkle:nth-child(4){top:50%;left:85%;animation-delay:1.5s;width:5px;height:5px}
+.sparkle:nth-child(5){top:70%;left:15%;animation-delay:2s}
+.sparkle:nth-child(6){top:80%;left:60%;animation-delay:.8s;width:6px;height:6px}
+@keyframes twinkle{0%,100%{opacity:.2;transform:scale(1)}50%{opacity:1;transform:scale(1.5)}}
+
+.hero-logo { font-size:48px; margin-bottom:10px; animation:bounceIn .8s ease; }
+@keyframes bounceIn{from{transform:scale(0);opacity:0}to{transform:scale(1);opacity:1}}
+.hero-title { font-size:22px; font-weight:900; color:#fff; line-height:1.3; margin-bottom:6px; }
+.hero-title span { color:var(--gold-light); }
+.hero-sub { font-size:13px; color:rgba(255,255,255,.65); }
+
+/* ======= PROGRESS ======= */
+.progress-wrap { background:var(--white); border-bottom:1px solid var(--border); padding:16px 20px; position:sticky; top:0; z-index:50; box-shadow:0 2px 12px rgba(0,0,0,.06); }
+.progress-steps { display:flex; gap:4px; align-items:center; justify-content:center; margin-bottom:8px; }
+.step-dot { width:28px; height:28px; border-radius:50%; background:var(--border); display:flex; align-items:center; justify-content:center; font-size:11px; font-weight:800; color:var(--text2); transition:.3s; flex-shrink:0; }
+.step-dot.active { background:var(--rose); color:#fff; box-shadow:0 0 0 4px rgba(233,30,140,.15); }
+.step-dot.done { background:var(--green); color:#fff; }
+.step-line { flex:1; height:2px; background:var(--border); border-radius:2px; transition:.3s; }
+.step-line.done { background:var(--green); }
+.progress-bar-track { background:var(--border); border-radius:100px; height:5px; overflow:hidden; }
+.progress-bar-fill { height:100%; background:linear-gradient(90deg,var(--rose),var(--gold)); border-radius:100px; transition:.4s ease; }
+.progress-label { font-size:11px; color:var(--text2); text-align:center; margin-top:6px; font-weight:700; }
+
+/* ======= CONTAINER ======= */
+.container { max-width:480px; margin:0 auto; padding:20px 16px 100px; }
+
+/* ======= STEP PANEL ======= */
+.step-panel { display:none; animation:fadeSlide .35s ease; }
+.step-panel.active { display:block; }
+@keyframes fadeSlide { from{opacity:0;transform:translateY(16px)} to{opacity:1;transform:translateY(0)} }
+
+.step-title { font-size:17px; font-weight:900; color:var(--dark); margin-bottom:16px; display:flex; align-items:center; gap:8px; }
+.step-title .step-icon { font-size:22px; }
+
+/* ======= CARDS / FIELDS ======= */
+.card { background:var(--white); border-radius:var(--r); border:1.5px solid var(--border); padding:16px; margin-bottom:12px; }
+
+.field { margin-bottom:12px; }
+.field label { display:block; font-size:12px; font-weight:800; color:var(--text2); margin-bottom:5px; }
+.field label .req { color:var(--rose); }
+.field input, .field select, .field textarea {
+  width:100%; padding:11px 14px;
+  background:var(--cream);
+  border:1.5px solid var(--border);
+  border-radius:10px;
+  font-size:14px; color:var(--text);
+  font-family:'Cairo',sans-serif;
+  outline:none; transition:.2s;
+}
+.field input:focus, .field select:focus, .field textarea:focus { border-color:var(--rose); background:#fff; }
+.field textarea { resize:vertical; min-height:100px; }
+.fields-row { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+
+/* ======= SIZE GRID ======= */
+.size-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:8px; }
+.size-card {
+  border:2px solid var(--border); border-radius:12px; padding:10px 6px;
+  text-align:center; cursor:pointer; transition:.2s; background:var(--cream);
+  position:relative;
+}
+.size-card:active { transform:scale(.96); }
+.size-card.selected { border-color:var(--rose); background:var(--cream2); box-shadow:0 0 0 3px rgba(233,30,140,.12); }
+.size-card .size-label { font-size:12px; font-weight:800; color:var(--text); }
+.size-card .size-persons { font-size:10px; color:var(--text2); margin-top:2px; }
+.size-card .size-price { font-size:11px; font-weight:800; color:var(--rose); margin-top:4px; }
+.size-card .size-emoji { font-size:20px; margin-bottom:4px; }
+
+/* ======= OPTIONS ======= */
+.option-grid { display:grid; grid-template-columns:repeat(2,1fr); gap:8px; }
+.option-btn {
+  border:2px solid var(--border); border-radius:10px; padding:10px 8px;
+  text-align:center; cursor:pointer; transition:.2s; background:var(--cream);
+  font-size:13px; font-weight:700; color:var(--text);
+}
+.option-btn:active { transform:scale(.96); }
+.option-btn.selected { border-color:var(--rose); background:var(--cream2); color:var(--rose-dark); }
+.option-btn .opt-emoji { font-size:20px; display:block; margin-bottom:4px; }
+
+/* ======= HALF HALF ======= */
+.half-half-box { background:var(--cream2); border:1.5px dashed var(--rose-light); border-radius:12px; padding:14px; margin-top:10px; display:none; }
+.half-half-box.show { display:block; }
+
+/* ======= OCCASIONS ======= */
+.occasion-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:8px; }
+.occasion-btn {
+  border:2px solid var(--border); border-radius:10px; padding:10px 6px;
+  text-align:center; cursor:pointer; transition:.2s; background:var(--cream);
+}
+.occasion-btn:active { transform:scale(.96); }
+.occasion-btn.selected { border-color:var(--gold); background:#fff8e8; }
+.occasion-btn .occ-emoji { font-size:22px; display:block; margin-bottom:4px; }
+.occasion-btn .occ-name { font-size:11px; font-weight:700; color:var(--text); }
+
+/* ======= IMAGE UPLOAD ======= */
+.img-upload-zone {
+  border:2px dashed var(--border); border-radius:var(--r); padding:20px;
+  text-align:center; cursor:pointer; transition:.2s; background:var(--cream);
+  position:relative; overflow:hidden;
+}
+.img-upload-zone:hover { border-color:var(--rose); background:var(--cream2); }
+.img-upload-zone input { position:absolute; inset:0; opacity:0; cursor:pointer; width:100%; height:100%; }
+.img-preview { width:100%; max-height:200px; object-fit:contain; border-radius:10px; margin-top:10px; display:none; }
+
+/* ======= PRICE BOX ======= */
+.price-box {
+  background:linear-gradient(135deg,var(--rose-dark),var(--rose));
+  color:#fff; border-radius:var(--r); padding:16px; text-align:center; margin-bottom:16px;
+}
+.price-box .price-main { font-size:28px; font-weight:900; }
+.price-box .price-note { font-size:11px; opacity:.85; margin-top:4px; line-height:1.5; }
+
+/* ======= SUMMARY ======= */
+.summary-row { display:flex; justify-content:space-between; padding:9px 0; border-bottom:1px solid var(--border); font-size:13px; }
+.summary-row:last-child { border-bottom:none; }
+.summary-key { color:var(--text2); font-weight:600; }
+.summary-val { font-weight:800; color:var(--dark); text-align:left; max-width:60%; }
+.summary-img { width:80px; height:80px; border-radius:10px; object-fit:cover; }
+
+/* ======= ALERT ======= */
+.alert { border-radius:10px; padding:12px 14px; font-size:12px; font-weight:700; line-height:1.6; margin-bottom:10px; }
+.alert-warn { background:#fff8e1; border:1.5px solid #f59e0b; color:#92400e; }
+.alert-info { background:#e8f5e9; border:1.5px solid #4caf50; color:#1b5e20; }
+
+/* ======= BTNS ======= */
+.nav-btns { position:fixed; bottom:0; left:0; right:0; background:var(--white); border-top:1px solid var(--border); padding:12px 16px max(12px,env(safe-area-inset-bottom)); display:flex; gap:10px; z-index:100; }
+.btn-back { flex:1; padding:13px; background:var(--cream); color:var(--text2); border-radius:12px; font-size:14px; font-weight:800; border:1.5px solid var(--border); cursor:pointer; font-family:'Cairo',sans-serif; transition:.2s; }
+.btn-next { flex:2; padding:13px; background:linear-gradient(135deg,var(--rose),var(--rose-dark)); color:#fff; border-radius:12px; font-size:14px; font-weight:800; border:none; cursor:pointer; font-family:'Cairo',sans-serif; transition:.2s; box-shadow:0 4px 16px rgba(233,30,140,.35); }
+.btn-next:active { transform:scale(.97); }
+.btn-next.gold { background:linear-gradient(135deg,var(--gold),var(--gold-light)); box-shadow:0 4px 16px rgba(200,151,58,.4); color:#fff; }
+
+/* ======= SUCCESS ======= */
+.success-screen { display:none; text-align:center; padding:40px 20px; }
+.success-screen.show { display:block; }
+.success-icon { font-size:72px; animation:popIn .6s cubic-bezier(.34,1.56,.64,1); }
+@keyframes popIn { from{transform:scale(0);opacity:0} to{transform:scale(1);opacity:1} }
+
+/* ======= TOAST ======= */
+.toast { position:fixed; top:20px; left:50%; transform:translateX(-50%); background:var(--dark); color:#fff; border-radius:12px; padding:12px 20px; font-size:13px; font-weight:700; z-index:9999; opacity:0; transition:.3s; pointer-events:none; white-space:nowrap; }
+.toast.show { opacity:1; }
+
+/* ======= ADMIN PANEL ======= */
+.admin-login { max-width:360px; margin:40px auto; padding:20px; background:var(--white); border-radius:var(--r); border:1.5px solid var(--border); }
+.admin-panel { max-width:480px; margin:0 auto; padding:20px; display:none; }
+
+/* ======= LAYERS SELECTOR ======= */
+.layers-grid { display:flex; gap:8px; flex-wrap:wrap; }
+.layer-btn { border:2px solid var(--border); border-radius:10px; padding:8px 14px; cursor:pointer; transition:.2s; background:var(--cream); font-size:13px; font-weight:700; color:var(--text); }
+.layer-btn.selected { border-color:var(--rose); background:var(--cream2); color:var(--rose-dark); }
+
+/* ======= PERSONS SLIDER ======= */
+.persons-row { display:flex; align-items:center; gap:12px; }
+.persons-val { font-size:24px; font-weight:900; color:var(--rose); min-width:50px; text-align:center; }
+.persons-btn { width:40px; height:40px; border-radius:50%; border:2px solid var(--rose); background:var(--cream2); color:var(--rose); font-size:20px; font-weight:800; cursor:pointer; display:flex; align-items:center; justify-content:center; transition:.2s; }
+.persons-btn:active { background:var(--rose); color:#fff; }
+</style>
+</head>
+<body>
+
+<!-- HERO -->
+<div class="hero" id="heroSection">
+  <div class="hero-sparkles">
+    <div class="sparkle"></div><div class="sparkle"></div><div class="sparkle"></div>
+    <div class="sparkle"></div><div class="sparkle"></div><div class="sparkle"></div>
+  </div>
+  <div class="hero-logo">🎂</div>
+  <div class="hero-title">طلب تورتة <span>سبيشيال</span></div>
+  <div class="hero-sub">زمزم ديزرت — صنع بالحب 🤍</div>
+</div>
+
+<!-- PROGRESS -->
+<div class="progress-wrap" id="progressWrap" style="display:none">
+  <div class="progress-steps">
+    <div class="step-dot active" id="dot1">1</div>
+    <div class="step-line" id="line1"></div>
+    <div class="step-dot" id="dot2">2</div>
+    <div class="step-line" id="line2"></div>
+    <div class="step-dot" id="dot3">3</div>
+    <div class="step-line" id="line3"></div>
+    <div class="step-dot" id="dot4">4</div>
+    <div class="step-line" id="line4"></div>
+    <div class="step-dot" id="dot5">5</div>
+  </div>
+  <div class="progress-bar-track">
+    <div class="progress-bar-fill" id="progressFill" style="width:20%"></div>
+  </div>
+  <div class="progress-label" id="progressLabel">بيانات العميل</div>
+</div>
+
+<!-- MAIN CONTAINER -->
+<div class="container">
+
+<!-- ==================== STEP 0: INTRO ==================== -->
+<div class="step-panel active" id="step0">
+  <div style="text-align:center;padding:20px 0">
+    <div style="font-size:18px;font-weight:900;color:var(--dark);margin-bottom:10px">صمّم تورتتك بنفسك ✨</div>
+    <div style="font-size:13px;color:var(--text2);line-height:1.8;margin-bottom:24px">
+      أدخل تفاصيل تورتتك المثالية وسنتواصل معك للتأكيد وتحديد السعر النهائي
+    </div>
+    <div style="display:flex;flex-direction:column;gap:10px;margin-bottom:24px">
+      <div style="background:var(--white);border-radius:12px;border:1.5px solid var(--border);padding:12px 16px;display:flex;align-items:center;gap:12px;text-align:right">
+        <span style="font-size:24px">📋</span>
+        <div><div style="font-size:13px;font-weight:800;color:var(--dark)">بيانات العميل</div><div style="font-size:11px;color:var(--text2)">اسمك، رقمك، موعد الاستلام</div></div>
+      </div>
+      <div style="background:var(--white);border-radius:12px;border:1.5px solid var(--border);padding:12px 16px;display:flex;align-items:center;gap:12px;text-align:right">
+        <span style="font-size:24px">🎂</span>
+        <div><div style="font-size:13px;font-weight:800;color:var(--dark)">مواصفات التورتة</div><div style="font-size:11px;color:var(--text2)">المقاس، التوبينج، الكيك، الحشوات</div></div>
+      </div>
+      <div style="background:var(--white);border-radius:12px;border:1.5px solid var(--border);padding:12px 16px;display:flex;align-items:center;gap:12px;text-align:right">
+        <span style="font-size:24px">🎨</span>
+        <div><div style="font-size:13px;font-weight:800;color:var(--dark)">التصميم والمناسبة</div><div style="font-size:11px;color:var(--text2)">الزينة، المناسبة، وصف التصميم</div></div>
+      </div>
+      <div style="background:var(--white);border-radius:12px;border:1.5px solid var(--border);padding:12px 16px;display:flex;align-items:center;gap:12px;text-align:right">
+        <span style="font-size:24px">📱</span>
+        <div><div style="font-size:13px;font-weight:800;color:var(--dark)">إرسال فوري على واتساب</div><div style="font-size:11px;color:var(--text2)">يصلنا طلبك في ثوانٍ</div></div>
+      </div>
+    </div>
+    <button class="btn-next" onclick="goStep(1)" style="width:100%;padding:15px;font-size:16px">ابدأ الطلب 🎂</button>
+  </div>
+</div>
+
+<!-- ==================== STEP 1: CLIENT DATA ==================== -->
+<div class="step-panel" id="step1">
+  <div class="step-title"><span class="step-icon">📋</span> بيانات العميل</div>
+  <div class="card">
+    <div class="field"><label>الاسم بالكامل <span class="req">*</span></label><input type="text" id="clientName" placeholder="مثال: محمد أحمد"/></div>
+    <div class="fields-row">
+      <div class="field"><label>رقم الهاتف <span class="req">*</span></label><input type="tel" id="clientPhone" placeholder="01xxxxxxxxx" style="direction:ltr"/></div>
+      <div class="field"><label>رقم الواتساب <span class="req">*</span></label><input type="tel" id="clientWa" placeholder="01xxxxxxxxx" style="direction:ltr"/></div>
+    </div>
+    <div class="fields-row">
+      <div class="field"><label>تاريخ الاستلام <span class="req">*</span></label><input type="date" id="clientDate"/></div>
+      <div class="field"><label>وقت الاستلام <span class="req">*</span></label><input type="time" id="clientTime"/></div>
+    </div>
+  </div>
+  <div class="card">
+    <div class="step-title" style="font-size:14px;margin-bottom:12px"><span>👥</span> عدد الأشخاص (يساعدك على اختيار المقاس)</div>
+    <div class="persons-row">
+      <button class="persons-btn" onclick="changePersons(-5)">−</button>
+      <div class="persons-val" id="personsVal">10</div>
+      <button class="persons-btn" onclick="changePersons(5)">+</button>
+      <div style="font-size:12px;color:var(--text2);margin-right:8px">شخص</div>
+    </div>
+    <div style="font-size:11px;color:var(--text2);margin-top:8px" id="personsHint">💡 مناسب لـ 18-20 سم</div>
+  </div>
+</div>
+
+<!-- ==================== STEP 2: CAKE SPECS ==================== -->
+<div class="step-panel" id="step2">
+  <div class="step-title"><span class="step-icon">🎂</span> مواصفات التورتة</div>
+
+  <!-- SIZE -->
+  <div class="card">
+    <div style="font-size:14px;font-weight:800;color:var(--dark);margin-bottom:12px">📐 المقاس <span class="req" style="color:var(--rose)">*</span></div>
+    <div class="size-grid" id="sizeGrid">
+      <div class="size-card" onclick="selectSize(this,'18 سم','ميني','6-8 أشخاص',180)">
+        <div class="size-emoji">🍰</div>
+        <div class="size-label">18 سم</div>
+        <div class="size-persons">6-8 أشخاص</div>
+        <div class="size-price">~180 ج</div>
+      </div>
+      <div class="size-card" onclick="selectSize(this,'20 سم','','8-12 شخص',220)">
+        <div class="size-emoji">🎂</div>
+        <div class="size-label">20 سم</div>
+        <div class="size-persons">8-12 شخص</div>
+        <div class="size-price">~220 ج</div>
+      </div>
+      <div class="size-card" onclick="selectSize(this,'22 سم','','12-16 شخص',270)">
+        <div class="size-emoji">🎂</div>
+        <div class="size-label">22 سم</div>
+        <div class="size-persons">12-16 شخص</div>
+        <div class="size-price">~270 ج</div>
+      </div>
+      <div class="size-card" onclick="selectSize(this,'24 سم','','16-20 شخص',320)">
+        <div class="size-emoji">🎂</div>
+        <div class="size-label">24 سم</div>
+        <div class="size-persons">16-20 شخص</div>
+        <div class="size-price">~320 ج</div>
+      </div>
+      <div class="size-card" onclick="selectSize(this,'26 سم','','20-25 شخص',380)">
+        <div class="size-emoji">🎂</div>
+        <div class="size-label">26 سم</div>
+        <div class="size-persons">20-25 شخص</div>
+        <div class="size-price">~380 ج</div>
+      </div>
+      <div class="size-card" onclick="selectSize(this,'28 سم','','25-30 شخص',440)">
+        <div class="size-emoji">🎂</div>
+        <div class="size-label">28 سم</div>
+        <div class="size-persons">25-30 شخص</div>
+        <div class="size-price">~440 ج</div>
+      </div>
+      <div class="size-card" onclick="selectSize(this,'20×30 سم','','20-25 شخص',400)">
+        <div class="size-emoji">🟫</div>
+        <div class="size-label">20×30 سم</div>
+        <div class="size-persons">20-25 شخص</div>
+        <div class="size-price">~400 ج</div>
+      </div>
+      <div class="size-card" onclick="selectSize(this,'30×30 سم','','25-30 شخص',450)">
+        <div class="size-emoji">🟫</div>
+        <div class="size-label">30×30 سم</div>
+        <div class="size-persons">25-30 شخص</div>
+        <div class="size-price">~450 ج</div>
+      </div>
+      <div class="size-card" onclick="selectSize(this,'30×40 سم','','35-40 شخص',550)">
+        <div class="size-emoji">🟫</div>
+        <div class="size-label">30×40 سم</div>
+        <div class="size-persons">35-40 شخص</div>
+        <div class="size-price">~550 ج</div>
+      </div>
+      <div class="size-card" onclick="selectSize(this,'40×40 سم','','45-50 شخص',650)">
+        <div class="size-emoji">🟫</div>
+        <div class="size-label">40×40 سم</div>
+        <div class="size-persons">45-50 شخص</div>
+        <div class="size-price">~650 ج</div>
+      </div>
+      <div class="size-card" onclick="selectSize(this,'40×60 سم','كبير','60-70 شخص',850)">
+        <div class="size-emoji">🟫</div>
+        <div class="size-label">40×60 سم</div>
+        <div class="size-persons">60-70 شخص</div>
+        <div class="size-price">~850 ج</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- LAYERS -->
+  <div class="card">
+    <div style="font-size:14px;font-weight:800;color:var(--dark);margin-bottom:12px">🎂 عدد الأدوار</div>
+    <div class="layers-grid" id="layersGrid">
+      <div class="layer-btn selected" onclick="selectLayer(this,'دور واحد')">دور واحد</div>
+      <div class="layer-btn" onclick="selectLayer(this,'دورين')">دورين</div>
+      <div class="layer-btn" onclick="selectLayer(this,'3 أدوار')">3 أدوار</div>
+      <div class="layer-btn" onclick="selectLayer(this,'حسب الاتفاق')">حسب الاتفاق</div>
+    </div>
+  </div>
+
+  <!-- TOPPING -->
+  <div class="card">
+    <div style="font-size:14px;font-weight:800;color:var(--dark);margin-bottom:12px">🍫 التغطية (Topping) — اختياري</div>
+    <div class="option-grid" id="toppingGrid">
+      <div class="option-btn" onclick="selectTopping(this,'كريمة')"><span class="opt-emoji">🤍</span>كريمة</div>
+      <div class="option-btn" onclick="selectTopping(this,'شوكليت')"><span class="opt-emoji">🍫</span>شوكليت</div>
+      <div class="option-btn" onclick="selectTopping(this,'لوتس')"><span class="opt-emoji">🍪</span>لوتس</div>
+      <div class="option-btn" onclick="selectTopping(this,'جالاكسي')"><span class="opt-emoji">🍬</span>جالاكسي</div>
+      <div class="option-btn" onclick="selectTopping(this,'كراميل')"><span class="opt-emoji">🍮</span>كراميل</div>
+      <div class="option-btn" onclick="selectTopping(this,'ميكس بيري')"><span class="opt-emoji">🫐</span>ميكس بيري</div>
+      <div class="option-btn" onclick="selectTopping(this,'نوتيلا')"><span class="opt-emoji">🥜</span>نوتيلا</div>
+      <div class="option-btn" onclick="selectHalfHalf(this)"><span class="opt-emoji">⚖️</span>نصف ونصف</div>
+    </div>
+    <div class="half-half-box" id="halfHalfBox">
+      <div style="font-size:13px;font-weight:800;color:var(--rose-dark);margin-bottom:10px">اختر طعمين:</div>
+      <div class="fields-row">
+        <div class="field"><label>النصف الأول</label>
+          <select id="half1">
+            <option>كريمة</option><option>شوكليت</option><option>لوتس</option>
+            <option>جالاكسي</option><option>كراميل</option><option>ميكس بيري</option><option>نوتيلا</option>
+          </select>
+        </div>
+        <div class="field"><label>النصف الثاني</label>
+          <select id="half2">
+            <option>شوكليت</option><option>كريمة</option><option>لوتس</option>
+            <option>جالاكسي</option><option>كراميل</option><option>ميكس بيري</option><option>نوتيلا</option>
+          </select>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SPONGE -->
+  <div class="card">
+    <div style="font-size:14px;font-weight:800;color:var(--dark);margin-bottom:12px">🍰 نوع الكيك الداخلي — اختياري</div>
+    <div class="option-grid" id="spongeGrid">
+      <div class="option-btn" onclick="selectOne('spongeGrid',this,'فانيليا')"><span class="opt-emoji">🤍</span>فانيليا</div>
+      <div class="option-btn" onclick="selectOne('spongeGrid',this,'شوكليت')"><span class="opt-emoji">🍫</span>شوكليت</div>
+      <div class="option-btn" style="grid-column:span 2" onclick="selectOne('spongeGrid',this,'نصف فانيليا ونصف شوكليت')"><span class="opt-emoji">🎭</span>نصف فانيليا ونصف شوكليت</div>
+    </div>
+  </div>
+
+  <!-- FILLING -->
+  <div class="card">
+    <div style="font-size:14px;font-weight:800;color:var(--dark);margin-bottom:12px">🍓 الحشوات — اختياري</div>
+    <div class="option-grid" id="fillingGrid">
+      <div class="option-btn selected" onclick="selectOne('fillingGrid',this,'بدون حشو')"><span class="opt-emoji">⭕</span>بدون حشو</div>
+      <div class="option-btn" onclick="selectFilling(this,'راسبري')"><span class="opt-emoji">🫐</span>راسبري</div>
+      <div class="option-btn" onclick="selectFilling(this,'مكسرات')"><span class="opt-emoji">🥜</span>مكسرات</div>
+      <div class="option-btn" onclick="selectFilling(this,'خوخ')"><span class="opt-emoji">🍑</span>خوخ</div>
+      <div class="option-btn" onclick="selectFilling(this,'فراولة')"><span class="opt-emoji">🍓</span>فراولة</div>
+    </div>
+    <div class="alert alert-warn" id="fillingAlert" style="display:none;margin-top:10px">
+      ⚠️ قد يترتب على بعض الحشوات تكلفة إضافية يتم تحديدها بعد مراجعة الطلب من قبل المسؤول.
+    </div>
+  </div>
+</div>
+
+<!-- ==================== STEP 3: DESIGN ==================== -->
+<div class="step-panel" id="step3">
+  <div class="step-title"><span class="step-icon">🎨</span> التصميم والمناسبة</div>
+
+  <!-- OCCASION -->
+  <div class="card">
+    <div style="font-size:14px;font-weight:800;color:var(--dark);margin-bottom:12px">🎉 المناسبة</div>
+    <div class="occasion-grid" id="occasionGrid">
+      <div class="occasion-btn" onclick="selectOccasion(this,'عيد ميلاد')"><span class="occ-emoji">🎂</span><span class="occ-name">عيد ميلاد</span></div>
+      <div class="occasion-btn" onclick="selectOccasion(this,'خطوبة')"><span class="occ-emoji">💍</span><span class="occ-name">خطوبة</span></div>
+      <div class="occasion-btn" onclick="selectOccasion(this,'زفاف')"><span class="occ-emoji">👰</span><span class="occ-name">زفاف</span></div>
+      <div class="occasion-btn" onclick="selectOccasion(this,'سبوع')"><span class="occ-emoji">👶</span><span class="occ-name">سبوع</span></div>
+      <div class="occasion-btn" onclick="selectOccasion(this,'تخرج')"><span class="occ-emoji">🎓</span><span class="occ-name">تخرج</span></div>
+      <div class="occasion-btn" onclick="selectOccasion(this,'شركة')"><span class="occ-emoji">🏢</span><span class="occ-name">شركة</span></div>
+      <div class="occasion-btn" onclick="selectOccasion(this,'أخرى')"><span class="occ-emoji">🎊</span><span class="occ-name">أخرى</span></div>
+    </div>
+  </div>
+
+  <!-- DECORATION -->
+  <div class="card">
+    <div style="font-size:14px;font-weight:800;color:var(--dark);margin-bottom:12px">✨ نوع الزينة</div>
+    <div class="option-grid" id="decoGrid">
+      <div class="option-btn" onclick="selectOne('decoGrid',this,'بدون صورة')"><span class="opt-emoji">🎂</span>بدون صورة</div>
+      <div class="option-btn" onclick="selectOne('decoGrid',this,'صورة مطبوعة')"><span class="opt-emoji">🖨️</span>صورة مطبوعة</div>
+      <div class="option-btn" onclick="selectOne('decoGrid',this,'صورة سكر')"><span class="opt-emoji">🍬</span>صورة سكر</div>
+      <div class="option-btn" onclick="selectOne('decoGrid',this,'مجسمات 3D')"><span class="opt-emoji">🎭</span>مجسمات 3D</div>
+      <div class="option-btn" style="grid-column:span 2" onclick="selectOne('decoGrid',this,'تصميم خاص')"><span class="opt-emoji">🎨</span>تصميم خاص</div>
+    </div>
+  </div>
+
+  <!-- REFERENCE IMAGE -->
+  <div class="card">
+    <div style="font-size:14px;font-weight:800;color:var(--dark);margin-bottom:8px">🖼️ صورة مرجعية — اختياري</div>
+    <div style="font-size:11px;color:var(--text2);margin-bottom:10px">ارفع صورة التصميم اللي عاوزه (JPG / PNG / WEBP)</div>
+    <div class="img-upload-zone" id="imgUploadZone">
+      <input type="file" accept="image/jpeg,image/png,image/webp" onchange="handleImgUpload(this)" id="imgFileInput"/>
+      <div id="imgUploadContent">
+        <div style="font-size:36px;margin-bottom:8px">📸</div>
+        <div style="font-size:13px;font-weight:700;color:var(--text2)">اضغط لرفع صورة مرجعية</div>
+        <div style="font-size:11px;color:var(--text2);margin-top:4px">JPG / PNG / WEBP</div>
+      </div>
+      <img id="imgPreview" class="img-preview"/>
+    </div>
+  </div>
+
+  <!-- DESCRIPTION -->
+  <div class="card">
+    <div style="font-size:14px;font-weight:800;color:var(--dark);margin-bottom:8px">✍️ وصف التورتة <span class="req" style="color:var(--rose)">*</span></div>
+    <div style="font-size:11px;color:var(--text2);margin-bottom:10px">اكتب كل التفاصيل: الألوان، الاسم على التورتة، العمر، أي ملاحظات</div>
+    <div class="field">
+      <textarea id="cakeDesc" placeholder="مثال: تورتة عيد ميلاد لبنتي مريم 5 سنين، ألوان وردي وأبيض، فيها الأميرة إيلسا من فيلم فروزن، ومكتوب عليها: كل سنة وأنتِ بخير يا مريم 🎀" rows="5"></textarea>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== STEP 4: SUMMARY ==================== -->
+<div class="step-panel" id="step4">
+  <div class="step-title"><span class="step-icon">📋</span> ملخص الطلب</div>
+  <div id="summaryContent"></div>
+  <div class="alert alert-warn">
+    ⚠️ السعر المعروض تقريبي فقط — السعر النهائي يتحدد بعد مراجعة التصميم والوزن والإضافات الخاصة من قبل فريقنا.
+  </div>
+  <div class="alert alert-info">
+    ✅ سيتم التواصل معك على واتساب خلال ساعات لتأكيد الطلب وتحديد السعر النهائي.
+  </div>
+</div>
+
+<!-- ==================== SUCCESS ==================== -->
+<div class="success-screen" id="successScreen">
+  <div class="success-icon">🎉</div>
+  <div style="font-size:22px;font-weight:900;color:var(--dark);margin:16px 0 8px">تم إرسال طلبك!</div>
+  <div style="font-size:14px;color:var(--text2);line-height:1.8;margin-bottom:24px">شكراً لثقتك في زمزم ديزرت 🎂<br/>سيتواصل معك فريقنا على واتساب قريباً لتأكيد طلبك</div>
+  <button onclick="resetForm()" style="padding:14px 32px;background:linear-gradient(135deg,var(--rose),var(--rose-dark));color:#fff;border-radius:12px;font-size:14px;font-weight:800;border:none;cursor:pointer;font-family:'Cairo',sans-serif">طلب جديد 🎂</button>
+  <div style="margin-top:16px">
+    <a href="https://wa.me/201158973728" style="font-size:13px;color:var(--rose);font-weight:700;text-decoration:none">تواصل معنا مباشرة على واتساب 📱</a>
+  </div>
+</div>
+
+</div><!-- end container -->
+
+<!-- NAV BUTTONS -->
+<div class="nav-btns" id="navBtns">
+  <button class="btn-back" id="btnBack" onclick="goBack()" style="display:none">← رجوع</button>
+  <button class="btn-next" id="btnNext" onclick="goNext()">ابدأ الطلب 🎂</button>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toastEl"></div>
+
+<!-- ==================== ADMIN PANEL ==================== -->
+<div id="adminSection" style="display:none;padding:0 0 80px">
+  <div class="admin-login" id="adminLogin">
+    <div style="text-align:center;margin-bottom:20px">
+      <div style="font-size:32px">🔐</div>
+      <div style="font-size:16px;font-weight:800;color:var(--dark)">لوحة الإدارة</div>
+    </div>
+    <div class="field"><label>كلمة السر</label><input type="password" id="adminPassInput" placeholder="كلمة السر"/></div>
+    <button onclick="adminLogin()" style="width:100%;padding:12px;background:linear-gradient(135deg,var(--rose),var(--rose-dark));color:#fff;border-radius:10px;font-size:14px;font-weight:800;border:none;cursor:pointer;font-family:'Cairo',sans-serif">دخول</button>
+  </div>
+  <div class="admin-panel" id="adminPanel">
+    <div style="font-size:18px;font-weight:900;color:var(--dark);margin-bottom:16px">⚙️ إعدادات نظام التورتات</div>
+    <div class="card">
+      <div style="font-size:14px;font-weight:800;margin-bottom:12px">📱 رقم واتساب استقبال الطلبات</div>
+      <div class="field">
+        <label>الرقم بصيغة دولية <span style="color:var(--rose)">*</span></label>
+        <input type="tel" id="adminWaNum" placeholder="+201158973728" style="direction:ltr"/>
+        <div style="font-size:11px;color:var(--text2);margin-top:4px">مثال: +201158973728 (مع رمز الدولة)</div>
+      </div>
+      <button onclick="saveAdminSettings()" style="padding:10px 20px;background:linear-gradient(135deg,var(--rose),var(--rose-dark));color:#fff;border-radius:10px;font-size:13px;font-weight:800;border:none;cursor:pointer;font-family:'Cairo',sans-serif">💾 حفظ</button>
+    </div>
+    <div class="card">
+      <div style="font-size:14px;font-weight:800;margin-bottom:12px">📦 الطلبات الواردة</div>
+      <div id="adminOrders" style="font-size:13px;color:var(--text2)">جاري التحميل...</div>
+    </div>
+  </div>
+</div>
+
+<!-- ADMIN TOGGLE -->
+<div style="text-align:center;padding:20px;font-size:11px;color:var(--text2)" id="adminToggleWrap">
+  <button onclick="toggleAdmin()" style="background:none;border:none;color:var(--text2);font-size:11px;cursor:pointer;font-family:'Cairo',sans-serif;text-decoration:underline">لوحة الإدارة</button>
+</div>
+
+<!-- ==================== SCRIPT ==================== -->
+<script>
+// ============================================================
+// STATE
+// ============================================================
+let currentStep = 0;
+const TOTAL_STEPS = 5; // 0=intro, 1=client, 2=specs, 3=design, 4=summary
+const STEP_LABELS = ['','بيانات العميل','مواصفات التورتة','التصميم','مراجعة الطلب','إرسال'];
+
+let order = {
+  clientName:'', clientPhone:'', clientWa:'', clientDate:'', clientTime:'',
+  persons:10,
+  size:'', sizePrice:0,
+  layers:'دور واحد',
+  topping:'', toppingHalf1:'', toppingHalf2:'', isHalfHalf:false,
+  sponge:'',
+  filling:'بدون حشو',
+  occasion:'',
+  deco:'',
+  desc:'',
+  imgBase64:'',
+};
+
+// Admin settings
+let adminSettings = JSON.parse(localStorage.getItem('zz_cake_settings')||'{}');
+let cakeOrders = JSON.parse(localStorage.getItem('zz_cake_orders')||'[]');
+
+const WA_NUM = () => adminSettings.waNum || '+201158973728';
+
+// ============================================================
+// NAVIGATION
+// ============================================================
+function goStep(n) {
+  document.getElementById('step'+currentStep).classList.remove('active');
+  currentStep = n;
+  document.getElementById('step'+currentStep).classList.add('active');
+  updateProgress();
+  window.scrollTo({top:0,behavior:'smooth'});
+
+  // Update nav buttons
+  const btnBack = document.getElementById('btnBack');
+  const btnNext = document.getElementById('btnNext');
+  btnBack.style.display = currentStep > 0 ? 'block' : 'none';
+
+  if (currentStep === 0) {
+    btnNext.style.display = 'none';
+    document.getElementById('progressWrap').style.display = 'none';
+  } else if (currentStep === 4) {
+    buildSummary();
+    btnNext.textContent = '📱 إرسال على واتساب';
+    btnNext.className = 'btn-next gold';
+    document.getElementById('progressWrap').style.display = 'block';
+  } else {
+    btnNext.textContent = 'التالي ←';
+    btnNext.className = 'btn-next';
+    document.getElementById('progressWrap').style.display = 'block';
+  }
+}
+
+function goNext() {
+  if (currentStep === 0) { goStep(1); return; }
+  if (!validateStep()) return;
+  if (currentStep === 4) { submitOrder(); return; }
+  goStep(currentStep + 1);
+}
+
+function goBack() {
+  if (currentStep > 0) goStep(currentStep - 1);
+}
+
+function updateProgress() {
+  const pct = (currentStep / 4) * 100;
+  document.getElementById('progressFill').style.width = Math.max(5,pct)+'%';
+  document.getElementById('progressLabel').textContent = STEP_LABELS[currentStep]||'';
+  for (let i=1; i<=5; i++) {
+    const dot = document.getElementById('dot'+i);
+    if (!dot) continue;
+    if (i < currentStep) { dot.className='step-dot done'; dot.textContent='✓'; }
+    else if (i === currentStep) { dot.className='step-dot active'; dot.textContent=i; }
+    else { dot.className='step-dot'; dot.textContent=i; }
+  }
+  for (let i=1; i<=4; i++) {
+    const line = document.getElementById('line'+i);
+    if (line) line.className = i < currentStep ? 'step-line done' : 'step-line';
+  }
+}
+
+// ============================================================
+// VALIDATION
+// ============================================================
+function validateStep() {
+  if (currentStep === 1) {
+    if (!document.getElementById('clientName').value.trim()) { showToast('❌ أدخل اسمك بالكامل'); return false; }
+    if (!document.getElementById('clientPhone').value.trim()) { showToast('❌ أدخل رقم هاتفك'); return false; }
+    if (!document.getElementById('clientWa').value.trim()) { showToast('❌ أدخل رقم واتساب'); return false; }
+    if (!document.getElementById('clientDate').value) { showToast('❌ اختر تاريخ الاستلام'); return false; }
+    if (!document.getElementById('clientTime').value) { showToast('❌ اختر وقت الاستلام'); return false; }
+    order.clientName = document.getElementById('clientName').value.trim();
+    order.clientPhone = document.getElementById('clientPhone').value.trim();
+    order.clientWa = document.getElementById('clientWa').value.trim();
+    order.clientDate = document.getElementById('clientDate').value;
+    order.clientTime = document.getElementById('clientTime').value;
+  }
+  if (currentStep === 2) {
+    if (!order.size) { showToast('❌ اختر مقاس التورتة'); return false; }
+  }
+  if (currentStep === 3) {
+    if (!document.getElementById('cakeDesc').value.trim()) { showToast('❌ وصف التورتة مطلوب'); return false; }
+    order.desc = document.getElementById('cakeDesc').value.trim();
+  }
+  return true;
+}
+
+// ============================================================
+// SELECTIONS
+// ============================================================
+let selectedSizeEl = null;
+function selectSize(el, size, badge, persons, price) {
+  if (selectedSizeEl) selectedSizeEl.classList.remove('selected');
+  el.classList.add('selected');
+  selectedSizeEl = el;
+  order.size = size;
+  order.sizePrice = price;
+}
+
+function selectLayer(el, val) {
+  document.querySelectorAll('#layersGrid .layer-btn').forEach(b=>b.classList.remove('selected'));
+  el.classList.add('selected');
+  order.layers = val;
+}
+
+let selectedToppingEl = null;
+function selectTopping(el, val) {
+  if (selectedToppingEl) selectedToppingEl.classList.remove('selected');
+  el.classList.add('selected');
+  selectedToppingEl = el;
+  order.topping = val;
+  order.isHalfHalf = false;
+  document.getElementById('halfHalfBox').classList.remove('show');
+}
+
+function selectHalfHalf(el) {
+  if (selectedToppingEl) selectedToppingEl.classList.remove('selected');
+  el.classList.add('selected');
+  selectedToppingEl = el;
+  order.isHalfHalf = true;
+  document.getElementById('halfHalfBox').classList.add('show');
+}
+
+function selectOne(gridId, el, val) {
+  document.querySelectorAll('#'+gridId+' .option-btn').forEach(b=>b.classList.remove('selected'));
+  el.classList.add('selected');
+  if (gridId==='spongeGrid') order.sponge = val;
+  if (gridId==='fillingGrid') { order.filling = val; document.getElementById('fillingAlert').style.display='none'; }
+  if (gridId==='decoGrid') order.deco = val;
+}
+
+function selectFilling(el, val) {
+  document.querySelectorAll('#fillingGrid .option-btn').forEach(b=>b.classList.remove('selected'));
+  el.classList.add('selected');
+  order.filling = val;
+  document.getElementById('fillingAlert').style.display = 'block';
+}
+
+function selectOccasion(el, val) {
+  document.querySelectorAll('#occasionGrid .occasion-btn').forEach(b=>b.classList.remove('selected'));
+  el.classList.add('selected');
+  order.occasion = val;
+}
+
+// ============================================================
+// PERSONS
+// ============================================================
+let personsCount = 10;
+function changePersons(delta) {
+  personsCount = Math.max(1, personsCount+delta);
+  document.getElementById('personsVal').textContent = personsCount;
+  order.persons = personsCount;
+  // hint
+  let hint = '💡 مناسب لـ 18-20 سم';
+  if (personsCount <= 8) hint = '💡 مناسب لـ 18-20 سم (ميني)';
+  else if (personsCount <= 15) hint = '💡 مناسب لـ 20-22 سم';
+  else if (personsCount <= 25) hint = '💡 مناسب لـ 24-26 سم';
+  else if (personsCount <= 35) hint = '💡 مناسب لـ 28-30 سم أو 20×30';
+  else hint = '💡 مناسب لمقاسات الـ 40 سم';
+  document.getElementById('personsHint').textContent = hint;
+}
+
+// ============================================================
+// IMAGE UPLOAD
+// ============================================================
+function handleImgUpload(input) {
+  const file = input.files[0];
+  if (!file) return;
+  if (file.size > 5*1024*1024) { showToast('❌ الصورة أكبر من 5MB'); return; }
+  const reader = new FileReader();
+  reader.onload = e => {
+    order.imgBase64 = e.target.result;
+    document.getElementById('imgPreview').src = e.target.result;
+    document.getElementById('imgPreview').style.display = 'block';
+    document.getElementById('imgUploadContent').style.display = 'none';
+  };
+  reader.readAsDataURL(file);
+}
+
+// ============================================================
+// SUMMARY
+// ============================================================
+function buildSummary() {
+  const toppingText = order.isHalfHalf
+    ? `نصف ${document.getElementById('half1')?.value||''} + نصف ${document.getElementById('half2')?.value||''}`
+    : order.topping || 'لم يُحدد';
+
+  const rows = [
+    ['👤 الاسم', order.clientName],
+    ['📱 الهاتف', order.clientPhone],
+    ['💬 واتساب', order.clientWa],
+    ['📅 تاريخ الاستلام', order.clientDate],
+    ['⏰ وقت الاستلام', order.clientTime],
+    ['👥 عدد الأشخاص', order.persons + ' شخص'],
+    ['📐 المقاس', order.size || '—'],
+    ['🎂 عدد الأدوار', order.layers],
+    ['🍫 التوبينج', toppingText],
+    ['🍰 الكيك الداخلي', order.sponge || 'لم يُحدد'],
+    ['🍓 الحشوة', order.filling],
+    ['🎉 المناسبة', order.occasion || 'لم تُحدد'],
+    ['✨ الزينة', order.deco || 'لم تُحدد'],
+    ['✍️ الوصف', order.desc],
+  ];
+
+  let html = `<div class="price-box">
+    <div style="font-size:13px;opacity:.9;margin-bottom:4px">السعر التقريبي</div>
+    <div class="price-main">${order.sizePrice ? '~'+order.sizePrice+' ج.م' : 'حسب الاتفاق'}</div>
+    <div class="price-note">السعر النهائي يتحدد بعد مراجعة التصميم والإضافات</div>
+  </div>
+  <div class="card">`;
+
+  rows.forEach(([k,v]) => {
+    html += `<div class="summary-row"><span class="summary-key">${k}</span><span class="summary-val">${v||'—'}</span></div>`;
+  });
+
+  if (order.imgBase64) {
+    html += `<div class="summary-row"><span class="summary-key">🖼️ الصورة المرجعية</span><span><img src="${order.imgBase64}" class="summary-img"/></span></div>`;
+  }
+
+  html += '</div>';
+  document.getElementById('summaryContent').innerHTML = html;
+}
+
+// ============================================================
+// SUBMIT
+// ============================================================
+function submitOrder() {
+  const toppingText = order.isHalfHalf
+    ? `نصف ${document.getElementById('half1')?.value||''} + نصف ${document.getElementById('half2')?.value||''}`
+    : order.topping || 'لم يُحدد';
+
+  const orderData = {
+    ...order,
+    topping: toppingText,
+    id: 'CAKE-'+Date.now(),
+    createdAt: new Date().toISOString()
+  };
+
+  // Save locally
+  cakeOrders.unshift(orderData);
+  localStorage.setItem('zz_cake_orders', JSON.stringify(cakeOrders.slice(0,100)));
+
+  // Build WhatsApp message
+  let msg = `🎂 *طلب تورتة سبيشيال — زمزم ديزرت*\n`;
+  msg += `━━━━━━━━━━━━━━━━\n`;
+  msg += `👤 الاسم: ${order.clientName}\n`;
+  msg += `📱 الهاتف: ${order.clientPhone}\n`;
+  msg += `💬 واتساب: ${order.clientWa}\n`;
+  msg += `📅 الاستلام: ${order.clientDate} الساعة ${order.clientTime}\n`;
+  msg += `👥 الأشخاص: ${order.persons}\n`;
+  msg += `━━━━━━━━━━━━━━━━\n`;
+  msg += `📐 المقاس: ${order.size}\n`;
+  msg += `🎂 الأدوار: ${order.layers}\n`;
+  msg += `🍫 التوبينج: ${toppingText}\n`;
+  msg += `🍰 الكيك: ${order.sponge||'لم يُحدد'}\n`;
+  msg += `🍓 الحشوة: ${order.filling}\n`;
+  msg += `🎉 المناسبة: ${order.occasion||'لم تُحدد'}\n`;
+  msg += `✨ الزينة: ${order.deco||'لم تُحدد'}\n`;
+  msg += `━━━━━━━━━━━━━━━━\n`;
+  msg += `✍️ الوصف:\n${order.desc}\n`;
+  msg += `━━━━━━━━━━━━━━━━\n`;
+  msg += `💰 السعر التقريبي: ${order.sizePrice ? '~'+order.sizePrice+' ج.م' : 'حسب الاتفاق'}\n`;
+  msg += `⚠️ السعر النهائي يتحدد بعد المراجعة\n`;
+  msg += `━━━━━━━━━━━━━━━━\n`;
+  if (order.imgBase64) msg += `🖼️ (صورة مرجعية مرفقة مع الطلب)\n`;
+  msg += `#${orderData.id}`;
+
+  const waUrl = `https://wa.me/${WA_NUM().replace(/[^0-9]/g,'')}?text=${encodeURIComponent(msg)}`;
+
+  // Show success
+  document.getElementById('heroSection').style.display = 'none';
+  document.getElementById('progressWrap').style.display = 'none';
+  document.querySelectorAll('.step-panel').forEach(p=>p.classList.remove('active'));
+  document.getElementById('navBtns').style.display = 'none';
+  document.getElementById('adminToggleWrap').style.display = 'none';
+  document.getElementById('successScreen').classList.add('show');
+
+  // Open WhatsApp
+  setTimeout(() => { window.open(waUrl, '_blank'); }, 500);
+}
+
+function resetForm() {
+  location.reload();
+}
+
+// ============================================================
+// ADMIN
+// ============================================================
+const ADMIN_PASS = 'zamzam2024';
+function toggleAdmin() {
+  const sec = document.getElementById('adminSection');
+  const main = document.getElementById('progressWrap');
+  if (sec.style.display === 'none') {
+    sec.style.display = 'block';
+    document.querySelectorAll('.step-panel').forEach(p=>p.classList.remove('active'));
+    document.getElementById('navBtns').style.display = 'none';
+  } else {
+    sec.style.display = 'none';
+    document.getElementById('step'+currentStep).classList.add('active');
+    document.getElementById('navBtns').style.display = 'flex';
+  }
+}
+
+function adminLogin() {
+  const pass = document.getElementById('adminPassInput').value;
+  if (pass !== ADMIN_PASS) { showToast('❌ كلمة السر غلط'); return; }
+  document.getElementById('adminLogin').style.display = 'none';
+  document.getElementById('adminPanel').style.display = 'block';
+  document.getElementById('adminWaNum').value = adminSettings.waNum || '+201158973728';
+  loadAdminOrders();
+}
+
+function saveAdminSettings() {
+  const num = document.getElementById('adminWaNum').value.trim();
+  if (!num.startsWith('+')) { showToast('❌ الرقم لازم يبدأ بـ + مع رمز الدولة'); return; }
+  adminSettings.waNum = num;
+  localStorage.setItem('zz_cake_settings', JSON.stringify(adminSettings));
+  showToast('✅ تم حفظ الإعدادات');
+}
+
+function loadAdminOrders() {
+  const orders = JSON.parse(localStorage.getItem('zz_cake_orders')||'[]');
+  if (!orders.length) {
+    document.getElementById('adminOrders').innerHTML = '<div style="text-align:center;padding:20px;color:var(--text2)">لا توجد طلبات بعد</div>';
+    return;
+  }
+  document.getElementById('adminOrders').innerHTML = orders.slice(0,20).map(o=>`
+    <div style="border:1.5px solid var(--border);border-radius:10px;padding:12px;margin-bottom:8px">
+      <div style="display:flex;justify-content:space-between;margin-bottom:4px">
+        <strong>${o.clientName}</strong>
+        <span style="font-size:11px;color:var(--text2)">${o.id}</span>
+      </div>
+      <div style="font-size:12px;color:var(--text2)">${o.clientPhone} · ${o.clientDate} · ${o.size}</div>
+      <div style="font-size:12px;margin-top:4px;color:var(--rose)">${o.sizePrice?'~'+o.sizePrice+' ج.م':'حسب الاتفاق'}</div>
+    </div>`).join('');
+}
+
+// ============================================================
+// TOAST
+// ============================================================
+let toastTimer;
+function showToast(msg) {
+  const el = document.getElementById('toastEl');
+  el.textContent = msg;
+  el.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(()=>el.classList.remove('show'), 3000);
+}
+
+// ============================================================
+// INIT
+// ============================================================
+document.getElementById('progressWrap').style.display = 'none';
+document.getElementById('btnNext').style.display = 'none';
+document.getElementById('btnBack').style.display = 'none';
+
+// Set min date to today
+const today = new Date().toISOString().split('T')[0];
+document.getElementById('clientDate').min = today;
+</script>
+</body>
+</html>
