@@ -244,7 +244,7 @@ body { background:var(--cream); color:var(--text); font-family:'Cairo',sans-seri
   <div class="progress-bar-track">
     <div class="progress-bar-fill" id="progressFill" style="width:20%"></div>
   </div>
-  <div class="progress-label" id="progressLabel">بيانات العميل</div>
+  <div class="progress-label" id="progressLabel">بياناتك</div>
 </div>
 
 <!-- MAIN CONTAINER -->
@@ -260,7 +260,7 @@ body { background:var(--cream); color:var(--text); font-family:'Cairo',sans-seri
     <div style="display:flex;flex-direction:column;gap:10px;margin-bottom:24px">
       <div style="background:var(--white);border-radius:12px;border:1.5px solid var(--border);padding:12px 16px;display:flex;align-items:center;gap:12px;text-align:right">
         <span style="font-size:24px">📋</span>
-        <div><div style="font-size:13px;font-weight:800;color:var(--dark)">بيانات العميل</div><div style="font-size:11px;color:var(--text2)">اسمك، رقمك، موعد الاستلام</div></div>
+        <div><div style="font-size:13px;font-weight:800;color:var(--dark)">بياناتك</div><div style="font-size:11px;color:var(--text2)">اسمك، رقمك، موعد الاستلام</div></div>
       </div>
       <div style="background:var(--white);border-radius:12px;border:1.5px solid var(--border);padding:12px 16px;display:flex;align-items:center;gap:12px;text-align:right">
         <span style="font-size:24px">🎂</span>
@@ -281,16 +281,38 @@ body { background:var(--cream); color:var(--text); font-family:'Cairo',sans-seri
 
 <!-- ==================== STEP 1: CLIENT DATA ==================== -->
 <div class="step-panel" id="step1">
-  <div class="step-title"><span class="step-icon">📋</span> بيانات العميل</div>
+  <div class="step-title"><span class="step-icon">📋</span> بياناتك</div>
   <div class="card">
     <div class="field"><label>الاسم بالكامل <span class="req">*</span></label><input type="text" id="clientName" placeholder="مثال: محمد أحمد"/></div>
     <div class="fields-row">
       <div class="field"><label>رقم الهاتف <span class="req">*</span></label><input type="tel" id="clientPhone" placeholder="01xxxxxxxxx" style="direction:ltr"/></div>
       <div class="field"><label>رقم الواتساب <span class="req">*</span></label><input type="tel" id="clientWa" placeholder="01xxxxxxxxx" style="direction:ltr"/></div>
     </div>
-    <div class="fields-row">
+    <div class="fields-grid">
       <div class="field"><label>تاريخ الاستلام <span class="req">*</span></label><input type="date" id="clientDate"/></div>
       <div class="field"><label>وقت الاستلام <span class="req">*</span></label><input type="time" id="clientTime"/></div>
+    </div>
+    <div class="field">
+      <label>نوع الاستلام <span class="req">*</span></label>
+      <select id="orderType" onchange="toggleDeliveryFields()">
+        <option value="pickup">🏪 استلام من المحل</option>
+        <option value="delivery">🚚 توصيل</option>
+      </select>
+    </div>
+    <div id="deliveryFields" style="display:none">
+      <div class="field"><label>العنوان بالتفصيل <span class="req">*</span></label>
+        <textarea id="clientAddress" placeholder="مثال: شارع النيل، بجوار مسجد النور، عمارة 5، شقة 3" rows="2" style="width:100%;padding:10px;background:var(--cream);border:1.5px solid var(--border);border-radius:10px;font-size:13px;font-family:'Cairo',sans-serif;resize:none;outline:none"></textarea>
+      </div>
+      <div class="field"><label>معلم قريب معروف</label>
+        <input type="text" id="clientLandmark" placeholder="مثال: بجوار كارفور، قرب محطة المترو..."/>
+      </div>
+      <div class="field">
+        <label>موقعك على الخريطة (اختياري)</label>
+        <button type="button" onclick="getClientLocation()" style="width:100%;padding:10px;background:var(--cream2);border:1.5px solid var(--rose-light);border-radius:10px;font-size:13px;font-weight:700;color:var(--rose-dark);cursor:pointer;font-family:'Cairo',sans-serif">
+          📍 مشاركة موقعي الحالي
+        </button>
+        <div id="locationStatus" style="font-size:11px;color:var(--text2);margin-top:4px;text-align:center"></div>
+      </div>
     </div>
   </div>
 
@@ -307,67 +329,56 @@ body { background:var(--cream); color:var(--text); font-family:'Cairo',sans-seri
       <div class="size-card" onclick="selectSize(this,'18 سم','ميني','6-8 أشخاص',180)">
         <div class="size-emoji">🍰</div>
         <div class="size-label">18 سم</div>
-        <div class="size-persons">6-8 أشخاص</div>
         <div class="size-price">~180 ج</div>
       </div>
       <div class="size-card" onclick="selectSize(this,'20 سم','','8-12 شخص',220)">
         <div class="size-emoji">🎂</div>
         <div class="size-label">20 سم</div>
-        <div class="size-persons">8-12 شخص</div>
         <div class="size-price">~220 ج</div>
       </div>
       <div class="size-card" onclick="selectSize(this,'22 سم','','12-16 شخص',270)">
         <div class="size-emoji">🎂</div>
         <div class="size-label">22 سم</div>
-        <div class="size-persons">12-16 شخص</div>
         <div class="size-price">~270 ج</div>
       </div>
       <div class="size-card" onclick="selectSize(this,'24 سم','','16-20 شخص',320)">
         <div class="size-emoji">🎂</div>
         <div class="size-label">24 سم</div>
-        <div class="size-persons">16-20 شخص</div>
         <div class="size-price">~320 ج</div>
       </div>
       <div class="size-card" onclick="selectSize(this,'26 سم','','20-25 شخص',380)">
         <div class="size-emoji">🎂</div>
         <div class="size-label">26 سم</div>
-        <div class="size-persons">20-25 شخص</div>
         <div class="size-price">~380 ج</div>
       </div>
       <div class="size-card" onclick="selectSize(this,'28 سم','','25-30 شخص',440)">
         <div class="size-emoji">🎂</div>
         <div class="size-label">28 سم</div>
-        <div class="size-persons">25-30 شخص</div>
         <div class="size-price">~440 ج</div>
       </div>
       <div class="size-card" onclick="selectSize(this,'20×30 سم','','20-25 شخص',400)">
         <div class="size-emoji">🟫</div>
         <div class="size-label">20×30 سم</div>
-        <div class="size-persons">20-25 شخص</div>
         <div class="size-price">~400 ج</div>
       </div>
       <div class="size-card" onclick="selectSize(this,'30×30 سم','','25-30 شخص',450)">
         <div class="size-emoji">🟫</div>
         <div class="size-label">30×30 سم</div>
-        <div class="size-persons">25-30 شخص</div>
         <div class="size-price">~450 ج</div>
       </div>
       <div class="size-card" onclick="selectSize(this,'30×40 سم','','35-40 شخص',550)">
         <div class="size-emoji">🟫</div>
         <div class="size-label">30×40 سم</div>
-        <div class="size-persons">35-40 شخص</div>
         <div class="size-price">~550 ج</div>
       </div>
       <div class="size-card" onclick="selectSize(this,'40×40 سم','','45-50 شخص',650)">
         <div class="size-emoji">🟫</div>
         <div class="size-label">40×40 سم</div>
-        <div class="size-persons">45-50 شخص</div>
         <div class="size-price">~650 ج</div>
       </div>
       <div class="size-card" onclick="selectSize(this,'40×60 سم','كبير','60-70 شخص',850)">
         <div class="size-emoji">🟫</div>
         <div class="size-label">40×60 سم</div>
-        <div class="size-persons">60-70 شخص</div>
         <div class="size-price">~850 ج</div>
       </div>
     </div>
@@ -487,12 +498,41 @@ body { background:var(--cream); color:var(--text); font-family:'Cairo',sans-seri
     </div>
   </div>
 
+  <!-- LAYERS HEIGHT -->
+  <div class="card">
+    <div style="font-size:14px;font-weight:800;color:var(--dark);margin-bottom:12px">📏 ارتفاع الدور — عدد الطبقات</div>
+    <div class="option-grid" id="layerHeightGrid">
+      <div class="option-btn selected" onclick="selectOne('layerHeightGrid',this,'3 طبقات (ارتفاع عادي)')"><span class="opt-emoji">📐</span>3 طبقات (عادي)</div>
+      <div class="option-btn" onclick="selectOne('layerHeightGrid',this,'4 طبقات')"><span class="opt-emoji">📐</span>4 طبقات</div>
+      <div class="option-btn" onclick="selectOne('layerHeightGrid',this,'5 طبقات')"><span class="opt-emoji">📐</span>5 طبقات</div>
+      <div class="option-btn" onclick="selectOne('layerHeightGrid',this,'حسب الاتفاق')"><span class="opt-emoji">📐</span>حسب الاتفاق</div>
+    </div>
+    <div class="alert alert-warn" style="margin-top:10px;font-size:11px">⚠️ الارتفاع أكتر من 3 طبقات بيكون بسعر إضافي حسب الاتفاق.</div>
+  </div>
+
+  <!-- DEDICATION -->
+  <div class="card">
+    <div style="font-size:14px;font-weight:800;color:var(--dark);margin-bottom:8px">💌 نص الإهداء على التورتة</div>
+    <div class="field">
+      <select id="dedicationChoice" onchange="toggleDedication()">
+        <option value="none">بدون إهداء</option>
+        <option value="yes">✍️ أريد كتابة إهداء</option>
+      </select>
+    </div>
+    <div id="dedicationField" style="display:none">
+      <div class="field">
+        <input type="text" id="dedicationText" placeholder="مثال: كل سنة وأنتِ بخير يا مريم 🎀"/>
+        <div style="font-size:10px;color:var(--text2);margin-top:4px">سيُكتب على التورتة كما هو</div>
+      </div>
+    </div>
+  </div>
+
   <!-- DESCRIPTION -->
   <div class="card">
     <div style="font-size:14px;font-weight:800;color:var(--dark);margin-bottom:8px">✍️ وصف التورتة <span class="req" style="color:var(--rose)">*</span></div>
-    <div style="font-size:11px;color:var(--text2);margin-bottom:10px">اكتب كل التفاصيل: الألوان، الاسم على التورتة، العمر، أي ملاحظات</div>
+    <div style="font-size:11px;color:var(--text2);margin-bottom:10px">اكتب كل التفاصيل: الألوان، العمر، أي ملاحظات إضافية</div>
     <div class="field">
-      <textarea id="cakeDesc" placeholder="مثال: تورتة عيد ميلاد لبنتي مريم 5 سنين، ألوان وردي وأبيض، فيها الأميرة إيلسا من فيلم فروزن، ومكتوب عليها: كل سنة وأنتِ بخير يا مريم 🎀" rows="5"></textarea>
+      <textarea id="cakeDesc" placeholder="مثال: تورتة عيد ميلاد لبنتي مريم 5 سنين، ألوان وردي وأبيض، فيها الأميرة إيلسا من فيلم فروزن 🎀" rows="5"></textarea>
     </div>
   </div>
 </div>
@@ -544,6 +584,11 @@ body { background:var(--cream); color:var(--text); font-family:'Cairo',sans-seri
   <div class="admin-panel" id="adminPanel">
     <div style="font-size:18px;font-weight:900;color:var(--dark);margin-bottom:16px">⚙️ إعدادات نظام التورتات</div>
     <div class="card">
+      <div style="font-size:14px;font-weight:800;margin-bottom:12px">💰 أسعار المقاسات</div>
+      <div id="sizePricesAdmin" style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px"></div>
+      <button onclick="saveSizePrices()" style="padding:8px 16px;background:linear-gradient(135deg,var(--rose),var(--rose-dark));color:#fff;border-radius:10px;font-size:12px;font-weight:800;border:none;cursor:pointer;font-family:'Cairo',sans-serif">💾 حفظ الأسعار</button>
+    </div>
+    <div class="card">
       <div style="font-size:14px;font-weight:800;margin-bottom:12px">📱 رقم واتساب استقبال الطلبات</div>
       <div class="field">
         <label>الرقم بصيغة دولية <span style="color:var(--rose)">*</span></label>
@@ -560,8 +605,13 @@ body { background:var(--cream); color:var(--text); font-family:'Cairo',sans-seri
 </div>
 
 <!-- ADMIN TOGGLE -->
-<div style="text-align:center;padding:20px;font-size:11px;color:var(--text2)" id="adminToggleWrap">
-  <button onclick="toggleAdmin()" style="background:none;border:none;color:var(--text2);font-size:11px;cursor:pointer;font-family:'Cairo',sans-serif;text-decoration:underline">لوحة الإدارة</button>
+<div style="text-align:center;padding:24px 20px;font-size:11px;color:var(--text2)" id="adminToggleWrap">
+  <div id="zamzamTapTarget" onclick="handleZamzamTap()" style="cursor:pointer;user-select:none">
+    <div style="font-size:15px;font-weight:900;color:var(--rose-dark);letter-spacing:1px">Zamzam Dessert</div>
+    <div style="font-size:11px;color:var(--text2);margin-top:2px">Programmer & Developer</div>
+    <div style="font-size:11px;color:var(--text2)">Designed by Mahmoud Gamal Eldeen</div>
+    <div style="font-size:11px;color:var(--text2);margin-top:2px">📱 01508613866</div>
+  </div>
 </div>
 
 <!-- ==================== SCRIPT ==================== -->
@@ -571,13 +621,14 @@ body { background:var(--cream); color:var(--text); font-family:'Cairo',sans-seri
 // ============================================================
 let currentStep = 0;
 const TOTAL_STEPS = 5; // 0=intro, 1=client, 2=specs, 3=design, 4=summary
-const STEP_LABELS = ['','بيانات العميل','مواصفات التورتة','التصميم','مراجعة الطلب','إرسال'];
+const STEP_LABELS = ['','بياناتك','مواصفات التورتة','التصميم','مراجعة الطلب','إرسال'];
 
 let order = {
   clientName:'', clientPhone:'', clientWa:'', clientDate:'', clientTime:'',
-  persons:10,
+  orderType:'pickup', clientAddress:'', clientLandmark:'',
   size:'', sizePrice:0,
   layers:'دور واحد',
+  layerHeight:'3 طبقات',
   topping:'', toppingHalf1:'', toppingHalf2:'', isHalfHalf:false,
   sponge:'',
   filling:'بدون حشو',
@@ -665,6 +716,10 @@ function validateStep() {
     if (!document.getElementById('clientWa').value.trim()) { showToast('❌ أدخل رقم واتساب'); return false; }
     if (!document.getElementById('clientDate').value) { showToast('❌ اختر تاريخ الاستلام'); return false; }
     if (!document.getElementById('clientTime').value) { showToast('❌ اختر وقت الاستلام'); return false; }
+    const _type = document.getElementById('orderType')?.value;
+    if (_type === 'delivery' && !document.getElementById('clientAddress')?.value?.trim()) {
+      showToast('❌ أدخل عنوان التوصيل'); return false;
+    }
     order.clientName = document.getElementById('clientName').value.trim();
     order.clientPhone = document.getElementById('clientPhone').value.trim();
     order.clientWa = document.getElementById('clientWa').value.trim();
@@ -685,7 +740,7 @@ function validateStep() {
 // SELECTIONS
 // ============================================================
 let selectedSizeEl = null;
-function selectSize(el, size, badge, persons, price) {
+function selectSize(el, size, price) {
   if (selectedSizeEl) selectedSizeEl.classList.remove('selected');
   el.classList.add('selected');
   selectedSizeEl = el;
@@ -837,31 +892,47 @@ function submitOrder() {
   localStorage.setItem('zz_cake_orders', JSON.stringify(cakeOrders.slice(0,100)));
 
   // Build WhatsApp message
-  let msg = `🎂 *طلب تورتة سبيشيال — زمزم ديزرت*\n`;
-  msg += `━━━━━━━━━━━━━━━━\n`;
-  msg += `👤 الاسم: ${order.clientName}\n`;
-  msg += `📱 الهاتف: ${order.clientPhone}\n`;
-  msg += `💬 واتساب: ${order.clientWa}\n`;
-  msg += `📅 الاستلام: ${order.clientDate} الساعة ${order.clientTime}\n`;
-  msg += `👥 الأشخاص: ${order.persons}\n`;
-  msg += `━━━━━━━━━━━━━━━━\n`;
-  msg += `📐 المقاس: ${order.size}\n`;
-  msg += `🎂 الأدوار: ${order.layers}\n`;
-  msg += `🍫 التوبينج: ${toppingText}\n`;
-  msg += `🍰 الكيك: ${order.sponge||'لم يُحدد'}\n`;
-  msg += `🍓 الحشوة: ${order.filling}\n`;
-  msg += `🎉 المناسبة: ${order.occasion||'لم تُحدد'}\n`;
-  msg += `✨ الزينة: ${order.deco||'لم تُحدد'}\n`;
-  msg += `━━━━━━━━━━━━━━━━\n`;
-  msg += `✍️ الوصف:\n${order.desc}\n`;
-  msg += `━━━━━━━━━━━━━━━━\n`;
-  msg += `💰 السعر التقريبي: ${order.sizePrice ? '~'+order.sizePrice+' ج.م' : 'حسب الاتفاق'}\n`;
-  msg += `⚠️ السعر النهائي يتحدد بعد المراجعة\n`;
-  msg += `━━━━━━━━━━━━━━━━\n`;
-  if (order.imgBase64) msg += `🖼️ (صورة مرجعية مرفقة مع الطلب)\n`;
-  msg += `#${orderData.id}`;
+  // جمع البيانات الإضافية
+  const orderType = document.getElementById('orderType')?.value || 'pickup';
+  const clientAddress = document.getElementById('clientAddress')?.value?.trim() || '';
+  const clientLandmark = document.getElementById('clientLandmark')?.value?.trim() || '';
+  const dedicationChoice = document.getElementById('dedicationChoice')?.value || 'none';
+  const dedicationText = document.getElementById('dedicationText')?.value?.trim() || '';
+  const layerHeight = document.querySelector('#layerHeightGrid .option-btn.selected')?.textContent?.trim() || '3 طبقات';
 
-  const waUrl = `https://wa.me/${WA_NUM().replace(/[^0-9]/g,'')}?text=${encodeURIComponent(msg)}`;
+  let msg = '🎂 *طلب تورتة سبيشيال — زمزم ديزرت*\n';
+  msg += '━━━━━━━━━━━━━━━━\n';
+  msg += '👤 الاسم: ' + order.clientName + '\n';
+  msg += '📱 الهاتف: ' + order.clientPhone + '\n';
+  msg += '💬 واتساب: ' + order.clientWa + '\n';
+  msg += '📅 الاستلام: ' + order.clientDate + ' الساعة ' + order.clientTime + '\n';
+  msg += '🏪 نوع الاستلام: ' + (orderType === 'delivery' ? 'توصيل 🚚' : 'استلام من المحل') + '\n';
+  if (orderType === 'delivery') {
+    if (clientAddress) msg += '📍 العنوان: ' + clientAddress + '\n';
+    if (clientLandmark) msg += '🗺️ معلم قريب: ' + clientLandmark + '\n';
+    if (clientLat) msg += '📌 الموقع: https://maps.google.com/?q=' + clientLat + ',' + clientLng + '\n';
+  }
+  msg += '━━━━━━━━━━━━━━━━\n';
+  msg += '📐 المقاس: ' + order.size + '\n';
+  msg += '🎂 الأدوار: ' + order.layers + '\n';
+  msg += '📏 ارتفاع الدور: ' + layerHeight + '\n';
+  msg += '🍫 التوبينج: ' + toppingText + '\n';
+  msg += '🍰 الكيك: ' + (order.sponge || 'لم يُحدد') + '\n';
+  msg += '🍓 الحشوة: ' + order.filling + '\n';
+  msg += '🎉 المناسبة: ' + (order.occasion || 'لم تُحدد') + '\n';
+  msg += '✨ الزينة: ' + (order.deco || 'لم تُحدد') + '\n';
+  if (dedicationChoice === 'yes' && dedicationText) msg += '💌 الإهداء: ' + dedicationText + '\n';
+  msg += '━━━━━━━━━━━━━━━━\n';
+  msg += '✍️ الوصف:\n' + order.desc + '\n';
+  msg += '━━━━━━━━━━━━━━━━\n';
+  msg += '💰 السعر التقريبي: ' + (order.sizePrice ? '~' + order.sizePrice + ' ج.م' : 'حسب الاتفاق') + '\n';
+  msg += '⚠️ السعر النهائي يتحدد بعد المراجعة\n';
+  msg += '━━━━━━━━━━━━━━━━\n';
+  if (order.imgBase64) msg += '🖼️ (صورة مرجعية مرفقة — ترسل منفصلة على واتساب)\n';
+  msg += '#' + orderData.id;
+
+  const waNum = WA_NUM().replace(/[^0-9]/g,'');
+  const waUrl = 'https://api.whatsapp.com/send?phone=' + waNum + '&text=' + encodeURIComponent(msg);
 
   // Show success
   document.getElementById('heroSection').style.display = 'none';
@@ -903,6 +974,7 @@ function adminLogin() {
   document.getElementById('adminLogin').style.display = 'none';
   document.getElementById('adminPanel').style.display = 'block';
   document.getElementById('adminWaNum').value = adminSettings.waNum || '+201158973728';
+  buildSizePricesAdmin();
   loadAdminOrders();
 }
 
@@ -944,6 +1016,95 @@ function showToast(msg) {
 }
 
 // ============================================================
+// SIZE PRICES — قابلة للتعديل من الأدمين
+// ============================================================
+const DEFAULT_SIZES = [
+  { label:'18 سم', price:180 }, { label:'20 سم', price:220 },
+  { label:'22 سم', price:270 }, { label:'24 سم', price:320 },
+  { label:'26 سم', price:380 }, { label:'28 سم', price:440 },
+  { label:'20×30 سم', price:400 }, { label:'30×30 سم', price:450 },
+  { label:'30×40 سم', price:550 }, { label:'40×40 سم', price:650 },
+  { label:'40×60 سم', price:850 }
+];
+let sizePrices = JSON.parse(localStorage.getItem('zz_cake_sizes') || 'null') || DEFAULT_SIZES;
+
+function buildSizeGrid() {
+  const grid = document.getElementById('sizeGrid');
+  if (!grid) return;
+  grid.innerHTML = sizePrices.map((s,i) => `
+    <div class="size-card" onclick="selectSize(this,'${s.label}',${s.price})">
+      <div class="size-emoji">${s.label.includes('×') ? '🟫' : '🎂'}</div>
+      <div class="size-label">${s.label}</div>
+      <div class="size-price">~${s.price} ج</div>
+    </div>`).join('');
+}
+
+function buildSizePricesAdmin() {
+  const el = document.getElementById('sizePricesAdmin');
+  if (!el) return;
+  el.innerHTML = sizePrices.map((s,i) => `
+    <div style="background:var(--cream);border:1px solid var(--border);border-radius:8px;padding:8px">
+      <div style="font-size:11px;font-weight:800;color:var(--rose-dark);margin-bottom:4px">${s.label}</div>
+      <input type="number" id="sizePrice_${i}" value="${s.price}" style="width:100%;padding:5px;border:1px solid var(--border);border-radius:6px;font-size:13px;background:#fff;font-family:'Cairo',sans-serif"/>
+    </div>`).join('');
+}
+
+function saveSizePrices() {
+  sizePrices = sizePrices.map((s,i) => ({
+    ...s, price: parseFloat(document.getElementById('sizePrice_'+i)?.value) || s.price
+  }));
+  localStorage.setItem('zz_cake_sizes', JSON.stringify(sizePrices));
+  buildSizeGrid();
+  showToast('✅ تم حفظ الأسعار');
+}
+
+// ============================================================
+// DELIVERY / LOCATION
+// ============================================================
+let clientLat = null, clientLng = null;
+
+function toggleDeliveryFields() {
+  const type = document.getElementById('orderType').value;
+  document.getElementById('deliveryFields').style.display = type === 'delivery' ? 'block' : 'none';
+}
+
+function getClientLocation() {
+  const statusEl = document.getElementById('locationStatus');
+  statusEl.textContent = '📍 جاري تحديد موقعك...';
+  if (!navigator.geolocation) { statusEl.textContent = '❌ المتصفح لا يدعم GPS'; return; }
+  navigator.geolocation.getCurrentPosition(pos => {
+    clientLat = pos.coords.latitude;
+    clientLng = pos.coords.longitude;
+    statusEl.textContent = '✅ تم تحديد موقعك بنجاح';
+    statusEl.style.color = 'green';
+  }, () => {
+    statusEl.textContent = '❌ تعذر تحديد الموقع، تأكد من تفعيل GPS';
+  });
+}
+
+// ============================================================
+// DEDICATION
+// ============================================================
+function toggleDedication() {
+  const choice = document.getElementById('dedicationChoice').value;
+  document.getElementById('dedicationField').style.display = choice === 'yes' ? 'block' : 'none';
+}
+
+// ============================================================
+// 7-TAP ADMIN
+// ============================================================
+let tapCount = 0, tapTimer = null;
+function handleZamzamTap() {
+  tapCount++;
+  clearTimeout(tapTimer);
+  tapTimer = setTimeout(() => { tapCount = 0; }, 2000);
+  if (tapCount >= 7) {
+    tapCount = 0;
+    toggleAdmin();
+  }
+}
+
+// ============================================================
 // INIT
 // ============================================================
 document.getElementById('progressWrap').style.display = 'none';
@@ -954,6 +1115,9 @@ document.getElementById('btnNext').textContent = 'ابدأ الطلب 🎂';
 // Set min date to today
 const today = new Date().toISOString().split('T')[0];
 document.getElementById('clientDate').min = today;
+
+// Build size grid from saved prices
+buildSizeGrid();
 </script>
 </body>
 </html>
