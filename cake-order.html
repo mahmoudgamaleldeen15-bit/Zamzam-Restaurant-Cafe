@@ -293,16 +293,7 @@ body { background:var(--cream); color:var(--text); font-family:'Cairo',sans-seri
       <div class="field"><label>وقت الاستلام <span class="req">*</span></label><input type="time" id="clientTime"/></div>
     </div>
   </div>
-  <div class="card">
-    <div class="step-title" style="font-size:14px;margin-bottom:12px"><span>👥</span> عدد الأشخاص (يساعدك على اختيار المقاس)</div>
-    <div class="persons-row">
-      <button class="persons-btn" onclick="changePersons(-5)">−</button>
-      <div class="persons-val" id="personsVal">10</div>
-      <button class="persons-btn" onclick="changePersons(5)">+</button>
-      <div style="font-size:12px;color:var(--text2);margin-right:8px">شخص</div>
-    </div>
-    <div style="font-size:11px;color:var(--text2);margin-top:8px" id="personsHint">💡 مناسب لـ 18-20 سم</div>
-  </div>
+
 </div>
 
 <!-- ==================== STEP 2: CAKE SPECS ==================== -->
@@ -618,16 +609,20 @@ function goStep(n) {
   btnBack.style.display = currentStep > 0 ? 'block' : 'none';
 
   if (currentStep === 0) {
-    btnNext.style.display = 'none';
+    btnNext.style.display = 'block';
+    btnNext.textContent = 'ابدأ الطلب 🎂';
+    btnNext.className = 'btn-next';
     document.getElementById('progressWrap').style.display = 'none';
   } else if (currentStep === 4) {
     buildSummary();
     btnNext.textContent = '📱 إرسال على واتساب';
     btnNext.className = 'btn-next gold';
+    btnNext.style.display = 'block';
     document.getElementById('progressWrap').style.display = 'block';
   } else {
     btnNext.textContent = 'التالي ←';
     btnNext.className = 'btn-next';
+    btnNext.style.display = 'block';
     document.getElementById('progressWrap').style.display = 'block';
   }
 }
@@ -954,6 +949,7 @@ function showToast(msg) {
 document.getElementById('progressWrap').style.display = 'none';
 document.getElementById('btnNext').style.display = 'none';
 document.getElementById('btnBack').style.display = 'none';
+document.getElementById('btnNext').textContent = 'ابدأ الطلب 🎂';
 
 // Set min date to today
 const today = new Date().toISOString().split('T')[0];
