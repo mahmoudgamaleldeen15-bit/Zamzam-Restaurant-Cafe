@@ -1010,6 +1010,9 @@ function submitOrder() {
   const waNum = WA_NUM().replace(/[^0-9]/g,'');
   const waUrl = 'https://api.whatsapp.com/send?phone=' + waNum + '&text=' + encodeURIComponent(msg);
 
+  // فتح واتساب فوراً في نفس الـ click event
+  window.open(waUrl, '_blank');
+
   // Show success
   document.getElementById('heroSection').style.display = 'none';
   document.getElementById('progressWrap').style.display = 'none';
@@ -1017,18 +1020,14 @@ function submitOrder() {
   document.getElementById('navBtns').style.display = 'none';
   document.getElementById('adminToggleWrap').style.display = 'none';
 
-  // Build success screen content
   const successEl = document.getElementById('successScreen');
   successEl.classList.add('show');
 
-  // If image exists - show separate send button
+  // لو فيه صورة — اظهر زرار الإرسال المنفصل
   if (order.imgBase64) {
     document.getElementById('imgSendSection').style.display = 'block';
     document.getElementById('imgSendPreview').src = order.imgBase64;
   }
-
-  // Open WhatsApp with text first (no image in URL to avoid breaking)
-  setTimeout(() => { window.open(waUrl, '_blank'); }, 500);
 }
 
 function resetForm() {
@@ -1113,13 +1112,12 @@ function startCountdown() {
     if (countdownSec <= 10 && numEl) numEl.style.color = '#ffcccc';
     if (countdownSec <= 0) {
       clearInterval(countdownTimer);
-      // Auto submit when countdown ends
+      // Show confirm button — can't auto-open WhatsApp without click
       var box = document.getElementById('countdownBox');
       if (box) {
-        box.innerHTML = '<div style="font-size:13px;font-weight:800;color:#fff">⏰ انتهى وقت المراجعة — سيتم الإرسال تلقائياً</div>';
-        box.style.background = '#166534';
+        box.innerHTML = '<div style="font-size:13px;font-weight:800;color:#fff;margin-bottom:10px">⏰ انتهى وقت المراجعة</div><button onclick="submitOrder()" style="width:100%;padding:12px;background:#fff;color:var(--rose-dark);border-radius:10px;font-size:14px;font-weight:900;border:none;cursor:pointer;font-family:Cairo,sans-serif">📱 اضغط لإرسال الطلب</button>';
+        box.style.background = 'linear-gradient(135deg,#166534,#15803d)';
       }
-      setTimeout(function() { submitOrder(); }, 1500);
     }
   }, 1000);
 }
