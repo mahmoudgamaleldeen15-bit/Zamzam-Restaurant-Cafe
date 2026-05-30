@@ -3705,6 +3705,12 @@ function isOfferValid(o) {
 // PRODUCT MODAL
 // ============================================================
 function openProduct(cat, id) {
+  // ✅ فحص لو الصنف فيه [LINK] في الوصف — يفتح الرابط مباشرة
+  var _linkItem = MENU[cat] && MENU[cat].items ? MENU[cat].items.find(function(i){return i.id===id;}) : null;
+  if (_linkItem && _linkItem.desc && _linkItem.desc.indexOf('[LINK]') !== -1) {
+    var _url = _linkItem.desc.replace(/.*\[LINK\]/, '').trim();
+    if (_url) { window.open(_url, '_blank'); return; }
+  }
   // ✅ فحص مواعيد العمل أولاً
   const mainGroupKey = getCatMainGroup(cat, MENU[cat]?.label || '');
   if (mainGroupKey && !isGroupOpen(mainGroupKey)) {
