@@ -4,6 +4,14 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>طلب تورتة سبيشيال 🎂 — زمزم ديزيرت</title>
+<meta name="theme-color" content="#c2185b">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="تورتة زمزم">
+<meta name="description" content="اطلب تورتتك المخصصة من زمزم ديزرت">
+<link rel="manifest" href="cake-manifest.json">
+<link rel="apple-touch-icon" href="https://res.cloudinary.com/dk3xw0x5v/image/upload/v1778698476/Gemini_Generated_Image_1%D8%BA%D8%BAix4ur1ix4ur1ix4_x2fzvd_zgujcf.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&display=swap" rel="stylesheet">
 <!-- Firebase SDK — نفس قاعدة زمزم -->
@@ -229,6 +237,9 @@ body { background:var(--cream); color:var(--text); font-family:'Cairo',sans-seri
   <div class="hero-logo">🎂</div>
   <div class="hero-title">طلب تورتة <span>سبيشيال</span></div>
   <div class="hero-sub">زمزم ديزيرت — صنع بالحب 🤍</div>
+  <div id="pwaInstallWrap" style="display:none;margin-top:16px">
+    <button onclick="showInstallGuide()" style="background:rgba(255,255,255,.15);border:1.5px solid rgba(255,255,255,.3);border-radius:12px;padding:10px 20px;color:#fff;font-size:13px;font-weight:800;cursor:pointer;font-family:Cairo,sans-serif">📲 ثبّت التطبيق</button>
+  </div>
 </div>
 
 <!-- PROGRESS -->
@@ -667,6 +678,67 @@ body { background:var(--cream); color:var(--text); font-family:'Cairo',sans-seri
     <div style="font-size:11px;color:var(--text2);margin-top:2px">Programmer & Developer</div>
     <div style="font-size:11px;color:var(--text2)">Designed by Mahmoud Gamal Eldeen</div>
     <div style="font-size:11px;color:var(--text2);margin-top:2px">📱 01508613866</div>
+  </div>
+</div>
+
+<!-- PWA INSTALL MODAL -->
+<div class="modal-overlay" id="pwaModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:300;align-items:flex-end;justify-content:center">
+  <div style="background:#fff;border-radius:20px 20px 0 0;padding:24px;width:100%;max-width:480px;max-height:85vh;overflow-y:auto">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+      <div style="font-size:16px;font-weight:900;color:#1a0a12">📲 ثبّت التطبيق</div>
+      <button onclick="closeInstallModal()" style="background:#f5f5f5;border:none;border-radius:50%;width:32px;height:32px;font-size:16px;cursor:pointer">✕</button>
+    </div>
+
+    <!-- Android Steps -->
+    <div id="androidSteps">
+      <div style="background:#e8f5e9;border-radius:12px;padding:12px;margin-bottom:14px;font-size:12px;color:#1b5e20;font-weight:700">
+        🤖 لأجهزة Android (Chrome)
+      </div>
+      <div style="display:flex;flex-direction:column;gap:10px;margin-bottom:16px">
+        <div style="display:flex;gap:12px;align-items:flex-start">
+          <div style="width:28px;height:28px;background:var(--rose);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:900;color:#fff;flex-shrink:0">1</div>
+          <div style="font-size:13px;color:#333;line-height:1.6">اضغط على <strong>النقاط الثلاث ⋮</strong> في أعلى المتصفح</div>
+        </div>
+        <div style="display:flex;gap:12px;align-items:flex-start">
+          <div style="width:28px;height:28px;background:var(--rose);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:900;color:#fff;flex-shrink:0">2</div>
+          <div style="font-size:13px;color:#333;line-height:1.6">اختر <strong>"إضافة إلى الشاشة الرئيسية"</strong></div>
+        </div>
+        <div style="display:flex;gap:12px;align-items:flex-start">
+          <div style="width:28px;height:28px;background:var(--rose);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:900;color:#fff;flex-shrink:0">3</div>
+          <div style="font-size:13px;color:#333;line-height:1.6">لو ظهر تحذير اضغط <strong style="color:#e53e3e">"Install anyway"</strong> للمتابعة</div>
+        </div>
+        <div style="display:flex;gap:12px;align-items:flex-start">
+          <div style="width:28px;height:28px;background:var(--green);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:900;color:#fff;flex-shrink:0">✓</div>
+          <div style="font-size:13px;color:#333;line-height:1.6">اضغط <strong>"إضافة"</strong> وسيظهر التطبيق على شاشتك 🎂</div>
+        </div>
+      </div>
+      <button id="androidInstallBtn" onclick="triggerAndroidInstall()" style="width:100%;padding:13px;background:linear-gradient(135deg,var(--rose),var(--rose-dark));color:#fff;border-radius:12px;font-size:14px;font-weight:800;border:none;cursor:pointer;font-family:'Cairo',sans-serif;margin-bottom:10px">⬇️ تثبيت مباشر</button>
+    </div>
+
+    <!-- iOS Steps -->
+    <div style="background:#fff8f0;border-radius:12px;padding:12px;margin-bottom:14px">
+      <div style="font-size:12px;font-weight:800;color:#92400e;margin-bottom:10px">🍎 لأجهزة iPhone / iPad (Safari)</div>
+      <div style="display:flex;flex-direction:column;gap:8px">
+        <div style="display:flex;gap:10px;align-items:flex-start">
+          <div style="width:24px;height:24px;background:var(--gold);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:900;color:#fff;flex-shrink:0">1</div>
+          <div style="font-size:12px;color:#555;line-height:1.6">افتح الرابط في <strong>Safari</strong> (مش Chrome)</div>
+        </div>
+        <div style="display:flex;gap:10px;align-items:flex-start">
+          <div style="width:24px;height:24px;background:var(--gold);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:900;color:#fff;flex-shrink:0">2</div>
+          <div style="font-size:12px;color:#555;line-height:1.6">اضغط أيقونة <strong>المشاركة</strong> ⬆️ في أسفل الشاشة</div>
+        </div>
+        <div style="display:flex;gap:10px;align-items:flex-start">
+          <div style="width:24px;height:24px;background:var(--gold);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:900;color:#fff;flex-shrink:0">3</div>
+          <div style="font-size:12px;color:#555;line-height:1.6">اختر <strong>"Add to Home Screen"</strong> أو <strong>"إضافة للشاشة الرئيسية"</strong></div>
+        </div>
+        <div style="display:flex;gap:10px;align-items:flex-start">
+          <div style="width:24px;height:24px;background:var(--green);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:900;color:#fff;flex-shrink:0">✓</div>
+          <div style="font-size:12px;color:#555;line-height:1.6">اضغط <strong>"Add"</strong> وسيظهر التطبيق على شاشتك 🎂</div>
+        </div>
+      </div>
+    </div>
+
+    <button onclick="closeInstallModal()" style="width:100%;padding:11px;background:#f5f5f5;color:#666;border-radius:12px;font-size:13px;font-weight:700;border:none;cursor:pointer;font-family:'Cairo',sans-serif">لاحقاً</button>
   </div>
 </div>
 
@@ -1306,6 +1378,62 @@ function handleZamzamTap() {
     toggleAdmin();
   }
 }
+
+// ============================================================
+// PWA INSTALL
+// ============================================================
+let _pwaPrompt = null;
+const _isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent);
+const _isAndroid = /android/i.test(navigator.userAgent);
+
+window.addEventListener('beforeinstallprompt', function(e) {
+  e.preventDefault();
+  _pwaPrompt = e;
+  document.getElementById('pwaInstallWrap').style.display = 'block';
+});
+
+// Show install button on iOS too
+if (_isIOS) {
+  setTimeout(function() {
+    if (!window.navigator.standalone) {
+      document.getElementById('pwaInstallWrap').style.display = 'block';
+    }
+  }, 1500);
+}
+
+function showInstallGuide() {
+  document.getElementById('pwaModal').style.display = 'flex';
+  // Hide android direct btn if no prompt
+  if (!_pwaPrompt) {
+    var btn = document.getElementById('androidInstallBtn');
+    if (btn) btn.style.display = 'none';
+  }
+}
+
+function closeInstallModal() {
+  document.getElementById('pwaModal').style.display = 'none';
+}
+
+function triggerAndroidInstall() {
+  if (_pwaPrompt) {
+    _pwaPrompt.prompt();
+    _pwaPrompt.userChoice.then(function(result) {
+      if (result.outcome === 'accepted') {
+        document.getElementById('pwaInstallWrap').style.display = 'none';
+        closeInstallModal();
+        showToast('✅ تم تثبيت التطبيق بنجاح! 🎂');
+      }
+      _pwaPrompt = null;
+    });
+  } else {
+    showToast('اتبع الخطوات المكتوبة للتثبيت');
+  }
+}
+
+// Close modal on backdrop click
+document.getElementById('pwaModal').addEventListener('click', function(e) {
+  if (e.target === this) closeInstallModal();
+});
 
 // ============================================================
 // INIT

@@ -1,0 +1,26 @@
+{
+  "name": "تورتة زمزم ديزرت",
+  "short_name": "تورتة زمزم",
+  "description": "اطلب تورتتك المخصصة من زمزم ديزرت",
+  "start_url": "/Zamzam-Restaurant-Cafe/cake-order.html",
+  "scope": "/Zamzam-Restaurant-Cafe/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#fdf6f0",
+  "theme_color": "#c2185b",
+  "lang": "ar",
+  "dir": "rtl",
+  "icons": [
+    {
+      "src": "https://res.cloudinary.com/dk3xw0x5v/image/upload/v1778698476/Gemini_Generated_Image_1%D8%BA%D8%BAix4ur1ix4ur1ix4_x2fzvd_zgujcf.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "https://res.cloudinary.com/dk3xw0x5v/image/upload/v1778698476/Gemini_Generated_Image_1%D8%BA%D8%BAix4ur1ix4ur1ix4_x2fzvd_zgujcf.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ],
+  "categories": ["food", "shopping"]
+}
