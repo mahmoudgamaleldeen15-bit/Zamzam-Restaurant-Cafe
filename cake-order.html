@@ -1436,6 +1436,19 @@ document.getElementById('pwaModal').addEventListener('click', function(e) {
 });
 
 // ============================================================
+// SERVICE WORKER — مطلوب لتفعيل PWA Install
+// ============================================================
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('/Zamzam-Restaurant-Cafe/sw.js', {
+    scope: '/Zamzam-Restaurant-Cafe/'
+  }).then(function(reg) {
+    console.log('[Cake PWA] SW registered ✅');
+  }).catch(function(err) {
+    console.warn('[Cake PWA] SW failed:', err);
+  });
+}
+
+// ============================================================
 // INIT
 // ============================================================
 document.getElementById('progressWrap').style.display = 'none';
