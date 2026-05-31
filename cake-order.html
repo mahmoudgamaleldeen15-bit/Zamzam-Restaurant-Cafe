@@ -10,10 +10,18 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="تورتة زمزم">
 <meta name="description" content="اطلب تورتتك المخصصة من زمزم ديزرت">
-<link rel="manifest" href="cake-manifest.json">
+<link rel="manifest" href="/Zamzam-Restaurant-Cafe/cake-manifest.json">
 <link rel="apple-touch-icon" href="https://res.cloudinary.com/dk3xw0x5v/image/upload/v1778698476/Gemini_Generated_Image_1%D8%BA%D8%BAix4ur1ix4ur1ix4_x2fzvd_zgujcf.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+<!-- Google Analytics -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-67V4E37QM0"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'G-67V4E37QM0');
+</script>
 <!-- Firebase SDK — نفس قاعدة زمزم -->
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
@@ -237,8 +245,8 @@ body { background:var(--cream); color:var(--text); font-family:'Cairo',sans-seri
   <div class="hero-logo">🎂</div>
   <div class="hero-title">طلب تورتة <span>سبيشيال</span></div>
   <div class="hero-sub">زمزم ديزيرت — صنع بالحب 🤍</div>
-  <div id="pwaInstallWrap" style="display:none;margin-top:16px">
-    <button onclick="showInstallGuide()" style="background:rgba(255,255,255,.15);border:1.5px solid rgba(255,255,255,.3);border-radius:12px;padding:10px 20px;color:#fff;font-size:13px;font-weight:800;cursor:pointer;font-family:Cairo,sans-serif">📲 ثبّت التطبيق</button>
+  <div id="pwaInstallWrap" style="margin-top:16px">
+    <button onclick="showInstallGuide()" style="background:rgba(255,255,255,.15);border:1.5px solid rgba(255,255,255,.3);border-radius:12px;padding:10px 20px;color:#fff;font-size:13px;font-weight:800;cursor:pointer;font-family:Cairo,sans-serif">📲 ثبّت التطبيق على موبايلك</button>
   </div>
 </div>
 
@@ -621,6 +629,21 @@ body { background:var(--cream); color:var(--text); font-family:'Cairo',sans-seri
     <div style="font-size:11px;color:#15803d;line-height:1.6">خذ screenshot لهذه الشاشة — ستحتاجها للمطابقة عند استلام التورتة ✅</div>
   </div>
 
+  <!-- RATING -->
+  <div id="ratingSection" style="background:#fff;border:1.5px solid var(--border);border-radius:16px;padding:16px;margin-bottom:16px;text-align:center">
+    <div style="font-size:14px;font-weight:800;color:var(--dark);margin-bottom:8px">⭐ قيّم تجربتك معنا</div>
+    <div id="starsRow" style="display:flex;justify-content:center;gap:8px;margin-bottom:10px">
+      <span onclick="setRating(1)" style="font-size:32px;cursor:pointer;transition:.2s" id="star1">☆</span>
+      <span onclick="setRating(2)" style="font-size:32px;cursor:pointer;transition:.2s" id="star2">☆</span>
+      <span onclick="setRating(3)" style="font-size:32px;cursor:pointer;transition:.2s" id="star3">☆</span>
+      <span onclick="setRating(4)" style="font-size:32px;cursor:pointer;transition:.2s" id="star4">☆</span>
+      <span onclick="setRating(5)" style="font-size:32px;cursor:pointer;transition:.2s" id="star5">☆</span>
+    </div>
+    <textarea id="ratingComment" placeholder="رأيك يهمنا... (اختياري)" rows="2" style="width:100%;padding:10px;border:1.5px solid var(--border);border-radius:10px;font-size:13px;font-family:'Cairo',sans-serif;resize:none;outline:none;margin-bottom:8px"></textarea>
+    <button onclick="submitRating()" id="ratingBtn" style="width:100%;padding:10px;background:linear-gradient(135deg,var(--gold),#e8b84b);color:#fff;border-radius:10px;font-size:13px;font-weight:800;border:none;cursor:pointer;font-family:'Cairo',sans-serif">إرسال التقييم ⭐</button>
+    <div id="ratingDone" style="display:none;color:var(--green);font-size:13px;font-weight:800;margin-top:8px">✅ شكراً على تقييمك!</div>
+  </div>
+
   <button onclick="resetForm()" style="padding:14px 32px;background:linear-gradient(135deg,var(--rose),var(--rose-dark));color:#fff;border-radius:12px;font-size:14px;font-weight:800;border:none;cursor:pointer;font-family:'Cairo',sans-serif">طلب جديد 🎂</button>
   <div style="margin-top:16px">
     <a href="https://wa.me/201158973728" style="font-size:13px;color:var(--rose);font-weight:700;text-decoration:none">تواصل معنا مباشرة على واتساب 📱</a>
@@ -649,24 +672,76 @@ body { background:var(--cream); color:var(--text); font-family:'Cairo',sans-seri
     <button onclick="adminLogin()" style="width:100%;padding:12px;background:linear-gradient(135deg,var(--rose),var(--rose-dark));color:#fff;border-radius:10px;font-size:14px;font-weight:800;border:none;cursor:pointer;font-family:'Cairo',sans-serif">دخول</button>
   </div>
   <div class="admin-panel" id="adminPanel">
-    <div style="font-size:18px;font-weight:900;color:var(--dark);margin-bottom:16px">⚙️ إعدادات نظام التورتات</div>
-    <div class="card">
-      <div style="font-size:14px;font-weight:800;margin-bottom:12px">💰 أسعار المقاسات</div>
-      <div id="sizePricesAdmin" style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px"></div>
-      <button onclick="saveSizePrices()" style="padding:8px 16px;background:linear-gradient(135deg,var(--rose),var(--rose-dark));color:#fff;border-radius:10px;font-size:12px;font-weight:800;border:none;cursor:pointer;font-family:'Cairo',sans-serif">💾 حفظ الأسعار</button>
-    </div>
-    <div class="card">
-      <div style="font-size:14px;font-weight:800;margin-bottom:12px">📱 رقم واتساب استقبال الطلبات</div>
-      <div class="field">
-        <label>الرقم بصيغة دولية <span style="color:var(--rose)">*</span></label>
-        <input type="tel" id="adminWaNum" placeholder="+201158973728" style="direction:ltr"/>
-        <div style="font-size:11px;color:var(--text2);margin-top:4px">مثال: +201158973728 (مع رمز الدولة)</div>
+    <div style="font-size:18px;font-weight:900;color:var(--dark);margin-bottom:16px">⚙️ لوحة إدارة التورتات</div>
+
+    <!-- ANALYTICS LINK -->
+    <a href="https://analytics.google.com" target="_blank" style="display:flex;align-items:center;gap:8px;background:linear-gradient(135deg,#1a73e8,#1557b0);border-radius:12px;padding:10px 14px;color:#fff;text-decoration:none;font-size:12px;font-weight:800;margin-bottom:12px">
+      <span style="font-size:18px">📊</span>
+      <div>
+        <div>Google Analytics</div>
+        <div style="font-size:10px;opacity:.8">شوف إحصائيات الزيارات والتثبيتات</div>
       </div>
-      <button onclick="saveAdminSettings()" style="padding:10px 20px;background:linear-gradient(135deg,var(--rose),var(--rose-dark));color:#fff;border-radius:10px;font-size:13px;font-weight:800;border:none;cursor:pointer;font-family:'Cairo',sans-serif">💾 حفظ</button>
+      <span style="margin-right:auto;font-size:16px">←</span>
+    </a>
+
+    <!-- STATS ROW -->
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:16px" id="adminStatsRow">
+      <div style="background:linear-gradient(135deg,var(--rose-dark),var(--rose));border-radius:14px;padding:14px;text-align:center;color:#fff">
+        <div style="font-size:26px;font-weight:900" id="statTotal">0</div>
+        <div style="font-size:10px;opacity:.85">إجمالي الطلبات</div>
+      </div>
+      <div style="background:linear-gradient(135deg,#92400e,#b45309);border-radius:14px;padding:14px;text-align:center;color:#fff">
+        <div style="font-size:26px;font-weight:900" id="statMonth">0</div>
+        <div style="font-size:10px;opacity:.85">طلبات هذا الشهر</div>
+      </div>
+      <div style="background:linear-gradient(135deg,#166534,#15803d);border-radius:14px;padding:14px;text-align:center;color:#fff">
+        <div style="font-size:22px;font-weight:900" id="statRating">—</div>
+        <div style="font-size:10px;opacity:.85">متوسط التقييم</div>
+      </div>
     </div>
-    <div class="card">
-      <div style="font-size:14px;font-weight:800;margin-bottom:12px">📦 الطلبات الواردة</div>
+
+    <!-- TABS -->
+    <div style="display:flex;background:#f5f5f5;border-radius:12px;padding:4px;margin-bottom:14px;gap:4px">
+      <button onclick="adminTab('orders')" id="tabOrders" style="flex:1;padding:8px;border-radius:9px;border:none;background:var(--rose);color:#fff;font-size:12px;font-weight:800;cursor:pointer;font-family:'Cairo',sans-serif">📦 الطلبات</button>
+      <button onclick="adminTab('ratings')" id="tabRatings" style="flex:1;padding:8px;border-radius:9px;border:none;background:none;color:#666;font-size:12px;font-weight:800;cursor:pointer;font-family:'Cairo',sans-serif">⭐ التقييمات</button>
+      <button onclick="adminTab('settings')" id="tabSettings" style="flex:1;padding:8px;border-radius:9px;border:none;background:none;color:#666;font-size:12px;font-weight:800;cursor:pointer;font-family:'Cairo',sans-serif">⚙️ الإعدادات</button>
+    </div>
+
+    <!-- ORDERS TAB -->
+    <div id="adminTabOrders">
+      <!-- MONTHLY FILTER -->
+      <div style="display:flex;gap:8px;margin-bottom:12px;align-items:center">
+        <select id="monthFilter" onchange="loadAdminOrders()" style="flex:1;padding:8px;border:1.5px solid var(--border);border-radius:10px;font-size:13px;background:#fff;font-family:'Cairo',sans-serif"></select>
+        <button onclick="exportOrdersXLS()" style="padding:8px 14px;background:var(--gold);color:#fff;border-radius:10px;font-size:12px;font-weight:800;border:none;cursor:pointer;font-family:'Cairo',sans-serif">📥 Excel</button>
+      </div>
       <div id="adminOrders" style="font-size:13px;color:var(--text2)">جاري التحميل...</div>
+    </div>
+
+    <!-- RATINGS TAB -->
+    <div id="adminTabRatings" style="display:none">
+      <div id="adminRatings" style="font-size:13px;color:var(--text2)">جاري التحميل...</div>
+    </div>
+
+    <!-- SETTINGS TAB -->
+    <div id="adminTabSettings" style="display:none">
+      <div class="card">
+        <div style="font-size:14px;font-weight:800;margin-bottom:12px">💰 أسعار المقاسات</div>
+        <div id="sizePricesAdmin" style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px"></div>
+        <button onclick="saveSizePrices()" style="padding:8px 16px;background:linear-gradient(135deg,var(--rose),var(--rose-dark));color:#fff;border-radius:10px;font-size:12px;font-weight:800;border:none;cursor:pointer;font-family:'Cairo',sans-serif">💾 حفظ الأسعار</button>
+      </div>
+      <div class="card">
+        <div style="font-size:14px;font-weight:800;margin-bottom:12px">📱 رقم واتساب</div>
+        <div class="field">
+          <label>الرقم بصيغة دولية</label>
+          <input type="tel" id="adminWaNum" placeholder="+201158973728" style="direction:ltr"/>
+        </div>
+        <button onclick="saveAdminSettings()" style="padding:10px 20px;background:linear-gradient(135deg,var(--rose),var(--rose-dark));color:#fff;border-radius:10px;font-size:13px;font-weight:800;border:none;cursor:pointer;font-family:'Cairo',sans-serif">💾 حفظ</button>
+      </div>
+      <div class="card">
+        <div style="font-size:14px;font-weight:800;margin-bottom:12px">🔑 تغيير كلمة السر</div>
+        <div class="field"><input type="password" id="newPassInput" placeholder="كلمة السر الجديدة"/></div>
+        <button onclick="changeAdminPass()" style="padding:8px 16px;background:#666;color:#fff;border-radius:10px;font-size:12px;font-weight:800;border:none;cursor:pointer;font-family:'Cairo',sans-serif">💾 تغيير</button>
+      </div>
     </div>
   </div>
 </div>
@@ -1103,6 +1178,10 @@ function submitOrder() {
   // Save locally
   cakeOrders.unshift(orderData);
   localStorage.setItem('zz_cake_orders', JSON.stringify(cakeOrders.slice(0,100)));
+  // Save to Firebase
+  if (cakeDb) cakeDb.ref('cake_orders/'+orderData.id).set(orderData).catch(function(){});
+  // Store order ID for rating
+  currentOrderId = orderData.id;
 
   // Build WhatsApp message
   // جمع البيانات الإضافية
@@ -1194,11 +1273,12 @@ function toggleAdmin() {
 
 function adminLogin() {
   const pass = document.getElementById('adminPassInput').value;
-  if (pass !== ADMIN_PASS) { showToast('❌ كلمة السر غلط'); return; }
+  const savedPass = localStorage.getItem('zz_cake_admin_pass') || ADMIN_PASS;
+  if (pass !== savedPass) { showToast('❌ كلمة السر غلط'); return; }
   document.getElementById('adminLogin').style.display = 'none';
   document.getElementById('adminPanel').style.display = 'block';
   document.getElementById('adminWaNum').value = adminSettings.waNum || '+201158973728';
-  buildSizePricesAdmin();
+  adminTab('orders');
   loadAdminOrders();
 }
 
@@ -1211,21 +1291,186 @@ function saveAdminSettings() {
   showToast('✅ تم حفظ الإعدادات على كل الأجهزة');
 }
 
+// ============================================================
+// ADMIN TABS
+// ============================================================
+function adminTab(tab) {
+  ['orders','ratings','settings'].forEach(function(t) {
+    var tabEl = document.getElementById('adminTab' + t.charAt(0).toUpperCase() + t.slice(1));
+    var btnEl = document.getElementById('tab' + t.charAt(0).toUpperCase() + t.slice(1));
+    if (tabEl) tabEl.style.display = t === tab ? 'block' : 'none';
+    if (btnEl) {
+      btnEl.style.background = t === tab ? 'var(--rose)' : 'none';
+      btnEl.style.color = t === tab ? '#fff' : '#666';
+    }
+  });
+  if (tab === 'ratings') loadAdminRatings();
+  if (tab === 'settings') { buildSizePricesAdmin(); }
+}
+
 function loadAdminOrders() {
-  const orders = JSON.parse(localStorage.getItem('zz_cake_orders')||'[]');
-  if (!orders.length) {
-    document.getElementById('adminOrders').innerHTML = '<div style="text-align:center;padding:20px;color:var(--text2)">لا توجد طلبات بعد</div>';
+  // جلب من Firebase أولاً
+  var allOrders = [];
+  if (cakeDb) {
+    cakeDb.ref('cake_orders').orderByChild('createdAt').limitToLast(200).get().then(function(snap) {
+      if (snap.exists()) {
+        snap.forEach(function(c) { var v=c.val(); if(v) allOrders.push(v); });
+        allOrders.sort(function(a,b){ return (b.createdAt||'').localeCompare(a.createdAt||''); });
+      }
+      // Merge with local
+      var local = JSON.parse(localStorage.getItem('zz_cake_orders')||'[]');
+      local.forEach(function(o) { if (!allOrders.find(function(x){return x.id===o.id;})) allOrders.push(o); });
+      renderAdminOrders(allOrders);
+    }).catch(function() {
+      var local = JSON.parse(localStorage.getItem('zz_cake_orders')||'[]');
+      renderAdminOrders(local);
+    });
+  } else {
+    var local = JSON.parse(localStorage.getItem('zz_cake_orders')||'[]');
+    renderAdminOrders(local);
+  }
+}
+
+function buildMonthFilter(orders) {
+  var sel = document.getElementById('monthFilter');
+  if (!sel) return;
+  var months = {};
+  orders.forEach(function(o) {
+    var d = o.clientDate || o.createdAt || '';
+    var m = d.slice(0,7);
+    if (m) months[m] = true;
+  });
+  var keys = Object.keys(months).sort().reverse();
+  var cur = sel.value;
+  sel.innerHTML = '<option value="all">كل الطلبات</option>' +
+    keys.map(function(m) { return '<option value="'+m+'"'+(m===cur?' selected':'')+'>'+m+'</option>'; }).join('');
+}
+
+function renderAdminOrders(orders) {
+  buildMonthFilter(orders);
+  var filterVal = (document.getElementById('monthFilter')||{}).value || 'all';
+  var filtered = filterVal === 'all' ? orders : orders.filter(function(o) {
+    var d = o.clientDate || o.createdAt || '';
+    return d.startsWith(filterVal);
+  });
+
+  // Update stats
+  var now = new Date();
+  var thisMonth = now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0');
+  var monthCount = orders.filter(function(o){ return (o.clientDate||'').startsWith(thisMonth)||(o.createdAt||'').startsWith(thisMonth); }).length;
+  var el = document.getElementById('statTotal'); if(el) el.textContent = orders.length;
+  el = document.getElementById('statMonth'); if(el) el.textContent = monthCount;
+
+  if (!filtered.length) {
+    document.getElementById('adminOrders').innerHTML = '<div style="text-align:center;padding:20px;color:var(--text2)">لا توجد طلبات</div>';
     return;
   }
-  document.getElementById('adminOrders').innerHTML = orders.slice(0,20).map(o=>`
-    <div style="border:1.5px solid var(--border);border-radius:10px;padding:12px;margin-bottom:8px">
-      <div style="display:flex;justify-content:space-between;margin-bottom:4px">
-        <strong>${o.clientName}</strong>
-        <span style="font-size:11px;color:var(--text2)">${o.id}</span>
-      </div>
-      <div style="font-size:12px;color:var(--text2)">${o.clientPhone} · ${o.clientDate} · ${o.size}</div>
-      <div style="font-size:12px;margin-top:4px;color:var(--rose)">${o.sizePrice?'~'+o.sizePrice+' ج.م':'حسب الاتفاق'}</div>
-    </div>`).join('');
+  document.getElementById('adminOrders').innerHTML = filtered.map(function(o) {
+    return '<div style="border:1.5px solid var(--border);border-radius:10px;padding:12px;margin-bottom:8px">'+
+      '<div style="display:flex;justify-content:space-between;margin-bottom:4px">'+
+      '<strong>'+o.clientName+'</strong>'+
+      '<span style="font-size:10px;color:var(--text2)">'+o.id+'</span></div>'+
+      '<div style="font-size:12px;color:var(--text2)">'+o.clientPhone+' · '+o.clientDate+' · '+o.size+'</div>'+
+      '<div style="font-size:11px;color:var(--text2);margin-top:2px">'+
+      (o.layers||'')+(o.filling&&o.filling!=='بدون حشو'?' · '+o.filling:'')+
+      (o.occasion?' · '+o.occasion:'')+'</div>'+
+      '<div style="font-size:12px;margin-top:4px;color:var(--rose);font-weight:800">'+
+      (o.sizePrice?'~'+o.sizePrice+' ج.م':'حسب الاتفاق')+'</div></div>';
+  }).join('');
+}
+
+function loadAdminRatings() {
+  var ratings = JSON.parse(localStorage.getItem('zz_cake_ratings')||'[]');
+  if (cakeDb) {
+    cakeDb.ref('cake_ratings').get().then(function(snap) {
+      if (snap.exists()) {
+        var fbRatings = [];
+        snap.forEach(function(c){ var v=c.val(); if(v) fbRatings.push(v); });
+        fbRatings.sort(function(a,b){ return (b.createdAt||'').localeCompare(a.createdAt||''); });
+        renderAdminRatings(fbRatings);
+      } else renderAdminRatings(ratings);
+    }).catch(function(){ renderAdminRatings(ratings); });
+  } else renderAdminRatings(ratings);
+}
+
+function renderAdminRatings(ratings) {
+  if (!ratings.length) {
+    document.getElementById('adminRatings').innerHTML = '<div style="text-align:center;padding:20px;color:var(--text2)">لا توجد تقييمات بعد</div>';
+    return;
+  }
+  var avg = (ratings.reduce(function(s,r){ return s+(r.stars||0); },0)/ratings.length).toFixed(1);
+  var el = document.getElementById('statRating'); if(el) el.textContent = avg + ' ⭐';
+
+  var stars = ['','★','★★','★★★','★★★★','★★★★★'];
+  document.getElementById('adminRatings').innerHTML =
+    '<div style="text-align:center;background:linear-gradient(135deg,#fffbeb,#fef3c7);border-radius:12px;padding:12px;margin-bottom:12px">'+
+    '<div style="font-size:32px;font-weight:900;color:#d97706">'+avg+'</div>'+
+    '<div style="color:#f59e0b;font-size:16px">'+stars[Math.round(parseFloat(avg))]+'</div>'+
+    '<div style="font-size:11px;color:#92400e">من '+ratings.length+' تقييم</div></div>'+
+    ratings.map(function(r) {
+      return '<div style="border:1px solid var(--border);border-radius:10px;padding:10px;margin-bottom:8px">'+
+        '<div style="display:flex;justify-content:space-between">'+
+        '<span style="color:#f59e0b">'+stars[r.stars||0]+'</span>'+
+        '<span style="font-size:10px;color:var(--text2)">'+(r.createdAt||'').slice(0,10)+'</span></div>'+
+        (r.comment?'<div style="font-size:12px;color:var(--text);margin-top:4px">'+r.comment+'</div>':'')+
+        '<div style="font-size:11px;color:var(--text2);margin-top:2px">'+(r.orderId||'')+'</div></div>';
+    }).join('');
+}
+
+function exportOrdersXLS() {
+  var orders = JSON.parse(localStorage.getItem('zz_cake_orders')||'[]');
+  if (!orders.length) { showToast('لا توجد طلبات للتصدير'); return; }
+  var rows = [['#','الاسم','الهاتف','التاريخ','المقاس','الأدوار','التوبينج','الحشوة','المناسبة','السعر','رقم الطلب']];
+  orders.forEach(function(o,i) {
+    rows.push([i+1,o.clientName,o.clientPhone,o.clientDate,o.size,o.layers,o.topping,o.filling,o.occasion,o.sizePrice?'~'+o.sizePrice:'حسب الاتفاق',o.id]);
+  });
+  var html = '<html dir="rtl"><head><meta charset="UTF-8"></head><body><table border="1">' +
+    rows.map(function(r){return '<tr>'+r.map(function(v,i){return '<'+(i===0||rows.indexOf(r)===0?'th':'td')+'>'+v+'</'+(i===0||rows.indexOf(r)===0?'th':'td')+'>';}).join('')+'</tr>';}).join('') +
+    '</table></body></html>';
+  var blob = new Blob([html],{type:'application/vnd.ms-excel;charset=utf-8'});
+  var url = URL.createObjectURL(blob);
+  var a = document.createElement('a'); a.href=url; a.download='طلبات_التورتات.xls';
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  setTimeout(function(){URL.revokeObjectURL(url);},2000);
+  showToast('✅ تم تصدير الطلبات');
+}
+
+function changeAdminPass() {
+  var newPass = document.getElementById('newPassInput').value.trim();
+  if (!newPass || newPass.length < 4) { showToast('❌ كلمة السر لازم 4 أحرف على الأقل'); return; }
+  localStorage.setItem('zz_cake_admin_pass', newPass);
+  showToast('✅ تم تغيير كلمة السر');
+  document.getElementById('newPassInput').value = '';
+}
+
+// ============================================================
+// RATING SYSTEM
+// ============================================================
+let currentRating = 0;
+let currentOrderId = '';
+
+function setRating(n) {
+  currentRating = n;
+  for (var i=1; i<=5; i++) {
+    var s = document.getElementById('star'+i);
+    if (s) s.textContent = i <= n ? '★' : '☆';
+    if (s) s.style.color = i <= n ? '#f59e0b' : '#ccc';
+  }
+}
+
+function submitRating() {
+  if (!currentRating) { showToast('❌ اختر عدد النجوم'); return; }
+  var comment = (document.getElementById('ratingComment')||{}).value || '';
+  var rating = { stars: currentRating, comment: comment, orderId: currentOrderId, createdAt: new Date().toISOString() };
+  var ratings = JSON.parse(localStorage.getItem('zz_cake_ratings')||'[]');
+  ratings.unshift(rating);
+  localStorage.setItem('zz_cake_ratings', JSON.stringify(ratings.slice(0,200)));
+  if (cakeDb) cakeDb.ref('cake_ratings').push(rating).catch(function(){});
+  document.getElementById('ratingBtn').style.display = 'none';
+  document.getElementById('starsRow').style.display = 'none';
+  document.getElementById('ratingComment').style.display = 'none';
+  document.getElementById('ratingDone').style.display = 'block';
+  showToast('✅ شكراً على تقييمك!');
 }
 
 // ============================================================
@@ -1389,16 +1634,19 @@ const _isAndroid = /android/i.test(navigator.userAgent);
 window.addEventListener('beforeinstallprompt', function(e) {
   e.preventDefault();
   _pwaPrompt = e;
-  document.getElementById('pwaInstallWrap').style.display = 'block';
 });
 
-// Show install button on iOS too
-if (_isIOS) {
-  setTimeout(function() {
-    if (!window.navigator.standalone) {
-      document.getElementById('pwaInstallWrap').style.display = 'block';
-    }
-  }, 1500);
+// Hide button if already installed (standalone mode)
+window.addEventListener('appinstalled', function() {
+  document.getElementById('pwaInstallWrap').style.display = 'none';
+});
+
+// Hide if already running as installed app
+if (window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone) {
+  document.addEventListener('DOMContentLoaded', function() {
+    var el = document.getElementById('pwaInstallWrap');
+    if (el) el.style.display = 'none';
+  });
 }
 
 function showInstallGuide() {
@@ -1439,9 +1687,7 @@ document.getElementById('pwaModal').addEventListener('click', function(e) {
 // SERVICE WORKER — مطلوب لتفعيل PWA Install
 // ============================================================
 if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register('/Zamzam-Restaurant-Cafe/sw.js', {
-    scope: '/Zamzam-Restaurant-Cafe/'
-  }).then(function(reg) {
+  navigator.serviceWorker.register('sw.js').then(function(reg) {
     console.log('[Cake PWA] SW registered ✅');
   }).catch(function(err) {
     console.warn('[Cake PWA] SW failed:', err);
