@@ -6,6 +6,9 @@
 <title>طلب تورتة سبيشيال 🎂 — زمزم ديزيرت</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+<!-- Firebase SDK — نفس قاعدة زمزم -->
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
 <style>
 :root {
   --rose: #e91e8c;
@@ -688,6 +691,55 @@ let cakeOrders = JSON.parse(localStorage.getItem('zz_cake_orders')||'[]');
 const WA_NUM = () => adminSettings.waNum || '+201158973728';
 
 // ============================================================
+// FIREBASE — نفس قاعدة زمزم — مسار cake_settings منفصل
+// ============================================================
+const CAKE_FB_CONFIG = {
+  apiKey: "AIzaSyB1x64GzJFU2yRll59RoGN6yzOBg7WeRS4",
+  authDomain: "zamzam-restaurant-cafe.firebaseapp.com",
+  databaseURL: "https://zamzam-restaurant-cafe-default-rtdb.firebaseio.com",
+  projectId: "zamzam-restaurant-cafe",
+  storageBucket: "zamzam-restaurant-cafe.appspot.com",
+  messagingSenderId: "669077377507",
+  appId: "1:669077377507:web:d308d8bdc3047b719bd0d6"
+};
+
+let cakeDb = null;
+try {
+  // تجنب تكرار التهيئة لو Firebase موجود بالفعل
+  const existingApp = firebase.apps.find(a => a.name === 'cake');
+  const cakeApp = existingApp || firebase.initializeApp(CAKE_FB_CONFIG, 'cake');
+  cakeDb = firebase.database(cakeApp);
+
+  // استمع على cake_settings في Firebase — يحدّث الأسعار والواتساب لحظياً
+  cakeDb.ref('cake_settings').on('value', function(snap) {
+    if (snap.exists()) {
+      const data = snap.val();
+      if (data.waNum) {
+        adminSettings.waNum = data.waNum;
+        localStorage.setItem('zz_cake_settings', JSON.stringify(adminSettings));
+      }
+      if (data.sizes && Array.isArray(data.sizes)) {
+        sizePrices = data.sizes;
+        localStorage.setItem('zz_cake_sizes', JSON.stringify(sizePrices));
+        buildSizeGrid();
+      }
+    }
+  });
+  console.log('[Cake] Firebase connected ✅');
+} catch(e) {
+  console.warn('[Cake] Firebase error:', e.message);
+}
+
+function fbSaveCakeSettings() {
+  if (!cakeDb) return;
+  cakeDb.ref('cake_settings').set({
+    waNum: adminSettings.waNum || '+201158973728',
+    sizes: sizePrices,
+    updatedAt: new Date().toISOString()
+  }).catch(function(e){ console.warn('fbSaveCakeSettings error:', e); });
+}
+
+// ============================================================
 // NAVIGATION
 // ============================================================
 function goStep(n) {
@@ -1067,7 +1119,8 @@ function saveAdminSettings() {
   if (!num.startsWith('+')) { showToast('❌ الرقم لازم يبدأ بـ + مع رمز الدولة'); return; }
   adminSettings.waNum = num;
   localStorage.setItem('zz_cake_settings', JSON.stringify(adminSettings));
-  showToast('✅ تم حفظ الإعدادات');
+  fbSaveCakeSettings(); // 🔥 حفظ في Firebase
+  showToast('✅ تم حفظ الإعدادات على كل الأجهزة');
 }
 
 function loadAdminOrders() {
@@ -1181,12 +1234,13 @@ function buildSizePricesAdmin() {
 }
 
 function saveSizePrices() {
-  sizePrices = sizePrices.map((s,i) => ({
-    ...s, price: parseFloat(document.getElementById('sizePrice_'+i)?.value) || s.price
-  }));
+  sizePrices = sizePrices.map(function(s,i) {
+    return Object.assign({}, s, { price: parseFloat(document.getElementById('sizePrice_'+i)?.value) || s.price });
+  });
   localStorage.setItem('zz_cake_sizes', JSON.stringify(sizePrices));
   buildSizeGrid();
-  showToast('✅ تم حفظ الأسعار');
+  fbSaveCakeSettings(); // 🔥 حفظ في Firebase عشان يتزامن على كل الأجهزة
+  showToast('✅ تم حفظ الأسعار على كل الأجهزة');
 }
 
 // ============================================================
