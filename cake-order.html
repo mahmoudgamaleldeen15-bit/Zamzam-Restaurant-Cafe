@@ -298,9 +298,19 @@ body { background:var(--cream); color:var(--text); font-family:'Cairo',sans-seri
     <div class="field">
       <label>نوع الاستلام <span class="req">*</span></label>
       <select id="orderType" onchange="toggleDeliveryFields()">
-        <option value="pickup">🏪 استلام من المحل</option>
+        <option value="factory">🏭 المصنع</option>
+        <option value="main">🏪 الفرع الرئيسي</option>
+        <option value="shobramlees">🏪 فرع شبراملس</option>
+        <option value="other">📍 أخرى</option>
         <option value="delivery">🚚 توصيل</option>
       </select>
+    </div>
+    <!-- لو اختار أخرى -->
+    <div id="otherBranchField" style="display:none">
+      <div class="field">
+        <label>اسم الفرع أو مكان الاستلام <span class="req">*</span></label>
+        <input type="text" id="otherBranchName" placeholder="مثال: فرع المحلة، فرع طنطا..."/>
+      </div>
     </div>
     <div id="deliveryFields" style="display:none">
       <div class="field"><label>العنوان بالتفصيل <span class="req">*</span></label>
@@ -818,6 +828,9 @@ function validateStep() {
     if (_type === 'delivery' && !document.getElementById('clientAddress')?.value?.trim()) {
       showToast('❌ أدخل عنوان التوصيل'); return false;
     }
+    if (_type === 'other' && !document.getElementById('otherBranchName')?.value?.trim()) {
+      showToast('❌ اكتب اسم الفرع أو مكان الاستلام'); return false;
+    }
     order.clientName = document.getElementById('clientName').value.trim();
     order.clientPhone = document.getElementById('clientPhone').value.trim();
     order.clientWa = document.getElementById('clientWa').value.trim();
@@ -1034,7 +1047,10 @@ function submitOrder() {
   msg += '📱 الهاتف: ' + order.clientPhone + '\n';
   msg += '💬 واتساب: ' + order.clientWa + '\n';
   msg += '📅 الاستلام: ' + order.clientDate + ' الساعة ' + order.clientTime + '\n';
-  msg += '🏪 نوع الاستلام: ' + (orderType === 'delivery' ? 'توصيل 🚚' : 'استلام من المحل') + '\n';
+  var branchLabels = {factory:'المصنع 🏭', main:'الفرع الرئيسي 🏪', shobramlees:'فرع شبراملس 🏪', other:'', delivery:'توصيل 🚚'};
+  var otherBranch = document.getElementById('otherBranchName')?.value?.trim() || '';
+  var pickupLabel = orderType === 'other' ? (otherBranch || 'أخرى') : (branchLabels[orderType] || orderType);
+  msg += '🏪 نوع الاستلام: ' + pickupLabel + '\n';
   if (orderType === 'delivery') {
     if (clientAddress) msg += '📍 العنوان: ' + clientAddress + '\n';
     if (clientLandmark) msg += '🗺️ معلم قريب: ' + clientLandmark + '\n';
@@ -1251,6 +1267,8 @@ let clientLat = null, clientLng = null;
 function toggleDeliveryFields() {
   const type = document.getElementById('orderType').value;
   document.getElementById('deliveryFields').style.display = type === 'delivery' ? 'block' : 'none';
+  var otherEl = document.getElementById('otherBranchField');
+  if (otherEl) otherEl.style.display = type === 'other' ? 'block' : 'none';
 }
 
 function getClientLocation() {
