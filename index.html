@@ -4267,6 +4267,13 @@ function placeOrder() {
   const zoneLine = selectedDeliveryZone ? `\n📌 المنطقة: ${selectedDeliveryZone.name} (توصيل: ${selectedDeliveryZone.fee} ج.م)` : '';
   const detailedAddressLine = detailedAddress ? `\n🏠 *العنوان التفصيلي:*\n${detailStreet ? `   • الشارع/الحى: ${detailStreet}` : ''}\n${detailFloor ? `   • الدور/الشقة: ${detailFloor}` : ''}\n${detailLandmark ? `   • علامة مميزة: ${detailLandmark}` : ''}` : '';
   const lastOrderNote = lastOrderActive ? '\n\n⚠️ *ملاحظة:* هذا الطلب بعد Last Order — قد يكون هناك تأخير' : '';
+  const isElectronicPayment = paymentType !== 'cash';
+  // Validate wallet phone
+  if (paymentType && paymentType.startsWith('ewallet_')) {
+    const wNumCheck = document.getElementById('clientWalletNum')?.value?.trim();
+    if (!wNumCheck) { showNotif('❌ أدخل رقم محفظتك اللي حولت منها'); return; }
+  }
+  const clientWalletNum = isElectronicPayment ? (document.getElementById('clientWalletNum')?.value?.trim() || '') : '';
   const msg = `🍽️ *طلب جديد — #${orderNum}*
 ━━━━━━━━━━━━━━━━━━━━━
 👤 *الاسم:* ${currentUser?.name || loadData('zamzam_user',{}).name || 'زائر'}
@@ -4292,13 +4299,6 @@ ${totalDisc > 0 ? `🏷️ الخصم: - ${totalDisc} ج.م\n` : ''}${deliveryFe
   if (appliedCouponId && currentUser?.phone) usedOffers[currentUser.phone + '_' + appliedCouponId] = true;
   saveData('zz_used_offers', usedOffers);
   const now = new Date();
-  const isElectronicPayment = paymentType !== 'cash';
-  // Validate wallet phone
-  if (paymentType && paymentType.startsWith('ewallet_')) {
-    const wNumCheck = document.getElementById('clientWalletNum')?.value?.trim();
-    if (!wNumCheck) { showNotif('❌ أدخل رقم محفظتك اللي حولت منها'); return; }
-  }
-  const clientWalletNum = isElectronicPayment ? (document.getElementById('clientWalletNum')?.value?.trim() || '') : '';
   const newOrder = {
     id: orderNum, name: currentUser?.name || loadData('zamzam_user',{}).name || 'زائر', phone: currentUser?.phone || '—',
     whatsapp: currentUser?.whatsapp || currentUser?.phone || '',
