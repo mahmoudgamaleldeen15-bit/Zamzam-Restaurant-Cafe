@@ -1281,7 +1281,7 @@ input,select,textarea{font-family:inherit;}
       <div style="font-size:18px;font-weight:900;margin-bottom:6px">⏳ في انتظار تأكيد الدفع</div>
       <div style="font-size:13px;opacity:.95;line-height:1.7">تم استلام طلبك — يجري التحقق من وصول المبلغ من قِبل المسؤول. سيبدأ التجهيز فور تأكيد الدفع.</div>
     </div>
-    <div style="background:var(--white);border-radius:14px;padding:16px;border:1px solid var(--border);margin-bottom:12px">
+    <div id="etaDisplayBox" style="background:var(--white);border-radius:14px;padding:16px;border:1px solid var(--border);margin-bottom:12px;display:none">
       <div style="font-size:14px;font-weight:800;margin-bottom:4px">⏱️ وقت التوصيل المتوقع</div>
       <div style="font-size:28px;font-weight:800;color:var(--olive-dark)" id="etaDisplay">~30 دقيقة</div>
     </div>
@@ -1646,6 +1646,7 @@ input,select,textarea{font-family:inherit;}
     <!-- Admin-only action buttons -->
     <div id="adminActionBtns" style="padding:0 16px 12px;display:none;gap:8px;flex-wrap:wrap">
       <button onclick="openSalesReport()" style="flex:1;min-width:120px;padding:11px;background:linear-gradient(135deg,#1a5fc8,#2176e0);color:#fff;border-radius:12px;font-size:13px;font-weight:800">📊 تقرير المبيعات</button>
+      <button onclick="openPaymentReportModal()" style="flex:1;min-width:120px;padding:11px;background:linear-gradient(135deg,#16a34a,#15803d);color:#fff;border-radius:12px;font-size:13px;font-weight:800">💰 جرد المدفوعات</button>
       <button onclick="exportBackup()" style="flex:1;min-width:100px;padding:11px;background:linear-gradient(135deg,var(--olive-dark),var(--olive));color:#fff;border-radius:12px;font-size:13px;font-weight:800">💾 تصدير Backup</button>
       <button onclick="openImportBackupModal()" style="flex:1;min-width:100px;padding:11px;background:linear-gradient(135deg,#1a5fc8,#2176e0);color:#fff;border-radius:12px;font-size:13px;font-weight:800">📥 استيراد Backup</button>
       <button onclick="confirmSystemReset()" style="flex:1;min-width:100px;padding:11px;background:linear-gradient(135deg,#c0392b,#e74c3c);color:#fff;border-radius:12px;font-size:13px;font-weight:800">🗑️ مسح النظام</button>
@@ -4139,6 +4140,12 @@ function selectPay(el, type, walletName, walletEmoji) {
     const w = (SETTINGS.ewallets||[]).find(x => x.id === wid);
     if (!w) return;
     detEl.style.display = 'block';
+    const isInstaPay = w.name && w.name.toLowerCase().includes('instapay');
+    const walletInputLabel = isInstaPay ? 'رقم المرتبط بـ InstaPay الخاص بك *' : 'رقم محفظتك اللي حولت منها *';
+    const walletInputPlaceholder = isInstaPay ? 'رقمك المرتبط بـ InstaPay' : '01xxxxxxxxx — مطلوب';
+    const howToPayText = isInstaPay
+      ? `📌 <b>كيف تدفع عبر InstaPay؟</b><br/>١. افتح تطبيق البنك أو فودافون كاش<br/>٢. اختر InstaPay وادفع على الرقم أعلاه<br/>٣. أدخل رقمك المرتبط بـ InstaPay في الخانة أدناه`
+      : `📌 <b>كيف تدفع؟</b><br/>١. انسخ الرقم أعلاه<br/>٢. افتح تطبيق ${w.name} وحوّل المبلغ<br/>٣. أدخل رقم محفظتك اللي حولت <b>منها</b> في الخانة أدناه`;
     detEl.innerHTML = `<div class="pay-info-box">
       <div style="font-size:14px;font-weight:800;margin-bottom:6px">${w.emoji} ${w.name}</div>
       ${w.number ? `<div style="font-size:20px;font-weight:800;letter-spacing:2px;direction:ltr;margin-bottom:8px">${w.number}</div>
@@ -4147,9 +4154,13 @@ function selectPay(el, type, walletName, walletEmoji) {
         📲 بعد إرسال المبلغ — سيقوم الكاشير بالتحقق من وصوله وتأكيد طلبك.
         <br/>🕐 طلبك سيبدأ تجهيزه بعد تأكيد الدفع فقط.
       </div>
+      <div style="margin-top:10px;padding:10px 12px;background:rgba(59,130,246,.08);border-radius:10px;border:1px solid rgba(59,130,246,.2);font-size:12px;color:#1e40af;line-height:1.7">
+        ${howToPayText}
+      </div>
       <div style="margin-top:8px">
-        <div style="font-size:12px;font-weight:700;color:var(--text-muted);margin-bottom:4px">رقم محفظتك الخاصة (اختياري)</div>
-        <input type="tel" id="clientWalletNum" placeholder="رقم محفظتك للتواصل" style="width:100%;padding:9px 12px;border:1.5px solid var(--border);border-radius:9px;font-size:14px;direction:ltr;background:var(--white);outline:none;box-sizing:border-box"/>
+        <div style="font-size:12px;font-weight:800;color:var(--red);margin-bottom:4px">${walletInputLabel}</div>
+        <input type="tel" id="clientWalletNum" placeholder="${walletInputPlaceholder}" style="width:100%;padding:9px 12px;border:1.5px solid var(--red);border-radius:9px;font-size:14px;direction:ltr;background:var(--white);outline:none;box-sizing:border-box"/>
+        <div style="font-size:11px;color:var(--text-muted);margin-top:4px">هذا الرقم سيصل لنا مع طلبك للتحقق من التحويل</div>
       </div>
     </div>`;
   }
@@ -4267,12 +4278,13 @@ ${address ? `🏠 *العنوان:* ${address}` : ''}${detailedAddressLine}
 ${itemsLines}
 ━━━━━━━━━━━━━━━━━━━━━
 🚚 *نوع الطلب:* ${orderTypeMap[deliveryType] || deliveryType}${tableNum ? '\n🪑 رقم الترابيزة: ' + tableNum : ''}${zoneLine}
-💳 *الدفع:* ${payMethodDetails}${gpsLine}
+💳 *الدفع:* ${payMethodDetails}${clientWalletNum ? `
+📱 *رقم محفظة العميل:* ${clientWalletNum}` : ''}${gpsLine}
 ━━━━━━━━━━━━━━━━━━━━━
 💰 المجموع: ${subtotal} ج.م
 ${totalDisc > 0 ? `🏷️ الخصم: - ${totalDisc} ج.م\n` : ''}${deliveryFee > 0 ? `🛵 التوصيل: ${deliveryFee} ج.م\n` : deliveryType === 'delivery' ? '🛵 التوصيل: مجانى\n' : ''}✅ *الإجمالى النهائى: ${finalTotal} ج.م*
 ━━━━━━━━━━━━━━━━━━━━━
-⏱️ وقت التوصيل المتوقع: ${eta}
+⏱️ سيتم تحديد وقت التوصيل المتوقع من قِبل الكاشير
 🕐 ${new Date().toLocaleString('ar-EG')}${lastOrderNote}`;
   OFFERS.filter(o => o.oneTime && isOfferValid(o)).forEach(o => {
     if (currentUser?.phone) usedOffers[currentUser.phone + '_' + o.id] = true;
@@ -4281,6 +4293,11 @@ ${totalDisc > 0 ? `🏷️ الخصم: - ${totalDisc} ج.م\n` : ''}${deliveryFe
   saveData('zz_used_offers', usedOffers);
   const now = new Date();
   const isElectronicPayment = paymentType !== 'cash';
+  // Validate wallet phone
+  if (paymentType && paymentType.startsWith('ewallet_')) {
+    const wNumCheck = document.getElementById('clientWalletNum')?.value?.trim();
+    if (!wNumCheck) { showNotif('❌ أدخل رقم محفظتك اللي حولت منها'); return; }
+  }
   const clientWalletNum = isElectronicPayment ? (document.getElementById('clientWalletNum')?.value?.trim() || '') : '';
   const newOrder = {
     id: orderNum, name: currentUser?.name || loadData('zamzam_user',{}).name || 'زائر', phone: currentUser?.phone || '—',
@@ -4800,8 +4817,6 @@ function sendDelayMsg(id) {
 نعتذر عن التأخير الحالي بسبب ضغط الطلبات 🙏
 ويتم العمل على تجهيز طلبكم بأسرع وقت ممكن.
 
-⏰ *الوقت المتوقع:* ${order.eta || '~30 دقيقة'}
-
 نقدر صبركم الجميل، وسيصلكم طلبكم بإذن الله في أقرب وقت.
 
 شكراً لثقتكم بنا 💚
@@ -4811,6 +4826,162 @@ function sendDelayMsg(id) {
   const delayBox = document.getElementById('delayMsgBox');
   if (delayBox) { delayBox.style.display = 'block'; document.getElementById('delayMsgText').textContent = msg; }
   showNotif('✓ تم إرسال إشعار التأخير');
+}
+
+// ============================================================
+// CASHIER MARK DELIVERED
+// ============================================================
+function openPaymentReportModal() {
+  // Show payment report in a simple modal or inline
+  const modal = document.getElementById('salesReportModal') || document.getElementById('reportModal');
+  if (modal) {
+    // Reuse existing modal if available
+    openSalesReport();
+    return;
+  }
+  // Fallback: create inline
+  const container = document.createElement('div');
+  container.id = 'payReportModal';
+  container.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:500;overflow-y:auto;padding:20px';
+  container.innerHTML = `
+    <div style="background:#fff;border-radius:16px;max-width:600px;margin:0 auto;overflow:hidden">
+      <div style="background:var(--olive);color:#fff;padding:16px;display:flex;justify-content:space-between;align-items:center">
+        <div style="font-size:16px;font-weight:900">💰 جرد المدفوعات</div>
+        <button onclick="document.getElementById('payReportModal').remove()" style="background:none;border:none;color:#fff;font-size:20px;cursor:pointer">✕</button>
+      </div>
+      <div style="padding:16px">
+        <div style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap">
+          <select id="payReportPeriod" style="padding:8px;border:1.5px solid var(--border);border-radius:8px;font-size:13px;background:#fff;outline:none">
+            <option value="today">اليوم</option>
+            <option value="week">هذا الأسبوع</option>
+            <option value="month">هذا الشهر</option>
+            <option value="year">هذا العام</option>
+            <option value="all">الكل</option>
+          </select>
+          <button onclick="showPaymentReport()" style="padding:8px 14px;background:var(--olive);color:#fff;border-radius:8px;font-size:13px;font-weight:800;border:none;cursor:pointer">📊 عرض</button>
+          <button onclick="exportPaymentReport()" style="padding:8px 14px;background:#16a34a;color:#fff;border-radius:8px;font-size:13px;font-weight:800;border:none;cursor:pointer">📥 Excel</button>
+        </div>
+        <div id="payReportContent"></div>
+      </div>
+    </div>`;
+  document.body.appendChild(container);
+  showPaymentReport();
+}
+
+function cashierMarkDelivered(orderId) {
+  const order = ordersData.find(o => o.id === orderId);
+  if (!order) return;
+  if (!confirm('تأكيد: هل تم تسليم الطلب #' + orderId + ' للعميل؟')) return;
+  updateOrderStatus(orderId, 'delivered');
+  showNotif('✅ تم تسجيل التسليم');
+}
+
+// ============================================================
+// CASHIER SET ETA — الكاشير يحدد وقت التوصيل المتوقع
+// ============================================================
+function cashierSetETA(orderId) {
+  const order = ordersData.find(o => o.id === orderId);
+  if (!order) return;
+  const eta = prompt('أدخل وقت التوصيل المتوقع (مثال: 30 دقيقة أو 45 دقيقة):', order.eta || '');
+  if (eta === null) return;
+  order.eta = eta.trim();
+  saveData('zz_orders', ordersData);
+  fbUpdate('orders/' + orderId, { eta: order.eta });
+  // Update customer tracking screen if visible
+  const etaBox = document.getElementById('etaDisplayBox');
+  const etaEl = document.getElementById('etaDisplay');
+  if (etaBox && etaEl && order.eta) {
+    etaBox.style.display = 'block';
+    etaEl.textContent = '~' + order.eta;
+  }
+  showNotif('✅ تم تحديد وقت التوصيل: ' + order.eta);
+}
+
+// ============================================================
+// PAYMENT REPORT — تقرير الجرد المالي
+// ============================================================
+function showPaymentReport() {
+  const period = document.getElementById('payReportPeriod')?.value || 'today';
+  const orders = filterOrdersByPeriod(period).filter(o => o.status === 'delivered' || o.confirmedPayment);
+  
+  if (!orders.length) { showNotif('لا توجد بيانات للفترة المحددة'); return; }
+
+  // Group by payment method
+  const groups = {};
+  let totalAll = 0;
+
+  orders.forEach(o => {
+    const method = o.payment || 'كاش';
+    if (!groups[method]) groups[method] = { orders:[], total:0 };
+    groups[method].orders.push(o);
+    groups[method].total += (o.total || 0);
+    totalAll += (o.total || 0);
+  });
+
+  // Build HTML
+  let html = '<div style="padding:16px">';
+  html += '<div style="font-size:16px;font-weight:900;color:var(--olive-dark);margin-bottom:16px">💰 تقرير الجرد المالي</div>';
+  
+  // Summary cards
+  html += '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;margin-bottom:16px">';
+  Object.entries(groups).forEach(([method, data]) => {
+    html += `<div style="background:var(--cream);border-radius:12px;padding:12px;text-align:center;border:1px solid var(--border)">
+      <div style="font-size:11px;color:var(--text-muted);margin-bottom:4px">${method.split('—')[0].trim()}</div>
+      <div style="font-size:20px;font-weight:900;color:var(--olive-dark)">${data.total.toFixed(0)}</div>
+      <div style="font-size:10px;color:var(--text-muted)">${data.orders.length} طلب</div>
+    </div>`;
+  });
+  html += `<div style="background:linear-gradient(135deg,var(--olive),var(--olive-light));border-radius:12px;padding:12px;text-align:center;color:#fff">
+    <div style="font-size:11px;opacity:.85;margin-bottom:4px">الإجمالي</div>
+    <div style="font-size:20px;font-weight:900">${totalAll.toFixed(0)}</div>
+    <div style="font-size:10px;opacity:.8">${orders.length} طلب</div>
+  </div>`;
+  html += '</div>';
+
+  // Detailed table per method
+  Object.entries(groups).forEach(([method, data]) => {
+    html += `<div style="margin-bottom:16px"><div style="font-size:13px;font-weight:800;color:var(--olive-dark);margin-bottom:8px;padding:6px 10px;background:var(--olive-pale);border-radius:8px">${method} — ${data.total.toFixed(0)} ج.م (${data.orders.length} طلب)</div>`;
+    html += '<div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;font-size:11px">';
+    html += '<tr style="background:var(--olive);color:#fff"><th style="padding:6px;text-align:right">الاسم</th><th style="padding:6px">الهاتف</th><th style="padding:6px">محفظة العميل</th><th style="padding:6px">المبلغ</th><th style="padding:6px">الوقت</th><th style="padding:6px">مؤكد</th></tr>';
+    data.orders.forEach(o => {
+      html += `<tr style="border-bottom:1px solid var(--border)">
+        <td style="padding:6px;font-weight:700">${o.name||'-'}</td>
+        <td style="padding:6px;direction:ltr">${o.phone||'-'}</td>
+        <td style="padding:6px;direction:ltr;color:var(--olive-dark);font-weight:700">${o.clientWalletNum||o.walletPhone||'-'}</td>
+        <td style="padding:6px;font-weight:800;color:var(--olive-dark)">${o.total} ج</td>
+        <td style="padding:6px">${o.time||'-'} ${o.date||''}</td>
+        <td style="padding:6px">${o.confirmedPayment?'✅':'—'}</td>
+      </tr>`;
+    });
+    html += '</table></div></div>';
+  });
+  html += '</div>';
+
+  document.getElementById('payReportContent').innerHTML = html;
+}
+
+function exportPaymentReport() {
+  const period = document.getElementById('payReportPeriod')?.value || 'today';
+  const orders = filterOrdersByPeriod(period).filter(o => o.status === 'delivered' || o.confirmedPayment);
+  if (!orders.length) { showNotif('لا توجد بيانات'); return; }
+  
+  const rows = [['#','الاسم','الهاتف','رقم المحفظة','المبلغ','طريقة الدفع','الوقت','التاريخ','تأكيد الدفع']];
+  orders.forEach((o,i) => rows.push([
+    i+1, o.name||'', o.phone||'', o.clientWalletNum||o.walletPhone||'',
+    o.total, (o.payment||'كاش').split('—')[0].trim(),
+    o.time||'', o.date||'', o.confirmedPayment?'✅':''
+  ]));
+  
+  const html2 = '<html dir="rtl"><head><meta charset="UTF-8"></head><body><table border="1">'+
+    rows.map(r=>'<tr>'+r.map(v=>'<td>'+String(v||'').replace(/&/g,'&amp;')+'</td>').join('')+'</tr>').join('')+
+    '</table></body></html>';
+  const blob = new Blob([html2],{type:'application/vnd.ms-excel;charset=utf-8'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href=url; a.download='payment_report_'+period+'_'+new Date().toISOString().slice(0,10)+'.xls';
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  setTimeout(()=>URL.revokeObjectURL(url),2000);
+  showNotif('✅ تم تصدير التقرير');
 }
 
 function clearOldOrders() {
@@ -4910,6 +5081,7 @@ function renderCashierSheet() {
           <button class="track-btn tb-prep ${o.status==='prep'?'active-state':''}" onclick="updateOrderStatus('${o.id}','prep')" title="بدأ التجهيز">🍳</button>
           <button class="track-btn tb-ready ${o.status==='ready'?'active-state':''}" onclick="updateOrderStatus('${o.id}','ready')" title="جاهز">✅</button>
           <button class="track-btn tb-out ${o.status==='out'?'active-state':''}" onclick="openAgentPopup('${o.id}')" title="خرج">🛵</button>
+          ${o.status==='out' ? `<button class="track-btn" style="background:#d1fae5;color:#065f46;font-size:10px;font-weight:900;padding:4px 7px" onclick="cashierMarkDelivered('${o.id}')" title="تم التسليم">📦✅</button>` : ''}
           <button class="track-btn tb-delay" onclick="sendDelayMsg('${o.id}')" title="تأخير">⏳</button>
           ` : ''}
           ${o.whatsapp ? `<button class="track-btn tb-wa" onclick="event.stopPropagation();openWhatsApp('${o.whatsapp||o.phone||''}')" title="واتساب">💬</button>` : ''}
