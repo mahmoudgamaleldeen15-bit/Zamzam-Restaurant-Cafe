@@ -2720,6 +2720,7 @@ let bookingsData = loadData('zz_bookings', []);
 // STATE
 // ============================================================
 let cart=[], currentUser=null, favs=new Set(loadData('zz_favs',[]));
+let BLOCKED_USERS = loadData('zz_blocked_users', {}); // {phone: {reason, blockedAt}}
 let favCounts = loadData('zz_fav_counts', {}); // {itemId: globalCount}
 let VIP_CUSTOMERS = loadData('zz_vip_customers', {}); // {phone: {discount, since}}
 let VIP_AUTO_SETTINGS = loadData('zz_vip_auto_settings', {
@@ -3547,6 +3548,21 @@ function verifyOTP() {
   if (entered !== _otpPending.code) { showNotif('❌ الرمز غير صحيح'); return; }
   // Verified!
   currentUser = { ..._otpPending.user, verified: true };
+  // Check if user is blocked
+  const _checkPhone = (currentUser.phone||'').replace(/[^0-9]/g,'');
+  const _isBlocked = BLOCKED_USERS[_checkPhone] || BLOCKED_USERS['0'+_checkPhone.slice(1)] || BLOCKED_USERS['2'+_checkPhone];
+  if (_isBlocked) {
+    currentUser = null;
+    _otpPending = null;
+    showScreen('auth');
+    document.getElementById('authScreen').innerHTML = `<div style="text-align:center;padding:48px 24px;color:#fff">
+      <div style="font-size:64px;margin-bottom:16px">🚫</div>
+      <div style="font-size:20px;font-weight:900;margin-bottom:8px">تم تقييد الوصول</div>
+      <div style="font-size:14px;opacity:.7;margin-bottom:8px">هذا الحساب غير مسموح له بالدخول</div>
+      ${_isBlocked.reason ? `<div style="font-size:12px;opacity:.5">${_isBlocked.reason}</div>` : ''}
+    </div>`;
+    return;
+  }
   const savedVerified = loadData('zz_verified_phones', {});
   // Store multiple phone variants so login always works
   const _phone = currentUser.phone || '';
@@ -4624,14 +4640,32 @@ function doLogout() {
   if (window.location.hash) history.replaceState(null, '', window.location.pathname);
   // Return to client view
   const saved = loadData('zamzam_user', null);
-  if (saved) { currentUser = saved; openScreen('app'); }
+  if (saved) {
+    const _savedPhone = (saved.phone||'').replace(/[^0-9]/g,'');
+    const _savedBlocked = BLOCKED_USERS[_savedPhone] || BLOCKED_USERS['0'+_savedPhone.slice(1)] || BLOCKED_USERS['2'+_savedPhone];
+    if (_savedBlocked) {
+      saveData('zamzam_user', null);
+      currentUser = null;
+    } else {
+      currentUser = saved; openScreen('app');
+    }
+  }
   else showScreen('auth');
 }
 function doPickupLogout() {
   saveData('zz_admin_role', null);
   if (window.location.hash) history.replaceState(null, '', window.location.pathname);
   const saved = loadData('zamzam_user', null);
-  if (saved) { currentUser = saved; openScreen('app'); }
+  if (saved) {
+    const _savedPhone = (saved.phone||'').replace(/[^0-9]/g,'');
+    const _savedBlocked = BLOCKED_USERS[_savedPhone] || BLOCKED_USERS['0'+_savedPhone.slice(1)] || BLOCKED_USERS['2'+_savedPhone];
+    if (_savedBlocked) {
+      saveData('zamzam_user', null);
+      currentUser = null;
+    } else {
+      currentUser = saved; openScreen('app');
+    }
+  }
   else showScreen('auth');
 }
 
@@ -6322,6 +6356,37 @@ function buildCustomerStats(period) {
   return Object.values(map);
 }
 
+function blockUser(phone, name) {
+  const cleanPhone = (phone||'').replace(/[^0-9]/g,'');
+  if (!cleanPhone) { showNotif('رقم غير صالح'); return; }
+  if (BLOCKED_USERS[cleanPhone]) {
+    if (confirm('هذا المستخدم محظور بالفعل. هل تريد رفع الحظر؟')) unblockUser(phone);
+    return;
+  }
+  const reason = prompt('سبب الحظر (اختياري):', '');
+  if (reason === null) return;
+  BLOCKED_USERS[cleanPhone] = { name: name||'', reason: reason||'', blockedAt: new Date().toLocaleDateString('ar-EG') };
+  saveData('zz_blocked_users', BLOCKED_USERS);
+  if (db) db.ref('blocked_users/' + cleanPhone).set(BLOCKED_USERS[cleanPhone]).catch(()=>{});
+  showNotif('🚫 تم حظر ' + (name||cleanPhone));
+  renderCustomersReport();
+}
+
+function unblockUser(phone) {
+  const cleanPhone = (phone||'').replace(/[^0-9]/g,'');
+  delete BLOCKED_USERS[cleanPhone];
+  saveData('zz_blocked_users', BLOCKED_USERS);
+  if (db) db.ref('blocked_users/' + cleanPhone).remove().catch(()=>{});
+  showNotif('✅ تم رفع الحظر عن ' + cleanPhone);
+  renderCustomersReport();
+}
+
+function blockByPhone() {
+  const phone = prompt('أدخل رقم الهاتف للحظر:', '01');
+  if (!phone || phone === '01') return;
+  blockUser(phone.trim(), '');
+}
+
 function renderCustomersReport() {
   loadVIPAutoSettingsUI();
   const period = document.getElementById('custReportPeriod')?.value || 'all';
@@ -6344,7 +6409,21 @@ function renderCustomersReport() {
     <div class="report-kpi-grid" style="margin-bottom:14px">
       <div class="report-kpi highlight"><div class="kpi-val">${customers.length}</div><div class="kpi-lbl">👥 إجمالى العملاء</div></div>
       <div class="report-kpi highlight"><div class="kpi-val">${vipCount}</div><div class="kpi-lbl">⭐ عملاء VIP</div></div>
+      <div class="report-kpi highlight" onclick="blockByPhone()" style="cursor:pointer;background:linear-gradient(135deg,#fee2e2,#fecaca)"><div class="kpi-val" style="font-size:22px">🚫</div><div class="kpi-lbl" style="color:#dc2626">حظر برقم</div></div>
     </div>
+    ${Object.keys(BLOCKED_USERS).length ? `
+    <div style="background:#fff1f2;border:1px solid #fecaca;border-radius:12px;padding:12px;margin-bottom:14px">
+      <div style="font-size:13px;font-weight:800;color:#dc2626;margin-bottom:8px">🚫 المحظورون (${Object.keys(BLOCKED_USERS).length})</div>
+      ${Object.entries(BLOCKED_USERS).map(([phone, data]) => `
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid #fee2e2">
+          <div>
+            <div style="font-size:13px;font-weight:700">${data.name||'غير معروف'} — <span dir="ltr">${phone}</span></div>
+            ${data.reason?`<div style="font-size:11px;color:#64748b">${data.reason}</div>`:''}
+            <div style="font-size:10px;color:#94a3b8">${data.blockedAt||''}</div>
+          </div>
+          <button onclick="unblockUser('${phone}')" style="padding:5px 10px;background:#dcfce7;color:#16a34a;border-radius:8px;font-size:12px;font-weight:800;border:1px solid #86efac;cursor:pointer">🔓 رفع الحظر</button>
+        </div>`).join('')}
+    </div>` : ''}
 
     <!-- Top 3 -->
     <div style="margin-bottom:14px">
@@ -6366,7 +6445,10 @@ function renderCustomersReport() {
               <div style="background:var(--cream);border-radius:8px;padding:6px"><div style="font-size:14px;font-weight:900;color:var(--olive-dark)">${c.total}</div><div style="font-size:9px;color:var(--text-muted);font-weight:700">ج.م</div></div>
               <div style="background:var(--cream);border-radius:8px;padding:6px"><div style="font-size:14px;font-weight:900;color:var(--olive-dark)">${avg}</div><div style="font-size:9px;color:var(--text-muted);font-weight:700">متوسط</div></div>
             </div>
-            <button onclick="toggleVIP('${c.phone}','${c.name}')" style="margin-top:8px;width:100%;padding:7px;border-radius:8px;font-size:12px;font-weight:800;background:${isVip?'#fef3c7':'linear-gradient(135deg,#f59e0b,#d97706)'};color:${isVip?'#92400e':'#fff'};border:none;cursor:pointer">${isVip?'✓ VIP — إدارة الخصم':'⭐ تحويل إلى VIP'}</button>
+            <div style="display:grid;grid-template-columns:1fr auto;gap:6px;margin-top:8px">
+              <button onclick="toggleVIP('${c.phone}','${c.name}')" style="padding:7px;border-radius:8px;font-size:12px;font-weight:800;background:${isVip?'#fef3c7':'linear-gradient(135deg,#f59e0b,#d97706)'};color:${isVip?'#92400e':'#fff'};border:none;cursor:pointer">${isVip?'✓ VIP — إدارة الخصم':'⭐ تحويل إلى VIP'}</button>
+              <button onclick="blockUser('${c.phone}','${c.name}')" style="padding:7px 10px;border-radius:8px;font-size:12px;font-weight:800;background:${BLOCKED_USERS[(c.phone||'').replace(/[^0-9]/g,'')]?'#fee2e2':'#f1f5f9'};color:${BLOCKED_USERS[(c.phone||'').replace(/[^0-9]/g,'')]?'#dc2626':'#64748b'};border:1px solid ${BLOCKED_USERS[(c.phone||'').replace(/[^0-9]/g,'')]?'#fca5a5':'#e2e8f0'};cursor:pointer" title="${BLOCKED_USERS[(c.phone||'').replace(/[^0-9]/g,'')]?'محظور — اضغط لرفع الحظر':'حظر المستخدم'}">${BLOCKED_USERS[(c.phone||'').replace(/[^0-9]/g,'')]?'🔓':'🚫'}</button>
+            </div>
           </div>
         </div>`;
       }).join('')}
@@ -8508,6 +8590,26 @@ function setupFirebaseListeners() {
         if (data[phone]) VIP_CUSTOMERS[phone.replace(/^2/,'')] = data[phone];
       });
       saveData('zz_vip_customers', VIP_CUSTOMERS);
+    }
+  });
+
+  // --------- BLOCKED USERS ---------
+  db.ref('blocked_users').on('value', snap => {
+    if (snap.exists()) {
+      BLOCKED_USERS = snap.val() || {};
+      saveData('zz_blocked_users', BLOCKED_USERS);
+      // If current user is now blocked — kick them out
+      if (currentUser) {
+        const _p = (currentUser.phone||'').replace(/[^0-9]/g,'');
+        if (BLOCKED_USERS[_p] || BLOCKED_USERS['0'+_p.slice(1)] || BLOCKED_USERS['2'+_p]) {
+          currentUser = null;
+          saveData('zamzam_user', null);
+          openScreen('auth');
+          showNotif('🚫 تم تقييد وصولك');
+        }
+      }
+    } else {
+      BLOCKED_USERS = {};
     }
   });
 
