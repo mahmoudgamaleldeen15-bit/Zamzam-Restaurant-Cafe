@@ -4291,30 +4291,21 @@ function placeOrder() {
     showWorkHoursBlock(closedGroups[0]);
     return;
   }
-  // ===== فحص موقع التوصيل للديليفري =====
+  // ===== فحص شروط الديليفري =====
   if (deliveryType === 'delivery') {
-    const hasGPS = gpsCoords && gpsCoords.lat;
-    const hasZone = !!selectedDeliveryZone;
-    if (!hasGPS && !hasZone) {
-      showNotif('📍 من فضلك حدد موقع التوصيل أولاً لتحديد رسوم التوصيل');
-      const gpsBtn = document.querySelector('.gps-btn') || document.querySelector('[onclick*="getGPS"]') || document.querySelector('[onclick*="gps"]');
-      if (gpsBtn) {
-        gpsBtn.style.border = '2px solid red';
-        gpsBtn.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        setTimeout(() => { gpsBtn.style.border = ''; }, 3000);
-      }
+    // 1) منطقة التوصيل — إجباري
+    if (!selectedDeliveryZone) {
+      showNotif('📍 من فضلك اختر منطقة التوصيل أولاً لتحديد رسوم التوصيل');
+      const zoneEl = document.querySelector('.zones-wrap') || document.querySelector('[class*="zone"]');
+      if (zoneEl) zoneEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
       return;
     }
-  }
-
-  // ===== فحص العنوان للديليفري =====
-  if (deliveryType === 'delivery') {
-    const _addrShort = (document.getElementById('addressField')?.value || '').trim();
+    // 2) عنوان التفصيلي — إجباري (شارع أو حي على الأقل)
     const _addrStreet = (document.getElementById('detailAddressStreet')?.value || '').trim();
-    const _addrFloor = (document.getElementById('detailAddressFloor')?.value || '').trim();
-    if (!_addrShort && !_addrStreet && !_addrFloor) {
-      showNotif('📍 من فضلك أدخل عنوان التوصيل أولاً');
-      const _addrEl = document.getElementById('addressField') || document.getElementById('detailAddressStreet');
+    const _addrShort = (document.getElementById('addressField')?.value || '').trim();
+    if (!_addrStreet && !_addrShort) {
+      showNotif('🏠 من فضلك أدخل اسم الشارع أو الحي');
+      const _addrEl = document.getElementById('detailAddressStreet') || document.getElementById('addressField');
       if (_addrEl) {
         _addrEl.style.border = '2px solid red';
         _addrEl.focus();
@@ -4322,6 +4313,7 @@ function placeOrder() {
       }
       return;
     }
+    // GPS اختياري — لا يوجد check
   }
 
   // ===== فحص المنتجات غير المتاحة للدليفري =====
