@@ -4291,6 +4291,22 @@ function placeOrder() {
     showWorkHoursBlock(closedGroups[0]);
     return;
   }
+  // ===== فحص موقع التوصيل للديليفري =====
+  if (deliveryType === 'delivery') {
+    const hasGPS = gpsCoords && gpsCoords.lat;
+    const hasZone = !!selectedDeliveryZone;
+    if (!hasGPS && !hasZone) {
+      showNotif('📍 من فضلك حدد موقع التوصيل أولاً لتحديد رسوم التوصيل');
+      const gpsBtn = document.querySelector('.gps-btn') || document.querySelector('[onclick*="getGPS"]') || document.querySelector('[onclick*="gps"]');
+      if (gpsBtn) {
+        gpsBtn.style.border = '2px solid red';
+        gpsBtn.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        setTimeout(() => { gpsBtn.style.border = ''; }, 3000);
+      }
+      return;
+    }
+  }
+
   // ===== فحص العنوان للديليفري =====
   if (deliveryType === 'delivery') {
     const _addrShort = (document.getElementById('addressField')?.value || '').trim();
