@@ -2937,8 +2937,21 @@ function saveVIPAutoSettings() {
   VIP_AUTO_SETTINGS = { enabled, ordersLimit, amountLimit, defaultDiscount, periodDays, renewalDays, warningDays, withdrawOrders, autoWithdraw, amountInactivityMonths, amountWarningMonths };
   saveData('zz_vip_auto_settings', VIP_AUTO_SETTINGS);
   if (db) fbUpdate('config', { vipAutoSettings: VIP_AUTO_SETTINGS }).catch(() => {});
+
+  // ✅ تحديث خصم كل عملاء VIP الحاليين بالخصم الجديد
+  if (defaultDiscount > 0) {
+    Object.keys(VIP_CUSTOMERS).forEach(phone => {
+      if (VIP_CUSTOMERS[phone]) {
+        VIP_CUSTOMERS[phone].discount = defaultDiscount;
+        if (db) db.ref('vip_customers/' + phone).update({ discount: defaultDiscount }).catch(() => {});
+      }
+    });
+    saveData('zz_vip_customers', VIP_CUSTOMERS);
+    if (db) fbUpdate('vip_customers', VIP_CUSTOMERS).catch(() => {});
+  }
+
   if (enabled) autoCheckVIPLimits();
-  showNotif('✓ تم حفظ إعدادات VIP التلقائي');
+  showNotif('✓ تم حفظ إعدادات VIP وتحديث خصومات العملاء (' + Object.keys(VIP_CUSTOMERS).length + ' عميل)');
 }
 
 function loadVIPAutoSettingsUI() {
@@ -11212,7 +11225,7 @@ function showInstallPopup() {
       </div>
       <div class="install-step">
         <div class="install-step-num">2</div>
-        <div class="install-step-text">اختر: <strong>"إضافة إلى الشاشة الرئيسية"</strong><br/><span style="color:var(--text-muted);font-size:11px">أو "Add to Home Screen"</span></div>
+        <div class="install-step-text">اختر: <strong>"التثبيت الآن"</strong><br/><span style="color:var(--text-muted);font-size:11px">أو "Install Now 🚀"</span></div>
       </div>
       <div class="install-step">
         <div class="install-step-num">3</div>
@@ -11220,7 +11233,7 @@ function showInstallPopup() {
       </div>
       <div class="install-step" style="background:#fff3cd;border:1px solid #ffc107">
         <div class="install-step-num" style="background:#e67e22">⚠️</div>
-        <div class="install-step-text">لو ظهرت رسالة تحذير من المتصفح بأن التطبيق <strong>"غير معتمد"</strong> — هذا طبيعي تماماً لأنه تطبيق ويب وليس من Google Play.<br/>
+        <div class="install-step-text">لو ظهرت رسالة تحذير من المتصفح بأن التطبيق <strong>"غير معتمد"</strong> — هذا طبيعي تماماً لأنه تطبيق ويب وليس من Google Play اضغط على السهم ⬇️.<br/>
         <span style="color:#e67e22;font-weight:800">اضغط: <strong>"Install anyway"</strong> أو <strong>"التثبيت على أي حال"</strong> ← للمتابعة</span></div>
       </div>
       <button onclick="closeInstallPopup()" class="install-cta-btn install-cta-android">✅ حسناً — سأثبته الآن</button>`;
