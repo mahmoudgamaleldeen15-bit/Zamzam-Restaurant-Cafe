@@ -2574,6 +2574,22 @@ input,select,textarea{font-family:inherit;}
 <!-- ===== JAVASCRIPT ===== -->
 <script>
 // ============================================================
+// DOMAIN LICENSE CHECK
+// ============================================================
+(function() {
+  const ALLOWED = [
+    'mahmoudgamaleldeen15-bit.github.io',
+    'zamzam-cake.netlify.app',
+    'localhost',
+    '127.0.0.1',
+    ''
+  ];
+  if (!ALLOWED.includes(location.hostname)) {
+    document.documentElement.innerHTML = '<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100vh;font-family:Cairo,sans-serif;background:#0a0a0a;color:#fff;text-align:center;padding:24px"><div style="font-size:80px;margin-bottom:16px">⛔</div><div style="font-size:22px;font-weight:900;margin-bottom:8px">غير مرخص</div><div style="font-size:14px;opacity:.6">هذا التطبيق غير مصرح بتشغيله على هذا النطاق</div></div>';
+  }
+})();
+
+// ============================================================
 // APP VERSION
 // ============================================================
 const APP_VERSION = '22.1.0';
@@ -4275,6 +4291,23 @@ function placeOrder() {
     showWorkHoursBlock(closedGroups[0]);
     return;
   }
+  // ===== فحص العنوان للديليفري =====
+  if (deliveryType === 'delivery') {
+    const _addrShort = (document.getElementById('addressField')?.value || '').trim();
+    const _addrStreet = (document.getElementById('detailAddressStreet')?.value || '').trim();
+    const _addrFloor = (document.getElementById('detailAddressFloor')?.value || '').trim();
+    if (!_addrShort && !_addrStreet && !_addrFloor) {
+      showNotif('📍 من فضلك أدخل عنوان التوصيل أولاً');
+      const _addrEl = document.getElementById('addressField') || document.getElementById('detailAddressStreet');
+      if (_addrEl) {
+        _addrEl.style.border = '2px solid red';
+        _addrEl.focus();
+        setTimeout(() => { _addrEl.style.border = ''; }, 3000);
+      }
+      return;
+    }
+  }
+
   // ===== فحص المنتجات غير المتاحة للدليفري =====
   if (deliveryType === 'delivery') {
     const unavailableItems = cart.filter(ci => {
