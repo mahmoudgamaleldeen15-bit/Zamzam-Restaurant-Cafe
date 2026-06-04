@@ -2193,18 +2193,30 @@ input,select,textarea{font-family:inherit;}
         </div>
 
         <!-- شروط الحصول على VIP -->
-        <div style="font-size:11px;font-weight:800;color:#92400e;margin:10px 0 6px">🏆 شروط الحصول على VIP</div>
+        <div style="font-size:11px;font-weight:800;color:#92400e;margin:10px 0 6px">🏆 شرط ١ — عدد الطلبات + المبلغ</div>
         <div class="vip-limit-row">
           <label>🛒 عدد الطلبات للترقية</label>
-          <input type="number" class="vip-limit-input" id="vipOrdersLimit" value="5" min="1" placeholder="5"/>
+          <input type="number" class="vip-limit-input" id="vipOrdersLimit" value="10" min="1" placeholder="10"/>
         </div>
         <div class="vip-limit-row">
           <label>⏱️ خلال كام يوم؟</label>
           <input type="number" class="vip-limit-input" id="vipPeriodDays" value="30" min="1" placeholder="30"/>
         </div>
         <div class="vip-limit-row">
-          <label>💰 أو إجمالى مشتريات (ج.م)</label>
+          <label>💰 حد أدنى للمشتريات مع الطلبات (ج.م)</label>
+          <input type="number" class="vip-limit-input" id="vipMinOrderAmount" value="0" min="0" placeholder="0 = بدون حد أدنى"/>
+        </div>
+        <div style="background:#fef9c3;border-radius:8px;padding:7px 10px;font-size:10px;color:#92400e;margin-bottom:8px">
+          ✅ العميل يحتاج <b id="ex1Orders">10</b> طلبات خلال <b id="ex1Days">30</b> يوم + مشتريات ≥ <b id="ex1Amount">0</b> ج.م
+        </div>
+
+        <div style="font-size:11px;font-weight:800;color:#1e40af;margin:10px 0 6px">🏆 شرط ٢ — إجمالي مشتريات خلال 30 يوم</div>
+        <div class="vip-limit-row">
+          <label>💰 حد أدنى إجمالي مشتريات (ج.م)</label>
           <input type="number" class="vip-limit-input" id="vipAmountLimit" value="10000" min="1" placeholder="10000"/>
+        </div>
+        <div style="background:#dbeafe;border-radius:8px;padding:7px 10px;font-size:10px;color:#1e40af;margin-bottom:8px">
+          ✅ العميل يحتاج مشتريات ≥ <b id="ex2Amount">10000</b> ج.م خلال آخر 30 يوم
         </div>
         <div class="vip-limit-row">
           <label>🏷️ نسبة الخصم الافتراضية (%)</label>
@@ -2240,7 +2252,7 @@ input,select,textarea{font-family:inherit;}
         </div>
 
         <div style="background:#fff8e1;border-radius:8px;padding:8px;margin:8px 0;font-size:11px;color:#92400e;line-height:1.7">
-          📌 مثال: العميل يحتاج <strong id="vipExampleOrders">5</strong> طلبات في <strong id="vipExampleDays">30</strong> يوم للترقية، ويحتاج <strong id="vipExampleWithdraw">3</strong> طلبات كل <strong id="vipExampleRenewal">30</strong> يوم للحفاظ عليها
+          📌 للحفاظ على VIP: يحتاج <strong id="vipExampleWithdraw">3</strong> طلبات كل <strong id="vipExampleRenewal">30</strong> يوم
         </div>
 
         <div style="display:flex;gap:8px;margin-top:12px">
@@ -2756,8 +2768,9 @@ let favCounts = loadData('zz_fav_counts', {}); // {itemId: globalCount}
 let VIP_CUSTOMERS = loadData('zz_vip_customers', {}); // {phone: {discount, since}}
 let VIP_AUTO_SETTINGS = loadData('zz_vip_auto_settings', {
   enabled: false,
-  ordersLimit: 20,
-  amountLimit: 10000,
+  ordersLimit: 10,
+  minOrderAmount: 0,     // حد أدنى مشتريات مع الطلبات (شرط 1)
+  amountLimit: 10000,    // حد أدنى مشتريات خلال 30 يوم (شرط 2)
   defaultDiscount: 10,
   periodDays: 30,        // المدة الزمنية للحساب
   renewalDays: 30,       // كل كام يوم يتجدد
@@ -2793,7 +2806,12 @@ function autoCheckVIPLimits() {
   let promoted = 0;
   Object.values(customerStats).forEach(c => {
     if (VIP_CUSTOMERS[c.phone]) return; // بالفعل VIP
-    const meetsOrders = VIP_AUTO_SETTINGS.ordersLimit > 0 && c.count >= VIP_AUTO_SETTINGS.ordersLimit;
+    // شرط ١: عدد الطلبات خلال periodDays + حد أدنى مشتريات
+    const minAmt = VIP_AUTO_SETTINGS.minOrderAmount || 0;
+    const meetsOrders = VIP_AUTO_SETTINGS.ordersLimit > 0 &&
+      c.count >= VIP_AUTO_SETTINGS.ordersLimit &&
+      (minAmt === 0 || c.total >= minAmt);
+    // شرط ٢: إجمالي مشتريات خلال 30 يوم فقط
     const meetsAmount = VIP_AUTO_SETTINGS.amountLimit > 0 && c.total >= VIP_AUTO_SETTINGS.amountLimit;
     if (meetsOrders || meetsAmount) {
       VIP_CUSTOMERS[c.phone] = {
@@ -2975,7 +2993,8 @@ function initVIPAutoCheck() {
 
 function saveVIPAutoSettings() {
   const enabled = document.getElementById('vipAutoEnabled')?.classList.contains('on') || false;
-  const ordersLimit = Number(document.getElementById('vipOrdersLimit')?.value) || 5;
+  const ordersLimit = Number(document.getElementById('vipOrdersLimit')?.value) || 10;
+  const minOrderAmount = Number(document.getElementById('vipMinOrderAmount')?.value) || 0;
   const amountLimit = Number(document.getElementById('vipAmountLimit')?.value) || 10000;
   const defaultDiscount = Number(document.getElementById('vipDefaultDiscount')?.value) || 10;
   const periodDays = Number(document.getElementById('vipPeriodDays')?.value) || 30;
@@ -2987,7 +3006,7 @@ function saveVIPAutoSettings() {
   const amountInactivityMonths = Number(document.getElementById('vipAmountInactivityMonths')?.value) || 12;
   const amountWarningMonths = Number(document.getElementById('vipAmountWarningMonths')?.value) || 6;
 
-  VIP_AUTO_SETTINGS = { enabled, ordersLimit, amountLimit, defaultDiscount, periodDays, renewalDays, warningDays, withdrawOrders, autoWithdraw, amountInactivityMonths, amountWarningMonths };
+  VIP_AUTO_SETTINGS = { enabled, ordersLimit, minOrderAmount, amountLimit, defaultDiscount, periodDays, renewalDays, warningDays, withdrawOrders, autoWithdraw, amountInactivityMonths, amountWarningMonths };
   saveData('zz_vip_auto_settings', VIP_AUTO_SETTINGS);
   if (db) fbUpdate('config', { vipAutoSettings: VIP_AUTO_SETTINGS }).catch(() => {});
 
