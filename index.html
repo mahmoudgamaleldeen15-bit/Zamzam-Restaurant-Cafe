@@ -4725,7 +4725,7 @@ function applyRoleRestrictions() {
 function switchAdminTab(tab, el) {
   document.querySelectorAll('.admin-tabs button').forEach(b => b.classList.remove('active'));
   el.classList.add('active');
-  ['orders','cashier','bookings','menu','addons','offers','settings','notify','ads','agents','stats'].forEach(t => {
+  ['orders','cashier','bookings','menu','addons','offers','settings','notify','ads','agents','block','stats'].forEach(t => {
     const tabEl = document.getElementById('tab-' + t);
     if (tabEl) tabEl.style.display = t === tab ? 'block' : 'none';
   });
@@ -6487,10 +6487,7 @@ function renderCustomersReport() {
               <div style="background:var(--cream);border-radius:8px;padding:6px"><div style="font-size:14px;font-weight:900;color:var(--olive-dark)">${c.total}</div><div style="font-size:9px;color:var(--text-muted);font-weight:700">ج.م</div></div>
               <div style="background:var(--cream);border-radius:8px;padding:6px"><div style="font-size:14px;font-weight:900;color:var(--olive-dark)">${avg}</div><div style="font-size:9px;color:var(--text-muted);font-weight:700">متوسط</div></div>
             </div>
-            <div style="display:grid;grid-template-columns:1fr auto;gap:6px;margin-top:8px">
-              <button onclick="toggleVIP('${c.phone}','${c.name}')" style="padding:7px;border-radius:8px;font-size:12px;font-weight:800;background:${isVip?'#fef3c7':'linear-gradient(135deg,#f59e0b,#d97706)'};color:${isVip?'#92400e':'#fff'};border:none;cursor:pointer">${isVip?'✓ VIP — إدارة الخصم':'⭐ تحويل إلى VIP'}</button>
-              <button onclick="blockUser('${c.phone}','${c.name}')" style="padding:7px 10px;border-radius:8px;font-size:12px;font-weight:800;background:${BLOCKED_USERS[(c.phone||'').replace(/[^0-9]/g,'')]?'#fee2e2':'#f1f5f9'};color:${BLOCKED_USERS[(c.phone||'').replace(/[^0-9]/g,'')]?'#dc2626':'#64748b'};border:1px solid ${BLOCKED_USERS[(c.phone||'').replace(/[^0-9]/g,'')]?'#fca5a5':'#e2e8f0'};cursor:pointer" title="${BLOCKED_USERS[(c.phone||'').replace(/[^0-9]/g,'')]?'محظور — اضغط لرفع الحظر':'حظر المستخدم'}">${BLOCKED_USERS[(c.phone||'').replace(/[^0-9]/g,'')]?'🔓':'🚫'}</button>
-            </div>
+            <button onclick="toggleVIP('${c.phone}','${c.name}')" style="margin-top:8px;width:100%;padding:7px;border-radius:8px;font-size:12px;font-weight:800;background:${isVip?'#fef3c7':'linear-gradient(135deg,#f59e0b,#d97706)'};color:${isVip?'#92400e':'#fff'};border:none;cursor:pointer">${isVip?'✓ VIP — إدارة الخصم':'⭐ تحويل إلى VIP'}</button>
           </div>
         </div>`;
       }).join('')}
