@@ -2870,7 +2870,28 @@ function _checkVIPRenewalAndWithdraw(currentStats) {
 }
 
 function _sendVIPWelcomeMsg(phone, name) {
-  // الرسالة بتتبعت من واتساب — مش تلقائي
+  const wa = normalizePhoneForWA(phone);
+  if (!wa) return;
+  const vip = VIP_CUSTOMERS[phone] || {};
+  const discount = vip.discount || VIP_AUTO_SETTINGS.defaultDiscount || 10;
+  // استخدم القالب النشط لو موجود
+  const activeTemplate = VIP_MSG_TEMPLATES.find(t => t.active);
+  let msg = '';
+  if (activeTemplate && activeTemplate.text) {
+    msg = activeTemplate.text.replace(/{name}/g, name).replace(/{discount}/g, discount);
+  } else {
+    msg = `🎉 مبروك ${name}!
+
+لقد أصبحت أحد عملاء VIP المميزين لدى ${RESTAURANT.name || 'زمزم'} 👑
+
+✨ مزاياك الحصرية:
+🏷️ خصم ${discount}% على جميع طلباتك
+
+شكراً على ثقتك بنا ❤️`;
+  }
+  setTimeout(() => {
+    window.open('https://wa.me/' + wa + '?text=' + encodeURIComponent(msg), '_blank');
+  }, 1000);
 }
 
 function _sendVIPAmountWarningMsg(phone, name, monthsLeft) {
