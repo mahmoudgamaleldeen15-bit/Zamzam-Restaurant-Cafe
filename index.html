@@ -597,6 +597,14 @@ input,select,textarea{font-family:inherit;}
 .last-order-block-overlay.show{display:flex;}
 .last-order-block-card{background:var(--white);border-radius:20px;padding:32px 24px;text-align:center;max-width:340px;width:100%;}
 
+/* ===== PRAYER TIME BLOCK (client) — مستقل تماماً ===== */
+.prayer-time-block-overlay{position:fixed;inset:0;background:rgba(0,0,0,.78);z-index:500;display:none;align-items:center;justify-content:center;padding:24px;}
+.prayer-time-block-overlay.show{display:flex;}
+.prayer-time-block-card{background:linear-gradient(160deg,#0f3d2e,#1b5e43);border:2px solid #d4af37;border-radius:22px;padding:34px 26px;text-align:center;max-width:350px;width:100%;box-shadow:0 18px 50px rgba(0,0,0,.5);}
+/* بانر تذكير الكاشير/الأدمن وقت الصلاة */
+#prayerStaffBanner{display:none;position:fixed;top:0;left:0;right:0;z-index:9999;background:linear-gradient(90deg,#b71c1c,#e53935);color:#fff;text-align:center;padding:11px 14px;font-weight:800;font-size:14px;letter-spacing:.2px;box-shadow:0 3px 14px rgba(0,0,0,.35);animation:prayerBlink 1.4s ease-in-out infinite;cursor:default;}
+@keyframes prayerBlink{0%,100%{opacity:1}50%{opacity:.5}}
+
 /* Work Hours Block */
 .work-hours-block-overlay{position:fixed;inset:0;background:rgba(0,0,0,.78);z-index:500;display:none;align-items:center;justify-content:center;padding:24px;}
 .work-hours-block-overlay.show{display:flex;animation:popIn .3s ease;}
@@ -1582,6 +1590,19 @@ input,select,textarea{font-family:inherit;}
   </div>
 </div>
 
+<!-- ===== PRAYER TIME BLOCK OVERLAY (client) — مستقل تماماً ===== -->
+<div class="prayer-time-block-overlay" id="prayerTimeBlockOverlay">
+  <div class="prayer-time-block-card">
+    <div style="font-size:58px;margin-bottom:10px">🕌</div>
+    <div style="font-size:19px;font-weight:800;color:#ffd86b;margin-bottom:12px">وقت الصلاة</div>
+    <div style="font-size:14.5px;color:#f4f1e6;line-height:2;margin-bottom:22px">نعتذر لكم، تم إيقاف استقبال الطلبات مؤقتاً لأداء الصلاة 🤲<br/><br/>نعود لخدمتكم خلال دقائق قليلة بإذن الله.<br/><br/>شكراً لتفهمكم، ونسأل الله أن يتقبل منا ومنكم صالح الأعمال 🌙</div>
+    <button onclick="document.getElementById('prayerTimeBlockOverlay').classList.remove('show')" style="background:#d4af37;color:#0f3d2e;border:none;border-radius:12px;padding:13px 30px;font-size:14px;font-weight:800;cursor:pointer">حسناً ✓</button>
+  </div>
+</div>
+
+<!-- بانر تذكير الكاشير/الأدمن إن وقت الصلاة مفعّل -->
+<div id="prayerStaffBanner">🕌 وقت الصلاة مفعّل — استقبال الطلبات متوقف حالياً ⛔</div>
+
 <!-- ===== WORK HOURS BLOCKED OVERLAY ===== -->
 <div class="work-hours-block-overlay" id="workHoursBlockOverlay">
   <div class="work-hours-block-card">
@@ -1642,6 +1663,9 @@ input,select,textarea{font-family:inherit;}
     <div style="padding:0 16px 12px;display:flex;gap:10px">
       <button onclick="toggleLastOrder()" id="lastOrderBtn" style="flex:1;padding:13px;background:var(--red);color:#fff;border-radius:12px;font-size:13px;font-weight:800">⚠️ تفعيل LAST ORDER</button>
       <button onclick="openScreen('app')" style="padding:13px 14px;background:var(--olive);color:#fff;border-radius:12px;font-size:13px;font-weight:800">🏠 المنيو</button>
+    </div>
+    <div style="padding:0 16px 12px">
+      <button onclick="togglePrayerTime()" id="prayerTimeBtn" style="width:100%;padding:13px;background:#1b5e43;color:#fff;border:1.5px solid #d4af37;border-radius:12px;font-size:13px;font-weight:800">🕌 تفعيل وقت الصلاة — 🟢 الحالة: معطل</button>
     </div>
     <!-- Admin-only action buttons -->
     <div id="adminActionBtns" style="padding:0 16px 12px;display:none;gap:8px;flex-wrap:wrap">
@@ -3050,7 +3074,7 @@ function loadVIPAutoSettingsUI() {
 }
 let deliveryType='delivery', paymentType='cash', paymentTypeLabel='💵 كاش';
 let currentPM=null, pmQtyVal=1, pmSelectedSize=null, pmSelectedExtras=new Set(), pmSpicy='normal';
-let gpsCoords=null, lastOrderActive=false, currentFilter='all', searchQuery='';
+let gpsCoords=null, lastOrderActive=false, prayerTimeActive=false, currentFilter='all', searchQuery='';
 let adminRoleType=null, _cashierViewedCurrentOrder=false;
 // currentOrderNum — بيتحفظ في localStorage عشان يتستعاد لو التطبيق اتقفل
 let currentOrderNum = loadData('zz_current_order_num', null);
@@ -4303,6 +4327,11 @@ function placeOrder() {
     document.getElementById('lastOrderBlockOverlay').classList.add('show');
     return;
   }
+  // Block if Prayer Time active — إضافة مستقلة
+  if (prayerTimeActive) {
+    document.getElementById('prayerTimeBlockOverlay').classList.add('show');
+    return;
+  }
 
   // ===== فحص مواعيد العمل — Work Hours Check =====
   const closedGroups = checkCartWorkHours();
@@ -4707,6 +4736,7 @@ function doAdminLogin() {
   initAutoBackup();
   initVIPAutoCheck();
   openScreen('adminPanel');
+  updatePrayerReminder();
 }
 function doLogout() {
   adminRoleType = null;
@@ -5265,6 +5295,61 @@ function toggleLastOrder() {
   }
   // 🔥 مزامنة مع Firebase عشان كل العملاء يشوفوا التغيير
   fbSetLastOrder(lastOrderActive);
+}
+
+// ============================================================
+// PRAYER TIME MODE — إيقاف الطلبات وقت الصلاة (إضافة مستقلة)
+// ============================================================
+function togglePrayerTime() {
+  prayerTimeActive = !prayerTimeActive;
+  const btn = document.getElementById('prayerTimeBtn');
+  if (prayerTimeActive) {
+    if (btn) { btn.textContent = '🕌 إيقاف وقت الصلاة — 🔴 الحالة: مفعّل'; btn.style.background = '#7a1f1f'; }
+    showNotif('🕌 تم تفعيل وقت الصلاة — تم إيقاف استقبال الطلبات');
+  } else {
+    if (btn) { btn.textContent = '🕌 تفعيل وقت الصلاة — 🟢 الحالة: معطل'; btn.style.background = '#1b5e43'; }
+    // إخفاء الرسالة فوراً عن أي عميل فاتحها
+    const ov = document.getElementById('prayerTimeBlockOverlay');
+    if (ov) ov.classList.remove('show');
+    showNotif('✓ تم إلغاء وقت الصلاة — عاد استقبال الطلبات');
+  }
+  // 🔥 مزامنة مع Firebase عشان كل العملاء يشوفوا التغيير فوراً
+  fbSetPrayerTime(prayerTimeActive);
+  updatePrayerReminder();
+}
+
+// تذكير الكاشير/الأدمن: بانر وامض + نغمة صوتية كل فترة (إضافة مستقلة)
+let _prayerBeepInterval = null;
+function playPrayerBeep() {
+  try {
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    [0, 0.25].forEach(offset => {
+      const o = ctx.createOscillator(), g = ctx.createGain();
+      o.connect(g); g.connect(ctx.destination);
+      o.type = 'sine'; o.frequency.value = 880;
+      const t = ctx.currentTime + offset;
+      g.gain.setValueAtTime(0.0001, t);
+      g.gain.exponentialRampToValueAtTime(0.35, t + 0.04);
+      g.gain.exponentialRampToValueAtTime(0.0001, t + 0.18);
+      o.start(t); o.stop(t + 0.2);
+    });
+    setTimeout(() => { try { ctx.close(); } catch(e){} }, 800);
+  } catch(e) {}
+  try { if (navigator.vibrate) navigator.vibrate([200, 90, 200]); } catch(e) {}
+}
+function updatePrayerReminder() {
+  const isStaff = (adminRoleType === 'admin' || adminRoleType === 'cashier');
+  const banner = document.getElementById('prayerStaffBanner');
+  if (prayerTimeActive && isStaff) {
+    if (banner) banner.style.display = 'block';
+    if (!_prayerBeepInterval) {
+      playPrayerBeep();
+      _prayerBeepInterval = setInterval(playPrayerBeep, 45000);
+    }
+  } else {
+    if (banner) banner.style.display = 'none';
+    if (_prayerBeepInterval) { clearInterval(_prayerBeepInterval); _prayerBeepInterval = null; }
+  }
 }
 
 // ============================================================
@@ -8758,6 +8843,25 @@ function setupFirebaseListeners() {
     }
   });
 
+  // --------- PRAYER TIME from Firebase — مزامنة مستقلة ---------
+  db.ref('config/prayerTimeActive').on('value', snap => {
+    if (snap.exists()) {
+      const val = snap.val();
+      if (val !== prayerTimeActive) {
+        prayerTimeActive = val;
+        const btn = document.getElementById('prayerTimeBtn');
+        if (prayerTimeActive) {
+          if (btn) { btn.textContent = '🕌 إيقاف وقت الصلاة — 🔴 الحالة: مفعّل'; btn.style.background = '#7a1f1f'; }
+        } else {
+          if (btn) { btn.textContent = '🕌 تفعيل وقت الصلاة — 🟢 الحالة: معطل'; btn.style.background = '#1b5e43'; }
+          const ov = document.getElementById('prayerTimeBlockOverlay');
+          if (ov) ov.classList.remove('show');
+        }
+        updatePrayerReminder();
+      }
+    }
+  });
+
   // --------- VIP AUTO SETTINGS from Firebase ---------
   db.ref('config/vipAutoSettings').on('value', snap => {
     if (snap.exists()) {
@@ -8880,6 +8984,7 @@ async function fbSaveAddons() { await fbSet('addons', ADDONS); }
 async function fbSaveSpicySettings() { await fbSet('spicy_settings', SPICY_SETTINGS); }
 async function fbSaveOffers() { await fbSet('offers', OFFERS); }
 async function fbSetLastOrder(val) { await fbUpdate('config', { lastOrderActive: val }); }
+async function fbSetPrayerTime(val) { await fbUpdate('config', { prayerTimeActive: val }); }
 
 // ============================================================
 // ADS SYSTEM
