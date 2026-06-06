@@ -1621,6 +1621,17 @@ input,select,textarea{font-family:inherit;}
   </div>
 </div>
 
+<!-- ===== تذكير النسخة الاحتياطية اليومية (يظهر للأدمن فقط لو فات 24 ساعة) ===== -->
+<div class="delivery-restrict-overlay" id="dailyBackupReminderOverlay">
+  <div class="delivery-restrict-card" style="border-top:5px solid var(--olive)">
+    <div style="font-size:54px;margin-bottom:10px">📥</div>
+    <div style="font-size:18px;font-weight:800;color:var(--dark);margin-bottom:10px">تذكير: خُد نسخة احتياطية</div>
+    <div id="dailyBackupReminderMsg" style="font-size:14px;color:var(--text-muted);line-height:1.9;margin-bottom:20px"></div>
+    <button class="btn-primary" onclick="doDailyBackupNow()" style="margin-bottom:8px">📥 احفظ نسخة النهاردة الآن</button>
+    <button class="btn-primary btn-secondary" onclick="document.getElementById('dailyBackupReminderOverlay').classList.remove('show')">بعدين ⏰</button>
+  </div>
+</div>
+
 <!-- ===== WORK HOURS BLOCKED OVERLAY ===== -->
 <div class="work-hours-block-overlay" id="workHoursBlockOverlay">
   <div class="work-hours-block-card">
@@ -4778,6 +4789,7 @@ function doAdminLogin() {
   openScreen('adminPanel');
   updatePrayerReminder();
   updateDeliveryCtrlBtnUI();
+  setTimeout(() => { if (adminRoleType === 'admin') checkDailyBackupReminder(); }, 1500);
 }
 function doLogout() {
   adminRoleType = null;
@@ -5531,6 +5543,34 @@ function saveDeliveryCtrlFromUI() {
 function saveDeliveryCtrl() {
   saveData('zz_delivery_ctrl', DELIVERY_CTRL);
   fbSetDeliveryCtrl(DELIVERY_CTRL);
+}
+
+// ============================================================
+// تذكير النسخة الاحتياطية اليومية (إضافة مستقلة)
+// يظهر للأدمن فقط لو فات 24 ساعة من آخر نسخة فعلية — مش كل دخول
+// ============================================================
+const DAILY_BACKUP_REMINDER_MS = 24 * 60 * 60 * 1000;
+function checkDailyBackupReminder() {
+  if (adminRoleType !== 'admin') return; // أدمن فقط
+  const last = loadData('zz_last_export_backup', null);
+  const overdue = !last || (Date.now() - Number(last)) >= DAILY_BACKUP_REMINDER_MS;
+  if (!overdue) return; // فات أقل من 24 ساعة → لا تذكير
+  const msgEl = document.getElementById('dailyBackupReminderMsg');
+  if (msgEl) {
+    if (last) {
+      const hrs = Math.floor((Date.now() - Number(last)) / (60 * 60 * 1000));
+      msgEl.innerHTML = `فات حوالي <b>${hrs} ساعة</b> على آخر نسخة احتياطية أخدتها.<br/>يُفضّل تحفظ نسخة جديدة للنهاردة عشان بياناتك تكون آمنة 🛡️`;
+    } else {
+      msgEl.innerHTML = `لسه مأخدتش أي نسخة احتياطية فعلية.<br/>احفظ نسختك الأولى دلوقتي عشان تأمّن بياناتك 🛡️`;
+    }
+  }
+  const ov = document.getElementById('dailyBackupReminderOverlay');
+  if (ov) ov.classList.add('show');
+}
+function doDailyBackupNow() {
+  const ov = document.getElementById('dailyBackupReminderOverlay');
+  if (ov) ov.classList.remove('show');
+  exportBackup(); // بينزّل الملف الكامل ويصفّر العداد تلقائياً
 }
 
 // ============================================================
@@ -7033,6 +7073,8 @@ function exportBackup() {
   setTimeout(()=>{ const b=document.createElement('a'); b.href=csvUrl; b.download=`zamzam_customers_${dateStr}.csv`; b.click(); URL.revokeObjectURL(csvUrl); }, 600);
 
   showNotif(`✓ تم تصدير Backup كامل — ${users.length} عميل، ${ordersData.length} طلب`);
+  // تصفير عداد التذكير اليومي — أي نسخة فعلية تصفّر الـ 24 ساعة
+  saveData('zz_last_export_backup', Date.now());
 }
 
 // ========== AUTO BACKUP قبل أي استيراد ==========
@@ -10171,6 +10213,13 @@ function _buildBackupData() {
     users, agents, ads: loadData('zz_ads', []), vipCustomers: VIP_CUSTOMERS,
     usedOffers, favCounts: loadData('zz_fav_counts', {}), mainGroups: MAIN_GROUPS
   };
+}
+
+// الدالة اللي بيناديها زرار "حفظ backup الآن" — كانت ناقصة
+function runManualAutoBackup() {
+  if (!db || !fbConnected) { showNotif('❌ لا يوجد اتصال بـ Firebase — تأكد من الإنترنت'); return; }
+  showNotif('⏳ جاري حفظ النسخة الاحتياطية...');
+  runAutoBackup(true);
 }
 
 async function runAutoBackup(manual = false) {
