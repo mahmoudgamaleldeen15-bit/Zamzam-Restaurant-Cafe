@@ -3566,6 +3566,12 @@ async function doLogin() {
   const phoneNorm = phone.replace(/[^0-9]/g,'');
   const isVerified = savedVerified[phone] || savedVerified[phoneNorm] || savedVerified['0'+phoneNorm.replace(/^2/,'')] || false;
 
+  // 🔒 فحص الحظر قبل أي دخول — يشمل الأرقام المتأكدة مسبقاً (سدّ ثغرة الدخول المباشر)
+  if (BLOCKED_USERS[phoneNorm] || BLOCKED_USERS['0'+phoneNorm.slice(1)] || BLOCKED_USERS['2'+phoneNorm] || BLOCKED_USERS[phone]) {
+    showNotif('🚫 هذا الحساب غير مسموح له بالدخول');
+    return;
+  }
+
   if (isVerified && hasRealName) {
     currentUser = { ...userData, verified: true };
     // ALWAYS save session — keep user logged in
@@ -4363,6 +4369,14 @@ function applyCoupon() {
 // ============================================================
 function placeOrder() {
   if (!cart.length) { showNotif('السلة فارغة!'); return; }
+  // 🔒 فحص الحظر وقت الطلب — طبقة حماية إضافية (سدّ ثغرة)
+  const _poPhone = (currentUser && currentUser.phone || '').replace(/[^0-9]/g,'');
+  if (_poPhone && (BLOCKED_USERS[_poPhone] || BLOCKED_USERS['0'+_poPhone.slice(1)] || BLOCKED_USERS['2'+_poPhone])) {
+    showNotif('🚫 هذا الحساب غير مسموح له بإرسال الطلبات');
+    currentUser = null; saveData('zamzam_user', null);
+    showScreen('auth');
+    return;
+  }
   // ===== فحص الإنترنت أولاً =====
   if (!navigator.onLine) {
     showOfflineAlert();
