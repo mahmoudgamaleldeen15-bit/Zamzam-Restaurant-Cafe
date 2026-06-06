@@ -986,11 +986,14 @@ input,select,textarea{font-family:inherit;}
         <div style="font-size:12px;font-weight:700;color:var(--olive-dark);margin-bottom:4px">✅ تم العثور على حسابك</div>
         <div style="font-size:14px;font-weight:800;color:var(--dark)" id="loginFoundName">—</div>
       </div>
+      <div class="field" id="loginPassField" style="display:none"><label>🔒 كلمة السر</label><input type="password" id="loginPass" placeholder="أدخل كلمة السر" autocomplete="new-password" readonly autocorrect="off" autocapitalize="off" spellcheck="false" onfocus="this.removeAttribute('readonly')" onkeydown="if(event.key==='Enter')doLogin()"/></div>
+      <div id="loginNeedPassMsg" style="display:none;background:#fff7e6;border:1.5px solid #e0a84e;border-radius:12px;padding:12px 14px;margin-bottom:12px;font-size:12.5px;color:#7a5b1b;line-height:1.7"></div>
       <div class="remember-row">
         <div class="toggle-sw on" id="rememberToggle" onclick="this.classList.toggle('on')"></div>
         <span style="font-size:14px;font-weight:600">تذكرنى فى المرات القادمة</span>
       </div>
       <button class="btn-primary" onclick="doLogin()">دخول ←</button>
+      <div style="text-align:center;margin-top:10px"><button id="forgotPassBtn" onclick="doForgotPassword()" style="display:none;font-size:12.5px;font-weight:700;color:var(--olive);background:none;border:none;cursor:pointer">نسيت كلمة السر؟</button></div>
       <div style="text-align:center;margin-top:14px">
         <span style="font-size:13px;color:var(--text-muted)">عميل جديد؟ </span>
         <button onclick="switchAuthTab('register')" style="font-size:13px;font-weight:700;color:var(--olive);background:none;border:none;cursor:pointer">إنشاء حساب</button>
@@ -1007,6 +1010,8 @@ input,select,textarea{font-family:inherit;}
       <div class="field"><label>رقم الهاتف</label><input type="tel" id="regPhone" placeholder="01xxxxxxxxx" inputmode="tel"/></div>
       <div class="field"><label>رقم الواتساب ⭐ (إجبارى)</label><input type="tel" id="regWhatsapp" placeholder="01xxxxxxxxx" inputmode="tel"/></div>
       <div class="field"><label>العنوان (اختيارى)</label><input type="text" id="regAddress" placeholder="الشارع، الحى"/></div>
+      <div class="field"><label>🔒 كلمة السر</label><input type="password" id="regPass" placeholder="اختر كلمة سر (4 أحرف على الأقل)" autocomplete="new-password"/></div>
+      <div class="field"><label>🔒 تأكيد كلمة السر</label><input type="password" id="regPass2" placeholder="أعد كتابة كلمة السر" autocomplete="new-password"/></div>
       <div class="remember-row">
         <div class="toggle-sw on" id="rememberToggle2" onclick="this.classList.toggle('on')"></div>
         <span style="font-size:14px;font-weight:600">تذكرنى فى المرات القادمة</span>
@@ -3290,7 +3295,12 @@ window.onload = () => {
           }
         }).catch(()=>{});
       }
-      openScreen('app');
+      // 🔒 لا دخول تلقائي بعد الآن — اطلب كلمة السر دائماً حتى مع جلسة محفوظة
+      currentUser = null;
+      showScreen('auth');
+      switchAuthTab('login');
+      const _lp = document.getElementById('loginPhone');
+      if (_lp && saved && saved.phone) { _lp.value = saved.phone; previewLoginUser(saved.phone); }
     }
     else showScreen('auth');
   }, 2000);
@@ -3472,11 +3482,11 @@ async function previewLoginUser(phone) {
 
   const cleanPhone = phone.replace(/[^0-9]/g,'');
 
-  // لو الرقم ناقص — اخفي الـ preview بعد شوية
+  // لو الرقم ناقص — اخفي الـ preview وحقول كلمة السر
   if (!phone || cleanPhone.length < 10) {
     clearTimeout(_previewTimer);
     clearTimeout(_previewHideTimer);
-    _previewHideTimer = setTimeout(() => { preview.style.display = 'none'; }, 300);
+    _previewHideTimer = setTimeout(() => { preview.style.display = 'none'; _applyLoginPasswordUI(null); }, 300);
     return;
   }
 
@@ -3493,6 +3503,7 @@ async function previewLoginUser(phone) {
       clearTimeout(_previewHideTimer);
       nameEl.textContent = found.name;
       preview.style.display = 'block';
+      _applyLoginPasswordUI(found);
       return;
     }
 
@@ -3511,23 +3522,89 @@ async function previewLoginUser(phone) {
           clearTimeout(_previewHideTimer);
           nameEl.textContent = fbUser.name;
           preview.style.display = 'block';
+          _applyLoginPasswordUI(fbUser);
           const u2 = loadData('zz_users', []);
           const existI = u2.findIndex(u => (u.phone||'').replace(/[^0-9]/g,'') === cleanPhone);
           if (existI >= 0) u2[existI] = fbUser; else u2.push(fbUser);
           saveData('zz_users', u2);
         } else {
           preview.style.display = 'none';
+          _applyLoginPasswordUI(null);
         }
       } else {
         preview.style.display = 'none';
+        _applyLoginPasswordUI(null);
       }
     } catch(e) { preview.style.display = 'none'; }
   }, 450); // 450ms
+}
+// تحكم في إظهار حقل كلمة السر أو رسالة "محتاج كلمة سر" للعملاء القدامى
+function _applyLoginPasswordUI(user) {
+  const passField = document.getElementById('loginPassField');
+  const needMsg = document.getElementById('loginNeedPassMsg');
+  const forgotBtn = document.getElementById('forgotPassBtn');
+  const passInput = document.getElementById('loginPass');
+  if (user && _userHasPassword(user)) {
+    if (passField) passField.style.display = 'block';
+    if (passInput) { passInput.value = ''; passInput.setAttribute('readonly','readonly'); passInput.placeholder = 'أدخل كلمة السر'; }
+    if (needMsg) needMsg.style.display = 'none';
+    if (forgotBtn) forgotBtn.style.display = 'inline-block';
+  } else if (user) {
+    // عميل قديم بدون كلمة سر — اعرض الخانة ليكتب كلمة سر جديدة + رسالة توضيحية
+    if (passField) passField.style.display = 'block';
+    if (passInput) { passInput.value = ''; passInput.setAttribute('readonly','readonly'); passInput.placeholder = 'اختر كلمة سر جديدة (4 أحرف على الأقل)'; }
+    if (needMsg) { needMsg.style.display = 'block'; needMsg.innerHTML = '🔒 حسابك محتاج كلمة سر للأمان. اكتب كلمة سر جديدة في الخانة فوق واضغط <b>دخول</b> — هيوصلك رمز تأكيد على واتساب لتفعيلها.'; }
+    if (forgotBtn) forgotBtn.style.display = 'none';
+  } else {
+    if (passField) passField.style.display = 'none';
+    if (needMsg) needMsg.style.display = 'none';
+    if (forgotBtn) forgotBtn.style.display = 'none';
+  }
+}
+// نسيت كلمة السر — يكتب كلمة سر جديدة ويأكّدها عبر OTP على واتساب
+function doForgotPassword() {
+  const phone = (document.getElementById('loginPhone').value || '').trim();
+  const cleanPhone = phone.replace(/[^0-9]/g,'');
+  if (cleanPhone.length < 10) { showNotif('أدخل رقم هاتفك أولاً'); return; }
+  const pwInput = (document.getElementById('loginPass')?.value || '').trim();
+  if (!pwInput || pwInput.length < 4) { showNotif('🔒 اكتب كلمة السر الجديدة في الخانة (4 أحرف على الأقل) ثم اضغط "نسيت كلمة السر؟" مرة أخرى'); return; }
+  const startReset = (u) => {
+    const userWithPw = { ...u, password: _hashPw(pwInput), verified: false };
+    showNotif('📲 هيوصلك رمز تأكيد على واتساب لإعادة تعيين كلمة السر');
+    startOTP(u.whatsapp || u.phone, 'resetpassword', userWithPw);
+  };
+  const users = loadData('zz_users', []);
+  let u = users.find(x => (x.phone||'').replace(/[^0-9]/g,'') === cleanPhone);
+  if (u) { startReset(u); return; }
+  if (db) {
+    db.ref('users/' + cleanPhone).get().then(snap => {
+      if (snap.exists() && snap.val() && snap.val().name) startReset(snap.val());
+      else showNotif('لم يتم العثور على الحساب');
+    }).catch(() => showNotif('تعذّر الوصول — تأكد من الإنترنت'));
+  } else { showNotif('لم يتم العثور على الحساب'); }
 }
 // ===== OTP SYSTEM =====
 let _otpPending = null; // {code, user, isLogin, timer}
 
 function generateOTP() { return Math.floor(1000 + Math.random() * 9000).toString(); }
+
+// ============================================================
+// نظام كلمة سر العميل (إضافة أمان) — التشفير يمنع تخزين الكلمة كنص صريح
+// ============================================================
+function _hashPw(pw) {
+  let h1 = 0xdeadbeef, h2 = 0x41c6ce57;
+  const s = 'zamzam_salt_2026_' + String(pw);
+  for (let i = 0; i < s.length; i++) {
+    const ch = s.charCodeAt(i);
+    h1 = Math.imul(h1 ^ ch, 2654435761);
+    h2 = Math.imul(h2 ^ ch, 1597334677);
+  }
+  h1 = Math.imul(h1 ^ (h1 >>> 16), 2246822507) ^ Math.imul(h2 ^ (h2 >>> 13), 3266489909);
+  h2 = Math.imul(h2 ^ (h2 >>> 16), 2246822507) ^ Math.imul(h1 ^ (h1 >>> 13), 3266489909);
+  return 'zp_' + (4294967296 * (2097151 & h2) + (h1 >>> 0)).toString(16);
+}
+function _verifyPw(pw, hash) { return !!hash && _hashPw(pw) === hash; }
+function _userHasPassword(u) { return !!(u && typeof u.password === 'string' && u.password.startsWith('zp_')); }
 
 async function doLogin() {
   const phone = document.getElementById('loginPhone').value.trim();
@@ -3572,17 +3649,28 @@ async function doLogin() {
     return;
   }
 
-  if (isVerified && hasRealName) {
-    currentUser = { ...userData, verified: true };
-    // ALWAYS save session — keep user logged in
-    saveData('zamzam_user', currentUser);
-    const rememberEl = document.getElementById('rememberToggle');
-    if (rememberEl && !rememberEl.classList.contains('on')) {
-      const sm = loadData('zz_session_meta', {}); sm.temporary = true; saveData('zz_session_meta', sm);
+  // 🔒 حساب موجود باسم حقيقي → لازم كلمة سر (لا دخول مباشر بعد الآن)
+  if (hasRealName) {
+    const pwInput = (document.getElementById('loginPass')?.value || '').trim();
+    if (_userHasPassword(foundUser)) {
+      // الحساب عنده كلمة سر — تحقق منها
+      if (!pwInput) { showNotif('🔒 أدخل كلمة السر'); return; }
+      if (!_verifyPw(pwInput, foundUser.password)) { showNotif('❌ كلمة السر غير صحيحة'); return; }
+      currentUser = { ...foundUser, verified: true };
+      saveData('zamzam_user', currentUser);
+      const rememberEl = document.getElementById('rememberToggle');
+      const sm = loadData('zz_session_meta', {});
+      sm.temporary = !(rememberEl && rememberEl.classList.contains('on'));
+      saveData('zz_session_meta', sm);
+      openScreen('app'); getGPS(); return;
     } else {
-      const sm = loadData('zz_session_meta', {}); sm.temporary = false; saveData('zz_session_meta', sm);
+      // عميل قديم بدون كلمة سر — يعيّن واحدة عبر OTP (لا يُرفض أبداً)
+      if (!pwInput || pwInput.length < 4) { showNotif('🔒 اختر كلمة سر (4 أحرف على الأقل) لتأمين حسابك'); return; }
+      const userWithPw = { ...foundUser, password: _hashPw(pwInput), verified: false };
+      showNotif('📲 هيوصلك رمز تأكيد على واتساب لتعيين كلمة السر');
+      startOTP(foundUser.whatsapp || foundUser.phone, 'setpassword', userWithPw);
+      return;
     }
-    openScreen('app'); getGPS(); return;
   }
 
   // Step 5: Phone verified but name is missing/corrupted — force complete registration
@@ -3634,7 +3722,11 @@ async function doRegister() {
     return;
   }
   // If existing has corrupted/empty name — allow re-registration to fix it
-  const user = { name, phone, whatsapp: wa, address: addr, verified: false };
+  const pass = document.getElementById('regPass').value;
+  const pass2 = document.getElementById('regPass2').value;
+  if (!pass || pass.length < 4) { showNotif('🔒 اختر كلمة سر (4 أحرف على الأقل)'); return; }
+  if (pass !== pass2) { showNotif('🔒 كلمتا السر غير متطابقتين'); return; }
+  const user = { name, phone, whatsapp: wa, address: addr, password: _hashPw(pass), verified: false };
   startOTP(wa, 'register', user);
 }
 
@@ -3772,6 +3864,18 @@ function doClientLogout() {
   const tabs = document.getElementById('authTabs');
   if (tabs) tabs.style.display = 'flex';
   switchAuthTab('login');
+  // مسح كلمة السر فقط (نسيب الرقم عشان البرنامج يفتكر العميل) ومنع الـ autofill
+  const lp = document.getElementById('loginPhone');
+  const lpw = document.getElementById('loginPass');
+  if (lpw) { lpw.value = ''; lpw.setAttribute('readonly','readonly'); }
+  // لو الرقم لسه متعبّي — اعرض خانة كلمة السر فاضية جاهزة؛ غير كده اخفِ كل شيء
+  if (lp && lp.value && lp.value.replace(/[^0-9]/g,'').length >= 10) {
+    previewLoginUser(lp.value);
+  } else {
+    _applyLoginPasswordUI(null);
+    const prev = document.getElementById('loginUserPreview');
+    if (prev) prev.style.display = 'none';
+  }
 }
 
 // ============================================================
