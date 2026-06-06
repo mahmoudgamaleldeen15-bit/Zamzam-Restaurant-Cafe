@@ -605,6 +605,13 @@ input,select,textarea{font-family:inherit;}
 #prayerStaffBanner{display:none;position:fixed;top:0;left:0;right:0;z-index:9999;background:linear-gradient(90deg,#b71c1c,#e53935);color:#fff;text-align:center;padding:11px 14px;font-weight:800;font-size:14px;letter-spacing:.2px;box-shadow:0 3px 14px rgba(0,0,0,.35);animation:prayerBlink 1.4s ease-in-out infinite;cursor:default;}
 @keyframes prayerBlink{0%,100%{opacity:1}50%{opacity:.5}}
 
+/* ===== DELIVERY CONTROL — رسالة منع الدليفري (مستقل) ===== */
+.delivery-restrict-overlay{position:fixed;inset:0;background:rgba(0,0,0,.78);z-index:500;display:none;align-items:center;justify-content:center;padding:24px;}
+.delivery-restrict-overlay.show{display:flex;}
+.delivery-restrict-card{background:#fff;border-radius:22px;padding:32px 24px;text-align:center;max-width:360px;width:100%;box-shadow:0 18px 50px rgba(0,0,0,.45);}
+.delivery-ctrl-zone-chip{display:inline-flex;align-items:center;gap:6px;padding:8px 12px;border-radius:10px;border:1.5px solid var(--border);font-size:13px;font-weight:700;cursor:pointer;margin:3px;background:var(--white);user-select:none;}
+.delivery-ctrl-zone-chip.on{background:#7a1f1f;color:#fff;border-color:#7a1f1f;}
+
 /* Work Hours Block */
 .work-hours-block-overlay{position:fixed;inset:0;background:rgba(0,0,0,.78);z-index:500;display:none;align-items:center;justify-content:center;padding:24px;}
 .work-hours-block-overlay.show{display:flex;animation:popIn .3s ease;}
@@ -1603,6 +1610,17 @@ input,select,textarea{font-family:inherit;}
 <!-- بانر تذكير الكاشير/الأدمن إن وقت الصلاة مفعّل -->
 <div id="prayerStaffBanner">🕌 وقت الصلاة مفعّل — استقبال الطلبات متوقف حالياً ⛔</div>
 
+<!-- ===== DELIVERY CONTROL — رسالة منع الدليفري للعميل (مستقل) ===== -->
+<div class="delivery-restrict-overlay" id="deliveryRestrictOverlay">
+  <div class="delivery-restrict-card">
+    <div style="font-size:56px;margin-bottom:10px">🛵</div>
+    <div style="font-size:18px;font-weight:800;color:var(--dark);margin-bottom:10px">التوصيل غير متاح حالياً</div>
+    <div id="deliveryRestrictMsg" style="font-size:14.5px;color:var(--text-muted);line-height:2;margin-bottom:20px"></div>
+    <button class="btn-primary" onclick="switchToPickupFromRestrict()" style="margin-bottom:8px">🏪 إكمال الطلب كاستلام من المطعم</button>
+    <button class="btn-primary btn-secondary" onclick="document.getElementById('deliveryRestrictOverlay').classList.remove('show')">حسناً ✓</button>
+  </div>
+</div>
+
 <!-- ===== WORK HOURS BLOCKED OVERLAY ===== -->
 <div class="work-hours-block-overlay" id="workHoursBlockOverlay">
   <div class="work-hours-block-card">
@@ -1666,6 +1684,9 @@ input,select,textarea{font-family:inherit;}
     </div>
     <div style="padding:0 16px 12px">
       <button onclick="togglePrayerTime()" id="prayerTimeBtn" style="width:100%;padding:13px;background:#1b5e43;color:#fff;border:1.5px solid #d4af37;border-radius:12px;font-size:13px;font-weight:800">🕌 تفعيل وقت الصلاة — 🟢 الحالة: معطل</button>
+    </div>
+    <div style="padding:0 16px 12px">
+      <button onclick="toggleDeliveryManual()" id="deliveryCtrlBtn" style="width:100%;padding:13px;background:#5a3e1b;color:#fff;border:1.5px solid #e0a84e;border-radius:12px;font-size:13px;font-weight:800">🛵 إيقاف الدليفري للمناطق — 🟢 معطل</button>
     </div>
     <!-- Admin-only action buttons -->
     <div id="adminActionBtns" style="padding:0 16px 12px;display:none;gap:8px;flex-wrap:wrap">
@@ -2067,6 +2088,14 @@ input,select,textarea{font-family:inherit;}
             <input id="newZoneFee" type="number" placeholder="الرسوم" style="width:80px;padding:9px 10px;border:1.5px solid var(--border);border-radius:9px;font-size:13px;background:var(--white);outline:none;direction:ltr"/>
             <button onclick="addDeliveryZone()" style="padding:9px 14px;background:var(--olive);color:#fff;border-radius:9px;font-size:13px;font-weight:800">+ إضافة</button>
           </div>
+        </div>
+      </div>
+      <div style="padding:0 16px 8px;font-size:15px;font-weight:800;color:var(--dark)">🛵 التحكم في الدليفري <span style="font-size:11px;font-weight:600;color:var(--text-muted)">(منفصل عن Last Order)</span></div>
+      <div class="settings-section">
+        <div style="padding:12px 16px">
+          <div style="font-size:12px;color:var(--text-muted);margin-bottom:10px;line-height:1.6">إيقاف التوصيل لمناطق محددة في أوقات محددة. العميل يقدر يكمّل الطلب كاستلام من المطعم.</div>
+          <div id="deliveryCtrlSettingsBox"></div>
+          <button onclick="saveDeliveryCtrlFromUI()" style="width:100%;padding:12px;background:var(--olive);color:#fff;border-radius:10px;font-size:13px;font-weight:800;border:none;cursor:pointer;margin-top:10px">💾 حفظ إعدادات الدليفري</button>
         </div>
       </div>
       <div style="padding:0 16px 8px;font-size:15px;font-weight:800;color:var(--dark)">📞 أرقام التواصل</div>
@@ -3055,6 +3084,8 @@ function loadVIPAutoSettingsUI() {
   if (el) el.classList.toggle('on', !!VIP_AUTO_SETTINGS.enabled);
   const ol = document.getElementById('vipOrdersLimit');
   if (ol) ol.value = VIP_AUTO_SETTINGS.ordersLimit || 5;
+  const moa = document.getElementById('vipMinOrderAmount');
+  if (moa) moa.value = VIP_AUTO_SETTINGS.minOrderAmount || 0;
   const al = document.getElementById('vipAmountLimit');
   if (al) al.value = VIP_AUTO_SETTINGS.amountLimit || 10000;
   const dd = document.getElementById('vipDefaultDiscount');
@@ -3069,6 +3100,10 @@ function loadVIPAutoSettingsUI() {
   if (wo) wo.value = VIP_AUTO_SETTINGS.withdrawOrders || 3;
   const aw = document.getElementById('vipAutoWithdraw');
   if (aw) aw.classList.toggle('on', !!VIP_AUTO_SETTINGS.autoWithdraw);
+  const aim = document.getElementById('vipAmountInactivityMonths');
+  if (aim) aim.value = VIP_AUTO_SETTINGS.amountInactivityMonths || 12;
+  const awm = document.getElementById('vipAmountWarningMonths');
+  if (awm) awm.value = VIP_AUTO_SETTINGS.amountWarningMonths || 6;
   renderVIPBenefitsAdmin();
   renderVIPMsgTemplates();
 }
@@ -4339,6 +4374,11 @@ function placeOrder() {
     showWorkHoursBlock(closedGroups[0]);
     return;
   }
+  // ===== فحص التحكم في الدليفري — منطقة مقيّدة في وقت مقيّد (إضافة مستقلة) =====
+  if (deliveryType === 'delivery' && selectedDeliveryZone && isZoneDeliveryBlocked(selectedDeliveryZone.id)) {
+    showDeliveryRestrictBlock(selectedDeliveryZone);
+    return;
+  }
   // ===== فحص شروط الديليفري =====
   if (deliveryType === 'delivery') {
     // 1) منطقة التوصيل — إجباري
@@ -4737,6 +4777,7 @@ function doAdminLogin() {
   initVIPAutoCheck();
   openScreen('adminPanel');
   updatePrayerReminder();
+  updateDeliveryCtrlBtnUI();
 }
 function doLogout() {
   adminRoleType = null;
@@ -4832,7 +4873,7 @@ function switchAdminTab(tab, el) {
   if (tab === 'menu') { renderMenuManage(); renderCatSelects(); }
   if (tab === 'addons') { renderAddonsAdmin(); renderSpicyCatToggles(); }
   if (tab === 'offers') renderOffersAdmin();
-  if (tab === 'settings') { loadSettingsUI(); _updatePushStatusUI(); _updateAutoBackupUI(); _initUpsellToggle(); loadLoyaltySettingsUI(); }
+  if (tab === 'settings') { loadSettingsUI(); _updatePushStatusUI(); _updateAutoBackupUI(); _initUpsellToggle(); loadLoyaltySettingsUI(); renderDeliveryCtrlSettings(); }
   if (tab === 'ads') renderAdsAdmin();
   if (tab === 'agents') { renderAgentsAdmin(); renderAgentReports(); startAdminAgentsTracking(); }
   if (tab === 'block') { renderBlockedUsers(); }
@@ -5350,6 +5391,146 @@ function updatePrayerReminder() {
     if (banner) banner.style.display = 'none';
     if (_prayerBeepInterval) { clearInterval(_prayerBeepInterval); _prayerBeepInterval = null; }
   }
+}
+
+// ============================================================
+// DELIVERY CONTROL — التحكم في الدليفري (إضافة مستقلة تماماً)
+// ============================================================
+// منطق الوقت: هل الوقت الحالي ضمن فترة إتاحة الدليفري [from, to]؟
+function isDeliveryWithinHours() {
+  const dc = DELIVERY_CTRL;
+  if (!dc.from || !dc.to) return true;
+  const now = new Date();
+  const nowMins = now.getHours() * 60 + now.getMinutes();
+  const fp = dc.from.split(':').map(Number);
+  const tp = dc.to.split(':').map(Number);
+  const fromMins = fp[0] * 60 + (fp[1] || 0);
+  let toMins = tp[0] * 60 + (tp[1] || 0);
+  if (toMins < fromMins) { return nowMins >= fromMins || nowMins < toMins; } // يعدّي منتصف الليل
+  return nowMins >= fromMins && nowMins < toMins;
+}
+// هل القيد مفعّل الآن (بغض النظر عن المنطقة)؟
+function isDeliveryRestrictActiveNow() {
+  const dc = DELIVERY_CTRL;
+  if (!dc || dc.mode === 'off') return false;
+  if (dc.mode === 'manual') return dc.manualActive === true;
+  if (dc.mode === 'auto') return !isDeliveryWithinHours(); // خارج الفترة = مقيّد
+  return false;
+}
+// هل هذه المنطقة ممنوعة من الدليفري الآن؟
+function isZoneDeliveryBlocked(zoneId) {
+  const dc = DELIVERY_CTRL;
+  if (!dc || dc.mode === 'off') return false;
+  if (!dc.zones || !dc.zones.includes(zoneId)) return false; // المنطقة غير مقيّدة
+  return isDeliveryRestrictActiveNow();
+}
+// رسالة المنع للعميل
+function showDeliveryRestrictBlock(zone) {
+  const dc = DELIVERY_CTRL;
+  const msgEl = document.getElementById('deliveryRestrictMsg');
+  if (msgEl) {
+    let timeTxt = (dc.mode === 'auto') ? ` بعد الساعة <b>${dc.to}</b>` : '';
+    msgEl.innerHTML = `نعتذر، التوصيل إلى منطقة <b>${zone ? zone.name : ''}</b> غير متاح${timeTxt} حالياً 🙏<br/><br/>تقدر تكمّل طلبك وتستلمه من المطعم 🏪`;
+  }
+  const ov = document.getElementById('deliveryRestrictOverlay');
+  if (ov) ov.classList.add('show');
+}
+// تحويل العميل لاستلام من داخل الرسالة
+function switchToPickupFromRestrict() {
+  const pickupOpt = document.querySelector('.d-opt[onclick*="pickup"]');
+  if (pickupOpt) { selectDelivery('pickup', pickupOpt); }
+  else { deliveryType = 'pickup'; updateCartUI && updateCartUI(); }
+  const ov = document.getElementById('deliveryRestrictOverlay');
+  if (ov) ov.classList.remove('show');
+  showNotif('🏪 تم التحويل إلى استلام من المطعم — تقدر تكمّل طلبك');
+}
+// زرار التحكم السريع (الوضع اليدوي) — للأدمن/الكاشير
+function toggleDeliveryManual() {
+  // الزرار السريع يشتغل في الوضع اليدوي. لو مش يدوي، نحوّله ليدوي ونفعّله.
+  if (DELIVERY_CTRL.mode !== 'manual') {
+    DELIVERY_CTRL.mode = 'manual';
+    DELIVERY_CTRL.manualActive = true;
+  } else {
+    DELIVERY_CTRL.manualActive = !DELIVERY_CTRL.manualActive;
+  }
+  if (DELIVERY_CTRL.manualActive && (!DELIVERY_CTRL.zones || !DELIVERY_CTRL.zones.length)) {
+    showNotif('⚠️ نبّه: لم تحدد أي منطقة مقيّدة بعد — افتح الإعدادات لتحديد المناطق');
+  }
+  saveDeliveryCtrl();
+  updateDeliveryCtrlBtnUI();
+  showNotif(DELIVERY_CTRL.manualActive ? '🛵 تم إيقاف الدليفري للمناطق المحددة' : '✓ تم استئناف الدليفري');
+}
+// تحديث شكل زرار التحكم السريع
+function updateDeliveryCtrlBtnUI() {
+  const btn = document.getElementById('deliveryCtrlBtn');
+  if (!btn) return;
+  const active = isDeliveryRestrictActiveNow();
+  if (active) { btn.innerHTML = '🛵 استئناف الدليفري — 🔴 مفعّل'; btn.style.background = '#7a1f1f'; }
+  else { btn.innerHTML = '🛵 إيقاف الدليفري للمناطق — 🟢 معطل'; btn.style.background = '#5a3e1b'; }
+}
+// رسم إعدادات الدليفري في لوحة الأدمن (المناطق ديناميكية من SETTINGS.deliveryZones)
+function renderDeliveryCtrlSettings() {
+  const box = document.getElementById('deliveryCtrlSettingsBox');
+  if (!box) return;
+  const dc = DELIVERY_CTRL;
+  const zones = (SETTINGS.deliveryZones || []);
+  const modeBtn = (val, label) => `<button onclick="setDeliveryCtrlMode('${val}')" style="flex:1;min-width:90px;padding:9px;border-radius:9px;font-size:12.5px;font-weight:800;cursor:pointer;border:1.5px solid var(--border);${dc.mode===val?'background:var(--olive);color:#fff;border-color:var(--olive)':'background:var(--white);color:var(--dark)'}">${label}</button>`;
+  let html = `
+    <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px">
+      ${modeBtn('off','⛔ معطل')}${modeBtn('auto','🕐 تلقائي')}${modeBtn('manual','✋ يدوي')}
+    </div>`;
+  if (dc.mode === 'auto') {
+    html += `
+    <div style="display:flex;gap:10px;align-items:center;margin-bottom:12px;background:var(--olive-pale);padding:10px 12px;border-radius:10px">
+      <span style="font-size:12.5px;font-weight:700;color:var(--olive-dark)">الدليفري متاح من</span>
+      <input id="dcFrom" type="time" value="${dc.from}" style="padding:7px 9px;border:1.5px solid var(--border);border-radius:8px;font-size:13px;background:var(--white);direction:ltr"/>
+      <span style="font-size:12.5px;font-weight:700;color:var(--olive-dark)">إلى</span>
+      <input id="dcTo" type="time" value="${dc.to}" style="padding:7px 9px;border:1.5px solid var(--border);border-radius:8px;font-size:13px;background:var(--white);direction:ltr"/>
+    </div>
+    <div style="font-size:11.5px;color:var(--text-muted);margin-bottom:10px">خارج هذه الفترة يُمنع الدليفري للمناطق المحددة أدناه فقط.</div>`;
+  } else if (dc.mode === 'manual') {
+    html += `<div style="background:var(--olive-pale);padding:10px 12px;border-radius:10px;margin-bottom:12px;font-size:12.5px;font-weight:700;color:var(--olive-dark)">الوضع اليدوي: ${dc.manualActive ? '🔴 الدليفري متوقف الآن للمناطق المحددة' : '🟢 الدليفري شغّال'} — تتحكم به من الزرار السريع أو من هنا.</div>`;
+  }
+  if (dc.mode !== 'off') {
+    html += `<div style="font-size:12.5px;font-weight:800;color:var(--dark);margin-bottom:8px">المناطق المقيّدة (اضغط للتحديد):</div>`;
+    if (!zones.length) {
+      html += `<div style="font-size:12px;color:var(--text-muted)">لا توجد مناطق في النظام بعد. أضف مناطق من "مناطق التوصيل" أعلاه.</div>`;
+    } else {
+      html += `<div style="display:flex;flex-wrap:wrap">` + zones.map(z =>
+        `<span class="delivery-ctrl-zone-chip ${ (dc.zones||[]).includes(z.id) ? 'on' : '' }" onclick="toggleDeliveryCtrlZone('${z.id}')">${ (dc.zones||[]).includes(z.id) ? '🚫' : '📍' } ${z.name}</span>`
+      ).join('') + `</div>`;
+    }
+  }
+  box.innerHTML = html;
+}
+function setDeliveryCtrlMode(mode) {
+  // اقرأ الأوقات الحالية من الحقول قبل إعادة الرسم (لو موجودة)
+  _readDeliveryCtrlTimesFromUI();
+  DELIVERY_CTRL.mode = mode;
+  if (mode === 'manual' && DELIVERY_CTRL.manualActive === undefined) DELIVERY_CTRL.manualActive = false;
+  renderDeliveryCtrlSettings();
+}
+function toggleDeliveryCtrlZone(zoneId) {
+  _readDeliveryCtrlTimesFromUI();
+  if (!Array.isArray(DELIVERY_CTRL.zones)) DELIVERY_CTRL.zones = [];
+  const i = DELIVERY_CTRL.zones.indexOf(zoneId);
+  if (i >= 0) DELIVERY_CTRL.zones.splice(i, 1); else DELIVERY_CTRL.zones.push(zoneId);
+  renderDeliveryCtrlSettings();
+}
+function _readDeliveryCtrlTimesFromUI() {
+  const f = document.getElementById('dcFrom'), t = document.getElementById('dcTo');
+  if (f && f.value) DELIVERY_CTRL.from = f.value;
+  if (t && t.value) DELIVERY_CTRL.to = t.value;
+}
+function saveDeliveryCtrlFromUI() {
+  _readDeliveryCtrlTimesFromUI();
+  saveDeliveryCtrl();
+  updateDeliveryCtrlBtnUI();
+  showNotif('💾 تم حفظ إعدادات الدليفري');
+}
+function saveDeliveryCtrl() {
+  saveData('zz_delivery_ctrl', DELIVERY_CTRL);
+  fbSetDeliveryCtrl(DELIVERY_CTRL);
 }
 
 // ============================================================
@@ -8862,6 +9043,26 @@ function setupFirebaseListeners() {
     }
   });
 
+  // --------- DELIVERY CONTROL from Firebase — مزامنة مستقلة ---------
+  db.ref('config/deliveryCtrl').on('value', snap => {
+    if (snap.exists()) {
+      const obj = snap.val();
+      if (obj) {
+        DELIVERY_CTRL = {
+          mode: obj.mode || 'off',
+          from: obj.from || '12:00',
+          to: obj.to || '22:00',
+          manualActive: obj.manualActive === true,
+          zones: Array.isArray(obj.zones) ? obj.zones : []
+        };
+        saveData('zz_delivery_ctrl', DELIVERY_CTRL);
+        updateDeliveryCtrlBtnUI();
+        const sBox = document.getElementById('deliveryCtrlSettingsBox');
+        if (sBox && sBox.offsetParent !== null) renderDeliveryCtrlSettings();
+      }
+    }
+  });
+
   // --------- VIP AUTO SETTINGS from Firebase ---------
   db.ref('config/vipAutoSettings').on('value', snap => {
     if (snap.exists()) {
@@ -8985,6 +9186,7 @@ async function fbSaveSpicySettings() { await fbSet('spicy_settings', SPICY_SETTI
 async function fbSaveOffers() { await fbSet('offers', OFFERS); }
 async function fbSetLastOrder(val) { await fbUpdate('config', { lastOrderActive: val }); }
 async function fbSetPrayerTime(val) { await fbUpdate('config', { prayerTimeActive: val }); }
+async function fbSetDeliveryCtrl(obj) { await fbUpdate('config', { deliveryCtrl: obj }); }
 
 // ============================================================
 // ADS SYSTEM
@@ -11080,6 +11282,18 @@ let WORK_HOURS = loadData('zz_work_hours', {
   ice_cream:      { enabled: false, from: '10:00', to: '23:00', label: '🍦 آيس كريم' },
   bakery:         { enabled: false, from: '08:00', to: '22:00', label: '🥐 مخبوزات' },
   drinks:         { enabled: false, from: '09:00', to: '02:00', label: '🥤 مشروبات' }
+});
+
+// ============================================================
+// DELIVERY CONTROL — التحكم في الدليفري (إضافة مستقلة تماماً)
+// منفصل عن Last Order — يوقف الدليفري لمناطق محددة في أوقات محددة فقط
+// ============================================================
+let DELIVERY_CTRL = loadData('zz_delivery_ctrl', {
+  mode: 'off',          // 'off' = معطل | 'auto' = تلقائي بالوقت | 'manual' = يدوي
+  from: '12:00',        // الوضع التلقائي: بداية إتاحة الدليفري للمناطق المقيّدة
+  to: '22:00',          // نهاية إتاحة الدليفري — بعدها يُمنع
+  manualActive: false,  // الوضع اليدوي: true = القيد مفعّل الآن
+  zones: []             // ids المناطق المقيّدة (من SETTINGS.deliveryZones)
 });
 
 // ============================================================
