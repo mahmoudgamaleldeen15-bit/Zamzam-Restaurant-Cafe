@@ -6912,11 +6912,18 @@ function blockUser(phone, name) {
 
 function unblockUser(phone) {
   const cleanPhone = (phone||'').replace(/[^0-9]/g,'');
-  delete BLOCKED_USERS[cleanPhone];
+  // امسح كل الصيغ المحتملة من الذاكرة و Firebase (01… / 201… / الصيغة الأصلية)
+  const keys = new Set([phone, cleanPhone]);
+  if (cleanPhone.startsWith('0')) keys.add('2' + cleanPhone.slice(1));
+  if (cleanPhone.startsWith('2')) keys.add('0' + cleanPhone.slice(1));
+  keys.forEach(k => {
+    if (!k) return;
+    delete BLOCKED_USERS[k];
+    if (db) db.ref('blocked_users/' + k).remove().catch(()=>{});
+  });
   saveData('zz_blocked_users', BLOCKED_USERS);
-  if (db) db.ref('blocked_users/' + cleanPhone).remove().catch(()=>{});
   showNotif('✅ تم رفع الحظر عن ' + cleanPhone);
-  renderCustomersReport();
+  renderBlockedUsers();
 }
 
 function blockByPhone() {
@@ -9136,6 +9143,9 @@ function setupFirebaseListeners() {
     } else {
       BLOCKED_USERS = {};
     }
+    // حدّث قائمة المحظورين لو كانت معروضة (عشان تتزامن من أي جهاز)
+    const _blkList = document.getElementById('blockedUsersList');
+    if (_blkList && _blkList.offsetParent !== null) renderBlockedUsers();
   });
 
   // --------- APP RATINGS ---------
