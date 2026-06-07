@@ -1637,28 +1637,6 @@ input,select,textarea{font-family:inherit;}
   </div>
 </div>
 
-<!-- ===== إعادة تعيين كلمة السر (نسيت كلمة السر) ===== -->
-<div class="delivery-restrict-overlay" id="forgotPassOverlay">
-  <div class="delivery-restrict-card" style="border-top:5px solid var(--olive)">
-    <div style="font-size:48px;margin-bottom:8px">🔑</div>
-    <div style="font-size:17px;font-weight:800;color:var(--dark);margin-bottom:6px">إعادة تعيين كلمة السر</div>
-    <div style="font-size:13px;color:var(--text-muted);line-height:1.8;margin-bottom:16px">اكتب كلمة سر جديدة، وهيوصلك رمز تأكيد على واتساب لتفعيلها.</div>
-    <input type="password" id="forgotNewPass" placeholder="كلمة السر الجديدة (4 أحرف على الأقل)" autocomplete="new-password" style="width:100%;padding:12px 14px;border:1.5px solid var(--border);border-radius:12px;font-size:14px;margin-bottom:14px;font-family:'Cairo',sans-serif;box-sizing:border-box" onkeydown="if(event.key==='Enter')submitForgotPassword()"/>
-    <button class="btn-primary" onclick="submitForgotPassword()" style="margin-bottom:8px">📲 إرسال رمز التأكيد على واتساب</button>
-    <button class="btn-primary btn-secondary" onclick="document.getElementById('forgotPassOverlay').classList.remove('show')">إلغاء</button>
-  </div>
-</div>
-
-<!-- ===== رسالة حظر العميل (تظهر للمستخدم المحظور) ===== -->
-<div class="delivery-restrict-overlay" id="blockedUserOverlay">
-  <div class="delivery-restrict-card" style="border-top:5px solid #dc2626">
-    <div style="font-size:56px;margin-bottom:10px">🚫</div>
-    <div style="font-size:18px;font-weight:800;color:#dc2626;margin-bottom:10px">تم تقييد الوصول</div>
-    <div id="blockedUserMsg" style="font-size:14px;color:var(--text-muted);line-height:1.9;margin-bottom:20px">هذا الحساب غير مسموح له بالدخول حالياً.</div>
-    <button class="btn-primary" onclick="document.getElementById('blockedUserOverlay').classList.remove('show'); showScreen('auth');">حسناً</button>
-  </div>
-</div>
-
 <!-- ===== WORK HOURS BLOCKED OVERLAY ===== -->
 <div class="work-hours-block-overlay" id="workHoursBlockOverlay">
   <div class="work-hours-block-card">
@@ -3285,7 +3263,6 @@ window.onload = () => {
                 if (ord && ord.status !== 'delivered' && ord.status !== 'cancelled') {
                   currentOrderNum = fbOrderNum;
                   saveData('zz_current_order_num', fbOrderNum);
-                  _startCustomerOrderTracking(fbOrderNum);
                 } else {
                   // الطلب خلص — امسح الـ session
                   currentOrderNum = null;
@@ -3589,20 +3566,8 @@ function doForgotPassword() {
   const phone = (document.getElementById('loginPhone').value || '').trim();
   const cleanPhone = phone.replace(/[^0-9]/g,'');
   if (cleanPhone.length < 10) { showNotif('أدخل رقم هاتفك أولاً'); return; }
-  const np = document.getElementById('forgotNewPass');
-  if (np) np.value = '';
-  const ov = document.getElementById('forgotPassOverlay');
-  if (ov) ov.classList.add('show');
-}
-// تأكيد كلمة السر الجديدة عبر OTP
-function submitForgotPassword() {
-  const phone = (document.getElementById('loginPhone').value || '').trim();
-  const cleanPhone = phone.replace(/[^0-9]/g,'');
-  if (cleanPhone.length < 10) { showNotif('أدخل رقم هاتفك أولاً'); return; }
-  const pwInput = (document.getElementById('forgotNewPass')?.value || '').trim();
-  if (!pwInput || pwInput.length < 4) { showNotif('🔒 اكتب كلمة سر جديدة (4 أحرف على الأقل)'); return; }
-  const ov = document.getElementById('forgotPassOverlay');
-  if (ov) ov.classList.remove('show');
+  const pwInput = (document.getElementById('loginPass')?.value || '').trim();
+  if (!pwInput || pwInput.length < 4) { showNotif('🔒 اكتب كلمة السر الجديدة في الخانة (4 أحرف على الأقل) ثم اضغط "نسيت كلمة السر؟" مرة أخرى'); return; }
   const startReset = (u) => {
     const userWithPw = { ...u, password: _hashPw(pwInput), verified: false };
     showNotif('📲 هيوصلك رمز تأكيد على واتساب لإعادة تعيين كلمة السر');
@@ -3614,9 +3579,9 @@ function submitForgotPassword() {
   if (db) {
     db.ref('users/' + cleanPhone).get().then(snap => {
       if (snap.exists() && snap.val() && snap.val().name) startReset(snap.val());
-      else showNotif('لم يتم العثور على الحساب بهذا الرقم');
+      else showNotif('لم يتم العثور على الحساب');
     }).catch(() => showNotif('تعذّر الوصول — تأكد من الإنترنت'));
-  } else { showNotif('لم يتم العثور على الحساب بهذا الرقم'); }
+  } else { showNotif('لم يتم العثور على الحساب'); }
 }
 // ===== OTP SYSTEM =====
 let _otpPending = null; // {code, user, isLogin, timer}
@@ -3808,11 +3773,12 @@ function verifyOTP() {
     currentUser = null;
     _otpPending = null;
     showScreen('auth');
-    const bm = document.getElementById('blockedUserMsg');
-    if (bm) bm.innerHTML = 'هذا الحساب غير مسموح له بالدخول حالياً.' + (_isBlocked.reason ? `<br/><span style="font-size:12px;opacity:.7">السبب: ${_isBlocked.reason}</span>` : '');
-    const bov = document.getElementById('blockedUserOverlay');
-    if (bov) bov.classList.add('show');
-    showNotif('🚫 تم تقييد وصول هذا الحساب');
+    document.getElementById('authScreen').innerHTML = `<div style="text-align:center;padding:48px 24px;color:#fff">
+      <div style="font-size:64px;margin-bottom:16px">🚫</div>
+      <div style="font-size:20px;font-weight:900;margin-bottom:8px">تم تقييد الوصول</div>
+      <div style="font-size:14px;opacity:.7;margin-bottom:8px">هذا الحساب غير مسموح له بالدخول</div>
+      ${_isBlocked.reason ? `<div style="font-size:12px;opacity:.5">${_isBlocked.reason}</div>` : ''}
+    </div>`;
     return;
   }
   const savedVerified = loadData('zz_verified_phones', {});
@@ -4699,7 +4665,6 @@ ${totalDisc > 0 ? `🏷️ الخصم: - ${totalDisc} ج.م\n` : ''}${deliveryFe
   saveData('zz_current_cart', []);
   updateCartUI(); renderCartSheet(); closeSheet('cartSheet', null);
   openScreen('tracking');
-  _startCustomerOrderTracking(currentOrderNum);
   // Smart order review — allow 90 seconds to cancel
   setTimeout(() => openOrderReview(newOrder), 400);
 }
@@ -4718,39 +4683,6 @@ function resetTracking() {
   document.getElementById('delayMsgBox').style.display = 'none';
 }
 
-// تتبع لحظي لطلب العميل الحالي فقط (خفيف — طلب واحد، بدل تحميل كل الطلبات)
-let _custOrderListenerRef = null, _custOrderListenerNum = null;
-function _startCustomerOrderTracking(orderNum) {
-  if (!db || !orderNum) return;
-  if (adminRoleType === 'admin' || adminRoleType === 'cashier') return; // الأدمن/الكاشير عندهم listener عام
-  if (_custOrderListenerNum === orderNum && _custOrderListenerRef) return; // نفس الطلب — تجنّب التكرار
-  if (_custOrderListenerRef && _custOrderListenerNum) {
-    try { db.ref('orders/' + _custOrderListenerNum).off('value', _custOrderListenerRef); } catch(e){}
-  }
-  _custOrderListenerNum = orderNum;
-  _custOrderListenerRef = db.ref('orders/' + orderNum).on('value', snap => {
-    if (!snap.exists()) return;
-    const o = snap.val();
-    if (!o) return;
-    const idx = ordersData.findIndex(x => x.id === o.id);
-    if (idx >= 0) ordersData[idx] = o; else ordersData.unshift(o);
-    saveData('zz_orders', ordersData);
-    const tnEl = document.getElementById('trackOrderNum');
-    if (tnEl) tnEl.textContent = 'طلب رقم #' + o.id;
-    if (document.getElementById('tracking')?.classList.contains('active')) {
-      updateTrackingStatus(o.status, o.outAt);
-    }
-    if (o.status === 'cancelled' && _pendingOrderForReview?.id === orderNum) {
-      closeOrderReview();
-    }
-  });
-}
-function _stopCustomerOrderTracking() {
-  if (_custOrderListenerRef && _custOrderListenerNum) {
-    try { db.ref('orders/' + _custOrderListenerNum).off('value', _custOrderListenerRef); } catch(e){}
-  }
-  _custOrderListenerRef = null; _custOrderListenerNum = null;
-}
 function updateTrackingStatus(status, outAt) {
   // إشعار Push للعميل لما تتغير حالة طلبه
   const clientPushMsgs = {
@@ -4967,11 +4899,6 @@ function doAdminLogin() {
     return;
   }
   adminRoleType = role;
-  // تسجيل listener الطلبات للأدمن/الكاشير (لو دخل بعد تحميل الصفحة) — مع حماية من التكرار
-  if (db && window._ordersHandler && (role === 'admin' || role === 'cashier') && !window._ordersHandlerOn) {
-    window._ordersHandlerOn = true;
-    db.ref('orders').on('value', window._ordersHandler);
-  }
   document.getElementById('adminRoleLabel').textContent = role === 'admin' ? '🔑 مدير النظام' : '💳 كاشير';
   // طلب إذن Desktop Notifications
   requestNotifPermission();
@@ -8935,8 +8862,8 @@ async function fbPush(path, data) {
 function setupFirebaseListeners() {
   if (!db) return;
 
-  // --------- ORDERS: للأدمن/الكاشير فقط (توفير استهلاك — العميل يتابع طلبه باستعلام منفصل) ---------
-  window._ordersHandler = function(snap) {
+  // --------- ORDERS: كاشير يشوف الطلبات فوراً ---------
+  db.ref('orders').on('value', snap => {
     const fbOrders = [];
     snap.forEach(child => { fbOrders.push(child.val()); });
     if (fbOrders.length > 0 || fbConnected) {
@@ -9035,8 +8962,7 @@ function setupFirebaseListeners() {
         }
       }
     }
-  };
-  if ((adminRoleType === 'admin' || adminRoleType === 'cashier') && !window._ordersHandlerOn) { window._ordersHandlerOn = true; db.ref('orders').on('value', window._ordersHandler); }
+  });
 
   // --------- BOOKINGS ---------
   db.ref('bookings').on('value', snap => {
