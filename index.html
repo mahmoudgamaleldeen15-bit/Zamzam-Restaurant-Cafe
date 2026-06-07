@@ -1764,6 +1764,7 @@ input,select,textarea{font-family:inherit;}
         </select>
         <button onclick="renderAdminOrders()" style="padding:8px 14px;background:var(--olive);color:#fff;border-radius:10px;font-size:13px;font-weight:700">↻</button>
         <button onclick="clearOldOrders()" style="padding:8px 12px;background:var(--cream);color:var(--text-muted);border-radius:10px;font-size:12px;font-weight:700" title="حذف الطلبات القديمة">🗑️</button>
+        <button onclick="cleanCorruptedOrders()" style="padding:8px 12px;background:#fff4e6;color:#b45309;border-radius:10px;font-size:12px;font-weight:700" title="حذف الطلبات التالفة (الفاضية بدون بيانات)">🧹</button>
       </div>
       <div class="orders-wrap">
         <div id="adminOrdersBody"></div>
@@ -3327,7 +3328,7 @@ window.onload = () => {
         db.ref('orders').orderByChild('phone').equalTo(saved.phone).limitToLast(30).get().then(snap => {
           if (snap.exists()) {
             const fbOrders = [];
-            snap.forEach(child => { const v = child.val(); if (v) fbOrders.push(v); });
+            snap.forEach(child => { const v = child.val(); if (v && v.id) fbOrders.push(v); });
             if (fbOrders.length > 0) {
               fbOrders.sort((a,b) => (b.timestamp||0) - (a.timestamp||0));
               // دمج مع الـ local history
@@ -5451,6 +5452,27 @@ function clearOldOrders() {
   toDelete.forEach(o => fbRemove('orders/' + o.id));
   renderAdminOrders();
   showNotif('✓ تم حذف الطلبات القديمة');
+}
+
+// حذف الطلبات التالفة (بدون id صحيح) — يحذف من Firebase بالمفتاح الفعلي
+function cleanCorruptedOrders() {
+  if (!db) { showNotif('⚠️ مفيش اتصال بالإنترنت'); return; }
+  if (!confirm('🧹 حذف الطلبات التالفة (الفاضية / بدون بيانات)؟\n\nهيتم حذف الطلبات اللي مالهاش رقم صحيح فقط — الطلبات الحقيقية مش هتتأثر.')) return;
+  db.ref('orders').get().then(snap => {
+    const updates = {};
+    let removed = 0;
+    snap.forEach(child => {
+      const o = child.val();
+      if (!o || !o.id) { updates[child.key] = null; removed++; }
+    });
+    if (removed === 0) { showNotif('✓ مفيش طلبات تالفة'); return; }
+    db.ref('orders').update(updates).then(() => {
+      ordersData = ordersData.filter(o => o && o.id);
+      saveData('zz_orders', ordersData);
+      renderAdminOrders();
+      showNotif('✓ تم حذف ' + removed + ' طلب تالف');
+    }).catch(() => showNotif('⚠️ تعذّر الحذف — حاول تاني'));
+  }).catch(() => showNotif('⚠️ تعذّر الوصول للبيانات'));
 }
 
 function deleteOrderAdmin(orderId) {
@@ -8978,7 +9000,7 @@ function setupFirebaseListeners() {
   // --------- ORDERS: للأدمن/الكاشير فقط (توفير استهلاك — العميل يتابع طلبه بـ listener منفصل) ---------
   window._ordersHandler = function(snap) {
     const fbOrders = [];
-    snap.forEach(child => { fbOrders.push(child.val()); });
+    snap.forEach(child => { const v = child.val(); if (v && v.id) fbOrders.push(v); });
     if (fbOrders.length > 0 || fbConnected) {
       fbOrders.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
       const oldCount = ordersData.length;
@@ -9432,6 +9454,7 @@ function setupFirebaseListeners() {
 }
 
 async function fbSaveOrder(order) { 
+  if (!order || !order.id) { console.warn('تم تجاهل حفظ طلب بدون رقم صحيح'); return; }
   const enriched = { ...order, createdAt: new Date().toISOString() };
   await fbSet('orders/' + order.id, enriched); 
 }
@@ -9924,7 +9947,7 @@ function _startAgentOrdersListener(agentId) {
       return;
     }
     const allOrders = [];
-    snap.forEach(child => { if (child.val()) allOrders.push(child.val()); });
+    snap.forEach(child => { const v = child.val(); if (v && v.id) allOrders.push(v); });
     ordersData = allOrders;
     saveData('zz_orders', ordersData);
     if (document.getElementById('agentScreen')?.classList.contains('active')) {
@@ -12332,12 +12355,29 @@ function _fullRebuildAfterImport() {
 <!-- Firebase SDK في آخر الـ body عشان يتحمل صح -->
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-messaging-compat.js"></script>
 <script>
-  // بعد ما SDK اتحمل — نهيئ Firebase ونبدأ listeners
+  // بعد ما SDK اتحمل — نهيئ Firebase ونبدأ listeners بعد تسجيل الدخول المجهول (للأمان)
   if (typeof firebase !== 'undefined') {
     initFirebase();
-    setupFirebaseListeners();
+    function _startFbListenersOnce() {
+      if (window._fbListenersStarted) return;
+      window._fbListenersStarted = true;
+      setupFirebaseListeners();
+    }
+    if (firebase.auth) {
+      // تسجيل دخول مجهول تلقائي — العميل لا يحس به، لكنه يمنع الوصول من خارج التطبيق
+      firebase.auth().signInAnonymously().catch(e => {
+        console.warn('Anonymous auth:', e);
+        _startFbListenersOnce(); // fallback: لو Auth غير مفعّل بعد — لا توقف النظام
+      });
+      firebase.auth().onAuthStateChanged(user => { if (user) _startFbListenersOnce(); });
+      // شبكة أمان: لو لم يجهز الدخول خلال 3 ثوانٍ — ابدأ على أي حال
+      setTimeout(_startFbListenersOnce, 3000);
+    } else {
+      _startFbListenersOnce();
+    }
   }
 </script>
 
