@@ -3182,6 +3182,7 @@ function _goToAppOrTracking() {
         const ttEl = document.getElementById('trackOrderTime');
         if (ttEl && ord.time) ttEl.textContent = ord.time;
         if (typeof updateTrackingStatus === 'function') updateTrackingStatus(ord.status, ord.outAt);
+        _startCustomerOrderTracking(_on);
       }
     }).catch(()=>{});
   }
@@ -3307,6 +3308,7 @@ window.onload = () => {
                 if (ord && ord.status !== 'delivered' && ord.status !== 'cancelled') {
                   currentOrderNum = fbOrderNum;
                   saveData('zz_current_order_num', fbOrderNum);
+                  _startCustomerOrderTracking(fbOrderNum);
                 } else {
                   // الطلب خلص — امسح الـ session
                   currentOrderNum = null;
@@ -4737,6 +4739,7 @@ ${totalDisc > 0 ? `🏷️ الخصم: - ${totalDisc} ج.م\n` : ''}${deliveryFe
   saveData('zz_current_cart', []);
   updateCartUI(); renderCartSheet(); closeSheet('cartSheet', null);
   openScreen('tracking');
+  _startCustomerOrderTracking(currentOrderNum);
   // Smart order review — allow 90 seconds to cancel
   setTimeout(() => openOrderReview(newOrder), 400);
 }
@@ -4755,6 +4758,39 @@ function resetTracking() {
   document.getElementById('delayMsgBox').style.display = 'none';
 }
 
+// تتبع لحظي لطلب العميل الحالي فقط (خفيف — طلب واحد، بدل تحميل كل الطلبات)
+let _custOrderListenerRef = null, _custOrderListenerNum = null;
+function _startCustomerOrderTracking(orderNum) {
+  if (!db || !orderNum) return;
+  if (adminRoleType === 'admin' || adminRoleType === 'cashier') return; // الأدمن/الكاشير عندهم listener عام
+  if (_custOrderListenerNum === orderNum && _custOrderListenerRef) return; // نفس الطلب — تجنّب التكرار
+  if (_custOrderListenerRef && _custOrderListenerNum) {
+    try { db.ref('orders/' + _custOrderListenerNum).off('value', _custOrderListenerRef); } catch(e){}
+  }
+  _custOrderListenerNum = orderNum;
+  _custOrderListenerRef = db.ref('orders/' + orderNum).on('value', snap => {
+    if (!snap.exists()) return;
+    const o = snap.val();
+    if (!o) return;
+    const idx = ordersData.findIndex(x => x.id === o.id);
+    if (idx >= 0) ordersData[idx] = o; else ordersData.unshift(o);
+    saveData('zz_orders', ordersData);
+    const tnEl = document.getElementById('trackOrderNum');
+    if (tnEl) tnEl.textContent = 'طلب رقم #' + o.id;
+    if (document.getElementById('tracking')?.classList.contains('active')) {
+      updateTrackingStatus(o.status, o.outAt);
+    }
+    if (o.status === 'cancelled' && _pendingOrderForReview?.id === orderNum) {
+      closeOrderReview();
+    }
+  });
+}
+function _stopCustomerOrderTracking() {
+  if (_custOrderListenerRef && _custOrderListenerNum) {
+    try { db.ref('orders/' + _custOrderListenerNum).off('value', _custOrderListenerRef); } catch(e){}
+  }
+  _custOrderListenerRef = null; _custOrderListenerNum = null;
+}
 function updateTrackingStatus(status, outAt) {
   // إشعار Push للعميل لما تتغير حالة طلبه
   const clientPushMsgs = {
@@ -4971,6 +5007,11 @@ function doAdminLogin() {
     return;
   }
   adminRoleType = role;
+  // تسجيل listener الطلبات للأدمن/الكاشير (لو دخل بعد تحميل الصفحة) — مع حماية من التكرار
+  if (db && window._ordersHandler && (role === 'admin' || role === 'cashier') && !window._ordersHandlerOn) {
+    window._ordersHandlerOn = true;
+    db.ref('orders').on('value', window._ordersHandler);
+  }
   document.getElementById('adminRoleLabel').textContent = role === 'admin' ? '🔑 مدير النظام' : '💳 كاشير';
   // طلب إذن Desktop Notifications
   requestNotifPermission();
@@ -8934,8 +8975,8 @@ async function fbPush(path, data) {
 function setupFirebaseListeners() {
   if (!db) return;
 
-  // --------- ORDERS: كاشير يشوف الطلبات فوراً ---------
-  db.ref('orders').on('value', snap => {
+  // --------- ORDERS: للأدمن/الكاشير فقط (توفير استهلاك — العميل يتابع طلبه بـ listener منفصل) ---------
+  window._ordersHandler = function(snap) {
     const fbOrders = [];
     snap.forEach(child => { fbOrders.push(child.val()); });
     if (fbOrders.length > 0 || fbConnected) {
@@ -9034,7 +9075,8 @@ function setupFirebaseListeners() {
         }
       }
     }
-  });
+  };
+  if ((adminRoleType === 'admin' || adminRoleType === 'cashier') && !window._ordersHandlerOn) { window._ordersHandlerOn = true; db.ref('orders').on('value', window._ordersHandler); }
 
   // --------- BOOKINGS ---------
   db.ref('bookings').on('value', snap => {
