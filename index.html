@@ -321,6 +321,28 @@ input,select,textarea{font-family:inherit;}
 .history-card .hc-total{font-size:15px;font-weight:800;color:var(--olive-dark);}
 .reorder-btn{float:left;padding:6px 14px;background:var(--olive-pale);color:var(--olive-dark);border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;}
 
+/* ===== ADMIN OTP OVERLAY ===== */
+#adminOtpOverlay{position:fixed;inset:0;background:rgba(0,0,0,.65);z-index:9000;display:none;align-items:center;justify-content:center;padding:20px;backdrop-filter:blur(4px);}
+#adminOtpOverlay.open{display:flex;}
+.admin-otp-card{background:var(--white);border-radius:20px;padding:32px 24px;width:100%;max-width:360px;text-align:center;box-shadow:0 24px 64px rgba(0,0,0,.25);}
+.admin-otp-icon{width:62px;height:62px;border-radius:50%;background:#25D366;display:flex;align-items:center;justify-content:center;margin:0 auto 14px;box-shadow:0 4px 16px rgba(37,211,102,.35);}
+.admin-otp-icon svg{width:32px;height:32px;fill:#fff;}
+.admin-otp-title{font-size:18px;font-weight:800;color:var(--dark);margin-bottom:6px;}
+.admin-otp-sub{font-size:13px;color:var(--text-muted);line-height:1.6;margin-bottom:20px;}
+.admin-otp-inputs{display:flex;gap:10px;justify-content:center;margin-bottom:16px;direction:ltr;}
+.admin-otp-inputs input{width:52px;height:56px;border:2px solid var(--border);border-radius:12px;font-size:22px;font-weight:800;text-align:center;background:var(--white);color:var(--dark);outline:none;transition:.2s;font-family:monospace;}
+.admin-otp-inputs input:focus{border-color:#25D366;box-shadow:0 0 0 3px rgba(37,211,102,.15);}
+.admin-otp-inputs input.otp-error{border-color:var(--red);animation:otpShake .3s;}
+@keyframes otpShake{0%,100%{transform:translateX(0)}25%{transform:translateX(-5px)}75%{transform:translateX(5px)}}
+.admin-otp-verify-btn{width:100%;padding:14px;background:var(--olive-dark);color:#fff;border-radius:12px;font-size:15px;font-weight:800;border:none;cursor:pointer;transition:.2s;margin-bottom:10px;}
+.admin-otp-verify-btn:active{transform:scale(.98);}
+.admin-otp-verify-btn:disabled{background:#9ca3af;cursor:not-allowed;}
+.admin-otp-resend{font-size:12px;color:var(--text-muted);}
+.admin-otp-resend a{color:#25D366;font-weight:700;cursor:pointer;}
+.admin-otp-timer{font-size:12px;color:var(--text-muted);margin-top:8px;}
+.admin-otp-timer span{font-weight:700;color:var(--red);}
+.admin-otp-cancel{margin-top:10px;font-size:13px;color:var(--text-muted);cursor:pointer;display:inline-block;padding:6px;}
+
 /* ===== ADMIN ===== */
 .admin-header{background:var(--olive-dark);padding:16px;color:#fff;}
 .admin-header h1{font-size:18px;font-weight:800;}
@@ -1699,6 +1721,32 @@ input,select,textarea{font-family:inherit;}
     </div>
     <button onclick="openScreen('agentScreen')" style="width:100%;padding:13px;background:linear-gradient(135deg,#f59e0b,#d97706);color:#fff;border-radius:12px;font-size:14px;font-weight:800;border:none;cursor:pointer">🛵 دخول المندوب</button>
     <button style="width:100%;padding:14px;margin-top:10px;color:var(--text-muted);font-size:14px" onclick="openScreen('app')">إلغاء</button>
+  </div>
+</div>
+
+<!-- ===== ADMIN OTP OVERLAY ===== -->
+<div id="adminOtpOverlay">
+  <div class="admin-otp-card">
+    <div class="admin-otp-icon">
+      <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+        <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/>
+      </svg>
+    </div>
+    <div class="admin-otp-title">تحقق من الهوية</div>
+    <div class="admin-otp-sub">تم إرسال كود التحقق على واتساب<br><strong id="adminOtpSentTo" style="color:var(--dark)">+20 150 861 3866</strong></div>
+    <div id="adminOtpMsgBox" style="display:none;padding:9px 14px;border-radius:9px;font-size:13px;font-weight:700;margin-bottom:12px"></div>
+    <div class="admin-otp-inputs" id="adminOtpInputs">
+      <input type="tel" maxlength="1" inputmode="numeric" oninput="adminOtpNext(this,0)" onkeydown="adminOtpKeyDown(event,0)">
+      <input type="tel" maxlength="1" inputmode="numeric" oninput="adminOtpNext(this,1)" onkeydown="adminOtpKeyDown(event,1)">
+      <input type="tel" maxlength="1" inputmode="numeric" oninput="adminOtpNext(this,2)" onkeydown="adminOtpKeyDown(event,2)">
+      <input type="tel" maxlength="1" inputmode="numeric" oninput="adminOtpNext(this,3)" onkeydown="adminOtpKeyDown(event,3)">
+      <input type="tel" maxlength="1" inputmode="numeric" oninput="adminOtpNext(this,4)" onkeydown="adminOtpKeyDown(event,4)">
+      <input type="tel" maxlength="1" inputmode="numeric" oninput="adminOtpNext(this,5)" onkeydown="adminOtpKeyDown(event,5)">
+    </div>
+    <button class="admin-otp-verify-btn" id="adminOtpVerifyBtn" onclick="verifyAdminOtp()">✓ تأكيد الكود والدخول</button>
+    <div class="admin-otp-resend">لم يصلك الكود؟ <a onclick="resendAdminOtp()">أعد الإرسال</a></div>
+    <div class="admin-otp-timer" id="adminOtpTimerDiv">ينتهي الكود خلال <span id="adminOtpTimerCount">05:00</span></div>
+    <div class="admin-otp-cancel" onclick="cancelAdminOtp()">← إلغاء والعودة</div>
   </div>
 </div>
 
@@ -4995,12 +5043,118 @@ function openClientLogin() {
     }
   }, 100);
 }
+// ============================================================
+// ADMIN OTP WHATSAPP — طبقة تحقق إضافية للأدمن/الكاشير/البيكاب
+// الرقم الذي يستقبل الكود
+// ============================================================
+var _ADMIN_OTP_WHATSAPP = '201508613866';
+var _adminOtpPending = null; // {code, role, expiry, timerInterval}
+
+function _generateAdminOtp() {
+  return Math.floor(100000 + Math.random() * 900000).toString();
+}
+
 function doAdminLogin() {
   const pass = document.getElementById('adminPass').value;
   const role = document.getElementById('adminRole').value;
   if (!_verifyAuth(role, pass)) { showNotif('❌ كلمة السر غير صحيحة'); return; }
   document.getElementById('adminPass').value = '';
-  // ✅ Mark authenticated role — required for hash guard
+  // ✅ كلمة السر صح — ابدأ OTP بدل الدخول المباشر
+  _startAdminOtp(role);
+}
+
+function _startAdminOtp(role) {
+  const code = _generateAdminOtp();
+  const expiry = Date.now() + 300000; // 5 دقائق
+  // إلغاء أي مؤقت سابق
+  if (_adminOtpPending && _adminOtpPending.timerInterval) clearInterval(_adminOtpPending.timerInterval);
+  _adminOtpPending = { code, role, expiry, timerInterval: null };
+  // إرسال الكود عبر واتساب
+  const msg = `🔐 *لوحة إدارة زمزم*\n\nكود التحقق الخاص بك:\n\n*${code}*\n\nصالح لمدة 5 دقائق فقط.\nلا تشاركه مع أحد. 🔒`;
+  const waUrl = 'https://wa.me/' + _ADMIN_OTP_WHATSAPP + '?text=' + encodeURIComponent(msg);
+  window.open(waUrl, '_blank');
+  // تحضير الـ overlay
+  document.querySelectorAll('#adminOtpInputs input').forEach(inp => { inp.value = ''; inp.classList.remove('otp-error'); });
+  const msgBox = document.getElementById('adminOtpMsgBox');
+  if (msgBox) { msgBox.style.display = 'none'; }
+  document.getElementById('adminOtpVerifyBtn').disabled = false;
+  // تشغيل المؤقت
+  _adminOtpPending.timerInterval = _runAdminOtpTimer(300);
+  // إظهار الـ overlay
+  document.getElementById('adminOtpOverlay').classList.add('open');
+  setTimeout(() => { const inp = document.querySelector('#adminOtpInputs input'); if (inp) inp.focus(); }, 200);
+}
+
+function _runAdminOtpTimer(seconds) {
+  let rem = seconds;
+  _updateAdminOtpTimerDisplay(rem);
+  return setInterval(() => {
+    rem--;
+    _updateAdminOtpTimerDisplay(rem);
+    if (rem <= 0) {
+      clearInterval(_adminOtpPending?.timerInterval);
+      _showAdminOtpMsg('❌ انتهت صلاحية الكود — اطلب كوداً جديداً', 'error');
+      document.getElementById('adminOtpVerifyBtn').disabled = true;
+    }
+  }, 1000);
+}
+
+function _updateAdminOtpTimerDisplay(sec) {
+  const el = document.getElementById('adminOtpTimerCount');
+  if (!el) return;
+  const m = Math.floor(sec / 60).toString().padStart(2,'0');
+  const s = (sec % 60).toString().padStart(2,'0');
+  el.textContent = m + ':' + s;
+}
+
+function _showAdminOtpMsg(msg, type) {
+  const box = document.getElementById('adminOtpMsgBox');
+  if (!box) return;
+  box.textContent = msg;
+  box.style.display = 'block';
+  if (type === 'error') {
+    box.style.background = '#fef2f2'; box.style.color = '#dc2626'; box.style.border = '1px solid #fecaca';
+  } else {
+    box.style.background = '#f0fdf4'; box.style.color = '#15803d'; box.style.border = '1px solid #bbf7d0';
+  }
+}
+
+function adminOtpNext(input, idx) {
+  input.value = input.value.replace(/[^0-9]/g,'');
+  const inputs = document.querySelectorAll('#adminOtpInputs input');
+  if (input.value && idx < 5) inputs[idx + 1].focus();
+  if (idx === 5 && input.value) verifyAdminOtp();
+}
+
+function adminOtpKeyDown(e, idx) {
+  const inputs = document.querySelectorAll('#adminOtpInputs input');
+  if (e.key === 'Backspace' && !inputs[idx].value && idx > 0) inputs[idx - 1].focus();
+}
+
+function verifyAdminOtp() {
+  if (!_adminOtpPending) { _showAdminOtpMsg('❌ انتهت الجلسة — أعد المحاولة', 'error'); return; }
+  const inputs = document.querySelectorAll('#adminOtpInputs input');
+  const entered = Array.from(inputs).map(i => i.value.replace(/[^0-9]/g,'')).join('');
+  if (entered.length < 6) { _showAdminOtpMsg('أدخل الكود المكون من 6 أرقام', 'error'); return; }
+  if (Date.now() > _adminOtpPending.expiry) {
+    _showAdminOtpMsg('❌ انتهت صلاحية الكود — اطلب كوداً جديداً', 'error');
+    document.getElementById('adminOtpVerifyBtn').disabled = true;
+    return;
+  }
+  if (entered !== _adminOtpPending.code) {
+    inputs.forEach(i => i.classList.add('otp-error'));
+    setTimeout(() => inputs.forEach(i => i.classList.remove('otp-error')), 500);
+    inputs.forEach(i => i.value = ''); inputs[0].focus();
+    _showAdminOtpMsg('❌ الكود غير صحيح — حاول مجدداً', 'error');
+    return;
+  }
+  // ✅ OTP صح — أكمل الدخول
+  clearInterval(_adminOtpPending.timerInterval);
+  const role = _adminOtpPending.role;
+  _adminOtpPending = null;
+  document.getElementById('adminOtpOverlay').classList.remove('open');
+  _showAdminOtpMsg('', 'success');
+  // ===== نفس منطق الدخول الأصلي =====
   saveData('zz_admin_role', role);
   if (role === 'pickup') {
     showScreen('pickupPanel');
@@ -5008,13 +5162,11 @@ function doAdminLogin() {
     return;
   }
   adminRoleType = role;
-  // تسجيل listener الطلبات للأدمن/الكاشير (لو دخل بعد تحميل الصفحة) — مع حماية من التكرار
   if (db && window._ordersHandler && (role === 'admin' || role === 'cashier') && !window._ordersHandlerOn) {
     window._ordersHandlerOn = true;
     db.ref('orders').on('value', window._ordersHandler);
   }
   document.getElementById('adminRoleLabel').textContent = role === 'admin' ? '🔑 مدير النظام' : '💳 كاشير';
-  // طلب إذن Desktop Notifications
   requestNotifPermission();
   initAutoBackup();
   initVIPAutoCheck();
@@ -5022,6 +5174,22 @@ function doAdminLogin() {
   updatePrayerReminder();
   updateDeliveryCtrlBtnUI();
   setTimeout(() => { if (adminRoleType === 'admin') checkDailyBackupReminder(); }, 1500);
+}
+
+function resendAdminOtp() {
+  if (!_adminOtpPending) return;
+  const role = _adminOtpPending.role;
+  if (_adminOtpPending.timerInterval) clearInterval(_adminOtpPending.timerInterval);
+  _adminOtpPending = null;
+  _startAdminOtp(role);
+  _showAdminOtpMsg('✓ تم إعادة إرسال الكود على واتساب', 'success');
+}
+
+function cancelAdminOtp() {
+  if (_adminOtpPending && _adminOtpPending.timerInterval) clearInterval(_adminOtpPending.timerInterval);
+  _adminOtpPending = null;
+  document.getElementById('adminOtpOverlay').classList.remove('open');
+  showScreen('adminLogin');
 }
 function doLogout() {
   adminRoleType = null;
