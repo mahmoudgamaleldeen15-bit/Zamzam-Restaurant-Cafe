@@ -1626,6 +1626,28 @@ input,select,textarea{font-family:inherit;}
   </div>
 </div>
 
+<!-- ===== رسالة حظر العميل (تظهر للمستخدم المحظور) ===== -->
+<div class="delivery-restrict-overlay" id="blockedUserOverlay">
+  <div class="delivery-restrict-card" style="border-top:5px solid #dc2626">
+    <div style="font-size:56px;margin-bottom:10px">🚫</div>
+    <div style="font-size:18px;font-weight:800;color:#dc2626;margin-bottom:10px">تم تقييد الوصول</div>
+    <div id="blockedUserMsg" style="font-size:14px;color:var(--text-muted);line-height:1.9;margin-bottom:20px">هذا الحساب غير مسموح له بالدخول حالياً.</div>
+    <button class="btn-primary" onclick="document.getElementById('blockedUserOverlay').classList.remove('show'); showScreen('auth');">حسناً</button>
+  </div>
+</div>
+
+<!-- ===== إعادة تعيين كلمة السر (نسيت كلمة السر) ===== -->
+<div class="delivery-restrict-overlay" id="forgotPassOverlay">
+  <div class="delivery-restrict-card" style="border-top:5px solid var(--olive)">
+    <div style="font-size:48px;margin-bottom:8px">🔑</div>
+    <div style="font-size:17px;font-weight:800;color:var(--dark);margin-bottom:6px">إعادة تعيين كلمة السر</div>
+    <div style="font-size:13px;color:var(--text-muted);line-height:1.8;margin-bottom:16px">اكتب كلمة سر جديدة، وهيوصلك رمز تأكيد على واتساب لتفعيلها.</div>
+    <input type="password" id="forgotNewPass" placeholder="كلمة السر الجديدة (4 أحرف على الأقل)" autocomplete="new-password" style="width:100%;padding:12px 14px;border:1.5px solid var(--border);border-radius:12px;font-size:14px;margin-bottom:14px;font-family:'Cairo',sans-serif;box-sizing:border-box" onkeydown="if(event.key==='Enter')submitForgotPassword()"/>
+    <button class="btn-primary" onclick="submitForgotPassword()" style="margin-bottom:8px">📲 إرسال رمز التأكيد على واتساب</button>
+    <button class="btn-primary btn-secondary" onclick="document.getElementById('forgotPassOverlay').classList.remove('show')">إلغاء</button>
+  </div>
+</div>
+
 <!-- ===== تذكير النسخة الاحتياطية اليومية (يظهر للأدمن فقط لو فات 24 ساعة) ===== -->
 <div class="delivery-restrict-overlay" id="dailyBackupReminderOverlay">
   <div class="delivery-restrict-card" style="border-top:5px solid var(--olive)">
@@ -3143,6 +3165,28 @@ let _pwaInstallPrompt=null;
 // ============================================================
 // INIT
 // ============================================================
+// بعد أي دخول ناجح: لو فيه طلب نشط → اعرض شاشة التتبع (والتزامن يشتغل)، غير كده → الصفحة الرئيسية
+function _goToAppOrTracking() {
+  openScreen('app');
+  const _on = currentOrderNum || loadData('zz_current_order_num', null);
+  if (_on && db) {
+    db.ref('orders/' + _on).get().then(snap => {
+      if (!snap.exists()) return;
+      const ord = snap.val();
+      if (ord && ord.status !== 'delivered' && ord.status !== 'cancelled') {
+        currentOrderNum = _on;
+        saveData('zz_current_order_num', _on);
+        openScreen('tracking');
+        const tnEl = document.getElementById('trackOrderNum');
+        if (tnEl) tnEl.textContent = 'طلب رقم #' + _on;
+        const ttEl = document.getElementById('trackOrderTime');
+        if (ttEl && ord.time) ttEl.textContent = ord.time;
+        if (typeof updateTrackingStatus === 'function') updateTrackingStatus(ord.status, ord.outAt);
+      }
+    }).catch(()=>{});
+  }
+}
+
 window.onload = () => {
   // ===== إغلاق أي overlays مفتوحة عند بدء التطبيق =====
   document.getElementById('productModal')?.classList.remove('open');
@@ -3295,12 +3339,25 @@ window.onload = () => {
           }
         }).catch(()=>{});
       }
-      // 🔒 لا دخول تلقائي بعد الآن — اطلب كلمة السر دائماً حتى مع جلسة محفوظة
-      currentUser = null;
-      showScreen('auth');
-      switchAuthTab('login');
-      const _lp = document.getElementById('loginPhone');
-      if (_lp && saved && saved.phone) { _lp.value = saved.phone; previewLoginUser(saved.phone); }
+      // التحقق من جلسة هذا المتصفح: لو دخل بكلمة السر في نفس الجلسة → دخول تلقائي (يحافظ على التجربة عند الريفريش)
+      let _sessOK = false;
+      try {
+        const _vs = sessionStorage.getItem('zz_verified_session');
+        const _sp = (saved.phone||'').replace(/[^0-9]/g,'');
+        _sessOK = !!_vs && (_vs === _sp || _vs === '0'+_sp.slice(1) || _vs === '2'+_sp);
+      } catch(e){}
+      if (_sessOK) {
+        currentUser = saved;
+        _goToAppOrTracking();
+        getGPS();
+      } else {
+        // 🔒 جلسة جديدة / متصفح جديد → اطلب كلمة السر (أمان)
+        currentUser = null;
+        showScreen('auth');
+        switchAuthTab('login');
+        const _lp = document.getElementById('loginPhone');
+        if (_lp && saved && saved.phone) { _lp.value = saved.phone; previewLoginUser(saved.phone); }
+      }
     }
     else showScreen('auth');
   }, 2000);
@@ -3561,13 +3618,25 @@ function _applyLoginPasswordUI(user) {
     if (forgotBtn) forgotBtn.style.display = 'none';
   }
 }
-// نسيت كلمة السر — يكتب كلمة سر جديدة ويأكّدها عبر OTP على واتساب
+// نسيت كلمة السر — يفتح صندوق إعادة التعيين
 function doForgotPassword() {
   const phone = (document.getElementById('loginPhone').value || '').trim();
   const cleanPhone = phone.replace(/[^0-9]/g,'');
   if (cleanPhone.length < 10) { showNotif('أدخل رقم هاتفك أولاً'); return; }
-  const pwInput = (document.getElementById('loginPass')?.value || '').trim();
-  if (!pwInput || pwInput.length < 4) { showNotif('🔒 اكتب كلمة السر الجديدة في الخانة (4 أحرف على الأقل) ثم اضغط "نسيت كلمة السر؟" مرة أخرى'); return; }
+  const np = document.getElementById('forgotNewPass');
+  if (np) np.value = '';
+  const ov = document.getElementById('forgotPassOverlay');
+  if (ov) ov.classList.add('show');
+}
+// تأكيد كلمة السر الجديدة عبر OTP
+function submitForgotPassword() {
+  const phone = (document.getElementById('loginPhone').value || '').trim();
+  const cleanPhone = phone.replace(/[^0-9]/g,'');
+  if (cleanPhone.length < 10) { showNotif('أدخل رقم هاتفك أولاً'); return; }
+  const pwInput = (document.getElementById('forgotNewPass')?.value || '').trim();
+  if (!pwInput || pwInput.length < 4) { showNotif('🔒 اكتب كلمة سر جديدة (4 أحرف على الأقل)'); return; }
+  const ov = document.getElementById('forgotPassOverlay');
+  if (ov) ov.classList.remove('show');
   const startReset = (u) => {
     const userWithPw = { ...u, password: _hashPw(pwInput), verified: false };
     showNotif('📲 هيوصلك رمز تأكيد على واتساب لإعادة تعيين كلمة السر');
@@ -3579,9 +3648,9 @@ function doForgotPassword() {
   if (db) {
     db.ref('users/' + cleanPhone).get().then(snap => {
       if (snap.exists() && snap.val() && snap.val().name) startReset(snap.val());
-      else showNotif('لم يتم العثور على الحساب');
+      else showNotif('لم يتم العثور على الحساب بهذا الرقم');
     }).catch(() => showNotif('تعذّر الوصول — تأكد من الإنترنت'));
-  } else { showNotif('لم يتم العثور على الحساب'); }
+  } else { showNotif('لم يتم العثور على الحساب بهذا الرقم'); }
 }
 // ===== OTP SYSTEM =====
 let _otpPending = null; // {code, user, isLogin, timer}
@@ -3615,8 +3684,8 @@ async function doLogin() {
   let users = loadData('zz_users', []);
   let foundUser = users.find(u => (u.phone||'').replace(/[^0-9]/g,'') === cleanPhone);
 
-  // Step 2: If not found locally — fetch from Firebase
-  if (!foundUser && db) {
+  // Step 2: دائماً اجلب أحدث نسخة من Firebase (عشان كلمة السر المحدّثة من أي جهاز تشتغل) — المحلي fallback فقط
+  if (db) {
     try {
       const snap = await db.ref('users/' + cleanPhone).get();
       if (snap.exists()) {
@@ -3658,11 +3727,12 @@ async function doLogin() {
       if (!_verifyPw(pwInput, foundUser.password)) { showNotif('❌ كلمة السر غير صحيحة'); return; }
       currentUser = { ...foundUser, verified: true };
       saveData('zamzam_user', currentUser);
+      try { sessionStorage.setItem('zz_verified_session', cleanPhone); } catch(e){}
       const rememberEl = document.getElementById('rememberToggle');
       const sm = loadData('zz_session_meta', {});
       sm.temporary = !(rememberEl && rememberEl.classList.contains('on'));
       saveData('zz_session_meta', sm);
-      openScreen('app'); getGPS(); return;
+      getGPS(); _goToAppOrTracking(); return;
     } else {
       // عميل قديم بدون كلمة سر — يعيّن واحدة عبر OTP (لا يُرفض أبداً)
       if (!pwInput || pwInput.length < 4) { showNotif('🔒 اختر كلمة سر (4 أحرف على الأقل) لتأمين حسابك'); return; }
@@ -3773,12 +3843,11 @@ function verifyOTP() {
     currentUser = null;
     _otpPending = null;
     showScreen('auth');
-    document.getElementById('authScreen').innerHTML = `<div style="text-align:center;padding:48px 24px;color:#fff">
-      <div style="font-size:64px;margin-bottom:16px">🚫</div>
-      <div style="font-size:20px;font-weight:900;margin-bottom:8px">تم تقييد الوصول</div>
-      <div style="font-size:14px;opacity:.7;margin-bottom:8px">هذا الحساب غير مسموح له بالدخول</div>
-      ${_isBlocked.reason ? `<div style="font-size:12px;opacity:.5">${_isBlocked.reason}</div>` : ''}
-    </div>`;
+    const bm = document.getElementById('blockedUserMsg');
+    if (bm) bm.innerHTML = 'هذا الحساب غير مسموح له بالدخول حالياً.' + (_isBlocked.reason ? `<br/><span style="font-size:12px;opacity:.7">السبب: ${_isBlocked.reason}</span>` : '');
+    const bov = document.getElementById('blockedUserOverlay');
+    if (bov) bov.classList.add('show');
+    showNotif('🚫 تم تقييد وصول هذا الحساب');
     return;
   }
   const savedVerified = loadData('zz_verified_phones', {});
@@ -3788,6 +3857,7 @@ function verifyOTP() {
   savedVerified[_phone] = true;
   savedVerified[_clean] = true;
   if (_clean.startsWith('2')) savedVerified['0' + _clean.slice(1)] = true;
+  try { sessionStorage.setItem('zz_verified_session', _clean); } catch(e){}
   if (_clean.startsWith('0')) savedVerified['2' + _clean] = true;
   saveData('zz_verified_phones', savedVerified);
   // Register / update user in users list
@@ -3829,7 +3899,7 @@ function verifyOTP() {
   if (phoneKey) fbSet('users/' + phoneKey, { ...currentUser, verified: true, registeredAt: users[existIdx >= 0 ? existIdx : users.length-1]?.registeredAt || new Date().toLocaleDateString('ar-EG') });
   _otpPending = null;
   showNotif('✅ تم التحقق بنجاح — أهلاً ' + currentUser.name);
-  openScreen('app'); getGPS();
+  getGPS(); _goToAppOrTracking();
 }
 
 let _otpCountdownTimer = null;
@@ -3859,6 +3929,7 @@ function doClientLogout() {
   currentUser = null;
   localStorage.removeItem('zamzam_user');
   localStorage.removeItem('zz_session_meta');
+  try { sessionStorage.removeItem('zz_verified_session'); } catch(e){}
   showScreen('auth');
   // After logout: show tabs + login mode (returning user)
   const tabs = document.getElementById('authTabs');
@@ -4517,10 +4588,11 @@ function placeOrder() {
       if (zoneEl) zoneEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
       return;
     }
-    // 2) عنوان التفصيلي — إجباري (شارع أو حي على الأقل)
+    // 2) عنوان التفصيلي — إجباري (شارع أو حي على الأقل) — إحداثيات GPS التلقائية لا تُحتسب عنواناً
     const _addrStreet = (document.getElementById('detailAddressStreet')?.value || '').trim();
     const _addrShort = (document.getElementById('addressField')?.value || '').trim();
-    if (!_addrStreet && !_addrShort) {
+    const _hasRealAddress = !!_addrStreet || (!!_addrShort && !_addrShort.startsWith('📍'));
+    if (!_hasRealAddress) {
       showNotif('🏠 من فضلك أدخل اسم الشارع أو الحي');
       const _addrEl = document.getElementById('detailAddressStreet') || document.getElementById('addressField');
       if (_addrEl) {
