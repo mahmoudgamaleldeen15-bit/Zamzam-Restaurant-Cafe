@@ -322,8 +322,8 @@ input,select,textarea{font-family:inherit;}
 .reorder-btn{float:left;padding:6px 14px;background:var(--olive-pale);color:var(--olive-dark);border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;}
 
 /* ===== ADMIN OTP OVERLAY ===== */
-#adminOtpOverlay{position:fixed;inset:0;background:rgba(0,0,0,.65);z-index:9000;display:none;align-items:center;justify-content:center;padding:20px;backdrop-filter:blur(4px);}
-#adminOtpOverlay.open{display:flex;}
+#adminOtpOverlay,#staffPinOverlay{position:fixed;inset:0;background:rgba(0,0,0,.65);z-index:9000;display:none;align-items:center;justify-content:center;padding:20px;backdrop-filter:blur(4px);}
+#adminOtpOverlay.open,#staffPinOverlay.open{display:flex;}
 .admin-otp-card{background:var(--white);border-radius:20px;padding:32px 24px;width:100%;max-width:360px;text-align:center;box-shadow:0 24px 64px rgba(0,0,0,.25);}
 .admin-otp-icon{width:62px;height:62px;border-radius:50%;background:#25D366;display:flex;align-items:center;justify-content:center;margin:0 auto 14px;box-shadow:0 4px 16px rgba(37,211,102,.35);}
 .admin-otp-icon svg{width:32px;height:32px;fill:#fff;}
@@ -1750,6 +1750,26 @@ input,select,textarea{font-family:inherit;}
   </div>
 </div>
 
+<!-- ===== STAFF PIN OVERLAY (كاشير/بيكاب) ===== -->
+<div id="staffPinOverlay">
+  <div class="admin-otp-card">
+    <div class="admin-otp-icon" style="background:var(--olive-dark)">
+      <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M12 1C8.676 1 6 3.676 6 7v2H4v14h16V9h-2V7c0-3.324-2.676-6-6-6zm0 2c2.276 0 4 1.724 4 4v2H8V7c0-2.276 1.724-4 4-4zm0 11a2 2 0 0 1 2 2 2 2 0 0 1-1 1.723V20h-2v-2.277A2 2 0 0 1 10 16a2 2 0 0 1 2-2z"/></svg>
+    </div>
+    <div class="admin-otp-title">رمز الدخول</div>
+    <div class="admin-otp-sub">أدخل رمز الدخول السري (PIN)<br>المكوّن من 4 أرقام للمتابعة</div>
+    <div id="staffPinMsgBox" style="display:none;padding:9px 14px;border-radius:9px;font-size:13px;font-weight:700;margin-bottom:12px"></div>
+    <div class="admin-otp-inputs" id="staffPinInputs">
+      <input type="tel" maxlength="1" inputmode="numeric" oninput="staffPinNext(this,0)" onkeydown="staffPinKeyDown(event,0)">
+      <input type="tel" maxlength="1" inputmode="numeric" oninput="staffPinNext(this,1)" onkeydown="staffPinKeyDown(event,1)">
+      <input type="tel" maxlength="1" inputmode="numeric" oninput="staffPinNext(this,2)" onkeydown="staffPinKeyDown(event,2)">
+      <input type="tel" maxlength="1" inputmode="numeric" oninput="staffPinNext(this,3)" onkeydown="staffPinKeyDown(event,3)">
+    </div>
+    <button class="admin-otp-verify-btn" id="staffPinVerifyBtn" onclick="verifyStaffPin()">✓ دخول</button>
+    <div class="admin-otp-cancel" onclick="cancelStaffPin()">← إلغاء والعودة</div>
+  </div>
+</div>
+
 <!-- ===== ADMIN PANEL ===== -->
 <div id="adminPanel" class="screen" style="background:var(--bg)">
   <div class="admin-header">
@@ -2274,6 +2294,10 @@ input,select,textarea{font-family:inherit;}
         <!-- باسورد الكاشير -->
         <div class="settings-row"><div class="info"><strong>باسورد الكاشير 1</strong></div><input class="settings-input" type="password" id="newCashier1" placeholder="باسورد 1"/></div>
         <div class="settings-row"><div class="info"><strong>باسورد الكاشير 2</strong></div><input class="settings-input" type="password" id="newCashier2" placeholder="باسورد 2"/></div>
+        <!-- رموز PIN للدخول (كاشير/بيكاب) — تُحفظ وتتزامن -->
+        <div class="settings-row"><div class="info"><strong>🔢 رمز PIN — كاشير 1</strong></div><input class="settings-input" type="tel" inputmode="numeric" maxlength="4" id="newPinCashier1" placeholder="٤ أرقام"/></div>
+        <div class="settings-row"><div class="info"><strong>🔢 رمز PIN — كاشير 2</strong></div><input class="settings-input" type="tel" inputmode="numeric" maxlength="4" id="newPinCashier2" placeholder="٤ أرقام"/></div>
+        <div class="settings-row"><div class="info"><strong>🔢 رمز PIN — البيكاب</strong></div><input class="settings-input" type="tel" inputmode="numeric" maxlength="4" id="newPinPickup" placeholder="٤ أرقام"/></div>
       </div>
       <div style="padding:0 16px">
         <button class="btn-primary" onclick="saveAllSettings()" style="margin-bottom:10px">💾 حفظ كل الإعدادات</button>
@@ -2758,6 +2782,20 @@ const _AUTH_TABLE = [
 // pickup default pass: pickup#1234
 function _verifyAuth(role, pass) {
   return _AUTH_TABLE.some(e => e.r === role && atob(e.h) === role + ':' + pass);
+}
+// ===== رموز PIN للموظفين (كاشير/بيكاب) — قابلة للتغيير من لوحة الأدمن وتُحفظ وتتزامن عبر Firebase =====
+let STAFF_PINS = loadData('zz_staff_pins', { cashier1: '1590', cashier2: '1500', pickup: '0155' });
+// تحديد هوية الموظف بدقة من كلمة السر (للتفريق بين كاشير 1 وكاشير 2)
+function _getStaffIdentity(role, pass) {
+  for (let i = 0; i < _AUTH_TABLE.length; i++) {
+    const e = _AUTH_TABLE[i];
+    if (e.r === role && atob(e.h) === role + ':' + pass) {
+      if (role === 'admin') return 'admin';
+      if (role === 'pickup') return 'pickup';
+      if (role === 'cashier') return (i === 1) ? 'cashier1' : 'cashier2';
+    }
+  }
+  return null;
 }
 
 // ============================================================
@@ -5059,8 +5097,85 @@ function doAdminLogin() {
   const role = document.getElementById('adminRole').value;
   if (!_verifyAuth(role, pass)) { showNotif('❌ كلمة السر غير صحيحة'); return; }
   document.getElementById('adminPass').value = '';
-  // ✅ كلمة السر صح — ابدأ OTP بدل الدخول المباشر
-  _startAdminOtp(role);
+  // ✅ كلمة السر صح
+  if (role === 'admin') {
+    // الأدمن: تحقق OTP عبر واتساب (كما هو)
+    _startAdminOtp(role);
+  } else {
+    // الكاشير/البيكاب: تحقق برمز PIN
+    _startStaffPin(role, _getStaffIdentity(role, pass));
+  }
+}
+
+// ===== نظام رمز PIN للموظفين (كاشير/بيكاب) =====
+let _staffPinPending = null;
+function _startStaffPin(role, identity) {
+  if (!identity) { showNotif('❌ تعذّر تحديد المستخدم'); return; }
+  _staffPinPending = { role, identity };
+  document.querySelectorAll('#staffPinInputs input').forEach(inp => { inp.value=''; inp.classList.remove('otp-error'); });
+  const box = document.getElementById('staffPinMsgBox'); if (box) box.style.display='none';
+  document.getElementById('staffPinOverlay').classList.add('open');
+  setTimeout(() => { const inp = document.querySelector('#staffPinInputs input'); if (inp) inp.focus(); }, 200);
+}
+function staffPinNext(input, idx) {
+  input.value = input.value.replace(/[^0-9]/g,'');
+  const inputs = document.querySelectorAll('#staffPinInputs input');
+  if (input.value && idx < 3) inputs[idx+1].focus();
+  if (idx === 3 && input.value) verifyStaffPin();
+}
+function staffPinKeyDown(e, idx) {
+  const inputs = document.querySelectorAll('#staffPinInputs input');
+  if (e.key === 'Backspace' && !inputs[idx].value && idx > 0) inputs[idx-1].focus();
+}
+function _showStaffPinMsg(msg) {
+  const box = document.getElementById('staffPinMsgBox');
+  if (!box) return;
+  box.textContent = msg; box.style.display='block';
+  box.style.background='#fef2f2'; box.style.color='#dc2626'; box.style.border='1px solid #fecaca';
+}
+function verifyStaffPin() {
+  if (!_staffPinPending) { _showStaffPinMsg('❌ انتهت الجلسة — أعد المحاولة'); return; }
+  const inputs = document.querySelectorAll('#staffPinInputs input');
+  const entered = Array.from(inputs).map(i => i.value.replace(/[^0-9]/g,'')).join('');
+  if (entered.length < 4) { _showStaffPinMsg('أدخل الرمز المكوّن من 4 أرقام'); return; }
+  const correct = STAFF_PINS[_staffPinPending.identity];
+  if (entered !== String(correct)) {
+    inputs.forEach(i => i.classList.add('otp-error'));
+    setTimeout(() => inputs.forEach(i => i.classList.remove('otp-error')), 500);
+    inputs.forEach(i => i.value=''); inputs[0].focus();
+    _showStaffPinMsg('❌ الرمز غير صحيح — حاول مجدداً');
+    return;
+  }
+  // ✅ الرمز صح — أكمل الدخول
+  const role = _staffPinPending.role;
+  _staffPinPending = null;
+  document.getElementById('staffPinOverlay').classList.remove('open');
+  _completeStaffLogin(role);
+}
+function cancelStaffPin() {
+  _staffPinPending = null;
+  document.getElementById('staffPinOverlay').classList.remove('open');
+}
+function _completeStaffLogin(role) {
+  saveData('zz_admin_role', role);
+  if (role === 'pickup') {
+    showScreen('pickupPanel');
+    setupPickupPanel();
+    return;
+  }
+  adminRoleType = role;
+  if (db && window._ordersHandler && (role === 'admin' || role === 'cashier') && !window._ordersHandlerOn) {
+    window._ordersHandlerOn = true;
+    db.ref('orders').on('value', window._ordersHandler);
+  }
+  document.getElementById('adminRoleLabel').textContent = role === 'admin' ? '🔑 مدير النظام' : '💳 كاشير';
+  requestNotifPermission();
+  initAutoBackup();
+  initVIPAutoCheck();
+  openScreen('adminPanel');
+  updatePrayerReminder();
+  updateDeliveryCtrlBtnUI();
+  setTimeout(() => { if (adminRoleType === 'admin') checkDailyBackupReminder(); }, 1500);
 }
 
 function _startAdminOtp(role) {
@@ -6808,6 +6923,15 @@ function saveAllSettings() {
   if (newAdmin) { _AUTH_TABLE.find(a => a.r === 'admin').h = btoa('admin:' + newAdmin); document.getElementById('newAdminPass').value = ''; }
   if (newC1) { _AUTH_TABLE[1].h = btoa('cashier:' + newC1); document.getElementById('newCashier1').value = ''; }
   if (newC2) { _AUTH_TABLE[2].h = btoa('cashier:' + newC2); document.getElementById('newCashier2').value = ''; }
+  // حفظ رموز PIN (كاشير/بيكاب) — مع تحقق ٤ أرقام وتخزين وتزامن
+  const _np1 = document.getElementById('newPinCashier1')?.value.trim();
+  const _np2 = document.getElementById('newPinCashier2')?.value.trim();
+  const _npp = document.getElementById('newPinPickup')?.value.trim();
+  let _pinChanged = false;
+  if (_np1 && /^\d{4}$/.test(_np1)) { STAFF_PINS.cashier1 = _np1; document.getElementById('newPinCashier1').value=''; _pinChanged = true; }
+  if (_np2 && /^\d{4}$/.test(_np2)) { STAFF_PINS.cashier2 = _np2; document.getElementById('newPinCashier2').value=''; _pinChanged = true; }
+  if (_npp && /^\d{4}$/.test(_npp)) { STAFF_PINS.pickup = _npp; document.getElementById('newPinPickup').value=''; _pinChanged = true; }
+  if (_pinChanged) { saveData('zz_staff_pins', STAFF_PINS); if (db) db.ref('config/staff_pins').set(STAFF_PINS); }
   showNotif('✓ تم حفظ كل الإعدادات');
 }
 
@@ -9301,6 +9425,16 @@ function setupFirebaseListeners() {
   });
 
   // --------- SETTINGS ---------
+  // مزامنة رموز PIN للموظفين (كاشير/بيكاب)
+  db.ref('config/staff_pins').on('value', snap => {
+    if (snap.exists() && fbConnected) {
+      const p = snap.val();
+      if (p && typeof p === 'object') {
+        STAFF_PINS = { ...STAFF_PINS, ...p };
+        saveData('zz_staff_pins', STAFF_PINS);
+      }
+    }
+  });
   db.ref('settings').on('value', snap => {
     if (snap.exists() && fbConnected) {
       const fbSettings = snap.val();
