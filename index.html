@@ -322,8 +322,8 @@ input,select,textarea{font-family:inherit;}
 .reorder-btn{float:left;padding:6px 14px;background:var(--olive-pale);color:var(--olive-dark);border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;}
 
 /* ===== ADMIN OTP OVERLAY ===== */
-#adminOtpOverlay,#staffPinOverlay{position:fixed;inset:0;background:rgba(0,0,0,.65);z-index:9000;display:none;align-items:center;justify-content:center;padding:20px;backdrop-filter:blur(4px);}
-#adminOtpOverlay.open,#staffPinOverlay.open{display:flex;}
+#adminOtpOverlay,#staffPinOverlay,#adminPpOverlay{position:fixed;inset:0;background:rgba(0,0,0,.65);z-index:9000;display:none;align-items:center;justify-content:center;padding:20px;backdrop-filter:blur(4px);}
+#adminOtpOverlay.open,#staffPinOverlay.open,#adminPpOverlay.open{display:flex;}
 .admin-otp-card{background:var(--white);border-radius:20px;padding:32px 24px;width:100%;max-width:360px;text-align:center;box-shadow:0 24px 64px rgba(0,0,0,.25);}
 .admin-otp-icon{width:62px;height:62px;border-radius:50%;background:#25D366;display:flex;align-items:center;justify-content:center;margin:0 auto 14px;box-shadow:0 4px 16px rgba(37,211,102,.35);}
 .admin-otp-icon svg{width:32px;height:32px;fill:#fff;}
@@ -1015,7 +1015,7 @@ input,select,textarea{font-family:inherit;}
         <span style="font-size:14px;font-weight:600">تذكرنى فى المرات القادمة</span>
       </div>
       <button class="btn-primary" onclick="doLogin()">دخول ←</button>
-      <div style="text-align:center;margin-top:10px"><button id="forgotPassBtn" onclick="doForgotPassword()" style="display:none;font-size:12.5px;font-weight:700;color:var(--olive);background:none;border:none;cursor:pointer">نسيت كلمة السر؟</button></div>
+      <div style="text-align:center;margin-top:10px"><button id="forgotPassBtn" onclick="contactAdminForRecovery()" style="display:none;font-size:12.5px;font-weight:700;color:var(--olive);background:none;border:none;cursor:pointer">📞 تواصل مع الإدارة لاستعادة كلمة السر</button></div>
       <div style="text-align:center;margin-top:14px">
         <span style="font-size:13px;color:var(--text-muted)">عميل جديد؟ </span>
         <button onclick="switchAuthTab('register')" style="font-size:13px;font-weight:700;color:var(--olive);background:none;border:none;cursor:pointer">إنشاء حساب</button>
@@ -1770,6 +1770,23 @@ input,select,textarea{font-family:inherit;}
   </div>
 </div>
 
+<!-- ===== ADMIN PASSPHRASE OVERLAY (كلمة السر السرية) ===== -->
+<div id="adminPpOverlay">
+  <div class="admin-otp-card">
+    <div class="admin-otp-icon" style="background:var(--olive-dark)">
+      <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zM9 6c0-1.66 1.34-3 3-3s3 1.34 3 3v2H9V6zm3 11a2 2 0 0 1-2-2 2 2 0 0 1 2-2 2 2 0 0 1 2 2 2 2 0 0 1-2 2z"/></svg>
+    </div>
+    <div class="admin-otp-title" id="adminPpTitle">كلمة السر السرية</div>
+    <div class="admin-otp-sub" id="adminPpSub">أدخل كلمة السر السرية الخاصة بك للمتابعة</div>
+    <div id="adminPpMsgBox" style="display:none;padding:9px 14px;border-radius:9px;font-size:13px;font-weight:700;margin-bottom:12px"></div>
+    <input type="password" id="adminPpInput" placeholder="••••••" autocomplete="off"
+      style="width:100%;padding:14px;text-align:center;font-size:18px;font-weight:800;letter-spacing:3px;border:2px solid var(--border);border-radius:12px;outline:none;box-sizing:border-box;margin-bottom:12px"
+      onkeydown="if(event.key==='Enter')verifyAdminPp()"/>
+    <button class="admin-otp-verify-btn" id="adminPpBtn" onclick="verifyAdminPp()">✓ دخول</button>
+    <div class="admin-otp-cancel" onclick="cancelAdminPp()">← إلغاء والعودة</div>
+  </div>
+</div>
+
 <!-- ===== ADMIN PANEL ===== -->
 <div id="adminPanel" class="screen" style="background:var(--bg)">
   <div class="admin-header">
@@ -2298,6 +2315,12 @@ input,select,textarea{font-family:inherit;}
         <div class="settings-row"><div class="info"><strong>🔢 رمز PIN — كاشير 1</strong></div><input class="settings-input" type="tel" inputmode="numeric" maxlength="4" id="newPinCashier1" placeholder="٤ أرقام"/></div>
         <div class="settings-row"><div class="info"><strong>🔢 رمز PIN — كاشير 2</strong></div><input class="settings-input" type="tel" inputmode="numeric" maxlength="4" id="newPinCashier2" placeholder="٤ أرقام"/></div>
         <div class="settings-row"><div class="info"><strong>🔢 رمز PIN — البيكاب</strong></div><input class="settings-input" type="tel" inputmode="numeric" maxlength="4" id="newPinPickup" placeholder="٤ أرقام"/></div>
+        <!-- رقم الإدارة لاستعادة كلمة سر العميل (يتغيّر ويتزامن) -->
+        <div class="settings-row"><div class="info"><strong>📞 رقم الإدارة (استعادة باسورد العميل)</strong></div><input class="settings-input" type="tel" inputmode="numeric" id="newRecoveryPhone" placeholder="201xxxxxxxxx"/></div>
+        <!-- إعادة تعيين باسورد عميل (لما العميل ينسى ويكلّم الإدارة) -->
+        <div class="settings-row" style="border-top:2px dashed var(--border);padding-top:12px;margin-top:8px"><div class="info"><strong>🔑 إعادة تعيين باسورد عميل — رقم العميل</strong></div><input class="settings-input" type="tel" inputmode="numeric" id="resetCustPhone" placeholder="رقم العميل المسجّل"/></div>
+        <div class="settings-row"><div class="info"><strong>🔑 الباسورد الجديد للعميل</strong></div><input class="settings-input" type="text" id="resetCustPass" placeholder="باسورد جديد (4 أحرف على الأقل)"/></div>
+        <div class="settings-row"><button onclick="adminResetCustomerPass()" style="width:100%;padding:11px;background:var(--olive);color:#fff;border:none;border-radius:10px;font-weight:800;font-size:13px;cursor:pointer">🔑 إعادة تعيين باسورد هذا العميل</button></div>
       </div>
       <div style="padding:0 16px">
         <button class="btn-primary" onclick="saveAllSettings()" style="margin-bottom:10px">💾 حفظ كل الإعدادات</button>
@@ -2785,6 +2808,10 @@ function _verifyAuth(role, pass) {
 }
 // ===== رموز PIN للموظفين (كاشير/بيكاب) — قابلة للتغيير من لوحة الأدمن وتُحفظ وتتزامن عبر Firebase =====
 let STAFF_PINS = loadData('zz_staff_pins', { cashier1: '1590', cashier2: '1500', pickup: '0155' });
+// كلمة السر السرية للأدمن (passphrase) — مشفّرة، تُخزَّن في Firebase فقط وليست في السورس
+let ADMIN_PP_HASH = loadData('zz_admin_pp', null);
+// رقم الإدارة لاستعادة كلمة سر العميل — قابل للتغيير من لوحة الأدمن ويتزامن عبر Firebase
+let RECOVERY_PHONE = loadData('zz_recovery_phone', '201508613866');
 // تحديد هوية الموظف بدقة من كلمة السر (للتفريق بين كاشير 1 وكاشير 2)
 function _getStaffIdentity(role, pass) {
   for (let i = 0; i < _AUTH_TABLE.length; i++) {
@@ -3708,6 +3735,34 @@ function _applyLoginPasswordUI(user) {
   }
 }
 // نسيت كلمة السر — يفتح صندوق إعادة التعيين
+// التواصل مع الإدارة لاستعادة كلمة السر (بدون OTP — آمن ضد المخترق)
+function contactAdminForRecovery() {
+  const phone = (document.getElementById('loginPhone')?.value || '').trim().replace(/[^0-9]/g,'');
+  const myNum = phone.length >= 10 ? phone : '(لم يُكتب الرقم)';
+  const msg = `السلام عليكم 🌟\nأنا عميل في مطعم وكافيه زمزم ونسيت كلمة السر.\nرقمي المسجّل: ${myNum}\nياريت تساعدوني في استعادة الدخول 🙏`;
+  window.open('https://wa.me/' + RECOVERY_PHONE + '?text=' + encodeURIComponent(msg), '_blank');
+}
+// إعادة تعيين باسورد عميل من لوحة الأدمن (بعد التحقق البشري من هويته)
+function adminResetCustomerPass() {
+  const phone = (document.getElementById('resetCustPhone')?.value || '').trim().replace(/[^0-9]/g,'');
+  const newPass = (document.getElementById('resetCustPass')?.value || '').trim();
+  if (phone.length < 10) { showNotif('❌ أدخل رقم العميل صحيحاً'); return; }
+  if (!newPass || newPass.length < 4) { showNotif('❌ الباسورد الجديد 4 أحرف على الأقل'); return; }
+  if (!db) { showNotif('❌ تتطلب اتصال إنترنت'); return; }
+  db.ref('users/' + phone).get().then(snap => {
+    if (!snap.exists() || !snap.val() || !snap.val().name) { showNotif('❌ لا يوجد عميل بهذا الرقم'); return; }
+    const u = snap.val();
+    u.password = _hashPw(newPass);
+    db.ref('users/' + phone).set(u).then(() => {
+      const users = loadData('zz_users', []);
+      const idx = users.findIndex(x => (x.phone||'').replace(/[^0-9]/g,'') === phone);
+      if (idx >= 0) { users[idx] = u; saveData('zz_users', users); }
+      const e1 = document.getElementById('resetCustPhone'); if (e1) e1.value='';
+      const e2 = document.getElementById('resetCustPass'); if (e2) e2.value='';
+      showNotif('✅ تم إعادة تعيين باسورد العميل — بلّغه بالباسورد الجديد');
+    }).catch(() => showNotif('⚠️ تعذّر الحفظ — حاول تاني'));
+  }).catch(() => showNotif('⚠️ تعذّر الوصول — تأكد من الإنترنت'));
+}
 function doForgotPassword() {
   const phone = (document.getElementById('loginPhone').value || '').trim();
   const cleanPhone = phone.replace(/[^0-9]/g,'');
@@ -5099,8 +5154,8 @@ function doAdminLogin() {
   document.getElementById('adminPass').value = '';
   // ✅ كلمة السر صح
   if (role === 'admin') {
-    // الأدمن: تحقق OTP عبر واتساب (كما هو)
-    _startAdminOtp(role);
+    // الأدمن: تحقق بكلمة السر السرية (passphrase) — لا OTP
+    _startAdminPp(role);
   } else {
     // الكاشير/البيكاب: تحقق برمز PIN
     _startStaffPin(role, _getStaffIdentity(role, pass));
@@ -5176,6 +5231,66 @@ function _completeStaffLogin(role) {
   updatePrayerReminder();
   updateDeliveryCtrlBtnUI();
   setTimeout(() => { if (adminRoleType === 'admin') checkDailyBackupReminder(); }, 1500);
+}
+
+// ===== كلمة السر السرية للأدمن (passphrase) — ليست في السورس، محفوظة مشفّرة في Firebase =====
+let _adminPpRole = null;
+function _startAdminPp(role) {
+  _adminPpRole = role;
+  const isSetup = !ADMIN_PP_HASH;
+  const title = document.getElementById('adminPpTitle');
+  const sub = document.getElementById('adminPpSub');
+  const btn = document.getElementById('adminPpBtn');
+  if (isSetup) {
+    if (title) title.textContent = '🔐 إنشاء كلمة السر السرية';
+    if (sub) sub.innerHTML = 'أول مرة — اختر كلمة سر سرية (٦ أحرف على الأقل).<br>لن تكون مكتوبة في أي مكان، احفظها كويس.';
+    if (btn) btn.textContent = '✓ حفظ ودخول';
+  } else {
+    if (title) title.textContent = '🔑 كلمة السر السرية';
+    if (sub) sub.innerHTML = 'أدخل كلمة السر السرية الخاصة بك للمتابعة';
+    if (btn) btn.textContent = '✓ دخول';
+  }
+  const inp = document.getElementById('adminPpInput');
+  if (inp) inp.value = '';
+  const box = document.getElementById('adminPpMsgBox'); if (box) box.style.display = 'none';
+  document.getElementById('adminPpOverlay').classList.add('open');
+  setTimeout(() => { if (inp) inp.focus(); }, 200);
+}
+function _showAdminPpMsg(msg) {
+  const box = document.getElementById('adminPpMsgBox');
+  if (!box) return;
+  box.textContent = msg; box.style.display = 'block';
+  box.style.background = '#fef2f2'; box.style.color = '#dc2626'; box.style.border = '1px solid #fecaca';
+}
+function verifyAdminPp() {
+  const inp = document.getElementById('adminPpInput');
+  const entered = (inp && inp.value ? inp.value : '').trim();
+  if (!entered) { _showAdminPpMsg('أدخل كلمة السر السرية'); return; }
+  const isSetup = !ADMIN_PP_HASH;
+  if (isSetup) {
+    if (entered.length < 6) { _showAdminPpMsg('كلمة السر قصيرة — ٦ أحرف على الأقل'); return; }
+    ADMIN_PP_HASH = _hashPw(entered);
+    saveData('zz_admin_pp', ADMIN_PP_HASH);
+    if (db) db.ref('config/admin_pp').set(ADMIN_PP_HASH).catch(() => {});
+  } else {
+    if (_hashPw(entered) !== ADMIN_PP_HASH) {
+      if (inp) { inp.style.border = '2px solid #dc2626'; setTimeout(() => { inp.style.border = ''; }, 600); inp.value = ''; inp.focus(); }
+      _showAdminPpMsg('❌ كلمة السر السرية غير صحيحة');
+      return;
+    }
+  }
+  // ✅ صح — أكمل الدخول (نفس منطق الدخول الأصلي)
+  const role = _adminPpRole;
+  _adminPpRole = null;
+  if (inp) inp.value = '';
+  document.getElementById('adminPpOverlay').classList.remove('open');
+  _completeStaffLogin(role);
+}
+function cancelAdminPp() {
+  _adminPpRole = null;
+  const inp = document.getElementById('adminPpInput'); if (inp) inp.value = '';
+  document.getElementById('adminPpOverlay').classList.remove('open');
+  showScreen('adminLogin');
 }
 
 function _startAdminOtp(role) {
@@ -6932,6 +7047,9 @@ function saveAllSettings() {
   if (_np2 && /^\d{4}$/.test(_np2)) { STAFF_PINS.cashier2 = _np2; document.getElementById('newPinCashier2').value=''; _pinChanged = true; }
   if (_npp && /^\d{4}$/.test(_npp)) { STAFF_PINS.pickup = _npp; document.getElementById('newPinPickup').value=''; _pinChanged = true; }
   if (_pinChanged) { saveData('zz_staff_pins', STAFF_PINS); if (db) db.ref('config/staff_pins').set(STAFF_PINS); }
+  // حفظ رقم الإدارة لاستعادة كلمة السر
+  const _rp = (document.getElementById('newRecoveryPhone')?.value || '').trim().replace(/[^0-9]/g,'');
+  if (_rp && _rp.length >= 10) { RECOVERY_PHONE = _rp; saveData('zz_recovery_phone', RECOVERY_PHONE); if (db) db.ref('config/recovery_phone').set(RECOVERY_PHONE); document.getElementById('newRecoveryPhone').value=''; }
   showNotif('✓ تم حفظ كل الإعدادات');
 }
 
@@ -9435,6 +9553,20 @@ function setupFirebaseListeners() {
       }
     }
   });
+  // مزامنة كلمة السر السرية للأدمن (مشفّرة)
+  db.ref('config/admin_pp').on('value', snap => {
+    if (snap.exists() && fbConnected) {
+      const h = snap.val();
+      if (h) { ADMIN_PP_HASH = h; saveData('zz_admin_pp', h); }
+    }
+  });
+  // مزامنة رقم الإدارة لاستعادة كلمة السر
+  db.ref('config/recovery_phone').on('value', snap => {
+    if (snap.exists() && fbConnected) {
+      const p = snap.val();
+      if (p) { RECOVERY_PHONE = String(p); saveData('zz_recovery_phone', RECOVERY_PHONE); }
+    }
+  });
   db.ref('settings').on('value', snap => {
     if (snap.exists() && fbConnected) {
       const fbSettings = snap.val();
@@ -10655,6 +10787,8 @@ function openSecurityModal(action) {
 }
 
 function _renderSecStep1() {
+  // تغيير باسورد الأدمن: يتطلب الكلمة السرية + OTP معاً (الاثنان إجباري)
+  if (_secAction === 'admin_pass') { _renderSecAdminPp(); return; }
   const phone = getSecOtpPhone();
   const masked = '+' + phone.slice(0,3) + '****' + phone.slice(-4);
   document.getElementById('secModalContent').innerHTML = `
@@ -10672,6 +10806,27 @@ function _renderSecStep1() {
     </div>`;
 }
 
+// خطوة الكلمة السرية قبل OTP (لتغيير باسورد الأدمن)
+function _renderSecAdminPp() {
+  document.getElementById('secModalContent').innerHTML = `
+    <div style="background:var(--olive-ultra);border-radius:10px;padding:12px 14px;margin-bottom:16px;font-size:12px;color:var(--olive-dark);line-height:1.7">🔒 تغيير باسورد المدير يتطلب التحقق بخطوتين معاً: كلمة السر السرية ثم كود OTP.</div>
+    <div style="font-size:13px;font-weight:800;color:var(--dark);margin-bottom:8px">الخطوة 1 من 2 — كلمة السر السرية</div>
+    <input type="password" id="secPpInput" placeholder="كلمة السر السرية" autocomplete="off"
+      style="width:100%;padding:13px;font-size:15px;border:2px solid var(--border);border-radius:12px;outline:none;box-sizing:border-box;margin-bottom:14px;text-align:center"
+      onkeydown="if(event.key==='Enter')_secVerifyPp()"/>
+    <button onclick="_secVerifyPp()" class="btn-primary">التالي ←</button>`;
+  setTimeout(() => document.getElementById('secPpInput')?.focus(), 300);
+}
+function _secVerifyPp() {
+  const entered = document.getElementById('secPpInput')?.value?.trim();
+  if (!entered) { showNotif('❌ أدخل كلمة السر السرية'); return; }
+  if (!ADMIN_PP_HASH || _hashPw(entered) !== ADMIN_PP_HASH) {
+    const el = document.getElementById('secPpInput'); if (el) el.style.border = '2px solid var(--red)';
+    showNotif('❌ كلمة السر السرية غير صحيحة'); return;
+  }
+  // ✅ الكلمة السرية صح — انتقل لكود OTP (الخطوة 2)
+  _secSendOTP();
+}
 function _secSendOTP() {
   _secOtpCode = String(Math.floor(100000 + Math.random() * 900000));
   const phone = getSecOtpPhone();
