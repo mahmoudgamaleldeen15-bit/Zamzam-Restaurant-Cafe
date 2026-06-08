@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>دليل تثبيت وتسجيل تطبيق زمزم</title>
+<style>
+  :root{--olive:#4A7C1F;--olive-dark:#3a6318;--olive-light:#6aa83a;--cream:#f7f4ec;--gold:#e8a800;--dark:#2b2b2b;--muted:#777;--border:#e3ddd0;--red:#dc2626;--green:#16a34a;--blue:#2563eb;}
+  *{margin:0;padding:0;box-sizing:border-box;font-family:'Segoe UI',Tahoma,sans-serif;}
+  body{background:var(--cream);color:var(--dark);line-height:1.7;padding:0 0 40px;}
+  .hero{background:linear-gradient(135deg,var(--olive-dark),var(--olive-light));color:#fff;padding:34px 20px 28px;text-align:center;border-radius:0 0 28px 28px;box-shadow:0 8px 30px rgba(74,124,31,.3);}
+  .hero .logo{width:74px;height:74px;background:#fff;border-radius:20px;margin:0 auto 12px;display:flex;align-items:center;justify-content:center;font-size:40px;box-shadow:0 6px 18px rgba(0,0,0,.2);}
+  .hero h1{font-size:23px;font-weight:800;margin-bottom:6px;}
+  .hero p{font-size:14px;opacity:.95;}
+  .wrap{max-width:760px;margin:0 auto;padding:0 16px;}
+  .tabs{display:flex;gap:10px;margin:22px 0 18px;}
+  .tab{flex:1;text-align:center;padding:14px;border-radius:16px;font-size:16px;font-weight:800;cursor:pointer;background:#fff;border:2px solid var(--border);transition:.2s;}
+  .tab.active{background:var(--olive);color:#fff;border-color:var(--olive);box-shadow:0 6px 16px rgba(74,124,31,.3);}
+  .section{display:none;}
+  .section.active{display:block;animation:fade .3s;}
+  @keyframes fade{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+  .step{background:#fff;border-radius:18px;padding:18px;margin-bottom:16px;box-shadow:0 3px 14px rgba(0,0,0,.06);border:1px solid var(--border);}
+  .step-head{display:flex;align-items:center;gap:12px;margin-bottom:12px;}
+  .step-num{width:38px;height:38px;border-radius:50%;background:var(--olive);color:#fff;font-size:18px;font-weight:800;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+  .step-title{font-size:16px;font-weight:800;color:var(--olive-dark);}
+  .step-body{font-size:14.5px;color:#444;}
+  .step-body b{color:var(--olive-dark);}
+  /* رسم موك للموبايل */
+  .phone{max-width:230px;margin:14px auto 4px;background:#1c1c1c;border-radius:26px;padding:8px;box-shadow:0 10px 30px rgba(0,0,0,.25);}
+  .screen{background:#fff;border-radius:18px;overflow:hidden;}
+  .sbar{background:var(--olive-dark);color:#fff;font-size:9px;padding:4px 12px;display:flex;justify-content:space-between;}
+  .appbar{background:linear-gradient(135deg,var(--olive),var(--olive-light));color:#fff;padding:12px;text-align:center;font-size:13px;font-weight:800;}
+  .scr-body{padding:14px 12px;min-height:120px;}
+  .fld{background:#f3f0e8;border:1px solid var(--border);border-radius:8px;padding:8px 10px;font-size:11px;color:#555;margin-bottom:8px;text-align:right;}
+  .btn{background:var(--olive);color:#fff;border-radius:8px;padding:9px;font-size:12px;font-weight:800;text-align:center;margin-top:4px;}
+  .otp-row{display:flex;gap:6px;justify-content:center;direction:ltr;margin:6px 0;}
+  .otp-box{width:30px;height:36px;border:2px solid var(--olive);border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:800;color:var(--olive-dark);background:#fff;}
+  .otp-box.empty{border-color:var(--border);color:#bbb;}
+  .menu-i{flex:1;text-align:center;background:#f3f0e8;border-radius:8px;padding:8px 4px;font-size:9px;}
+  .caption{text-align:center;font-size:11.5px;color:var(--muted);margin-top:6px;}
+  /* تلميح مميز */
+  .tip{border-radius:12px;padding:12px 14px;font-size:13.5px;margin-top:10px;display:flex;gap:9px;align-items:flex-start;}
+  .tip.warn{background:#fff7ed;border:1.5px solid #fed7aa;color:#9a3412;}
+  .tip.ok{background:#f0fdf4;border:1.5px solid #bbf7d0;color:#166534;}
+  .tip .ic{font-size:18px;flex-shrink:0;}
+  .pulse{display:inline-block;background:var(--gold);color:#fff;border-radius:6px;padding:1px 7px;font-size:11px;font-weight:800;}
+  .big-arrow{text-align:center;font-size:22px;color:var(--olive);margin:-4px 0 6px;}
+  .footer{text-align:center;font-size:12.5px;color:var(--muted);margin-top:24px;padding-top:18px;border-top:1px dashed var(--border);}
+  .share{display:inline-block;font-size:11px;}
+</style>
+</head>
+<body>
+  <div class="hero">
+    <div class="logo">🍽️</div>
+    <h1>دليل تثبيت وتسجيل تطبيق زمزم</h1>
+    <p>خطوات بسيطة بالصور — للأندرويد والآيفون</p>
+  </div>
+
+  <div class="wrap">
+    <div class="tabs">
+      <div class="tab active" onclick="showTab('android',this)">🤖 أندرويد</div>
+      <div class="tab" onclick="showTab('iphone',this)">🍎 آيفون</div>
+    </div>
+
+    <!-- ============ ANDROID ============ -->
+    <div class="section active" id="android">
+
+      <div class="step">
+        <div class="step-head"><div class="step-num">1</div><div class="step-title">افتح الرابط في Chrome</div></div>
+        <div class="step-body">افتح رابط التطبيق من خلال متصفح <b>Chrome</b> (المتصفح الأخضر/الملوّن). تأكد إنك مش فاتحه جوّه واتساب أو فيسبوك.</div>
+        <div class="tip ok"><span class="ic">✅</span><div>لو فتح جوّه واتساب، اضغط على <b>⋮</b> (الثلاث نقط فوق) واختر <b>«فتح في Chrome»</b>.</div></div>
+      </div>
+
+      <div class="step">
+        <div class="step-head"><div class="step-num">2</div><div class="step-title">سجّل حسابك في التطبيق</div></div>
+        <div class="step-body">هتلاقي شاشة التسجيل — اكتب اسمك ورقم تليفونك واختار كلمة سر، واضغط <b>تسجيل</b>.</div>
+        <div class="phone"><div class="screen">
+          <div class="sbar"><span>9:41</span><span>📶 🔋</span></div>
+          <div class="appbar">🍽️ زمزم — إنشاء حساب</div>
+          <div class="scr-body">
+            <div class="fld">👤 الاسم</div>
+            <div class="fld">📱 رقم الموبايل</div>
+            <div class="fld">🔒 كلمة السر</div>
+            <div class="btn">تسجيل</div>
+          </div>
+        </div></div>
+        <div class="caption">شاشة إنشاء الحساب</div>
+      </div>
+
+      <div class="step">
+        <div class="step-head"><div class="step-num">3</div><div class="step-title">ثبّت التطبيق على الشاشة الرئيسية</div></div>
+        <div class="step-body">هتظهرلك رسالة <span class="pulse">تثبيت التطبيق</span> في أسفل الشاشة — اضغط عليها.<br>لو مظهرتش، اضغط <b>⋮</b> (فوق) ← <b>«تثبيت التطبيق»</b> أو <b>«إضافة إلى الشاشة الرئيسية»</b>.</div>
+        <div class="phone"><div class="screen">
+          <div class="sbar"><span>9:41</span><span>📶 🔋</span></div>
+          <div class="appbar">🍽️ زمزم</div>
+          <div class="scr-body" style="min-height:80px">
+            <div style="display:flex;gap:6px"><div class="menu-i">🍔<br>برجر</div><div class="menu-i">🍕<br>بيتزا</div><div class="menu-i">🥤<br>مشروبات</div></div>
+          </div>
+          <div style="background:#fff;border-top:1px solid var(--border);padding:9px;display:flex;align-items:center;gap:8px">
+            <div style="width:26px;height:26px;background:var(--olive);border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:13px">🍽️</div>
+            <div style="flex:1;font-size:10px;font-weight:700">تثبيت تطبيق زمزم؟</div>
+            <div style="background:var(--olive);color:#fff;font-size:10px;font-weight:800;padding:5px 10px;border-radius:6px">تثبيت</div>
+          </div>
+        </div></div>
+        <div class="caption">اضغط زر «تثبيت» الأخضر</div>
+        <div class="tip ok"><span class="ic">🎉</span><div>بعد الضغط، هتلاقي <b>أيقونة زمزم</b> ظهرت على شاشة موبايلك زي أي تطبيق عادي — تقدر تفتحه منها على طول.</div></div>
+      </div>
+
+    </div>
+
+    <!-- ============ IPHONE ============ -->
+    <div class="section" id="iphone">
+
+      <div class="step">
+        <div class="step-head"><div class="step-num">1</div><div class="step-title">افتح الرابط في Safari</div></div>
+        <div class="step-body">على الآيفون <b>لازم</b> تفتح الرابط في متصفح <b>Safari</b> (الأزرق 🧭) — التثبيت مش هيشتغل في Chrome أو جوّه واتساب.</div>
+        <div class="tip warn"><span class="ic">⚠️</span><div>لو فتحته جوّه واتساب، اضغط زر <b>المشاركة</b> أو <b>⋯</b> واختر <b>«فتح في Safari»</b>.</div></div>
+      </div>
+
+      <div class="step">
+        <div class="step-head"><div class="step-num">2</div><div class="step-title">سجّل حسابك</div></div>
+        <div class="step-body">اكتب اسمك ورقمك وكلمة السر، واضغط <b>تسجيل</b>.</div>
+      </div>
+
+      <!-- مشكلة الـ OTP -->
+      <div class="step" style="border:2px solid var(--gold)">
+        <div class="step-head"><div class="step-num" style="background:var(--gold)">3</div><div class="step-title" style="color:#9a6800">إدخال كود التأكيد (OTP) — مهم للآيفون!</div></div>
+        <div class="step-body">بعد التسجيل هيتبعتلك كود من <b>4 أرقام</b>. ارجع للتطبيق هتلاقي <b>4 خانات</b> فاضية — اكتب الكود فيهم.</div>
+
+        <div class="tip warn"><span class="ic">🩹</span><div><b>لو الصفحة طلعت بيضاء أو الخانات مش ظاهرة:</b><br>اضغط زر <b>الرجوع (السهم لليسار ‹)</b> مرة واحدة في Safari تحت — الخانات هتظهر على طول. دي حاجة طبيعية في الآيفون.</div></div>
+
+        <div class="phone"><div class="screen">
+          <div class="sbar"><span>9:41</span><span>📶 🔋</span></div>
+          <div class="appbar">🔐 أدخل كود التأكيد</div>
+          <div class="scr-body" style="text-align:center">
+            <div style="font-size:10px;color:#777;margin-bottom:8px">تم إرسال الكود على رقمك</div>
+            <div class="otp-row">
+              <div class="otp-box">1</div><div class="otp-box">5</div><div class="otp-box empty">_</div><div class="otp-box empty">_</div>
+            </div>
+            <div class="btn" style="margin-top:10px">تأكيد</div>
+          </div>
+        </div></div>
+        <div class="caption">اكتب الـ 4 أرقام ثم اضغط «تأكيد»</div>
+      </div>
+
+      <div class="step">
+        <div class="step-head"><div class="step-num">4</div><div class="step-title">ثبّت التطبيق على الشاشة</div></div>
+        <div class="step-body">بعد الدخول، اضغط زر <b>المشاركة</b> (المربع اللي فيه سهم لفوق ⬆️) أسفل Safari.</div>
+        <div class="big-arrow">⬇️</div>
+        <div class="step-body">انزل في القائمة واختر <b>«إضافة إلى الشاشة الرئيسية»</b> (Add to Home Screen) ← ثم <b>«إضافة»</b>.</div>
+        <div class="phone"><div class="screen">
+          <div class="sbar"><span>9:41</span><span>📶 🔋</span></div>
+          <div class="appbar">مشاركة</div>
+          <div class="scr-body" style="padding:8px">
+            <div class="fld" style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">📋 نسخ &nbsp; <span>⧉</span></div>
+            <div class="fld" style="display:flex;justify-content:space-between;align-items:center;background:#eafbe0;border-color:var(--olive)"><b style="color:var(--olive-dark)">➕ إضافة إلى الشاشة الرئيسية</b> <span>＋</span></div>
+            <div class="fld" style="display:flex;justify-content:space-between;align-items:center">🔖 إضافة إشارة مرجعية &nbsp; <span>📑</span></div>
+          </div>
+        </div></div>
+        <div class="caption">اختر «إضافة إلى الشاشة الرئيسية»</div>
+        <div class="tip ok"><span class="ic">🎉</span><div>هتلاقي <b>أيقونة زمزم</b> ظهرت على شاشة الآيفون — افتحها منها زي أي تطبيق.</div></div>
+      </div>
+
+    </div>
+
+    <div class="footer">
+      🍽️ <b>مطعم وكافيه زمزم</b><br>
+      لأي مساعدة في التثبيت، تواصل معنا وهنساعدك خطوة بخطوة 💚
+    </div>
+  </div>
+
+<script>
+  function showTab(id,el){
+    document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
+    document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+    document.getElementById(id).classList.add('active');
+    el.classList.add('active');
+    window.scrollTo({top:0,behavior:'smooth'});
+  }
+</script>
+</body>
+</html>
