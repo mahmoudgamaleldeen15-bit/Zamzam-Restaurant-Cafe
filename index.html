@@ -1030,7 +1030,9 @@ input,select,textarea{font-family:inherit;}
       </div>
       <div class="field"><label>الاسم بالكامل</label><input type="text" id="regName" placeholder="أدخل اسمك الكامل"/></div>
       <div class="field"><label>رقم الهاتف</label><input type="tel" id="regPhone" placeholder="01xxxxxxxxx" inputmode="tel"/></div>
+      <div id="regPhoneErr" style="display:none;color:var(--red);font-size:12.5px;font-weight:700;margin:-10px 0 12px 2px">⚠️ رقم موبايل غير صحيح</div>
       <div class="field"><label>رقم الواتساب ⭐ (إجبارى)</label><input type="tel" id="regWhatsapp" placeholder="01xxxxxxxxx" inputmode="tel"/></div>
+      <div id="regWaErr" style="display:none;color:var(--red);font-size:12.5px;font-weight:700;margin:-10px 0 12px 2px">⚠️ رقم واتساب غير صحيح</div>
       <div class="field"><label>العنوان (اختيارى)</label><input type="text" id="regAddress" placeholder="الشارع، الحى"/></div>
       <div class="field"><label>🔒 كلمة السر</label><input type="password" id="regPass" placeholder="اختر كلمة سر (4 أحرف على الأقل)" autocomplete="new-password"/></div>
       <div class="field"><label>🔒 تأكيد كلمة السر</label><input type="password" id="regPass2" placeholder="أعد كتابة كلمة السر" autocomplete="new-password"/></div>
@@ -3911,6 +3913,31 @@ async function doRegister() {
   const addr = document.getElementById('regAddress').value.trim();
   if (!name || !phone) { showNotif('يرجى ملء الاسم ورقم الهاتف'); return; }
   if (!wa) { showNotif('⚠️ رقم الواتساب إجبارى'); return; }
+  // ✅ التحقق من شكل رقم الموبايل المصري (11 رقم ويبدأ بـ 010/011/012/015) — إنشاء الحساب فقط
+  // إخفاء أي رسائل خطأ قديمة أول كل محاولة
+  const _phoneEl = document.getElementById('regPhone');
+  const _waEl = document.getElementById('regWhatsapp');
+  const _phoneErr = document.getElementById('regPhoneErr');
+  const _waErr = document.getElementById('regWaErr');
+  if (_phoneErr) _phoneErr.style.display = 'none';
+  if (_waErr) _waErr.style.display = 'none';
+  if (_phoneEl) _phoneEl.style.borderColor = '';
+  if (_waEl) _waEl.style.borderColor = '';
+  const _regPhoneClean = phone.replace(/[^0-9]/g,'');
+  if (!/^01[0125][0-9]{8}$/.test(_regPhoneClean)) {
+    if (_phoneErr) _phoneErr.style.display = 'block';
+    if (_phoneEl) { _phoneEl.style.borderColor = 'var(--red)'; _phoneEl.focus(); _phoneEl.scrollIntoView({behavior:'smooth', block:'center'}); }
+    showNotif('⚠️ رقم موبايل غير صحيح');
+    return;
+  }
+  // ✅ التحقق من شكل رقم الواتساب المصري (11 رقم ويبدأ بـ 010/011/012/015) — إنشاء الحساب فقط
+  const _regWaClean = wa.replace(/[^0-9]/g,'');
+  if (!/^01[0125][0-9]{8}$/.test(_regWaClean)) {
+    if (_waErr) _waErr.style.display = 'block';
+    if (_waEl) { _waEl.style.borderColor = 'var(--red)'; _waEl.focus(); _waEl.scrollIntoView({behavior:'smooth', block:'center'}); }
+    showNotif('⚠️ رقم واتساب غير صحيح');
+    return;
+  }
   // Check if phone already registered — local first
   const INVALID_NAMES_REG = ['عميل', 'مجهول', 'زائر', 'guest', 'unknown', ''];
   const users = loadData('zz_users', []);
@@ -3941,7 +3968,66 @@ async function doRegister() {
   if (!pass || pass.length < 4) { showNotif('🔒 اختر كلمة سر (4 أحرف على الأقل)'); return; }
   if (pass !== pass2) { showNotif('🔒 كلمتا السر غير متطابقتين'); return; }
   const user = { name, phone, whatsapp: wa, address: addr, password: _hashPw(pass), verified: false };
-  startOTP(wa, 'register', user);
+  _completeRegisterNoOtp(user);
+}
+
+// ===== إنشاء الحساب بدون OTP — يكمل التسجيل مباشرة (نفس منطق verifyOTP للتسجيل، بدون كود تحقق) =====
+function _completeRegisterNoOtp(userData) {
+  currentUser = { ...userData, verified: true };
+  // فحص الحظر (نفس فحص verifyOTP بالضبط)
+  const _checkPhone = (currentUser.phone||'').replace(/[^0-9]/g,'');
+  const _isBlocked = BLOCKED_USERS[_checkPhone] || BLOCKED_USERS['0'+_checkPhone.slice(1)] || BLOCKED_USERS['2'+_checkPhone];
+  if (_isBlocked) {
+    currentUser = null;
+    showScreen('auth');
+    const bm = document.getElementById('blockedUserMsg');
+    if (bm) bm.innerHTML = 'هذا الحساب غير مسموح له بالدخول حالياً.' + (_isBlocked.reason ? `<br/><span style="font-size:12px;opacity:.7">السبب: ${_isBlocked.reason}</span>` : '');
+    const bov = document.getElementById('blockedUserOverlay');
+    if (bov) bov.classList.add('show');
+    showNotif('🚫 تم تقييد وصول هذا الحساب');
+    return;
+  }
+  const savedVerified = loadData('zz_verified_phones', {});
+  const _phone = currentUser.phone || '';
+  const _clean = _phone.replace(/[^0-9]/g,'');
+  savedVerified[_phone] = true;
+  savedVerified[_clean] = true;
+  if (_clean.startsWith('2')) savedVerified['0' + _clean.slice(1)] = true;
+  try { sessionStorage.setItem('zz_verified_session', _clean); } catch(e){}
+  if (_clean.startsWith('0')) savedVerified['2' + _clean] = true;
+  saveData('zz_verified_phones', savedVerified);
+  const INVALID_NAMES_MERGE = ['عميل', 'مجهول', 'زائر', 'guest', 'unknown', ''];
+  const users = loadData('zz_users', []);
+  const existIdx = users.findIndex(u => (u.phone||'').replace(/[^0-9]/g,'') === (currentUser.phone||'').replace(/[^0-9]/g,''));
+  if (existIdx >= 0) {
+    const oldName = (users[existIdx].name||'').trim();
+    const newName = (currentUser.name||'').trim();
+    const oldNameValid = oldName && !INVALID_NAMES_MERGE.includes(oldName.toLowerCase());
+    const newNameValid = newName && !INVALID_NAMES_MERGE.includes(newName.toLowerCase());
+    const mergedUser = { ...users[existIdx], ...currentUser };
+    mergedUser.name = newNameValid ? newName : (oldNameValid ? oldName : newName);
+    users[existIdx] = mergedUser;
+    currentUser = { ...users[existIdx] };
+  } else {
+    users.push({ ...currentUser, registeredAt: new Date().toLocaleDateString('ar-EG') });
+  }
+  saveData('zz_users', users);
+  saveData('zamzam_user', currentUser);
+  // احترام زر "تذكّرني" الخاص بشاشة التسجيل (rememberToggle2) — نفس منطق verifyOTP
+  const rememberEl = document.getElementById('rememberToggle2');
+  if (rememberEl && !rememberEl.classList.contains('on')) {
+    const sessionMeta = loadData('zz_session_meta', {});
+    sessionMeta.temporary = true;
+    saveData('zz_session_meta', sessionMeta);
+  } else {
+    const sessionMeta = loadData('zz_session_meta', {});
+    sessionMeta.temporary = false;
+    saveData('zz_session_meta', sessionMeta);
+  }
+  const phoneKey = (currentUser.phone||'').replace(/[^0-9]/g,'');
+  if (phoneKey) fbSet('users/' + phoneKey, { ...currentUser, verified: true, registeredAt: users[existIdx >= 0 ? existIdx : users.length-1]?.registeredAt || new Date().toLocaleDateString('ar-EG') });
+  showNotif('✅ تم إنشاء حسابك بنجاح — أهلاً ' + currentUser.name);
+  getGPS(); _goToAppOrTracking();
 }
 
 function startOTP(waNumber, type, userData) {
