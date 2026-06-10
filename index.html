@@ -665,6 +665,7 @@ input,select,textarea{font-family:inherit;}
 .cashier-popup-header{padding:16px 20px;display:flex;align-items:center;gap:12px;}
 .cashier-popup-header.new-order{background:linear-gradient(135deg,#1a5fc8,#2176e0);}
 .cashier-popup-header.ready-order{background:linear-gradient(135deg,#16a34a,#22c55e);}
+.cashier-popup-header.cancelled-order{background:linear-gradient(135deg,#c81a1a,#e03030);}
 .cashier-popup-icon{width:48px;height:48px;border-radius:50%;background:rgba(255,255,255,.2);display:flex;align-items:center;justify-content:center;font-size:24px;flex-shrink:0;animation:pulse 1s infinite;}
 .cashier-popup-title{color:#fff;font-size:16px;font-weight:900;}
 .cashier-popup-subtitle{color:rgba(255,255,255,.85);font-size:12px;margin-top:2px;}
@@ -676,6 +677,7 @@ input,select,textarea{font-family:inherit;}
 .cashier-popup-btn{width:100%;padding:15px;font-size:15px;font-weight:800;color:#fff;border:none;cursor:pointer;transition:.15s;}
 .cashier-popup-btn.btn-blue{background:linear-gradient(135deg,#1a5fc8,#2176e0);}
 .cashier-popup-btn.btn-green{background:linear-gradient(135deg,#16a34a,#22c55e);}
+.cashier-popup-btn.btn-red{background:linear-gradient(135deg,#c81a1a,#e03030);}
 .cashier-popup-btn:active{opacity:.9;transform:scale(.99);}
 @keyframes cashierSlideIn{from{transform:translateY(-40px);opacity:0}to{transform:translateY(0);opacity:1}}
 .cashier-popup-card{animation:cashierSlideIn .35s ease;}
@@ -1230,6 +1232,10 @@ input,select,textarea{font-family:inherit;}
       </div>
       <div id="paymentDetails" style="display:none;margin-bottom:10px"></div>
 
+      <!-- ===== ملاحظات على الطلب (اختياري) ===== -->
+      <div style="font-size:12px;font-weight:800;color:var(--text-muted);margin:12px 0 8px;text-transform:uppercase">📝 ملاحظات على الطلب (اختياري)</div>
+      <textarea id="orderNotes" placeholder="مثال: بدون بصل — الكريب بدون مايونيز — تتبيلة خفيفة" maxlength="300" style="width:100%;min-height:54px;padding:10px 12px;border:1.5px solid var(--border);border-radius:10px;font-size:14px;background:var(--white);outline:none;box-sizing:border-box;font-family:inherit;resize:vertical;margin-bottom:6px"></textarea>
+
       <!-- ===== الملخص ===== -->
       <div class="cart-summary" id="cartSummary"></div>
     </div>
@@ -1315,6 +1321,10 @@ input,select,textarea{font-family:inherit;}
         <div class="status-step"><div class="step-dot" id="track3">✅</div><div class="step-info"><div class="st">الطلب جاهز</div><div class="sd" id="track3t">—</div></div></div>
         <div class="status-step"><div class="step-dot" id="track4">🛵</div><div class="step-info"><div class="st">خرج للتوصيل</div><div class="sd" id="track4t">—</div></div></div>
         <div class="status-step"><div class="step-dot" id="track5">🎉</div><div class="step-info"><div class="st">تم التسليم</div><div class="sd" id="track5t">—</div></div></div>
+      </div>
+      <div id="clientCancelBtnBox" style="display:none;margin-top:14px">
+        <button onclick="cancelActiveClientOrder()" style="width:100%;padding:12px;background:#fff0f0;color:var(--red);border-radius:12px;font-size:14px;font-weight:800;border:2px solid var(--red);cursor:pointer">❌ إلغاء الطلب</button>
+        <div style="font-size:11px;color:var(--text-muted);text-align:center;margin-top:6px">تقدر تلغي طالما الكاشير لسه ما بدأش التجهيز</div>
       </div>
     </div>
     <div id="delayMsgBox" style="display:none;background:linear-gradient(135deg,#ff7043,#e53935);border-radius:14px;padding:16px;color:#fff;margin-bottom:16px">
@@ -4899,6 +4909,8 @@ function placeOrder() {
     if (!wNumCheck) { showNotif('❌ أدخل رقم محفظتك اللي حولت منها'); return; }
   }
   const clientWalletNum = isElectronicPayment ? (document.getElementById('clientWalletNum')?.value?.trim() || '') : '';
+  const orderNotes = (document.getElementById('orderNotes')?.value || '').trim();
+  const notesLine = orderNotes ? `\n📝 *ملاحظات العميل:* ${orderNotes}` : '';
   const msg = `🍽️ *طلب جديد — #${orderNum}*
 ━━━━━━━━━━━━━━━━━━━━━
 👤 *الاسم:* ${currentUser?.name || loadData('zamzam_user',{}).name || 'زائر'}
@@ -4909,7 +4921,7 @@ ${address ? `🏠 *العنوان:* ${address}` : ''}${detailedAddressLine}
 🛒 *تفاصيل الطلب:*
 ${itemsLines}
 ━━━━━━━━━━━━━━━━━━━━━
-🚚 *نوع الطلب:* ${orderTypeMap[deliveryType] || deliveryType}${tableNum ? '\n🪑 رقم الترابيزة: ' + tableNum : ''}${zoneLine}
+🚚 *نوع الطلب:* ${orderTypeMap[deliveryType] || deliveryType}${tableNum ? '\n🪑 رقم الترابيزة: ' + tableNum : ''}${zoneLine}${notesLine}
 💳 *الدفع:* ${payMethodDetails}${clientWalletNum ? `
 📱 *رقم محفظة العميل:* ${clientWalletNum}` : ''}${gpsLine}
 ━━━━━━━━━━━━━━━━━━━━━
@@ -4918,11 +4930,13 @@ ${totalDisc > 0 ? `🏷️ الخصم: - ${totalDisc} ج.م\n` : ''}${deliveryFe
 ━━━━━━━━━━━━━━━━━━━━━
 ⏱️ سيتم تحديد وقت التوصيل المتوقع من قِبل الكاشير
 🕐 ${new Date().toLocaleString('ar-EG')}${lastOrderNote}`;
+  // 🎟️ لا نُسجّل استخدام العرض الآن — نخزّن قائمة مفاتيح العروض فقط، وتُسجّل لاحقاً عند التأكيد النهائي
+  // (عشان لو العميل عدّل أو ألغى الطلب ما يتحرقش العرض عليه بالغلط)
+  const _offerKeysToBurn = [];
   OFFERS.filter(o => o.oneTime && isOfferValid(o)).forEach(o => {
-    if (currentUser?.phone) usedOffers[currentUser.phone + '_' + o.id] = true;
+    if (currentUser?.phone) _offerKeysToBurn.push(currentUser.phone + '_' + o.id);
   });
-  if (appliedCouponId && currentUser?.phone) usedOffers[currentUser.phone + '_' + appliedCouponId] = true;
-  saveData('zz_used_offers', usedOffers);
+  if (appliedCouponId && currentUser?.phone) _offerKeysToBurn.push(currentUser.phone + '_' + appliedCouponId);
   const now = new Date();
   const newOrder = {
     id: orderNum, name: currentUser?.name || loadData('zamzam_user',{}).name || 'زائر', phone: currentUser?.phone || '—',
@@ -4942,8 +4956,10 @@ ${totalDisc > 0 ? `🏷️ الخصم: - ${totalDisc} ج.م\n` : ''}${deliveryFe
     isElectronicPayment,
     selectedWalletId: _selectedWallet?.id || null,
     selectedWalletName: _selectedWallet?.name || null,
-    clientWalletNum
+    clientWalletNum,
+    notes: orderNotes
   };
+  newOrder._offersToBurn = _offerKeysToBurn; // 🎟️ تُسجّل عند التأكيد النهائي فقط
   ordersData.unshift(newOrder);
   saveData('zz_orders', ordersData);
   // 🔥 حفظ الطلب في Firebase مؤجل — لن يُرسل للكاشير إلا بعد تأكيد العميل النهائي
@@ -4963,8 +4979,14 @@ ${totalDisc > 0 ? `🏷️ الخصم: - ${totalDisc} ج.م\n` : ''}${deliveryFe
   if (savedIdx !== -1) ordersData[savedIdx]._waMsg = msg;
   saveData('zz_orders', ordersData);
 
+  // 💳 أوردر الدفع الإلكتروني (محفظة/إنستاباي): يتبعت للكاشير فوراً بحالة "معلّق — في انتظار الدفع"
+  // عشان ما يضيعش لو العميل طلع من التطبيق يحوّل الفلوس قبل ما يخلص العدّاد
+  if (isElectronicPayment) {
+    fbSaveOrder(newOrder);
+  }
   cart = []; appliedDiscount = 0; appliedCouponId = null; selectedDeliveryZone = null;
   saveData('zz_current_cart', []);
+  const _notesEl = document.getElementById('orderNotes'); if (_notesEl) _notesEl.value = '';
   updateCartUI(); renderCartSheet(); closeSheet('cartSheet', null);
   openScreen('tracking');
   _startCustomerOrderTracking(currentOrderNum);
@@ -5040,6 +5062,9 @@ function updateTrackingStatus(status, outAt) {
 
   const payPendingBox = document.getElementById('paymentPendingBox');
   if (payPendingBox) payPendingBox.style.display = effectiveStatus === 'payment_pending' ? 'block' : 'none';
+  // ❌ زرار إلغاء الطلب: يظهر طالما الكاشير ما بدأش التجهيز (جديد أو دفع معلّق) ويختفي بعد كده
+  const clientCancelBox = document.getElementById('clientCancelBtnBox');
+  if (clientCancelBox) clientCancelBox.style.display = (effectiveStatus === 'new' || effectiveStatus === 'payment_pending') ? 'block' : 'none';
 
   for (let i = 1; i <= 5; i++) {
     const dot = document.getElementById('track' + i);
@@ -5657,7 +5682,7 @@ function renderAdminOrders() {
           </div>
           <div style="font-size:10px;color:var(--text-muted)">${o.phone} • ${o.time}</div>
         </div>
-        <div><span class="status-badge ${statusCls[o.status] || 's-new'}">${statusLabels[o.status] || o.status}</span></div>
+        <div><span class="status-badge ${statusCls[o.status] || 's-new'}">${statusLabels[o.status] || o.status}</span>${o.cancelledByClient ? '<br/><span style="font-size:9px;background:#fee2e2;color:#991b1b;padding:1px 5px;border-radius:4px;font-weight:800">🔴 ألغاه العميل</span>' : ''}</div>
         <div style="font-size:11px">${o.type === 'delivery' ? '🛵' : o.type === 'cafe' ? '☕' : '🏪'}</div>
         <div style="font-weight:800;color:var(--olive-dark);font-size:13px">${o.total} ج</div>
       </div>
@@ -5674,11 +5699,13 @@ function renderAdminOrders() {
         ` : ''}
         ${adminRoleType === 'admin' ? `<button class="action-btn btn-cancel" onclick="updateOrderStatus('${o.id}','cancelled')">❌ إلغاء</button>
           <button class="action-btn" style="background:#ffe3e3;color:#c81a1a;font-weight:900" onclick="deleteOrderAdmin('${o.id}')">🗑️ حذف نهائي</button>` : ''}
+        ${o.cancelledByClient && canManage ? `<button class="action-btn" style="background:#fee2e2;color:#991b1b;font-weight:900" onclick="hideCancelledOrder('${o.id}')">✓ إخفاء الطلب الملغى</button>` : ''}
         ${o.whatsapp ? `<button class="action-btn btn-wa" onclick="openWhatsApp('${o.whatsapp||o.phone||''}')">💬 واتساب</button>` : ''}
       </div>
       <div class="order-detail-panel" id="odetail_${o.id}">
         <div style="font-weight:800;margin-bottom:8px">📋 تفاصيل الطلب #${o.id}</div>
         <div style="margin-bottom:6px;line-height:1.6">${(o.items || []).map(i => `• ${i.emoji} ${i.name}${i.size ? ' ('+i.size+')' : ''}${i.spicyLabel ? ' — '+i.spicyLabel : ''} × ${i.qty} = ${i.price * i.qty} ج`).join('<br/>')}</div>
+        ${o.notes ? `<div style="background:#fff7ed;border:1.5px solid var(--gold);border-radius:10px;padding:9px 11px;margin-bottom:8px;font-size:13px;color:#9a3412">📝 <strong>ملاحظات العميل:</strong> <span style="font-weight:800">${o.notes}</span></div>` : ''}
         ${o.address ? `<div style="margin-bottom:4px">🏠 ${o.address}</div>` : ''}
         ${o.detailedAddress && (o.detailedAddress.street || o.detailedAddress.floor || o.detailedAddress.landmark) ? `
           <div style="background:var(--white);border:1.5px solid var(--olive-light);border-radius:10px;padding:10px;margin-bottom:6px">
@@ -6035,11 +6062,13 @@ function renderCashierSheet() {
       <td><span style="background:${statusBg};padding:3px 8px;border-radius:6px;font-size:10px;font-weight:800">${statusLabels[o.status]||o.status}</span>
         ${isPending ? `<br/><span style="font-size:9px;color:#92400e">${o.payment||''}</span>` : ''}
         ${o.deliveredByClient ? `<br/><span style="font-size:9px;background:#d1fae5;color:#065f46;padding:1px 5px;border-radius:4px;font-weight:800">✅ استلم العميل — ${o.clientReceivedTime||''}</span>` : ''}
+        ${o.cancelledByClient ? `<br/><span style="font-size:9px;background:#fee2e2;color:#991b1b;padding:1px 5px;border-radius:4px;font-weight:800">🔴 ألغاه العميل</span>` : ''}
       </td>
       <td style="white-space:nowrap">${o.time}</td>
       <td style="white-space:nowrap">${o.date || '—'}</td>
       <td onclick="event.stopPropagation()">
         ${canManage ? `<div class="track-btns">
+          ${o.cancelledByClient ? `<button class="track-btn" style="background:#fee2e2;color:#991b1b;font-weight:900;font-size:10px;padding:4px 8px" onclick="event.stopPropagation();hideCancelledOrder('${o.id}')" title="إخفاء الطلب الملغى">✓ إخفاء</button>` : ''}
           ${isPending ? `<button class="track-btn" style="background:#fef3c7;color:#92400e;font-weight:900;padding:4px 8px;font-size:10px" onclick="confirmOrderPayment('${o.id}')">💳 تأكيد</button>` : ''}
           ${!isPending ? `
           <button class="track-btn tb-prep ${o.status==='prep'?'active-state':''}" onclick="updateOrderStatus('${o.id}','prep')" title="بدأ التجهيز">🍳</button>
@@ -8875,6 +8904,24 @@ function openOrderReview(orderObj) {
   _pendingOrderForReview = orderObj;
   _reviewSecs = 90;
   document.getElementById('orderReviewOverlay').classList.add('open');
+  // 💳 لو الدفع إلكتروني (محفظة/إنستاباي): الطلب راح للكاشير فعلاً — نخفي زر "تأكيد وإرسال" ونسيب التعديل/الإلغاء فقط
+  //    لو كاش: النظام زي ما هو (زر التأكيد + التعديل + الإلغاء)
+  const _isElec = !!orderObj.isElectronicPayment;
+  const _confirmBtn = document.getElementById('reviewConfirmBtn');
+  const _rTitle = document.getElementById('reviewTitle');
+  const _rSub = document.getElementById('reviewSubtitle');
+  const _rCountLabel = document.getElementById('reviewCountdownLabel');
+  if (_isElec) {
+    if (_confirmBtn) _confirmBtn.style.display = 'none';
+    if (_rTitle) _rTitle.textContent = '✅ تم إرسال طلبك للكاشير';
+    if (_rSub) _rSub.textContent = 'تقدر تعدّل الطلب أو تلغيه طالما الكاشير لسه ما بدأش التجهيز';
+    if (_rCountLabel) _rCountLabel.textContent = 'ثانية متاحة للتعديل أو الإلغاء';
+  } else {
+    if (_confirmBtn) _confirmBtn.style.display = 'block';
+    if (_rTitle) _rTitle.textContent = 'في انتظار تأكيدك النهائي';
+    if (_rSub) _rSub.textContent = 'الطلب لم يُرسل للكاشير بعد — يمكنك تعديله أو إلغاؤه';
+    if (_rCountLabel) _rCountLabel.textContent = 'ثانية — بعدها يُرسل تلقائياً';
+  }
   const numEl = document.getElementById('reviewCountdownNum');
   if (numEl) numEl.textContent = _reviewSecs;
   // Update order info in overlay
@@ -8905,6 +8952,11 @@ function confirmFinalOrder() {
   const order = _pendingOrderForReview;
   // NOW send to Firebase — cashier sees it
   fbSaveOrder(order);
+  // 🎟️ الآن فقط نُسجّل أن العرض اتستخدم — بعد التأكيد النهائي وإرسال الطلب للكاشير
+  if (order._offersToBurn && order._offersToBurn.length) {
+    order._offersToBurn.forEach(k => { if (k) usedOffers[k] = true; });
+    saveData('zz_used_offers', usedOffers);
+  }
   // كسب نقاط الولاء — للكل أو VIP حسب الإعداد
   if (currentUser?.phone) {
     earnLoyaltyPoints(order.total || 0, currentUser.phone, currentUser.name || '');
@@ -8929,22 +8981,87 @@ function confirmFinalOrder() {
 function cancelOrderFromReview() {
   if (!_pendingOrderForReview) { closeOrderReview(); return; }
   const orderId = _pendingOrderForReview.id;
-  // Remove from ordersData (was never sent to Firebase)
-  ordersData = ordersData.filter(o => o.id !== orderId);
-  orderHistory = orderHistory.filter(o => o.id !== orderId);
-  saveData('zz_orders', ordersData);
-  saveData('zz_order_history', orderHistory);
-  // No need to fbRemove since we never sent it
-  currentOrderNum = null;
-  saveData('zz_current_order_num', null);
-  // مسح من Firebase
-  if (db && currentUser?.phone) {
-    const _ph = (currentUser.phone||'').replace(/[^0-9]/g,'');
-    db.ref('user_sessions/' + _ph + '/currentOrderNum').remove().catch(()=>{});
+
+  // تنفيذ الإلغاء محلياً (تنظيف + رجوع للتطبيق)
+  const _doLocalCancel = () => {
+    ordersData = ordersData.filter(o => o.id !== orderId);
+    orderHistory = orderHistory.filter(o => o.id !== orderId);
+    saveData('zz_orders', ordersData);
+    saveData('zz_order_history', orderHistory);
+    currentOrderNum = null;
+    saveData('zz_current_order_num', null);
+    if (db && currentUser?.phone) {
+      const _ph = (currentUser.phone||'').replace(/[^0-9]/g,'');
+      db.ref('user_sessions/' + _ph + '/currentOrderNum').remove().catch(()=>{});
+    }
+    closeOrderReview();
+    openScreen('app');
+    showNotif('✓ تم إلغاء الطلب بنجاح');
+  };
+
+  // 🛡️ نتأكد من حالة الطلب الحالية في فايربيس قبل الإلغاء (سدّ ثغرة السباق)
+  if (db) {
+    db.ref('orders/' + orderId).get().then(snap => {
+      const ord = snap.val();
+      // ⛔ الكاشير بدأ التجهيز فعلاً — مينفعش العميل يلغي (الأكل بدأ يتجهّز)
+      if (ord && ['prep','ready','out','delivered'].includes(ord.status)) {
+        closeOrderReview();
+        showNotif('⚠️ طلبك بدأ تجهيزه بالفعل — تواصل مع المطعم للإلغاء');
+        return;
+      }
+      // 🔴 الطلب موجود في فايربيس = وصل للكاشير فعلاً → نخليه "ملغى من العميل" ويفضل ظاهر له أحمر + تنبيه
+      //    (لو مش موجود في فايربيس = كاش لسه في نافذة المراجعة ماوصلش → إلغاء محلي هادئ بدون أي أثر)
+      if (ord) {
+        db.ref('orders/' + orderId).update({ status: 'cancelled', cancelledByClient: true, cancelledAt: new Date().toISOString() }).catch(()=>{});
+      }
+      _doLocalCancel();
+    }).catch(() => {
+      // تعذّرت القراءة — نلغي محلياً ونحاول مسح آمن
+      try { db.ref('orders/' + orderId).remove().catch(()=>{}); } catch(e){}
+      _doLocalCancel();
+    });
+  } else {
+    // أوفلاين — الطلب أصلاً مش في فايربيس — إلغاء محلي
+    _doLocalCancel();
   }
-  closeOrderReview();
-  openScreen('app');
-  showNotif('✓ تم إلغاء الطلب بنجاح');
+}
+// ❌ إلغاء الطلب النشط من شاشة التتبع (بضغطة واحدة) — طالما الكاشير ما بدأش التجهيز
+function cancelActiveClientOrder() {
+  const orderId = currentOrderNum;
+  if (!orderId) { showNotif('لا يوجد طلب نشط'); return; }
+  const _finishClientCancel = () => {
+    ordersData = ordersData.filter(o => o.id !== orderId);
+    saveData('zz_orders', ordersData);
+    try { _stopCustomerOrderTracking(); } catch(e){}
+    currentOrderNum = null;
+    saveData('zz_current_order_num', null);
+    if (db && currentUser?.phone) {
+      const _ph = (currentUser.phone||'').replace(/[^0-9]/g,'');
+      db.ref('user_sessions/' + _ph + '/currentOrderNum').remove().catch(()=>{});
+    }
+    openScreen('app');
+    showNotif('✓ تم إلغاء الطلب بنجاح');
+  };
+  if (db) {
+    db.ref('orders/' + orderId).get().then(snap => {
+      const ord = snap.val();
+      // ⛔ الكاشير بدأ التجهيز — مينفعش الإلغاء
+      if (ord && ['prep','ready','out','delivered'].includes(ord.status)) {
+        showNotif('⚠️ طلبك بدأ تجهيزه بالفعل — تواصل مع المطعم للإلغاء');
+        return;
+      }
+      // 🔴 الطلب موجود في فايربيس = وصل للكاشير → نخليه "ملغى من العميل" ويتنبّه (يفضل ظاهر أحمر)
+      if (ord) {
+        db.ref('orders/' + orderId).update({ status: 'cancelled', cancelledByClient: true, cancelledAt: new Date().toISOString() }).catch(()=>{});
+      }
+      _finishClientCancel();
+    }).catch(() => {
+      try { db.ref('orders/' + orderId).remove().catch(()=>{}); } catch(e){}
+      _finishClientCancel();
+    });
+  } else {
+    _finishClientCancel();
+  }
 }
 function editOrderFromReview() {
   if (!_pendingOrderForReview) { closeOrderReview(); return; }
@@ -8958,6 +9075,8 @@ function editOrderFromReview() {
   orderHistory = orderHistory.filter(o => o.id !== order.id);
   saveData('zz_orders', ordersData);
   saveData('zz_order_history', orderHistory);
+  // مسح الطلب من Firebase لو كان اتبعت فعلاً (أوردر الدفع الإلكتروني بيتبعت فوراً) — آمن حتى لو مش موجود
+  if (db) { try { db.ref('orders/' + order.id).remove().catch(()=>{}); } catch(e){} }
   currentOrderNum = null;
   saveData('zz_current_order_num', null);
   _pendingOrderForReview = null;
@@ -8965,6 +9084,20 @@ function editOrderFromReview() {
   openScreen('app');
   setTimeout(() => openSheet('cartSheet'), 300);
   showNotif('✏️ يمكنك تعديل طلبك الآن');
+}
+// 🔴 إخفاء الطلب الملغى من العميل (بعد ما الكاشير يراجعه) — يمسحه نهائياً من فايربيس والقائمة
+function hideCancelledOrder(id) {
+  if (db) { try { db.ref('orders/' + id).remove().catch(()=>{}); } catch(e){} }
+  ordersData = ordersData.filter(o => o.id !== id);
+  saveData('zz_orders', ordersData);
+  try {
+    const s = new Set(JSON.parse(localStorage.getItem('zz_cancel_notified_ids') || '[]'));
+    s.delete(id);
+    localStorage.setItem('zz_cancel_notified_ids', JSON.stringify([...s]));
+  } catch(e){}
+  try { renderAdminOrders(); } catch(e){}
+  try { renderCashierSheet(); } catch(e){}
+  showNotif('✓ تم إخفاء الطلب الملغى');
 }
 
 // ============================================================
@@ -9010,9 +9143,9 @@ function processCashierPopupQueue() {
           <span>${i.emoji || ''} ${i.name}${i.size ? ' ('+i.size+')' : ''}${i.spicyLabel ? ' — '+i.spicyLabel : ''}</span>
           <span style="font-weight:800;color:var(--olive-dark)">×${i.qty}</span>
         </div>`
-      ).join('');
+      ).join('') + (orderData.notes ? `<div style="margin-top:6px;background:#fff7ed;border:1.5px solid var(--gold);border-radius:8px;padding:6px 9px;color:#9a3412;font-weight:800">📝 ملاحظات: ${orderData.notes}</div>` : '');
     } else {
-      itemsBox.textContent = '—';
+      itemsBox.innerHTML = orderData.notes ? `<div style="background:#fff7ed;border:1.5px solid var(--gold);border-radius:8px;padding:6px 9px;color:#9a3412;font-weight:800">📝 ملاحظات: ${orderData.notes}</div>` : '—';
     }
   }
 
@@ -9039,6 +9172,14 @@ function processCashierPopupQueue() {
     btn.textContent = '✓ تمت المشاهدة — فتح الطلبات';
     statusRow.style.display = 'flex';
     document.getElementById('cpStatus').textContent = '✅ تم التجهيز — جاهز للتسليم';
+  } else if (type === 'order_cancelled') {
+    header.className = 'cashier-popup-header cancelled-order';
+    icon.textContent = '🔴';
+    title.textContent = '🔴 العميل ألغى الطلب';
+    subtitle.textContent = 'الطلب اتلغى من العميل — راجعه وأخفيه من القائمة';
+    btn.className = 'cashier-popup-btn btn-red';
+    btn.textContent = '✓ تمام — فهمت';
+    statusRow.style.display = 'none';
   }
 
   _cashierHighlightOrderId = orderData.id;
@@ -9362,6 +9503,12 @@ function openOrderDetailsModal(orderId) {
             </div>` : ''}
           ${o.gps ? `<a href="https://www.google.com/maps?q=${o.gps.lat},${o.gps.lng}" target="_blank" style="display:inline-flex;align-items:center;gap:4px;margin-top:6px;color:var(--blue);font-size:12px;font-weight:700">📍 عرض على الخريطة</a>` : ''}
         </div>` : ''}
+        <!-- ملاحظات العميل -->
+        ${o.notes ? `
+        <div style="background:#fff7ed;border:1.5px solid var(--gold);border-radius:14px;padding:14px;margin-bottom:12px">
+          <div style="font-size:11px;font-weight:900;color:#9a3412;margin-bottom:6px;text-transform:uppercase">📝 ملاحظات العميل</div>
+          <div style="font-size:14px;font-weight:800;color:#7c2d12">${o.notes}</div>
+        </div>` : ''}
         <!-- محتوى الطلب -->
         <div style="background:var(--white);border:1.5px solid var(--border);border-radius:14px;padding:14px;margin-bottom:12px">
           <div style="font-size:11px;font-weight:900;color:var(--text-muted);margin-bottom:8px;text-transform:uppercase">🛒 محتوى الطلب (${(o.items||[]).length} صنف)</div>
@@ -9551,6 +9698,19 @@ function setupFirebaseListeners() {
           playSound();
           showNotif(`💳 طلب دفع إلكتروني جديد — ${o.name} — ${o.payment || ''}`);
         });
+        // 🔴 تنبيه الكاشير لما العميل يلغي طلب كان وصله فعلاً (ملغى من العميل) — يفضل ظاهر لحد ما يخفيه
+        const _cancelNotified = new Set(JSON.parse(localStorage.getItem('zz_cancel_notified_ids') || '[]'));
+        let _cancelChanged = false;
+        fbOrders.forEach(o => {
+          if (o.status === 'cancelled' && o.cancelledByClient && !_cancelNotified.has(o.id)) {
+            _cancelNotified.add(o.id); _cancelChanged = true;
+            if (adminRoleType === 'admin' || adminRoleType === 'cashier') {
+              playSound();
+              showCashierPopup(o, 'order_cancelled');
+            }
+          }
+        });
+        if (_cancelChanged) localStorage.setItem('zz_cancel_notified_ids', JSON.stringify([..._cancelNotified]));
       }
       if (document.getElementById('pickupPanel')?.classList.contains('active')) {
         renderPickupOrders();
@@ -11637,6 +11797,7 @@ function showVIPCashierPopup(order) {
             <span style="font-size:13px">${i.emoji||''} ${i.name}${i.size?' ('+i.size+')':''}</span>
             <span style="font-size:12px;font-weight:800;color:var(--olive)">×${i.qty} — ${i.price*i.qty} ج</span>
           </div>`).join('')}
+        ${order.notes ? `<div style="margin-top:8px;background:#fff7ed;border:1.5px solid var(--gold);border-radius:8px;padding:6px 9px;color:#9a3412;font-size:12.5px;font-weight:800">📝 ملاحظات: ${order.notes}</div>` : ''}
         <div style="display:flex;justify-content:space-between;margin-top:8px;font-weight:900">
           <span>الإجمالي</span>
           <span style="color:var(--olive);font-size:15px">${order.total||0} ج.م</span>
@@ -12730,13 +12891,13 @@ function _fullRebuildAfterImport() {
 <div class="order-review-overlay" id="orderReviewOverlay">
   <div class="order-review-card">
     <div style="font-size:36px;margin-bottom:8px">⏳</div>
-    <div style="font-size:18px;font-weight:800;color:var(--dark);margin-bottom:6px">في انتظار تأكيدك النهائي</div>
-    <div style="font-size:13px;color:var(--text-muted);margin-bottom:12px;line-height:1.6">الطلب لم يُرسل للكاشير بعد — يمكنك تعديله أو إلغاؤه</div>
+    <div id="reviewTitle" style="font-size:18px;font-weight:800;color:var(--dark);margin-bottom:6px">في انتظار تأكيدك النهائي</div>
+    <div id="reviewSubtitle" style="font-size:13px;color:var(--text-muted);margin-bottom:12px;line-height:1.6">الطلب لم يُرسل للكاشير بعد — يمكنك تعديله أو إلغاؤه</div>
     <div id="reviewOrderInfo" style="background:var(--olive-pale);border-radius:10px;padding:10px 14px;margin-bottom:12px;text-align:right"></div>
     <div class="review-countdown" id="reviewCountdownNum">90</div>
-    <div style="font-size:12px;color:var(--text-muted);margin-bottom:20px">ثانية — بعدها يُرسل تلقائياً</div>
+    <div id="reviewCountdownLabel" style="font-size:12px;color:var(--text-muted);margin-bottom:20px">ثانية — بعدها يُرسل تلقائياً</div>
     <div style="display:flex;flex-direction:column;gap:8px">
-      <button onclick="confirmFinalOrder()" style="width:100%;padding:15px;background:linear-gradient(135deg,var(--olive),var(--olive-light));color:#fff;border-radius:12px;font-size:15px;font-weight:900;cursor:pointer;border:none;box-shadow:0 4px 16px rgba(74,124,31,.3)">✅ تأكيد الطلب النهائي — إرسال للكاشير</button>
+      <button id="reviewConfirmBtn" onclick="confirmFinalOrder()" style="width:100%;padding:15px;background:linear-gradient(135deg,var(--olive),var(--olive-light));color:#fff;border-radius:12px;font-size:15px;font-weight:900;cursor:pointer;border:none;box-shadow:0 4px 16px rgba(74,124,31,.3)">✅ تأكيد الطلب النهائي — إرسال للكاشير</button>
       <div style="display:flex;gap:8px">
         <button onclick="editOrderFromReview()" style="flex:1;padding:12px;background:var(--blue-pale);color:var(--blue);border-radius:12px;font-size:13px;font-weight:800;cursor:pointer;border:2px solid var(--blue)">✏️ تعديل الطلب</button>
         <button onclick="cancelOrderFromReview()" style="flex:1;padding:12px;background:#fff0f0;color:var(--red);border-radius:12px;font-size:13px;font-weight:800;border:2px solid var(--red);cursor:pointer">❌ إلغاء الطلب</button>
