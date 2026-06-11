@@ -4983,6 +4983,11 @@ ${totalDisc > 0 ? `🏷️ الخصم: - ${totalDisc} ج.م\n` : ''}${deliveryFe
   // عشان ما يضيعش لو العميل طلع من التطبيق يحوّل الفلوس قبل ما يخلص العدّاد
   if (isElectronicPayment) {
     fbSaveOrder(newOrder);
+    // 💬 رسالة الواتساب للكاشير تروح فوراً وقت تأكيد الطلب (لأن الطلب راح للكاشير في نفس اللحظة)
+    const _waNumElec = SETTINGS.waNum || RESTAURANT.waNum;
+    if (newOrder._waMsg) {
+      window.open(`https://wa.me/${_waNumElec}?text=${encodeURIComponent(newOrder._waMsg)}`, '_blank');
+    }
   }
   cart = []; appliedDiscount = 0; appliedCouponId = null; selectedDeliveryZone = null;
   saveData('zz_current_cart', []);
@@ -8902,22 +8907,26 @@ function triggerPWAInstall() {
 let _reviewSecs = 60;
 function openOrderReview(orderObj) {
   _pendingOrderForReview = orderObj;
-  _reviewSecs = 90;
+  // ⏱️ العداد: كاش 30 ثانية | محفظة/إنستاباي 10 ثواني
+  _reviewSecs = orderObj.isElectronicPayment ? 10 : 30;
   document.getElementById('orderReviewOverlay').classList.add('open');
-  // 💳 لو الدفع إلكتروني (محفظة/إنستاباي): الطلب راح للكاشير فعلاً — نخفي زر "تأكيد وإرسال" ونسيب التعديل/الإلغاء فقط
-  //    لو كاش: النظام زي ما هو (زر التأكيد + التعديل + الإلغاء)
+  // 💳 لو الدفع إلكتروني (محفظة/إنستاباي): الطلب راح للكاشير فعلاً — نخفي "تعديل"، ونحوّل زر التأكيد لـ "تم"، ونسيب الإلغاء
+  //    لو كاش: النظام زي ما هو (زر التأكيد والإرسال + التعديل + الإلغاء)
   const _isElec = !!orderObj.isElectronicPayment;
   const _confirmBtn = document.getElementById('reviewConfirmBtn');
+  const _editBtn = document.getElementById('reviewEditBtn');
   const _rTitle = document.getElementById('reviewTitle');
   const _rSub = document.getElementById('reviewSubtitle');
   const _rCountLabel = document.getElementById('reviewCountdownLabel');
   if (_isElec) {
-    if (_confirmBtn) _confirmBtn.style.display = 'none';
+    if (_confirmBtn) { _confirmBtn.style.display = 'block'; _confirmBtn.textContent = '✓ تم'; }
+    if (_editBtn) _editBtn.style.display = 'none';
     if (_rTitle) _rTitle.textContent = '✅ تم إرسال طلبك للكاشير';
-    if (_rSub) _rSub.textContent = 'تقدر تعدّل الطلب أو تلغيه طالما الكاشير لسه ما بدأش التجهيز';
-    if (_rCountLabel) _rCountLabel.textContent = 'ثانية متاحة للتعديل أو الإلغاء';
+    if (_rSub) _rSub.textContent = 'تقدر تلغي الطلب طالما الكاشير لسه ما بدأش — أو اضغط «تم» للإنهاء';
+    if (_rCountLabel) _rCountLabel.textContent = 'ثانية';
   } else {
-    if (_confirmBtn) _confirmBtn.style.display = 'block';
+    if (_confirmBtn) { _confirmBtn.style.display = 'block'; _confirmBtn.textContent = '✅ تأكيد الطلب النهائي — إرسال للكاشير'; }
+    if (_editBtn) _editBtn.style.display = 'block';
     if (_rTitle) _rTitle.textContent = 'في انتظار تأكيدك النهائي';
     if (_rSub) _rSub.textContent = 'الطلب لم يُرسل للكاشير بعد — يمكنك تعديله أو إلغاؤه';
     if (_rCountLabel) _rCountLabel.textContent = 'ثانية — بعدها يُرسل تلقائياً';
@@ -8950,9 +8959,13 @@ function confirmFinalOrder() {
   if (!_pendingOrderForReview) { closeOrderReview(); return; }
   clearInterval(_orderReviewTimer);
   const order = _pendingOrderForReview;
-  // NOW send to Firebase — cashier sees it
-  fbSaveOrder(order);
-  // 🎟️ الآن فقط نُسجّل أن العرض اتستخدم — بعد التأكيد النهائي وإرسال الطلب للكاشير
+  const _isElec = !!order.isElectronicPayment;
+  // الكاش فقط: يُحفظ الآن في فايربيس ويُرسل للكاشير. الإلكتروني محفوظ ومُرسل بالفعل من placeOrder
+  // (منعملش حفظ تاني للإلكتروني عشان ما نمسحش أي تغيير عمله الكاشير زي بدء التجهيز)
+  if (!_isElec) {
+    fbSaveOrder(order);
+  }
+  // 🎟️ الآن فقط نُسجّل أن العرض اتستخدم — بعد التأكيد النهائي
   if (order._offersToBurn && order._offersToBurn.length) {
     order._offersToBurn.forEach(k => { if (k) usedOffers[k] = true; });
     saveData('zz_used_offers', usedOffers);
@@ -8964,12 +8977,14 @@ function confirmFinalOrder() {
   // إعادة تعيين خصم النقاط
   _loyaltyDiscountApplied = 0;
   closeOrderReview();
-  showNotif('✅ تم إرسال الطلب للكاشير بنجاح');
-  // إرسال واتساب هنا فقط — بعد التأكيد النهائي
-  const waNum = SETTINGS.waNum || RESTAURANT.waNum;
-  const msgToSend = order._waMsg || '';
-  if (msgToSend) {
-    window.open(`https://wa.me/${waNum}?text=${encodeURIComponent(msgToSend)}`, '_blank');
+  showNotif(_isElec ? '✅ تم تأكيد طلبك' : '✅ تم إرسال الطلب للكاشير بنجاح');
+  // إرسال واتساب للكاشير — للكاش فقط هنا (الإلكتروني اتبعت وقت تأكيد الطلب في placeOrder)
+  if (!_isElec) {
+    const waNum = SETTINGS.waNum || RESTAURANT.waNum;
+    const msgToSend = order._waMsg || '';
+    if (msgToSend) {
+      window.open(`https://wa.me/${waNum}?text=${encodeURIComponent(msgToSend)}`, '_blank');
+    }
   }
   // إرسال إشعار Last Order إن وجد
   if (lastOrderActive && currentUser?.whatsapp) {
@@ -12899,7 +12914,7 @@ function _fullRebuildAfterImport() {
     <div style="display:flex;flex-direction:column;gap:8px">
       <button id="reviewConfirmBtn" onclick="confirmFinalOrder()" style="width:100%;padding:15px;background:linear-gradient(135deg,var(--olive),var(--olive-light));color:#fff;border-radius:12px;font-size:15px;font-weight:900;cursor:pointer;border:none;box-shadow:0 4px 16px rgba(74,124,31,.3)">✅ تأكيد الطلب النهائي — إرسال للكاشير</button>
       <div style="display:flex;gap:8px">
-        <button onclick="editOrderFromReview()" style="flex:1;padding:12px;background:var(--blue-pale);color:var(--blue);border-radius:12px;font-size:13px;font-weight:800;cursor:pointer;border:2px solid var(--blue)">✏️ تعديل الطلب</button>
+        <button id="reviewEditBtn" onclick="editOrderFromReview()" style="flex:1;padding:12px;background:var(--blue-pale);color:var(--blue);border-radius:12px;font-size:13px;font-weight:800;cursor:pointer;border:2px solid var(--blue)">✏️ تعديل الطلب</button>
         <button onclick="cancelOrderFromReview()" style="flex:1;padding:12px;background:#fff0f0;color:var(--red);border-radius:12px;font-size:13px;font-weight:800;border:2px solid var(--red);cursor:pointer">❌ إلغاء الطلب</button>
       </div>
     </div>
