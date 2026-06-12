@@ -6077,8 +6077,8 @@ function renderCashierSheet() {
           ${!isPending ? `
           <button class="track-btn tb-prep ${o.status==='prep'?'active-state':''}" onclick="updateOrderStatus('${o.id}','prep')" title="بدأ التجهيز">🍳</button>
           <button class="track-btn tb-ready ${o.status==='ready'?'active-state':''}" onclick="updateOrderStatus('${o.id}','ready')" title="جاهز">✅</button>
-          <button class="track-btn tb-out ${o.status==='out'?'active-state':''}" onclick="openAgentPopup('${o.id}')" title="خرج">🛵</button>
-          ${o.status==='out' ? `<button class="track-btn" style="background:#d1fae5;color:#065f46;font-size:10px;font-weight:900;padding:4px 7px" onclick="cashierMarkDelivered('${o.id}')" title="تم التسليم">📦✅</button>` : ''}
+          <button class="track-btn tb-out ${o.status==='out'?'active-state':''}" onclick="openAgentPopup('${o.id}')" title="خرج للتوصيل">🛵</button>
+          <button class="track-btn ${o.status==='delivered'?'active-state':''}" style="background:#d1fae5;color:#065f46;font-size:10px;font-weight:900;padding:4px 7px" onclick="cashierMarkDelivered('${o.id}')" title="تسليم مباشر (استلام/كافيه)">📦✅</button>
           <button class="track-btn tb-delay" onclick="sendDelayMsg('${o.id}')" title="تأخير">⏳</button>
           ` : ''}
           ${o.whatsapp ? `<button class="track-btn tb-wa" onclick="event.stopPropagation();openWhatsApp('${o.whatsapp||o.phone||''}')" title="واتساب">💬</button>` : ''}
