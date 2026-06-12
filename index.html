@@ -5034,6 +5034,12 @@ function _startCustomerOrderTracking(orderNum) {
     if (o.status === 'cancelled' && _pendingOrderForReview?.id === orderNum) {
       closeOrderReview();
     }
+    // 🔔 المحفظة/إنستاباي: لو الكاشير بدأ التجهيز ونافذة العداد لسه مفتوحة → نقفلها ونوقف الإلغاء ونبلّغ العميل
+    if (_pendingOrderForReview?.id === orderNum && _pendingOrderForReview?.isElectronicPayment
+        && ['prep','ready','out','delivered'].includes(o.status)) {
+      closeOrderReview();
+      showNotif('🔔 بدأ تجهيز طلبك — لو محتاج تعديل أو إلغاء، تواصل معنا على واتساب');
+    }
   });
 }
 function _stopCustomerOrderTracking() {
