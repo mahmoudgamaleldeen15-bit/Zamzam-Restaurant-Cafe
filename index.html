@@ -1322,10 +1322,6 @@ input,select,textarea{font-family:inherit;}
         <div class="status-step"><div class="step-dot" id="track4">🛵</div><div class="step-info"><div class="st">خرج للتوصيل</div><div class="sd" id="track4t">—</div></div></div>
         <div class="status-step"><div class="step-dot" id="track5">🎉</div><div class="step-info"><div class="st">تم التسليم</div><div class="sd" id="track5t">—</div></div></div>
       </div>
-      <div id="clientCancelBtnBox" style="display:none;margin-top:14px">
-        <button onclick="cancelActiveClientOrder()" style="width:100%;padding:12px;background:#fff0f0;color:var(--red);border-radius:12px;font-size:14px;font-weight:800;border:2px solid var(--red);cursor:pointer">❌ إلغاء الطلب</button>
-        <div style="font-size:11px;color:var(--text-muted);text-align:center;margin-top:6px">تقدر تلغي طالما الكاشير لسه ما بدأش التجهيز</div>
-      </div>
     </div>
     <div id="delayMsgBox" style="display:none;background:linear-gradient(135deg,#ff7043,#e53935);border-radius:14px;padding:16px;color:#fff;margin-bottom:16px">
       <div style="font-size:16px;font-weight:800;margin-bottom:6px">⏳ إشعار مهم</div>
@@ -5067,9 +5063,6 @@ function updateTrackingStatus(status, outAt) {
 
   const payPendingBox = document.getElementById('paymentPendingBox');
   if (payPendingBox) payPendingBox.style.display = effectiveStatus === 'payment_pending' ? 'block' : 'none';
-  // ❌ زرار إلغاء الطلب: يظهر طالما الكاشير ما بدأش التجهيز (جديد أو دفع معلّق) ويختفي بعد كده
-  const clientCancelBox = document.getElementById('clientCancelBtnBox');
-  if (clientCancelBox) clientCancelBox.style.display = (effectiveStatus === 'new' || effectiveStatus === 'payment_pending') ? 'block' : 'none';
 
   for (let i = 1; i <= 5; i++) {
     const dot = document.getElementById('track' + i);
@@ -8907,8 +8900,8 @@ function triggerPWAInstall() {
 let _reviewSecs = 60;
 function openOrderReview(orderObj) {
   _pendingOrderForReview = orderObj;
-  // ⏱️ العداد: كاش 30 ثانية | محفظة/إنستاباي 10 ثواني
-  _reviewSecs = orderObj.isElectronicPayment ? 10 : 30;
+  // ⏱️ العداد 30 ثانية للكاش والمحفظة (الإلغاء متاح في نافذة العداد فقط)
+  _reviewSecs = 30;
   document.getElementById('orderReviewOverlay').classList.add('open');
   // 💳 لو الدفع إلكتروني (محفظة/إنستاباي): الطلب راح للكاشير فعلاً — نخفي "تعديل"، ونحوّل زر التأكيد لـ "تم"، ونسيب الإلغاء
   //    لو كاش: النظام زي ما هو (زر التأكيد والإرسال + التعديل + الإلغاء)
@@ -9038,44 +9031,6 @@ function cancelOrderFromReview() {
   } else {
     // أوفلاين — الطلب أصلاً مش في فايربيس — إلغاء محلي
     _doLocalCancel();
-  }
-}
-// ❌ إلغاء الطلب النشط من شاشة التتبع (بضغطة واحدة) — طالما الكاشير ما بدأش التجهيز
-function cancelActiveClientOrder() {
-  const orderId = currentOrderNum;
-  if (!orderId) { showNotif('لا يوجد طلب نشط'); return; }
-  const _finishClientCancel = () => {
-    ordersData = ordersData.filter(o => o.id !== orderId);
-    saveData('zz_orders', ordersData);
-    try { _stopCustomerOrderTracking(); } catch(e){}
-    currentOrderNum = null;
-    saveData('zz_current_order_num', null);
-    if (db && currentUser?.phone) {
-      const _ph = (currentUser.phone||'').replace(/[^0-9]/g,'');
-      db.ref('user_sessions/' + _ph + '/currentOrderNum').remove().catch(()=>{});
-    }
-    openScreen('app');
-    showNotif('✓ تم إلغاء الطلب بنجاح');
-  };
-  if (db) {
-    db.ref('orders/' + orderId).get().then(snap => {
-      const ord = snap.val();
-      // ⛔ الكاشير بدأ التجهيز — مينفعش الإلغاء
-      if (ord && ['prep','ready','out','delivered'].includes(ord.status)) {
-        showNotif('⚠️ طلبك بدأ تجهيزه بالفعل — تواصل مع المطعم للإلغاء');
-        return;
-      }
-      // 🔴 الطلب موجود في فايربيس = وصل للكاشير → نخليه "ملغى من العميل" ويتنبّه (يفضل ظاهر أحمر)
-      if (ord) {
-        db.ref('orders/' + orderId).update({ status: 'cancelled', cancelledByClient: true, cancelledAt: new Date().toISOString() }).catch(()=>{});
-      }
-      _finishClientCancel();
-    }).catch(() => {
-      try { db.ref('orders/' + orderId).remove().catch(()=>{}); } catch(e){}
-      _finishClientCancel();
-    });
-  } else {
-    _finishClientCancel();
   }
 }
 function editOrderFromReview() {
@@ -9665,11 +9620,21 @@ function setupFirebaseListeners() {
       const oldPendingIds = ordersData.filter(o => o.status === 'payment_pending').map(o => o.id);
       ordersData = fbOrders;
       saveData('zz_orders', ordersData);
+      // 🔕 أول تحميل للبرنامج: نسجّل الأوردرات الموجودة كـ"متشافة" بصمت (بدون صوت/إشعار)
+      //    والتنبيه يشتغل بس للأوردر اللي يجي جديد فعلاً بعد كده — يمنع تكرار تنبيه الأوردرات القديمة عند كل دخول
+      const _isInitialOrdersLoad = !window._ordersBaselineSet;
+      window._ordersBaselineSet = true;
+      if (_isInitialOrdersLoad) {
+        localStorage.setItem('zz_orders_prev_ids', JSON.stringify(fbOrders.map(o => o.id)));
+        const _seenCancel = new Set(JSON.parse(localStorage.getItem('zz_cancel_notified_ids') || '[]'));
+        fbOrders.forEach(o => { if (o.status === 'cancelled' && o.cancelledByClient) _seenCancel.add(o.id); });
+        localStorage.setItem('zz_cancel_notified_ids', JSON.stringify([..._seenCancel]));
+      }
       if (document.getElementById('adminPanel')?.classList.contains('active')) {
         const activeTab = document.querySelector('.admin-tabs button.active')?.textContent || '';
         if (activeTab.includes('الطلبات')) renderAdminOrders();
         if (activeTab.includes('الكاشير')) renderCashierSheet();
-        if (fbOrders.length > oldCount && oldCount > 0) {
+        if (!_isInitialOrdersLoad && fbOrders.length > oldCount && oldCount > 0) {
           // Find new orders
           const newOrders = fbOrders.filter(o => !ordersData.find(x => x.id === o.id) || false);
           // Actually compare timestamps
@@ -9708,7 +9673,7 @@ function setupFirebaseListeners() {
         }
         localStorage.setItem('zz_orders_prev_ids', JSON.stringify(fbOrders.map(o => o.id)));
         // إشعار بطلب دفع إلكتروني جديد
-        const newPending = fbOrders.filter(o => o.status === 'payment_pending' && !oldPendingIds.includes(o.id));
+        const newPending = _isInitialOrdersLoad ? [] : fbOrders.filter(o => o.status === 'payment_pending' && !oldPendingIds.includes(o.id));
         newPending.forEach(o => {
           playSound();
           showNotif(`💳 طلب دفع إلكتروني جديد — ${o.name} — ${o.payment || ''}`);
@@ -9719,7 +9684,7 @@ function setupFirebaseListeners() {
         fbOrders.forEach(o => {
           if (o.status === 'cancelled' && o.cancelledByClient && !_cancelNotified.has(o.id)) {
             _cancelNotified.add(o.id); _cancelChanged = true;
-            if (adminRoleType === 'admin' || adminRoleType === 'cashier') {
+            if (!_isInitialOrdersLoad && (adminRoleType === 'admin' || adminRoleType === 'cashier')) {
               playSound();
               showCashierPopup(o, 'order_cancelled');
             }
@@ -9729,7 +9694,7 @@ function setupFirebaseListeners() {
       }
       if (document.getElementById('pickupPanel')?.classList.contains('active')) {
         renderPickupOrders();
-        if (fbOrders.length > oldCount && oldCount > 0) { playSound(); showNotif('🔔 طلب جديد للتجهيز!'); }
+        if (!_isInitialOrdersLoad && fbOrders.length > oldCount && oldCount > 0) { playSound(); showNotif('🔔 طلب جديد للتجهيز!'); }
       }
       updateOffersBadge();
 
