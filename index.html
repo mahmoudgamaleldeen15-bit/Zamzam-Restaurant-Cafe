@@ -1722,6 +1722,7 @@ input,select,textarea{font-family:inherit;}
     </div>
     <div class="field"><label>كلمة السر</label><input type="password" id="adminPass" placeholder="أدخل كلمة السر"/></div>
     <button class="btn-primary" onclick="doAdminLogin()">دخول</button>
+    <div id="adminLoginMsg" style="display:none;margin-top:12px;padding:10px 14px;border-radius:10px;font-size:13px;font-weight:800;text-align:center"></div>
     <div style="margin:14px 0;display:flex;align-items:center;gap:10px">
       <div style="flex:1;height:1px;background:var(--border)"></div>
       <div style="font-size:11px;color:var(--text-muted);font-weight:700">أو</div>
@@ -2329,6 +2330,7 @@ input,select,textarea{font-family:inherit;}
         <div class="settings-row" style="border-top:2px dashed var(--border);padding-top:12px;margin-top:8px"><div class="info"><strong>🔑 إعادة تعيين باسورد عميل — رقم العميل</strong></div><input class="settings-input" type="tel" inputmode="numeric" id="resetCustPhone" placeholder="رقم العميل المسجّل"/></div>
         <div class="settings-row"><div class="info"><strong>🔑 الباسورد الجديد للعميل</strong></div><input class="settings-input" type="text" id="resetCustPass" placeholder="باسورد جديد (4 أحرف على الأقل)"/></div>
         <div class="settings-row"><button onclick="adminResetCustomerPass()" style="width:100%;padding:11px;background:var(--olive);color:#fff;border:none;border-radius:10px;font-weight:800;font-size:13px;cursor:pointer">🔑 إعادة تعيين باسورد هذا العميل</button></div>
+        <div class="settings-row" id="sendCustPassRow" style="display:none"><button onclick="sendCustomerPassWhatsApp()" style="width:100%;padding:11px;background:#25D366;color:#fff;border:none;border-radius:10px;font-weight:800;font-size:13px;cursor:pointer">📲 إرسال الباسورد للعميل على واتساب</button></div>
       </div>
       <div style="padding:0 16px">
         <button class="btn-primary" onclick="saveAllSettings()" style="margin-bottom:10px">💾 حفظ كل الإعدادات</button>
@@ -2805,14 +2807,14 @@ const APP_VERSION = '22.1.0';
 // SECURITY: Passwords stored obfuscated (base64 encoded pairs)
 // ============================================================
 const _AUTH_TABLE = [
-  {r:'admin',   h:'YWRtaW46TUcjMTQ1NkA='},
-  {r:'cashier', h:'Y2FzaGllcjp6YW0jMTk5MA=='},
-  {r:'cashier', h:'Y2FzaGllcjp6YW0yIzIwMjU='},
-  {r:'pickup',  h:'cGlja3VwOnBpY2t1cCMxMjM0'}
+  {r:'admin',   h:'zp_195ee9d95da89a'},
+  {r:'cashier', h:'zp_1d3eecc165ad3d'},
+  {r:'cashier', h:'zp_2c7409a5b7c49'},
+  {r:'pickup',  h:'zp_1184676ca1dad6'}
 ];
 // pickup default pass: pickup#1234
 function _verifyAuth(role, pass) {
-  return _AUTH_TABLE.some(e => e.r === role && atob(e.h) === role + ':' + pass);
+  return _AUTH_TABLE.some(e => e.r === role && e.h === _hashPw(role + ':' + pass));
 }
 // ===== رموز PIN للموظفين (كاشير/بيكاب) — قابلة للتغيير من لوحة الأدمن وتُحفظ وتتزامن عبر Firebase =====
 let STAFF_PINS = loadData('zz_staff_pins', { cashier1: '1590', cashier2: '1500', pickup: '0155' });
@@ -2824,7 +2826,7 @@ let RECOVERY_PHONE = loadData('zz_recovery_phone', '201508613866');
 function _getStaffIdentity(role, pass) {
   for (let i = 0; i < _AUTH_TABLE.length; i++) {
     const e = _AUTH_TABLE[i];
-    if (e.r === role && atob(e.h) === role + ':' + pass) {
+    if (e.r === role && e.h === _hashPw(role + ':' + pass)) {
       if (role === 'admin') return 'admin';
       if (role === 'pickup') return 'pickup';
       if (role === 'cashier') return (i === 1) ? 'cashier1' : 'cashier2';
@@ -3765,11 +3767,32 @@ function adminResetCustomerPass() {
       const users = loadData('zz_users', []);
       const idx = users.findIndex(x => (x.phone||'').replace(/[^0-9]/g,'') === phone);
       if (idx >= 0) { users[idx] = u; saveData('zz_users', users); }
+      // نحتفظ بالرقم والباسورد الجديد (واسم العميل) لزر إرسال الواتساب — قبل مسح الخانات
+      _lastResetCust = { phone: phone, pass: newPass, name: u.name || '' };
+      const _sendRow = document.getElementById('sendCustPassRow');
+      if (_sendRow) _sendRow.style.display = 'block';
       const e1 = document.getElementById('resetCustPhone'); if (e1) e1.value='';
       const e2 = document.getElementById('resetCustPass'); if (e2) e2.value='';
-      showNotif('✅ تم إعادة تعيين باسورد العميل — بلّغه بالباسورد الجديد');
+      showNotif('✅ تم إعادة تعيين باسورد العميل — اضغط "إرسال على واتساب" لتبليغه');
     }).catch(() => showNotif('⚠️ تعذّر الحفظ — حاول تاني'));
   }).catch(() => showNotif('⚠️ تعذّر الوصول — تأكد من الإنترنت'));
+}
+// إرسال الباسورد الجديد للعميل على واتساب برسالة احترافية جاهزة
+let _lastResetCust = null;
+function sendCustomerPassWhatsApp() {
+  if (!_lastResetCust || !_lastResetCust.phone || !_lastResetCust.pass) {
+    showNotif('❌ لا يوجد باسورد جاهز للإرسال — أعد التعيين أولاً');
+    return;
+  }
+  const waNum = normalizePhoneForWA(_lastResetCust.phone);
+  if (!waNum) { showNotif('❌ رقم العميل غير صالح'); return; }
+  const greet = _lastResetCust.name ? `عميلنا العزيز ${_lastResetCust.name} 🌟` : 'عميلنا العزيز 🌟';
+  const msg = `السلام عليكم ورحمة الله\n${greet}\n\nتم إعادة تعيين كلمة السر الخاصة بحسابك في *مطعم وكافيه زمزم* بناءً على طلبك.\n\n🔑 كلمة السر الجديدة: *${_lastResetCust.pass}*\n\nبرجاء استخدامها لتسجيل الدخول، ويمكنك الاحتفاظ بها في مكان آمن. نتمنى لك تجربة ممتعة 💚`;
+  window.open(`https://wa.me/${waNum}?text=${encodeURIComponent(msg)}`, '_blank');
+  // بعد الإرسال: نخفي الزرار ونمسح بيانات آخر عميل عشان ما تتبعتش بالغلط لعميل تاني
+  const _sendRow = document.getElementById('sendCustPassRow');
+  if (_sendRow) _sendRow.style.display = 'none';
+  _lastResetCust = null;
 }
 function doForgotPassword() {
   const phone = (document.getElementById('loginPhone').value || '').trim();
@@ -5262,12 +5285,55 @@ function _generateAdminOtp() {
   return Math.floor(100000 + Math.random() * 900000).toString();
 }
 
+// 🔒 قفل مؤقت بعد محاولات دخول فاشلة (يفك تلقائياً بعد المدة — لا يحبس بشكل دائم)
+let _adminFailCount = 0;
+let _adminLockUntil = 0;
+const _ADMIN_MAX_FAILS = 5;
+const _ADMIN_LOCK_MS = 5 * 60 * 1000; // 5 دقائق
+function _adminLockRemaining() {
+  let stored = 0;
+  try { stored = parseInt(sessionStorage.getItem('zz_admin_lock_until') || '0', 10) || 0; } catch(e){}
+  const until = Math.max(_adminLockUntil, stored);
+  return Math.max(0, until - Date.now());
+}
+function _showAdminLoginMsg(msg, ok) {
+  const el = document.getElementById('adminLoginMsg');
+  if (!el) { showNotif(msg); return; }
+  el.textContent = msg;
+  el.style.display = 'block';
+  if (ok) { el.style.background = '#d1fae5'; el.style.color = '#065f46'; }
+  else { el.style.background = '#fef2f2'; el.style.color = '#dc2626'; el.style.border = '1px solid #fecaca'; }
+}
+function _clearAdminLoginMsg() {
+  const el = document.getElementById('adminLoginMsg');
+  if (el) el.style.display = 'none';
+}
 function doAdminLogin() {
+  // لو مقفول مؤقتاً — امنع المحاولة وأظهر الوقت المتبقي
+  const _remaining = _adminLockRemaining();
+  if (_remaining > 0) {
+    _showAdminLoginMsg('🔒 تم قفل الدخول مؤقتاً بسبب محاولات كثيرة — حاول بعد ' + Math.ceil(_remaining / 60000) + ' دقيقة');
+    return;
+  }
   const pass = document.getElementById('adminPass').value;
   const role = document.getElementById('adminRole').value;
-  if (!_verifyAuth(role, pass)) { showNotif('❌ كلمة السر غير صحيحة'); return; }
+  if (!_verifyAuth(role, pass)) {
+    _adminFailCount++;
+    if (_adminFailCount >= _ADMIN_MAX_FAILS) {
+      _adminLockUntil = Date.now() + _ADMIN_LOCK_MS;
+      try { sessionStorage.setItem('zz_admin_lock_until', String(_adminLockUntil)); } catch(e){}
+      _adminFailCount = 0;
+      _showAdminLoginMsg('🔒 محاولات كثيرة خاطئة — تم قفل الدخول 5 دقائق');
+    } else {
+      _showAdminLoginMsg('❌ كلمة السر غير صحيحة — باقي ' + (_ADMIN_MAX_FAILS - _adminFailCount) + ' محاولات');
+    }
+    return;
+  }
+  // ✅ كلمة السر صح — صفّر العداد وأزل القفل
+  _adminFailCount = 0;
+  try { sessionStorage.removeItem('zz_admin_lock_until'); } catch(e){}
+  _clearAdminLoginMsg();
   document.getElementById('adminPass').value = '';
-  // ✅ كلمة السر صح
   if (role === 'admin') {
     // الأدمن: تحقق بكلمة السر السرية (passphrase) — لا OTP
     _startAdminPp(role);
@@ -7154,9 +7220,9 @@ function saveAllSettings() {
   const newAdmin = document.getElementById('newAdminPass')?.value;
   const newC1 = document.getElementById('newCashier1')?.value;
   const newC2 = document.getElementById('newCashier2')?.value;
-  if (newAdmin) { _AUTH_TABLE.find(a => a.r === 'admin').h = btoa('admin:' + newAdmin); document.getElementById('newAdminPass').value = ''; }
-  if (newC1) { _AUTH_TABLE[1].h = btoa('cashier:' + newC1); document.getElementById('newCashier1').value = ''; }
-  if (newC2) { _AUTH_TABLE[2].h = btoa('cashier:' + newC2); document.getElementById('newCashier2').value = ''; }
+  if (newAdmin) { _AUTH_TABLE.find(a => a.r === 'admin').h = _hashPw('admin:' + newAdmin); document.getElementById('newAdminPass').value = ''; }
+  if (newC1) { _AUTH_TABLE[1].h = _hashPw('cashier:' + newC1); document.getElementById('newCashier1').value = ''; }
+  if (newC2) { _AUTH_TABLE[2].h = _hashPw('cashier:' + newC2); document.getElementById('newCashier2').value = ''; }
   // حفظ رموز PIN (كاشير/بيكاب) — مع تحقق ٤ أرقام وتخزين وتزامن
   const _np1 = document.getElementById('newPinCashier1')?.value.trim();
   const _np2 = document.getElementById('newPinCashier2')?.value.trim();
