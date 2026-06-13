@@ -2327,7 +2327,8 @@ input,select,textarea{font-family:inherit;}
         <!-- رقم الإدارة لاستعادة كلمة سر العميل (يتغيّر ويتزامن) -->
         <div class="settings-row"><div class="info"><strong>📞 رقم الإدارة (استعادة باسورد العميل)</strong></div><input class="settings-input" type="tel" inputmode="numeric" id="newRecoveryPhone" placeholder="201xxxxxxxxx"/></div>
         <!-- إعادة تعيين باسورد عميل (لما العميل ينسى ويكلّم الإدارة) -->
-        <div class="settings-row" style="border-top:2px dashed var(--border);padding-top:12px;margin-top:8px"><div class="info"><strong>🔑 إعادة تعيين باسورد عميل — رقم العميل</strong></div><input class="settings-input" type="tel" inputmode="numeric" id="resetCustPhone" placeholder="رقم العميل المسجّل"/></div>
+        <div class="settings-row" style="border-top:2px dashed var(--border);padding-top:12px;margin-top:8px"><div class="info"><strong>🔑 إعادة تعيين باسورد عميل — رقم العميل</strong></div><input class="settings-input" type="tel" inputmode="numeric" id="resetCustPhone" placeholder="رقم العميل المسجّل" oninput="lookupResetCustomer()"/></div>
+        <div id="resetCustFound" style="display:none;margin:-4px 16px 8px;font-size:12.5px;font-weight:800;padding:8px 12px;border-radius:8px"></div>
         <div class="settings-row"><div class="info"><strong>🔑 الباسورد الجديد للعميل</strong></div><input class="settings-input" type="text" id="resetCustPass" placeholder="باسورد جديد (4 أحرف على الأقل)"/></div>
         <div class="settings-row"><button onclick="adminResetCustomerPass()" style="width:100%;padding:11px;background:var(--olive);color:#fff;border:none;border-radius:10px;font-weight:800;font-size:13px;cursor:pointer">🔑 إعادة تعيين باسورد هذا العميل</button></div>
         <div class="settings-row" id="sendCustPassRow" style="display:none"><button onclick="sendCustomerPassWhatsApp()" style="width:100%;padding:11px;background:#25D366;color:#fff;border:none;border-radius:10px;font-weight:800;font-size:13px;cursor:pointer">📲 إرسال الباسورد للعميل على واتساب</button></div>
@@ -3753,6 +3754,35 @@ function contactAdminForRecovery() {
   window.open('https://wa.me/' + RECOVERY_PHONE + '?text=' + encodeURIComponent(msg), '_blank');
 }
 // إعادة تعيين باسورد عميل من لوحة الأدمن (بعد التحقق البشري من هويته)
+// 🔎 بحث تلقائي عن العميل أثناء كتابة رقمه في خانة إعادة التعيين
+function lookupResetCustomer() {
+  const box = document.getElementById('resetCustFound');
+  if (!box) return;
+  const clean = (document.getElementById('resetCustPhone')?.value || '').replace(/[^0-9]/g, '');
+  if (clean.length < 10) { box.style.display = 'none'; return; }
+  const norm = s => (s || '').replace(/[^0-9]/g, '');
+  const _show = (found) => {
+    box.style.display = 'block';
+    if (found && found.name) {
+      let extra = '';
+      try {
+        const mine = (ordersData || []).filter(o => norm(o.whatsapp || o.phone) === clean);
+        if (mine.length) extra = ` — آخر طلب: #${mine[mine.length - 1].id}`;
+      } catch (e) {}
+      box.style.background = '#d1fae5'; box.style.color = '#065f46';
+      box.textContent = `✅ الحساب موجود — الاسم: ${found.name}${extra}`;
+    } else {
+      box.style.background = '#fef2f2'; box.style.color = '#dc2626';
+      box.textContent = '⚠️ لا يوجد حساب بهذا الرقم';
+    }
+  };
+  const users = loadData('zz_users', []);
+  const u = users.find(x => norm(x.phone) === clean || norm(x.whatsapp) === clean);
+  if (u) { _show(u); return; }
+  if (db) {
+    db.ref('users/' + clean).get().then(snap => _show(snap.exists() ? snap.val() : null)).catch(() => { box.style.display = 'none'; });
+  } else { _show(null); }
+}
 function adminResetCustomerPass() {
   const phone = (document.getElementById('resetCustPhone')?.value || '').trim().replace(/[^0-9]/g,'');
   const newPass = (document.getElementById('resetCustPass')?.value || '').trim();
@@ -3773,6 +3803,7 @@ function adminResetCustomerPass() {
       if (_sendRow) _sendRow.style.display = 'block';
       const e1 = document.getElementById('resetCustPhone'); if (e1) e1.value='';
       const e2 = document.getElementById('resetCustPass'); if (e2) e2.value='';
+      const _fb = document.getElementById('resetCustFound'); if (_fb) _fb.style.display='none';
       showNotif('✅ تم إعادة تعيين باسورد العميل — اضغط "إرسال على واتساب" لتبليغه');
     }).catch(() => showNotif('⚠️ تعذّر الحفظ — حاول تاني'));
   }).catch(() => showNotif('⚠️ تعذّر الوصول — تأكد من الإنترنت'));
