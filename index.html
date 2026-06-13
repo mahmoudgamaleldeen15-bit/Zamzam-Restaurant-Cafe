@@ -3793,22 +3793,23 @@ function _showResetMsg(text, ok) {
   else { el.style.background = '#fef2f2'; el.style.color = '#dc2626'; }
 }
 function adminResetCustomerPass() {
-  const phone = (document.getElementById('resetCustPhone')?.value || '').trim().replace(/[^0-9]/g,'');
+  const clean = (document.getElementById('resetCustPhone')?.value || '').replace(/[^0-9]/g,'');
   const newPass = (document.getElementById('resetCustPass')?.value || '').trim();
-  if (phone.length < 10) { _showResetMsg('❌ أدخل رقم العميل صحيحاً', false); return; }
+  if (clean.length < 10) { _showResetMsg('❌ أدخل رقم العميل صحيحاً', false); return; }
   if (!newPass || newPass.length < 4) { _showResetMsg('❌ الباسورد الجديد 4 أحرف على الأقل', false); return; }
   if (!db) { _showResetMsg('❌ تتطلب اتصال إنترنت', false); return; }
   _showResetMsg('⏳ جارٍ إعادة التعيين...', true);
-  db.ref('users/' + phone).get().then(snap => {
-    if (!snap.exists() || !snap.val() || !snap.val().name) { _showResetMsg('❌ لا يوجد عميل بهذا الرقم', false); return; }
-    const u = snap.val();
-    u.password = _hashPw(newPass);
-    db.ref('users/' + phone).set(u).then(() => {
+  const norm = s => (s||'').replace(/[^0-9]/g,'');
+  // الحفظ على المفتاح الصح بتاع الحساب (مفتاح فايربيس = رقم الهاتف المسجّل)
+  const _save = (src, key) => {
+    const u = { ...src, password: _hashPw(newPass) };
+    db.ref('users/' + key).set(u).then(() => {
       const users = loadData('zz_users', []);
-      const idx = users.findIndex(x => (x.phone||'').replace(/[^0-9]/g,'') === phone);
-      if (idx >= 0) { users[idx] = u; saveData('zz_users', users); }
-      // نحتفظ بالرقم والباسورد الجديد (واسم العميل) لزر إرسال الواتساب — قبل مسح الخانات
-      _lastResetCust = { phone: phone, pass: newPass, name: u.name || '' };
+      const idx = users.findIndex(x => norm(x.phone) === norm(u.phone) || (u.whatsapp && norm(x.whatsapp) === norm(u.whatsapp)));
+      if (idx >= 0) { users[idx] = u; } else { users.push(u); }
+      saveData('zz_users', users);
+      // الرسالة بتروح على رقم الواتساب المسجّل
+      _lastResetCust = { phone: u.whatsapp || u.phone, pass: newPass, name: u.name || '' };
       const _sendRow = document.getElementById('sendCustPassRow');
       if (_sendRow) _sendRow.style.display = 'block';
       const e1 = document.getElementById('resetCustPhone'); if (e1) e1.value='';
@@ -3816,6 +3817,15 @@ function adminResetCustomerPass() {
       const _fb = document.getElementById('resetCustFound'); if (_fb) _fb.style.display='none';
       _showResetMsg('✅ تم إعادة تعيين باسورد العميل — اضغط "إرسال على واتساب" لتبليغه', true);
     }).catch((err) => _showResetMsg('⚠️ تعذّر الحفظ: ' + (err && err.message ? err.message : 'حاول تاني'), false));
+  };
+  // 1) بحث محلي بالهاتف أو الواتساب (نفس طريقة البحث التلقائي)
+  const users = loadData('zz_users', []);
+  const local = users.find(x => norm(x.phone) === clean || norm(x.whatsapp) === clean);
+  if (local && local.name) { _save(local, norm(local.phone) || clean); return; }
+  // 2) لو مش في الكاش — نجرّب فايربيس بالمفتاح المباشر
+  db.ref('users/' + clean).get().then(snap => {
+    if (snap.exists() && snap.val() && snap.val().name) { _save(snap.val(), clean); return; }
+    _showResetMsg('❌ لا يوجد عميل بهذا الرقم', false);
   }).catch((err) => _showResetMsg('⚠️ تعذّر الوصول: ' + (err && err.message ? err.message : 'تأكد من الإنترنت'), false));
 }
 // إرسال الباسورد الجديد للعميل على واتساب برسالة احترافية جاهزة
