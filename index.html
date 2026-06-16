@@ -1918,6 +1918,7 @@ input,select,textarea{font-family:inherit;}
     <!-- BOOKINGS TAB -->
     <div id="tab-bookings" style="display:none">
       <div style="padding:0 16px 8px">
+        <div id="tableAvailPanel" style="margin-bottom:8px"></div>
         <div style="font-size:13px;font-weight:800;color:var(--dark);margin-bottom:12px">📅 حجوزات الكافيه — مرتبة حسب التاريخ والوقت</div>
         <div id="adminBookingsList"></div>
       </div>
@@ -2975,6 +2976,7 @@ let usedOffers   = loadData('zz_used_offers', {});
 let ordersData   = loadData('zz_orders', []);
 let orderHistory = loadData('zz_order_history', []);
 let bookingsData = loadData('zz_bookings', []);
+let TABLE_AVAIL = loadData('zz_table_avail', {}); // {رقم الترابيزة: false} = الكاشير علّمها غير متاحة الآن
 
 // ============================================================
 // STATE
@@ -6495,12 +6497,16 @@ function renderTablesGrid() {
   for (let t = 1; t <= tablesCount; t++) {
     const cap = getTableCapacity(t);
     const fitsPersons = persons >= cap.min && persons <= cap.max;
-    const isBooked = bookingsData.some(b => b.tableNum === t && b.date === today && b.status !== 'cancelled' &&
+    const isBooked = bookingsData.some(b => b.tableNum === t && b.date === today && b.status !== 'cancelled' && b.status !== 'unavailable' &&
       Math.abs(timeToMin(b.time) - timeToMin(time)) < 90);
+    const isUnavail = TABLE_AVAIL[t] === false;
     const isSelected = selectedTableNum === t;
-    const canSelect = !isBooked && fitsPersons;
+    const canSelect = !isBooked && !isUnavail && fitsPersons;
     let cls, capLabel;
-    if (isBooked) {
+    if (isUnavail) {
+      cls = 'booked';
+      capLabel = '🔴 غير متاحة الآن';
+    } else if (isBooked) {
       cls = 'booked';
       capLabel = '🔴 محجوزة';
     } else if (!fitsPersons) {
@@ -6545,7 +6551,7 @@ function confirmBooking() {
     id: bookCode, tableNum: selectedTableNum, date, time, persons,
     name: currentUser.name, phone: currentUser.phone,
     whatsapp: currentUser.whatsapp || currentUser.phone,
-    status: 'confirmed', timestamp: Date.now()
+    status: 'pending', timestamp: Date.now()
   };
   bookingsData.push(booking);
   saveData('zz_bookings', bookingsData);
@@ -6569,28 +6575,75 @@ function confirmBooking() {
   // Start late alert timer
   startBookingAlertTimer(booking);
 }
+function _bookingHeaderHtml(status){
+  if (status === 'pending') return '<div style="font-size:26px;margin-bottom:8px">🔍</div><div style="font-size:18px;font-weight:800;margin-bottom:4px">تم إرسال طلب الحجز</div><div style="font-size:13px;opacity:.85;margin-bottom:12px">في انتظار مراجعة الكافيه وتأكيد توفّر الترابيزة</div>';
+  if (status === 'unavailable') return '<div style="font-size:26px;margin-bottom:8px">😔</div><div style="font-size:18px;font-weight:800;margin-bottom:4px">عذراً، الترابيزة غير متاحة</div><div style="font-size:13px;opacity:.85;margin-bottom:12px">برجاء اختيار موعد آخر — يسعدنا استقبالك 💚</div>';
+  if (status === 'cancelled') return '<div style="font-size:26px;margin-bottom:8px">🚫</div><div style="font-size:18px;font-weight:800;margin-bottom:4px">تم إلغاء الحجز</div><div style="font-size:13px;opacity:.85;margin-bottom:12px">يمكنك عمل حجز جديد في أي وقت 💚</div>';
+  return '<div style="font-size:28px;margin-bottom:8px">☕</div><div style="font-size:18px;font-weight:800;margin-bottom:4px">تم تأكيد الحجز!</div><div style="font-size:13px;opacity:.8;margin-bottom:12px">يرجى الاحتفاظ بهذه الشاشة وإظهارها عند الحضور</div>';
+}
+function _updateMyBookingTracking(){
+  const id = window._myBookingId;
+  if (!id) return;
+  const b = bookingsData.find(x => x.id === id);
+  if (!b) return;
+  const hEl = document.getElementById('bookingHeader_' + id);
+  if (hEl) hEl.innerHTML = _bookingHeaderHtml(b.status);
+  const badgeEl = document.getElementById('bookingStatusBadge_' + id);
+  if (badgeEl) badgeEl.innerHTML = getBookingStatusBadge(b.status);
+  if (b.status === 'unavailable') { _stopBookingCountdown(id, 'unavailable'); }
+  else if (b.status === 'cancelled') { _stopBookingCountdown(id, 'cancelled'); }
+}
+function captureBookingShot(id){
+  const b = bookingsData.find(x => x.id === id);
+  if (!b) return;
+  if (b.status !== 'confirmed' && b.status !== 'arrived') {
+    showNotif('📸 الصورة تتاح بعد تأكيد الحجز من الكافيه');
+    return;
+  }
+  const target = document.getElementById('bookingShot_' + id);
+  if (!target) return;
+  const _do = () => {
+    try {
+      html2canvas(target, { scale: 2, backgroundColor: '#2d5016' }).then(canvas => {
+        const link = document.createElement('a');
+        link.download = 'حجز_' + id + '.png';
+        link.href = canvas.toDataURL('image/png');
+        link.click();
+        showNotif('✅ تم حفظ صورة الحجز');
+      }).catch(() => showNotif('⚠️ تعذّر حفظ الصورة — حاول تاني'));
+    } catch(e) { showNotif('⚠️ تعذّر حفظ الصورة'); }
+  };
+  if (typeof html2canvas === 'undefined') {
+    const s = document.createElement('script');
+    s.src = 'https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js';
+    s.onload = _do;
+    s.onerror = () => showNotif('⚠️ تعذّر تحميل أداة الصورة — تأكد من الإنترنت');
+    document.head.appendChild(s);
+  } else { _do(); }
+}
 function showBookingConfirm(b) {
+  window._myBookingId = b.id;
   document.getElementById('bookingFormView').style.display = 'none';
   document.getElementById('bookingConfirmView').style.display = 'block';
   document.getElementById('bookingConfirmView').innerHTML = `
     <div class="booking-confirm" style="animation:popIn .4s ease">
-      <div style="font-size:28px;margin-bottom:8px">☕</div>
-      <div style="font-size:18px;font-weight:800;margin-bottom:4px">تم تأكيد الحجز!</div>
-      <div style="font-size:13px;opacity:.8;margin-bottom:12px">يرجى الاحتفاظ بهذه الشاشة وإظهارها عند الحضور</div>
+      <div id="bookingHeader_${b.id}">${_bookingHeaderHtml(b.status)}</div>
       
       <div style="background:linear-gradient(135deg,#fff3cd,#ffe69c);border-radius:12px;padding:12px 14px;margin-bottom:14px;font-size:12px;font-weight:700;color:#856404;text-align:right;line-height:1.7;border:1.5px solid #ffc107">
         ⚠️ يرجى الالتزام بموعد الحجز المحدد، حيث أن الأولوية للعملاء المتواجدين فعلياً داخل الكافيه، وفي حالة التأخير قد يتم إلغاء الحجز تلقائياً.
       </div>
 
-      <div class="booking-code">${b.id}</div>
-      
-      <div style="background:var(--cream);border-radius:12px;padding:10px 14px;margin-bottom:12px">
-        <div class="booking-detail"><span>👤 الاسم</span><span>${b.name}</span></div>
-        <div class="booking-detail"><span>🪑 رقم الترابيزة</span><span>${b.tableNum}</span></div>
-        <div class="booking-detail"><span>📅 التاريخ</span><span>${b.date}</span></div>
-        <div class="booking-detail"><span>⏰ الوقت</span><span>${b.time}</span></div>
-        <div class="booking-detail"><span>👥 عدد الأشخاص</span><span>${b.persons}</span></div>
-        <div class="booking-detail"><span>📋 الحالة</span><span id="bookingStatusBadge_${b.id}">${getBookingStatusBadge(b.status)}</span></div>
+      <div id="bookingShot_${b.id}" style="background:linear-gradient(135deg,#2d5016,#4a7c1f);border-radius:14px;padding:16px;margin-bottom:12px">
+        <div style="text-align:center;font-size:13px;font-weight:800;margin-bottom:6px;color:#ffe69c">☕ ${(typeof RESTAURANT!=='undefined'&&RESTAURANT.name)?RESTAURANT.name:'الكافيه'}</div>
+        <div class="booking-code" style="color:#ffe69c;margin:0 0 10px">${b.id}</div>
+        <div style="background:rgba(255,255,255,.14);border-radius:12px;padding:10px 14px">
+          <div class="booking-detail" style="color:#fff"><span style="color:#fff">👤 الاسم</span><span style="color:#fff">${b.name}</span></div>
+          <div class="booking-detail" style="color:#fff"><span style="color:#fff">🪑 رقم الترابيزة</span><span style="color:#fff">${b.tableNum}</span></div>
+          <div class="booking-detail" style="color:#fff"><span style="color:#fff">📅 التاريخ</span><span style="color:#fff">${b.date}</span></div>
+          <div class="booking-detail" style="color:#fff"><span style="color:#fff">⏰ الوقت</span><span style="color:#fff">${b.time}</span></div>
+          <div class="booking-detail" style="color:#fff"><span style="color:#fff">👥 عدد الأشخاص</span><span style="color:#fff">${b.persons}</span></div>
+          <div class="booking-detail" style="color:#fff"><span style="color:#fff">📋 الحالة</span><span id="bookingStatusBadge_${b.id}" style="color:#fff">${getBookingStatusBadge(b.status)}</span></div>
+        </div>
       </div>
 
       <div style="background:var(--white);border-radius:12px;padding:12px 14px;margin-bottom:14px;border:1.5px solid var(--olive)">
@@ -6598,7 +6651,7 @@ function showBookingConfirm(b) {
         <div id="bookingCountdownDisplay_${b.id}" style="text-align:center;font-size:26px;font-weight:900;color:var(--olive-dark);font-family:monospace">--:--</div>
       </div>
 
-      <div class="screenshot-note">📸 قم بأخذ Screenshot للحجز الآن</div>
+      <button id="bookingShotBtn_${b.id}" onclick="captureBookingShot('${b.id}')" class="screenshot-note" style="width:100%;border:none;cursor:pointer;font-family:inherit">📸 احفظ صورة الحجز</button>
     </div>
     <button class="btn-primary" onclick="openScreen('app')" style="margin-bottom:10px">العودة للمنيو 🏠</button>
     <button class="btn-primary btn-secondary" onclick="document.getElementById('bookingFormView').style.display='block';document.getElementById('bookingConfirmView').style.display='none'">حجز آخر ☕</button>
@@ -6608,6 +6661,8 @@ function showBookingConfirm(b) {
 
 function getBookingStatusBadge(status) {
   const map = {
+    'pending':    '<span style="background:#fef3c7;color:#92400e;padding:3px 10px;border-radius:100px;font-size:12px;font-weight:800">🔍 قيد المراجعة</span>',
+    'unavailable':'<span style="background:#fee2e2;color:#991b1b;padding:3px 10px;border-radius:100px;font-size:12px;font-weight:800">😔 غير متاحة</span>',
     'confirmed':  '<span style="background:#d1fae5;color:#065f46;padding:3px 10px;border-radius:100px;font-size:12px;font-weight:800">✅ مؤكد</span>',
     'waiting':    '<span style="background:#fef3c7;color:#92400e;padding:3px 10px;border-radius:100px;font-size:12px;font-weight:800">⏳ قيد الانتظار</span>',
     'cancelled':  '<span style="background:#fee2e2;color:#991b1b;padding:3px 10px;border-radius:100px;font-size:12px;font-weight:800">❌ ملغي</span>',
@@ -6617,6 +6672,26 @@ function getBookingStatusBadge(status) {
 }
 
 let _bookingCountdownIntervals = {};
+// إيقاف عداد الموعد ووضع رسالة محترمة مكانه (عند غير متاح أو الإلغاء)
+function _stopBookingCountdown(id, kind) {
+  try { clearInterval(_bookingCountdownIntervals[id]); } catch(e){}
+  const el = document.getElementById('bookingCountdownDisplay_' + id);
+  if (!el) return;
+  const box = el.parentElement;
+  if (kind === 'unavailable') {
+    if (box) {
+      box.style.background = '#fef2f2';
+      box.style.border = '1.5px solid #fecaca';
+      box.innerHTML = '<div style="text-align:center;font-size:13px;font-weight:800;color:#991b1b;line-height:1.8">😔 نعتذر، الترابيزة غير متاحة في هذا الموعد<br><span style="font-size:12px;font-weight:700">يسعدنا استقبالك في موعد آخر — تواصل معنا 💚</span></div>';
+    }
+  } else {
+    if (box) {
+      box.style.background = '#fff7ed';
+      box.style.border = '1.5px solid #fed7aa';
+      box.innerHTML = '<div style="text-align:center;font-size:13px;font-weight:800;color:#9a3412;line-height:1.8">🚫 تم إلغاء هذا الحجز<br><span style="font-size:12px;font-weight:700">يمكنك عمل حجز جديد في أي وقت — نسعد بخدمتك 💚</span></div>';
+    }
+  }
+}
 function startBookingCountdown(b) {
   const key = b.id;
   clearInterval(_bookingCountdownIntervals[key]);
@@ -6645,6 +6720,7 @@ function startBookingCountdown(b) {
 // ADMIN BOOKINGS
 // ============================================================
 function renderAdminBookings() {
+  renderTableAvailPanel();
   const el = document.getElementById('adminBookingsList');
   const sorted = [...bookingsData].sort((a, b) => {
     if (a.date !== b.date) return a.date.localeCompare(b.date);
@@ -6673,8 +6749,9 @@ function renderAdminBookings() {
         ${isLate ? '<span style="background:#fef3c7;color:#92400e;padding:3px 10px;border-radius:100px;font-size:11px;font-weight:800">⚠️ تأخر +5 دقائق</span>' : ''}
       </div>
       <div style="display:flex;gap:8px;flex-wrap:wrap">
-        ${b.status !== 'arrived' && b.status !== 'cancelled' ? `<button class="action-btn" style="background:#dbeafe;color:#1e40af" onclick="markBookingArrived('${b.id}')">🙋 حضر العميل</button>` : ''}
-        ${b.whatsapp ? `<button class="action-btn btn-wa" onclick="sendBookingEntryMsg('${b.id}')">💬 إذن الدخول</button>` : ''}
+        ${b.status === 'pending' ? `<button class="action-btn" style="background:#d1fae5;color:#065f46" onclick="approveBooking('${b.id}')">✅ تأكيد الحجز</button><button class="action-btn" style="background:#fee2e2;color:#991b1b" onclick="rejectBooking('${b.id}')">🚫 غير متاح</button>` : ''}
+        ${b.status !== 'arrived' && b.status !== 'cancelled' && b.status !== 'pending' && b.status !== 'unavailable' ? `<button class="action-btn" style="background:#dbeafe;color:#1e40af" onclick="markBookingArrived('${b.id}')">🙋 حضر العميل</button>` : ''}
+        ${b.whatsapp && b.status !== 'pending' && b.status !== 'unavailable' ? `<button class="action-btn btn-wa" onclick="sendBookingEntryMsg('${b.id}')">💬 إذن الدخول</button>` : ''}
         ${b.status !== 'cancelled' ? `<button class="action-btn btn-cancel" onclick="cancelBooking('${b.id}')">❌ إلغاء الحجز</button>` : ''}
         <button class="action-btn" style="background:#fce7f3;color:#9d174d" onclick="deleteBooking('${b.id}')">🗑️ حذف</button>
       </div>
@@ -6682,6 +6759,55 @@ function renderAdminBookings() {
   }).join('');
 }
 
+// === توفّر الترابيزات (يتحكم فيه الكاشير) ===
+function renderTableAvailPanel() {
+  const el = document.getElementById('tableAvailPanel');
+  if (!el) return;
+  const tablesCount = Number(SETTINGS.tablesCount) || 17;
+  let html = '<div style="font-size:13px;font-weight:800;color:var(--dark);margin-bottom:8px">🪑 توفّر الترابيزات الآن — اضغط لتغيير الحالة</div>';
+  html += '<div style="font-size:11px;color:var(--text-muted);margin-bottom:10px">علّم الترابيزة "مشغولة" لو فيه حد قاعد عليها — العميل مش هيقدر يحجزها وهي مشغولة.</div>';
+  html += '<div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:18px">';
+  for (let t = 1; t <= tablesCount; t++) {
+    const unavail = TABLE_AVAIL[t] === false;
+    html += `<div onclick="toggleTableAvail(${t})" style="cursor:pointer;min-width:56px;text-align:center;padding:8px 6px;border-radius:10px;font-weight:800;border:2px solid ${unavail?'#dc2626':'#16a34a'};background:${unavail?'#fef2f2':'#f0fdf4'};color:${unavail?'#dc2626':'#15803d'}">
+      <div style="font-size:15px">${t}</div>
+      <div style="font-size:10px">${unavail?'🔴 مشغولة':'🟢 متاحة'}</div>
+    </div>`;
+  }
+  html += '</div>';
+  el.innerHTML = html;
+}
+function toggleTableAvail(t) {
+  if (TABLE_AVAIL[t] === false) { delete TABLE_AVAIL[t]; }
+  else { TABLE_AVAIL[t] = false; }
+  saveData('zz_table_avail', TABLE_AVAIL);
+  if (db) { try { db.ref('table_avail').set(TABLE_AVAIL); } catch(e){} }
+  renderTableAvailPanel();
+  showNotif(TABLE_AVAIL[t] === false ? `🔴 ترابيزة ${t} مشغولة الآن` : `🟢 ترابيزة ${t} متاحة الآن`);
+}
+function approveBooking(id) {
+  const b = bookingsData.find(x => x.id === id);
+  if (!b) return;
+  b.status = 'confirmed';
+  fbUpdate('bookings/' + id, { status: 'confirmed' });
+  saveData('zz_bookings', bookingsData);
+  renderAdminBookings();
+  showNotif('✅ تم تأكيد الحجز — العميل هيشوفه في التتبع');
+}
+function rejectBooking(id) {
+  const b = bookingsData.find(x => x.id === id);
+  if (!b) return;
+  b.status = 'unavailable';
+  fbUpdate('bookings/' + id, { status: 'unavailable' });
+  saveData('zz_bookings', bookingsData);
+  renderAdminBookings();
+  const wa = normalizePhoneForWA(b.whatsapp || b.phone || '');
+  if (wa) {
+    const msg = `عزيزنا *${b.name}* 🌟\n\nنعتذر، الترابيزة المطلوبة غير متاحة في الموعد المحدد (${b.date} - ${b.time}).\nيسعدنا استقبالك في موعد آخر — تواصل معنا لاختيار وقت مناسب 💚`;
+    window.open(`https://wa.me/${wa}?text=${encodeURIComponent(msg)}`, '_blank');
+  }
+  showNotif('🚫 تم تحديد الحجز كغير متاح وإبلاغ العميل');
+}
 function markBookingArrived(id) {
   const b = bookingsData.find(x => x.id === id);
   if (!b) return;
@@ -9871,7 +9997,16 @@ function setupFirebaseListeners() {
         if (activeTab.includes('الحجوزات')) renderAdminBookings();
       }
       if (document.getElementById('booking')?.classList.contains('active')) renderTablesGrid();
+      try { _updateMyBookingTracking(); } catch(e){}
     }
+  });
+
+  // --------- TABLE AVAILABILITY (توفّر الترابيزات) ---------
+  db.ref('table_avail').on('value', snap => {
+    TABLE_AVAIL = snap.val() || {};
+    saveData('zz_table_avail', TABLE_AVAIL);
+    if (document.getElementById('tableAvailPanel')) { try { renderTableAvailPanel(); } catch(e){} }
+    if (document.getElementById('booking')?.classList.contains('active')) { try { renderTablesGrid(); } catch(e){} }
   });
 
   // --------- MENU PRICES ---------
