@@ -1099,6 +1099,7 @@ input,select,textarea{font-family:inherit;}
     <!-- VIP Loyalty Card — تظهر فقط لعملاء VIP -->
     <div id="vipLoyaltyCardWrap" style="display:none"></div>
     <!-- ADS SLIDER -->
+    <div id="compCardsSection" style="display:none;padding:0 12px 8px"></div>
     <div id="adsSliderSection" style="display:none">
       <div class="ads-slider-wrap">
         <button class="ads-nav-btn prev" onclick="adsSlideNav(-1)">›</button>
@@ -1841,6 +1842,7 @@ input,select,textarea{font-family:inherit;}
       <button id="tabAgentsBtn" onclick="switchAdminTab('agents',this)">🛵 المندوبين</button>
       <button id="tabBlockBtn" onclick="switchAdminTab('block',this)">🚫 الحظر</button>
       <button id="tabStatsBtn" onclick="switchAdminTab('stats',this)">📊 الإحصائيات</button>
+      <button id="tabCompBtn" onclick="switchAdminTab('competitions',this)">🏆 المسابقات</button>
     </div>
 
     <!-- ORDERS TAB (Card View) -->
@@ -2118,6 +2120,15 @@ input,select,textarea{font-family:inherit;}
       <div id="adminReviewsList"><div style="text-align:center;padding:30px;color:var(--text-muted);font-weight:700">لا توجد تعليقات بعد</div></div>
     </div>
 
+
+
+    <div id="tab-competitions" style="display:none;padding:12px">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+        <div style="font-size:15px;font-weight:900;color:var(--text)">🏆 المسابقات</div>
+        <button onclick="_compOpenCreateModal()" style="background:var(--olive);color:#fff;border:none;padding:8px 14px;border-radius:10px;font-size:13px;font-weight:800;cursor:pointer;font-family:inherit">+ مسابقة جديدة</button>
+      </div>
+      <div id="compAdminList"><div style="text-align:center;padding:30px;color:var(--text-muted);font-weight:700">لا توجد مسابقات بعد</div></div>
+    </div>
 
     <div id="tab-settings" style="display:none">
       <!-- 🌟 نظام نقاط الولاء -->
@@ -13512,6 +13523,794 @@ function sendSWPushNotification(title, body, data = {}) {
     sendDesktopNotificationEnhanced(data.order || {}, data.type || 'new_order');
   }
 }
+</script>
+<style>
+#compCardsSection { display:none; }
+</style>
+<script>
+/* ═══════════════════════════════════════════════════════════════
+   COMPETITION SYSTEM — ZAMZAM RESTAURANT
+   Added as pure extension — zero modification to existing code
+   ═══════════════════════════════════════════════════════════════ */
+
+/* ── Data ── */
+let _COMPETITIONS = {};
+let _compModalOpen = false;
+
+/* ── Override switchAdminTab to handle competitions ── */
+(function(){
+  const _orig = window.switchAdminTab;
+  window.switchAdminTab = function(tab, el) {
+    const compTab = document.getElementById('tab-competitions');
+    if (tab === 'competitions') {
+      document.querySelectorAll('.admin-tabs button').forEach(b => b.classList.remove('active'));
+      el.classList.add('active');
+      ['orders','cashier','bookings','menu','addons','offers','settings','notify','ads','agents','block','stats'].forEach(t => {
+        const e = document.getElementById('tab-' + t); if (e) e.style.display = 'none';
+      });
+      if (compTab) { compTab.style.display = 'block'; _compRenderAdmin(); }
+      return;
+    }
+    if (compTab) compTab.style.display = 'none';
+    if (_orig) _orig(tab, el);
+  };
+})();
+
+/* ══════════════════ FIREBASE HELPERS ══════════════════ */
+function _compRef(path) {
+  if (typeof db !== 'undefined' && db) return db.ref('competitions/' + path);
+  return null;
+}
+function _prizeRef(phone, compId) {
+  if (typeof db !== 'undefined' && db) return db.ref('comp_prizes/' + phone.replace(/\D/g,'') + '/' + compId);
+  return null;
+}
+
+/* ══════════════════ ADMIN — CREATE ══════════════════ */
+function _compOpenCreateModal() {
+  const today = new Date().toISOString().slice(0,10);
+  const m = document.getElementById('_compCreateModal');
+  if (m) { m.style.display = 'flex'; return; }
+  const modal = document.createElement('div');
+  modal.id = '_compCreateModal';
+  modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:9999;display:flex;align-items:flex-start;justify-content:center;overflow-y:auto;padding:20px';
+  modal.innerHTML = `
+    <div style="background:var(--bg);border-radius:18px;max-width:480px;width:100%;padding:20px;margin:auto">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+        <div style="font-size:16px;font-weight:900;color:var(--text)">🏆 مسابقة جديدة</div>
+        <button onclick="document.getElementById('_compCreateModal').style.display='none'" style="background:none;border:none;font-size:20px;cursor:pointer;color:var(--text-muted)">✕</button>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:10px">
+        <input id="_cTitle" placeholder="عنوان المسابقة — مثال: الأهلي × الزمالك" style="padding:10px;border:1.5px solid var(--border);border-radius:10px;font-size:14px;font-family:inherit;background:var(--bg);color:var(--text)">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+          <input id="_cTeam1" placeholder="الفريق الأول" style="padding:10px;border:1.5px solid var(--border);border-radius:10px;font-size:14px;font-family:inherit;background:var(--bg);color:var(--text)">
+          <input id="_cTeam2" placeholder="الفريق الثاني" style="padding:10px;border:1.5px solid var(--border);border-radius:10px;font-size:14px;font-family:inherit;background:var(--bg);color:var(--text)">
+        </div>
+        <input id="_cImageUrl" placeholder="🖼️ رابط البوستر (اختياري)" style="padding:10px;border:1.5px solid var(--border);border-radius:10px;font-size:13px;font-family:inherit;background:var(--bg);color:var(--text)">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+          <div><div style="font-size:12px;font-weight:700;color:var(--text-muted);margin-bottom:4px">📅 تاريخ المباراة</div>
+          <input type="date" id="_cMatchDate" value="${today}" style="width:100%;padding:9px;border:1.5px solid var(--border);border-radius:10px;font-size:13px;font-family:inherit;background:var(--bg);color:var(--text);box-sizing:border-box"></div>
+          <div><div style="font-size:12px;font-weight:700;color:var(--text-muted);margin-bottom:4px">⏰ غلق التوقعات</div>
+          <input type="time" id="_cCloseTime" value="19:45" style="width:100%;padding:9px;border:1.5px solid var(--border);border-radius:10px;font-size:13px;font-family:inherit;background:var(--bg);color:var(--text);box-sizing:border-box"></div>
+        </div>
+        <div style="border:1.5px solid var(--border);border-radius:12px;padding:12px">
+          <div style="font-size:13px;font-weight:800;color:var(--text);margin-bottom:8px">🎁 نوع الجائزة</div>
+          <select id="_cPrizeType" onchange="_compPrizeTypeChange()" style="width:100%;padding:9px;border:1.5px solid var(--border);border-radius:10px;font-size:13px;font-family:inherit;background:var(--bg);color:var(--text);margin-bottom:8px">
+            <option value="discount">خصم على الفاتورة (%)</option>
+            <option value="free_delivery">توصيل مجاني</option>
+            <option value="free_product">منتج مجاني</option>
+          </select>
+          <div id="_cPrizeExtra">
+            <input type="number" id="_cPrizeVal" placeholder="نسبة الخصم % مثال: 20" min="1" max="100" style="width:100%;padding:9px;border:1.5px solid var(--border);border-radius:10px;font-size:13px;font-family:inherit;background:var(--bg);color:var(--text);box-sizing:border-box">
+          </div>
+        </div>
+        <div style="border:1.5px solid var(--border);border-radius:12px;padding:12px">
+          <div style="font-size:13px;font-weight:800;color:var(--text);margin-bottom:8px">📋 شروط المشاركة</div>
+          <label style="display:flex;align-items:center;gap:8px;margin-bottom:8px;font-size:13px;cursor:pointer">
+            <input type="checkbox" id="_cReqOrder" checked style="width:16px;height:16px;accent-color:var(--olive)"> لازم يكون عامل أوردر
+          </label>
+          <div style="margin-bottom:8px">
+            <div style="font-size:12px;font-weight:700;color:var(--text-muted);margin-bottom:4px">نوع الطلب المطلوب</div>
+            <select id="_cOrderType" style="width:100%;padding:9px;border:1.5px solid var(--border);border-radius:10px;font-size:13px;font-family:inherit;background:var(--bg);color:var(--text)">
+              <option value="all">جميع الطلبات</option>
+              <option value="dine_in">داخل الكافيه فقط (يتحقق GPS)</option>
+              <option value="delivery">توصيل فقط</option>
+              <option value="pickup">استلام من الفرع فقط</option>
+            </select>
+          </div>
+          <div style="display:flex;align-items:center;gap:8px">
+            <input type="number" id="_cMinOrder" placeholder="الحد الأدنى للطلب (اختياري)" min="0" style="flex:1;padding:9px;border:1.5px solid var(--border);border-radius:10px;font-size:13px;font-family:inherit;background:var(--bg);color:var(--text)">
+            <span style="font-size:12px;color:var(--text-muted);white-space:nowrap">جنيه</span>
+          </div>
+        </div>
+        <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer;background:var(--bg-2,#f5f5f5);padding:10px;border-radius:10px">
+          <input type="checkbox" id="_cWinnersAll" style="width:16px;height:16px;accent-color:var(--olive)"> الجائزة لكل من توقع صح (وليس فائز واحد عشوائي)
+        </label>
+        <button onclick="_compSaveNew()" style="padding:12px;background:var(--olive);color:#fff;border:none;border-radius:12px;font-size:15px;font-weight:900;cursor:pointer;font-family:inherit">✅ حفظ المسابقة</button>
+      </div>
+    </div>`;
+  document.body.appendChild(modal);
+}
+
+function _compPrizeTypeChange() {
+  const t = document.getElementById('_cPrizeType').value;
+  const ex = document.getElementById('_cPrizeExtra');
+  if (t === 'discount') ex.innerHTML = '<input type="number" id="_cPrizeVal" placeholder="نسبة الخصم % مثال: 20" min="1" max="100" style="width:100%;padding:9px;border:1.5px solid var(--border);border-radius:10px;font-size:13px;font-family:inherit;background:var(--bg);color:var(--text);box-sizing:border-box">';
+  else if (t === 'free_delivery') ex.innerHTML = '<div style="font-size:12px;color:var(--text-muted);padding:6px">التوصيل المجاني سيُطبق تلقائياً</div>';
+  else ex.innerHTML = '<input id="_cPrizeVal" placeholder="اسم المنتج الهدية" style="width:100%;padding:9px;border:1.5px solid var(--border);border-radius:10px;font-size:13px;font-family:inherit;background:var(--bg);color:var(--text);box-sizing:border-box">';
+}
+
+function _compSaveNew() {
+  const title = (document.getElementById('_cTitle')||{}).value?.trim();
+  const team1 = (document.getElementById('_cTeam1')||{}).value?.trim();
+  const team2 = (document.getElementById('_cTeam2')||{}).value?.trim();
+  const matchDate = (document.getElementById('_cMatchDate')||{}).value;
+  const closeTime = (document.getElementById('_cCloseTime')||{}).value;
+  const prizeType = (document.getElementById('_cPrizeType')||{}).value;
+  const prizeVal = (document.getElementById('_cPrizeVal')||{}).value;
+  const reqOrder = document.getElementById('_cReqOrder')?.checked;
+  const orderType = (document.getElementById('_cOrderType')||{}).value;
+  const minOrder = parseInt((document.getElementById('_cMinOrder')||{}).value) || 0;
+  const winnersAll = document.getElementById('_cWinnersAll')?.checked;
+  const imageUrl = (document.getElementById('_cImageUrl')||{}).value?.trim() || '';
+
+  if (!title || !team1 || !team2 || !matchDate) { if(typeof showNotif==='function') showNotif('❌ كمّل البيانات المطلوبة'); return; }
+
+  const closeAt = matchDate + 'T' + (closeTime || '19:45');
+  const id = 'comp_' + Date.now();
+  const comp = { id, title, team1, team2, matchDate, closeAt, status: 'active',
+    correctResult: null, winnersAll: !!winnersAll, createdAt: new Date().toISOString(),
+    prize: { type: prizeType, value: prizeVal || '' },
+    imageUrl: imageUrl || '',
+    conditions: { requireOrder: !!reqOrder, orderType, minOrder }
+  };
+
+  const ref = _compRef(id);
+  if (ref) {
+    ref.set(comp).then(() => {
+      if(typeof showNotif==='function') showNotif('✅ تم حفظ المسابقة');
+      document.getElementById('_compCreateModal').style.display = 'none';
+      _compRenderAdmin();
+      _compLoadForCustomer();
+    }).catch(() => { if(typeof showNotif==='function') showNotif('❌ خطأ في الحفظ'); });
+  } else {
+    _COMPETITIONS[id] = comp;
+    if(typeof showNotif==='function') showNotif('✅ تم حفظ المسابقة (محلياً)');
+    document.getElementById('_compCreateModal').style.display = 'none';
+    _compRenderAdmin();
+    _compLoadForCustomer();
+  }
+}
+
+/* ══════════════════ ADMIN — RENDER LIST ══════════════════ */
+function _compRenderAdmin() {
+  const ref = _compRef('');
+  if (ref) {
+    ref.get().then(snap => {
+      _COMPETITIONS = {};
+      if (snap.exists()) snap.forEach(c => { const v = c.val(); if(v) _COMPETITIONS[c.key] = v; });
+      _compRenderAdminList();
+    });
+  } else { _compRenderAdminList(); }
+}
+
+function _compRenderAdminList() {
+  const el = document.getElementById('compAdminList');
+  if (!el) return;
+  const comps = Object.values(_COMPETITIONS).sort((a,b) => (b.createdAt||'').localeCompare(a.createdAt||''));
+  if (!comps.length) { el.innerHTML = '<div style="text-align:center;padding:30px;color:var(--text-muted);font-weight:700">لا توجد مسابقات بعد</div>'; return; }
+  el.innerHTML = comps.map(c => {
+    const isClosed = c.status === 'closed' || new Date() > new Date(c.closeAt);
+    const isFinished = c.status === 'finished';
+    const statusColor = isFinished ? '#16a34a' : isClosed ? '#f59e0b' : '#3b82f6';
+    const statusText = isFinished ? '✅ منتهية' : isClosed ? '⏳ انتهى التوقع' : '🟢 نشطة';
+    const prizeText = c.prize?.type === 'discount' ? `خصم ${c.prize.value}%` : c.prize?.type === 'free_delivery' ? 'توصيل مجاني' : `منتج: ${c.prize?.value||''}`;
+    const condText = _compCondText(c.conditions);
+    return `<div style="background:var(--bg);border:1.5px solid var(--border);border-radius:14px;padding:14px;margin-bottom:10px">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px">
+        <div>
+          <div style="font-weight:900;font-size:15px;color:var(--text)">${c.title||''}</div>
+          <div style="font-size:12px;color:var(--text-muted);margin-top:2px">📅 ${c.matchDate||''} | ⏰ غلق: ${(c.closeAt||'').slice(11,16)}</div>
+        </div>
+        <span style="background:${statusColor}20;color:${statusColor};padding:4px 10px;border-radius:100px;font-size:12px;font-weight:800">${statusText}</span>
+      </div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px">
+        <span style="background:var(--bg-2,#f5f5f5);padding:4px 10px;border-radius:8px;font-size:12px;font-weight:700">🎁 ${prizeText}</span>
+        ${condText ? `<span style="background:var(--bg-2,#f5f5f5);padding:4px 10px;border-radius:8px;font-size:12px;font-weight:700">📋 ${condText}</span>` : ''}
+        <span style="background:var(--bg-2,#f5f5f5);padding:4px 10px;border-radius:8px;font-size:12px;font-weight:700">${c.winnersAll ? '🏆 كل الصح يكسب' : '🎰 فائز عشوائي'}</span>
+      </div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap">
+        <button onclick="_compViewPredictions('${c.id}')" style="flex:1;padding:8px;background:#3b82f620;color:#3b82f6;border:1.5px solid #3b82f6;border-radius:8px;font-size:12px;font-weight:800;cursor:pointer;font-family:inherit">👁️ التوقعات</button>
+        ${!isFinished ? `<button onclick="_compEnterResult('${c.id}')" style="flex:1;padding:8px;background:var(--olive);color:#fff;border:none;border-radius:8px;font-size:12px;font-weight:800;cursor:pointer;font-family:inherit">⚽ النتيجة</button>` : ''}
+        ${!isFinished && !isClosed ? `<button onclick="_compClosePred('${c.id}')" style="flex:1;padding:8px;background:#f59e0b20;color:#b45309;border:1.5px solid #f59e0b;border-radius:8px;font-size:12px;font-weight:800;cursor:pointer;font-family:inherit">🔒 إغلاق مبكر</button>` : ''}
+        <button onclick="_compDelete('${c.id}')" style="padding:8px 12px;background:#ef444420;color:#ef4444;border:1.5px solid #ef4444;border-radius:8px;font-size:12px;font-weight:800;cursor:pointer;font-family:inherit">🗑</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function _compCondText(cond) {
+  if (!cond) return '';
+  const parts = [];
+  if (cond.requireOrder) parts.push('لازم أوردر');
+  if (cond.orderType && cond.orderType !== 'all') {
+    const m = {dine_in:'داخل الكافيه', delivery:'توصيل', pickup:'استلام'};
+    parts.push(m[cond.orderType] || cond.orderType);
+  }
+  if (cond.minOrder > 0) parts.push(`حد أدنى ${cond.minOrder} جـ`);
+  return parts.join(' | ');
+}
+
+/* ══════════════════ ADMIN — RESULT + WINNERS ══════════════════ */
+function _compCloseResultModal() {
+  var m = document.getElementById('_compResultModal');
+  if (m) m.remove();
+}
+
+function _compEnterResult(compId) {
+  var comp = _COMPETITIONS[compId];
+  if (!comp) return;
+  window._compCurrentResultId = compId;
+  var old = document.getElementById('_compResultModal');
+  if (old) old.remove();
+  var modal = document.createElement('div');
+  modal.id = '_compResultModal';
+  modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.65);z-index:99999;display:flex;align-items:center;justify-content:center;padding:20px;direction:rtl;font-family:inherit';
+  var teamLine = (comp.team1 || '') + ' × ' + (comp.team2 || '');
+  modal.innerHTML =
+    '<div style="background:var(--bg);border-radius:18px;max-width:380px;width:100%;overflow:hidden">' +
+      '<div style="background:var(--olive);padding:14px 18px;display:flex;justify-content:space-between;align-items:center">' +
+        '<div style="color:#fff;font-size:15px;font-weight:900">⚽ نتيجة المباراة</div>' +
+        '<button onclick="_compCloseResultModal()" style="background:rgba(255,255,255,.2);border:none;color:#fff;width:28px;height:28px;border-radius:50%;font-size:16px;cursor:pointer">×</button>' +
+      '</div>' +
+      '<div style="padding:20px">' +
+        '<div style="text-align:center;font-size:15px;font-weight:800;color:var(--text);margin-bottom:18px;padding:10px;background:var(--bg-2,#f5f5f5);border-radius:10px">' + teamLine + '</div>' +
+        '<div style="font-size:12px;font-weight:700;color:var(--text-muted);margin-bottom:8px">أدخل نتيجة كل فريق</div>' +
+        '<div style="display:grid;grid-template-columns:1fr auto 1fr;gap:8px;align-items:center;margin-bottom:6px">' +
+          '<div style="text-align:center">' +
+            '<div style="font-size:11px;font-weight:700;color:var(--text-muted);margin-bottom:4px">' + (comp.team1 || 'فريق 1') + '</div>' +
+            '<input id="_cResA" type="number" min="0" max="20" placeholder="0" style="width:100%;padding:12px;border:2px solid var(--border);border-radius:10px;font-size:26px;font-weight:900;text-align:center;font-family:inherit;background:var(--bg);color:var(--text)">' +
+          '</div>' +
+          '<div style="font-size:22px;font-weight:900;color:var(--text-muted);padding-top:18px">-</div>' +
+          '<div style="text-align:center">' +
+            '<div style="font-size:11px;font-weight:700;color:var(--text-muted);margin-bottom:4px">' + (comp.team2 || 'فريق 2') + '</div>' +
+            '<input id="_cResB" type="number" min="0" max="20" placeholder="0" style="width:100%;padding:12px;border:2px solid var(--border);border-radius:10px;font-size:26px;font-weight:900;text-align:center;font-family:inherit;background:var(--bg);color:var(--text)">' +
+          '</div>' +
+        '</div>' +
+        '<div id="_cResPreview" style="text-align:center;font-size:13px;font-weight:800;color:var(--olive);min-height:20px;margin-bottom:14px"></div>' +
+        '<button onclick="_compConfirmResultFromModal()" style="width:100%;padding:13px;background:var(--olive);color:#fff;border:none;border-radius:12px;font-size:14px;font-weight:900;cursor:pointer;font-family:inherit">✅ تأكيد النتيجة وعرض الفائزين</button>' +
+      '</div>' +
+    '</div>';
+  document.body.appendChild(modal);
+  function upd() {
+    var a = document.getElementById('_cResA').value;
+    var b = document.getElementById('_cResB').value;
+    var p = document.getElementById('_cResPreview');
+    if (p) p.textContent = (a !== '' && b !== '') ? 'النتيجة: ' + a + '-' + b : '';
+  }
+  document.getElementById('_cResA').oninput = upd;
+  document.getElementById('_cResB').oninput = upd;
+  setTimeout(function(){ var el=document.getElementById('_cResA'); if(el) el.focus(); }, 100);
+}
+
+function _compConfirmResultFromModal() {
+  var compId = window._compCurrentResultId;
+  if (!compId) return;
+  var a = (document.getElementById('_cResA') || {}).value;
+  var b = (document.getElementById('_cResB') || {}).value;
+  if (a === '' || b === '') { if(typeof showNotif==='function') showNotif('❌ أدخل نتيجة الفريقين'); return; }
+  var correctResult = a + '-' + b;
+  var ref = _compRef(compId);
+  var update = { correctResult: correctResult, status: 'finished' };
+  var done = function() {
+    _COMPETITIONS[compId] = Object.assign({}, _COMPETITIONS[compId], update);
+    if(typeof showNotif==='function') showNotif('✅ النتيجة: ' + correctResult);
+    _compCloseResultModal();
+    _compRenderAdminList();
+    _compViewPredictions(compId);
+  };
+  if (ref) { ref.update(update).then(done).catch(function(){ if(typeof showNotif==='function') showNotif('❌ خطأ في الحفظ'); }); }
+  else { done(); }
+}
+
+function _compViewPredictions(compId) {
+  const comp = _COMPETITIONS[compId];
+  if (!comp) return;
+  const modal = document.getElementById('_compPredModal') || (() => {
+    const m = document.createElement('div');
+    m.id = '_compPredModal';
+    m.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:9999;display:flex;align-items:flex-start;justify-content:center;overflow-y:auto;padding:20px';
+    document.body.appendChild(m); return m;
+  })();
+  modal.style.display = 'flex';
+
+  const ref = _compRef(compId + '/predictions');
+  const render = (preds) => {
+    const correct = comp.correctResult;
+    const entries = Object.entries(preds || {});
+    const winners = correct ? entries.filter(([,p]) => p.result === correct) : [];
+    const condText = _compCondText(comp.conditions);
+
+    modal.innerHTML = `<div style="background:var(--bg);border-radius:18px;max-width:500px;width:100%;padding:20px;margin:auto">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+        <div style="font-size:15px;font-weight:900">${comp.title}</div>
+        <button onclick="document.getElementById('_compPredModal').style.display='none'" style="background:none;border:none;font-size:20px;cursor:pointer;color:var(--text-muted)">✕</button>
+      </div>
+      ${correct ? `<div style="background:#f0fdf4;border:1.5px solid #16a34a;border-radius:10px;padding:10px;margin-bottom:12px;text-align:center;font-size:14px;font-weight:900;color:#16a34a">⚽ النتيجة الصحيحة: ${correct}</div>` : `<div style="background:#fef3c7;border:1.5px solid #f59e0b;border-radius:10px;padding:10px;margin-bottom:12px;text-align:center;font-size:13px;font-weight:800;color:#92400e">⏳ لم تُدخل النتيجة بعد</div>`}
+      ${condText ? `<div style="background:var(--bg-2,#f5f5f5);border-radius:8px;padding:8px;margin-bottom:10px;font-size:12px;font-weight:700;color:var(--text-muted)">📋 الشروط: ${condText}</div>` : ''}
+      <div style="font-size:13px;font-weight:800;margin-bottom:8px">إجمالي التوقعات: ${entries.length} | توقعوا صح: ${winners.length}${(comp.conditions && (comp.conditions.orderType !== 'all' || comp.conditions.minOrder > 0)) ? ' | مستوفون الشروط: ' + winners.filter(([,p]) => { var c=comp.conditions||{}; var tOk=!c.orderType||c.orderType==='all'||(p.deliveryType||p.orderType)===c.orderType; var aOk=!c.minOrder||(p.orderAmount||0)>=c.minOrder; return tOk&&aOk; }).length : ''}</div>
+      ${correct && winners.length ? `<div style="display:flex;gap:8px;margin-bottom:12px">
+        ${!comp.winnersAll ? `<button onclick="_compPickRandom('${compId}')" style="flex:1;padding:10px;background:var(--olive);color:#fff;border:none;border-radius:10px;font-size:13px;font-weight:800;cursor:pointer;font-family:inherit">🎰 فائز عشوائي</button>` : ''}
+        <button onclick="_compGrantAll('${compId}')" style="flex:1;padding:10px;background:#16a34a;color:#fff;border:none;border-radius:10px;font-size:13px;font-weight:800;cursor:pointer;font-family:inherit">🏆 منح الكل الجائزة</button>
+      </div>` : ''}
+      <div style="max-height:350px;overflow-y:auto">
+        ${entries.length === 0 ? '<div style="text-align:center;padding:20px;color:var(--text-muted)">لا توجد توقعات بعد</div>' :
+          entries.map(([phone, p]) => {
+            const isWinner = correct && p.result === correct;
+            const granted = p.prizeGranted;
+            /* check conditions */
+            const cond = comp.conditions || {};
+            const condChecks = [];
+            if (cond.orderType && cond.orderType !== 'all') {
+              const typeOk = p.deliveryType === cond.orderType || p.orderType === cond.orderType;
+              condChecks.push({ ok: typeOk, label: typeOk ? '✅ نوع الطلب صح' : '❌ نوع الطلب غلط (المطلوب: ' + cond.orderType + ' — المسجل: ' + (p.deliveryType||p.orderType||'—') + ')' });
+            }
+            if (cond.minOrder > 0) {
+              const amtOk = (p.orderAmount || 0) >= cond.minOrder;
+              condChecks.push({ ok: amtOk, label: amtOk ? '✅ قيمة الطلب كافية' : '❌ قيمة الطلب أقل من ' + cond.minOrder + ' جـ (المسجل: ' + (p.orderAmount||0) + ' جـ)' });
+            }
+            const meetsAll = condChecks.every(c => c.ok);
+            /* row bg color */
+            const rowBg = !isWinner ? '' : meetsAll ? '#f0fdf4' : '#fff1f2';
+            const rowBorder = !isWinner ? 'var(--border)' : meetsAll ? '#86efac' : '#fca5a5';
+            return '<div style="display:flex;align-items:flex-start;justify-content:space-between;padding:10px;border-bottom:1px solid var(--border);gap:8px;background:' + rowBg + ';border-right:3px solid ' + rowBorder + '">' +
+              '<div style="flex:1">' +
+                '<div style="font-weight:800;font-size:13px">' + (p.name||phone) + '</div>' +
+                '<div style="font-size:12px;color:var(--text-muted)">' + phone + ' | توقع: <b>' + p.result + '</b></div>' +
+                (p.orderType||p.deliveryType ? '<div style="font-size:11px;color:var(--text-muted);margin-top:2px">نوع: ' + (p.deliveryType||p.orderType||'—') + ' | قيمة: ' + (p.orderAmount||0) + ' جـ</div>' : '') +
+                (isWinner && condChecks.length ? '<div style="margin-top:4px">' +
+                  condChecks.map(c => '<div style="font-size:10px;font-weight:700;color:' + (c.ok?'#16a34a':'#dc2626') + '">' + c.label + '</div>').join('') +
+                '</div>' : '') +
+              '</div>' +
+              '<div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px;min-width:80px">' +
+                (isWinner ? '<span style="color:#16a34a;font-size:12px;font-weight:800">✅ صح</span>' : '<span style="color:#ef4444;font-size:12px;font-weight:800">❌ غلط</span>') +
+                (isWinner && !meetsAll && condChecks.length ? '<span style="background:#fee2e2;color:#dc2626;font-size:10px;font-weight:800;padding:2px 6px;border-radius:4px">مش مستوفي</span>' : '') +
+                (isWinner && meetsAll && !granted ? '<button data-cid="' + compId + '" data-ph="' + phone + '" onclick="_compGrantFromBtn(this)" style="padding:4px 10px;background:#16a34a;color:#fff;border:none;border-radius:6px;font-size:11px;font-weight:800;cursor:pointer;font-family:inherit">منح الجائزة</button>' : '') +
+                (granted ? '<span style="color:#3b82f6;font-size:11px;font-weight:700">🎁 منحت</span>' : '') +
+              '</div>' +
+            '</div>';
+          }).join('')}
+      </div>
+    </div>`;
+  };
+
+  if (ref) { ref.get().then(s => render(s.exists() ? s.val() : {})); }
+  else { render({}); }
+}
+
+function _compPickRandom(compId) {
+  const comp = _COMPETITIONS[compId];
+  const ref = _compRef(compId + '/predictions');
+  if (!ref) { if(typeof showNotif==='function') showNotif('❌ تحتاج اتصال بـ Firebase'); return; }
+  ref.get().then(s => {
+    if (!s.exists()) return;
+    const preds = s.val();
+    const winners = Object.entries(preds).filter(([,p]) => p.result === comp.correctResult && !p.prizeGranted);
+    if (!winners.length) { if(typeof showNotif==='function') showNotif('❌ لا يوجد فائزين متاحين'); return; }
+    const [phone] = winners[Math.floor(Math.random() * winners.length)];
+    const name = preds[phone]?.name || phone;
+    if (confirm(`🏆 الفائز العشوائي: ${name} (${phone})\nمنحه الجائزة؟`)) {
+      _compGrantOne(compId, phone);
+    }
+  });
+}
+
+function _compGrantAll(compId) {
+  const comp = _COMPETITIONS[compId];
+  const ref = _compRef(compId + '/predictions');
+  if (!ref) { if(typeof showNotif==='function') showNotif('❌ تحتاج اتصال'); return; }
+  ref.get().then(s => {
+    if (!s.exists()) return;
+    const preds = s.val();
+    const winners = Object.entries(preds).filter(([,p]) => p.result === comp.correctResult && !p.prizeGranted);
+    if (!winners.length) { if(typeof showNotif==='function') showNotif('ℹ️ لا يوجد فائزين جدد'); return; }
+    const promises = winners.map(([phone]) => _compGrantOne(compId, phone, true));
+    Promise.all(promises).then(() => { if(typeof showNotif==='function') showNotif(`✅ تم منح الجائزة لـ ${winners.length} فائز`); _compViewPredictions(compId); });
+  });
+}
+
+function _compGrantFromBtn(btn) {
+  var cid = btn.getAttribute('data-cid');
+  var ph  = btn.getAttribute('data-ph');
+  if (cid && ph) _compGrantOne(cid, ph, false);
+}
+
+function _compGrantOne(compId, phone, silent) {
+  var comp = _COMPETITIONS[compId];
+  if (!comp) return Promise.resolve();
+  var prizeText = !comp.prize ? '' :
+    comp.prize.type === 'discount' ? 'خصم ' + comp.prize.value + '%' :
+    comp.prize.type === 'free_delivery' ? 'توصيل مجاني' : 'هدية: ' + (comp.prize.value || '');
+  var prize = { type: comp.prize ? comp.prize.type : '', value: comp.prize ? comp.prize.value : '',
+    used: false, grantedAt: new Date().toISOString(),
+    expiresAt: new Date(Date.now() + 30*24*3600*1000).toISOString(),
+    competitionTitle: comp.title };
+  var prizeRef = _prizeRef(phone, compId);
+  var predRef = _compRef(compId + '/predictions/' + phone.replace(/\D/g,''));
+  var p1 = prizeRef ? prizeRef.set(prize) : Promise.resolve();
+  var p2 = predRef ? predRef.update({ prizeGranted: true }) : Promise.resolve();
+  return Promise.all([p1, p2]).then(function() {
+    if (!silent) {
+      if(typeof showNotif==='function') showNotif('🎁 تم منح الجائزة');
+      /* WhatsApp notification to winner */
+      var waNum = typeof SETTINGS !== 'undefined' ? (SETTINGS.waNum || '') : '';
+      if (phone && prize.type) {
+        var waPhone = phone.replace(/\D/g,'');
+        if (!waPhone.startsWith('20')) waPhone = '20' + waPhone.replace(/^0/,'');
+        var waMsg = '🏆 مبروك! أنت من الفائزين في مسابقة: ' + comp.title + '\n🎁 جائزتك: ' + prizeText + '\n⏳ صالحة لمدة 30 يوم - افتح التطبيق لاستخدامها';
+        window.open('https://wa.me/' + waPhone + '?text=' + encodeURIComponent(waMsg), '_blank');
+      }
+      _compViewPredictions(compId);
+    }
+  });
+}
+
+function _compClosePred(compId) {
+  if (!confirm('غلق باب التوقعات مبكراً لهذه المسابقة؟')) return;
+  var ref = _compRef(compId);
+  if (ref) {
+    ref.update({ status: 'closed', closeAt: new Date().toISOString() }).then(function() {
+      if (_COMPETITIONS[compId]) { _COMPETITIONS[compId].status = 'closed'; _COMPETITIONS[compId].closeAt = new Date().toISOString(); }
+      if(typeof showNotif==='function') showNotif('🔒 تم غلق التوقعات');
+      _compRenderAdminList();
+    });
+  }
+}
+
+function _compDelete(compId) {
+  if (!confirm('حذف هذه المسابقة؟')) return;
+  const ref = _compRef(compId);
+  if (ref) { ref.remove().then(() => { delete _COMPETITIONS[compId]; _compRenderAdminList(); if(typeof showNotif==='function') showNotif('🗑️ تم الحذف'); }); }
+  else { delete _COMPETITIONS[compId]; _compRenderAdminList(); }
+}
+
+/* ══════════════════ CUSTOMER — CARDS ══════════════════ */
+function _compLoadForCustomer() {
+  const section = document.getElementById('compCardsSection');
+  if (!section) return;
+  const ref = _compRef('');
+  if (!ref) { section.style.display = 'none'; return; }
+  ref.orderByChild('status').equalTo('active').get().then(snap => {
+    var comps = [];
+    if (snap.exists()) snap.forEach(function(c) { var v = c.val();
+      if(v) {
+        var closeAt = new Date(v.closeAt||'');
+        var diff = Date.now() - closeAt.getTime();
+        if(new Date() < closeAt || diff < 3*3600*1000) comps.push(v);
+      }
+    });
+    if (!comps.length) { section.style.display = 'none'; return; }
+    section.style.display = 'block';
+    section.innerHTML = '<div style="font-size:14px;font-weight:900;color:var(--text);margin-bottom:8px">🏆 المسابقات</div>' +
+      comps.map(function(c) { return _compCardHTML(c); }).join('');
+    if (typeof currentUser !== 'undefined' && currentUser && currentUser.phone) {
+      var _uph = currentUser.phone.replace(/\D/g,'');
+      comps.forEach(function(c) {
+        var pRef = _compRef(c.id + '/predictions/' + _uph);
+        if (pRef) pRef.get().then(function(s) { if (s.exists()) _compUpdateCardAfterPred(c.id, s.val().result); });
+      });
+    }
+  }).catch(function() { section.style.display = 'none'; });
+}
+
+function _compCardHTML(c) {
+  var prizeText = !c.prize ? '' :
+    c.prize.type === 'discount' ? 'خصم ' + c.prize.value + '%' :
+    c.prize.type === 'free_delivery' ? 'توصيل مجاني' : 'هدية: ' + (c.prize.value || '');
+  var condText = _compCondText(c.conditions);
+  var closeDate = new Date(c.closeAt);
+  var closeStr = closeDate.toLocaleString('ar-EG', {hour:'2-digit', minute:'2-digit', day:'numeric', month:'short'});
+  var imgHtml = c.imageUrl ? '<img src="' + c.imageUrl + '" style="width:100%;height:160px;object-fit:cover;display:block" onerror="this.remove()">' : '';
+  var condHtml = condText ? '<div style="background:rgba(255,255,255,.1);border-radius:8px;padding:6px 10px;font-size:11px;margin-bottom:10px">\u{1F4CB} \u0627\u0644\u0634\u0631\u0648\u0637: ' + condText + '</div>' : '';
+  return '<div data-comp-id="' + c.id + '" style="background:linear-gradient(135deg,#1e3a2f,#2d5a3d);border-radius:14px;overflow:hidden;margin-bottom:10px;color:#fff">' +
+    imgHtml + '<div style="padding:14px">' +
+    '<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px">' +
+      '<div><div style="font-size:15px;font-weight:900">' + (c.title || '') + '</div>' +
+      '<div style="font-size:12px;opacity:.8;margin-top:3px">\u23F0 \u063a\u0644\u0642 \u0627\u0644\u062a\u0648\u0642\u0639\u0627\u062a: ' + closeStr + '</div></div>' +
+      '<div style="background:rgba(255,255,255,.15);padding:6px 10px;border-radius:8px;font-size:12px;font-weight:800">\uD83C\uDF81 ' + prizeText + '</div>' +
+    '</div>' + condHtml +
+    '<button onclick="_compOpenPredModal(\'' + c.id + '\')" class="_compCardBtn_' + c.id + '" style="width:100%;padding:10px;background:#fff;color:#1e3a2f;border:none;border-radius:10px;font-size:14px;font-weight:900;cursor:pointer;font-family:inherit">\u26BD \u062a\u0648\u0642\u0639 \u0627\u0644\u0646\u062a\u064a\u062c\u0629</button>' +
+    '</div></div>';
+}
+
+function _compUpdateCardAfterPred(compId, result) {
+  var section = document.getElementById('compCardsSection');
+  if (!section) return;
+  section.querySelectorAll('[data-comp-id="' + compId + '"] button').forEach(function(btn) {
+    btn.style.background = '#16a34a';
+    btn.style.color = '#fff';
+    btn.textContent = '\u2705 \u0634\u0627\u0631\u0643\u062a \u0628\u062a\u0648\u0642\u0639: ' + result;
+    btn.onclick = null;
+    btn.style.cursor = 'default';
+  });
+}
+
+
+/* ══════════════════ CUSTOMER — PREDICTION ══════════════════ */
+function _compCalcDistance(lat1,lon1,lat2,lon2){
+  var R=6371000, dLat=(lat2-lat1)*Math.PI/180, dLon=(lon2-lon1)*Math.PI/180;
+  var a=Math.sin(dLat/2)*Math.sin(dLat/2)+Math.cos(lat1*Math.PI/180)*Math.cos(lat2*Math.PI/180)*Math.sin(dLon/2)*Math.sin(dLon/2);
+  return R*2*Math.atan2(Math.sqrt(a),Math.sqrt(1-a));
+}
+
+function _compOpenPredModal(compId) {
+  if (typeof currentUser === 'undefined' || !currentUser?.phone) {
+    if(typeof showNotif==='function') showNotif('❌ سجّل دخولك أولاً');
+    if(typeof openScreen==='function') openScreen('settings'); return;
+  }
+  var comp = _COMPETITIONS[compId];
+  if (!comp) { _compLoadForCustomer(); return; }
+  var phone = currentUser.phone.replace(/\D/g,'');
+  var predRef = _compRef(compId + '/predictions/' + phone);
+  var proceed = function() {
+    if (predRef) {
+      predRef.get().then(function(s) {
+        if (s.exists()) { if(typeof showNotif==='function') showNotif('✅ شاركت بالفعل بتوقع: ' + s.val().result); return; }
+        _compShowPredModal(comp);
+      });
+    } else { _compShowPredModal(comp); }
+  };
+  if (comp.conditions && comp.conditions.orderType === 'dine_in') {
+    if (typeof deliveryType === 'undefined' || deliveryType !== 'cafe') {
+      if(typeof showNotif==='function') showNotif('❌ اختر "كافيه" في السلة أولاً للمشاركة'); return;
+    }
+    if (!navigator.geolocation) {
+      if(typeof showNotif==='function') showNotif('❌ GPS غير متاح على هذا الجهاز'); return;
+    }
+    if(typeof showNotif==='function') showNotif('⏳ جاري التحقق من موقعك...');
+    navigator.geolocation.getCurrentPosition(
+      function(pos) {
+        var dist = _compCalcDistance(pos.coords.latitude, pos.coords.longitude, RESTAURANT.lat, RESTAURANT.lng);
+        if (dist > 300) { if(typeof showNotif==='function') showNotif('❌ أنت لست داخل الكافيه — المسافة: ' + Math.round(dist) + 'م'); return; }
+        proceed();
+      },
+      function(err) {
+        var m = { 1:'❌ يجب تفعيل الموقع الجغرافي للمشاركة', 2:'❌ تعذر تحديد موقعك', 3:'❌ انتهت مهلة الموقع' };
+        if(typeof showNotif==='function') showNotif(m[err.code] || '❌ خطأ GPS');
+      },
+      { timeout: 8000, maximumAge: 0 }
+    );
+    return;
+  }
+  proceed();
+}
+
+function _compShowPredModal(comp) {
+  const modal = document.getElementById('_compPredUserModal') || (() => {
+    const m = document.createElement('div');
+    m.id = '_compPredUserModal';
+    m.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px';
+    document.body.appendChild(m); return m;
+  })();
+  modal.style.display = 'flex';
+  const orderTypeLabel = {all:'جميع الطلبات', dine_in:'داخل الكافيه (مع رقم الترابيزة)', delivery:'توصيل', pickup:'استلام من الفرع'};
+  const condText = _compCondText(comp.conditions);
+  modal.innerHTML = `<div style="background:var(--bg);border-radius:18px;max-width:360px;width:100%;padding:20px">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+      <div style="font-size:15px;font-weight:900;color:var(--text)">⚽ توقع النتيجة</div>
+      <button onclick="document.getElementById('_compPredUserModal').style.display='none'" style="background:none;border:none;font-size:20px;cursor:pointer;color:var(--text-muted)">✕</button>
+    </div>
+    ${comp.imageUrl ? `<img src="${comp.imageUrl}" style="width:100%;height:130px;object-fit:cover;border-radius:10px;margin-bottom:10px" onerror="this.style.display='none'">` : ''}
+    <div style="text-align:center;font-size:18px;font-weight:900;color:var(--text);margin-bottom:4px">${comp.team1||''} × ${comp.team2||''}</div>
+    <div style="text-align:center;font-size:12px;color:var(--text-muted);margin-bottom:14px">📅 ${comp.matchDate||''}</div>
+    ${condText ? `<div style="background:#fef3c7;border-radius:10px;padding:10px;margin-bottom:12px;font-size:12px;font-weight:700;color:#92400e">📋 شروط المشاركة: ${condText}</div>` : ''}
+    <div style="margin-bottom:12px">
+      <div style="font-size:12px;font-weight:800;color:var(--text-muted);margin-bottom:6px">توقعك للنتيجة (مثال: 2-1)</div>
+      <input id="_cUserResult" placeholder="مثال: 2-1" maxlength="10" style="width:100%;padding:10px;border:2px solid var(--olive);border-radius:10px;font-size:16px;font-weight:900;text-align:center;font-family:inherit;background:var(--bg);color:var(--text);box-sizing:border-box">
+    </div>
+    
+    <button onclick="_compSubmitPred('${comp.id}')" style="width:100%;padding:12px;background:var(--olive);color:#fff;border:none;border-radius:12px;font-size:15px;font-weight:900;cursor:pointer;font-family:inherit">✅ إرسال التوقع</button>
+    <div style="font-size:11px;color:var(--text-muted);text-align:center;margin-top:8px">لا يمكن تعديل التوقع بعد الإرسال</div>
+  </div>`;
+}
+
+function _compSubmitPred(compId) {
+  const result = (document.getElementById('_cUserResult')||{}).value?.trim();
+  if (!result || !/^\d+[-–]\d+$/.test(result.replace('–','-'))) {
+    if(typeof showNotif==='function') showNotif('❌ أدخل النتيجة بالشكل الصحيح مثال: 2-1'); return;
+  }
+  const comp = _COMPETITIONS[compId];
+  if (!comp) return;
+  const now = new Date();
+  if (now > new Date(comp.closeAt)) { if(typeof showNotif==='function') showNotif('❌ انتهى وقت التوقع'); return; }
+  const phone = currentUser.phone.replace(/\D/g,'');
+  const pred = { result: result.replace('–','-'), name: currentUser.name || '', submittedAt: now.toISOString(),
+    prizeGranted: false, orderType: comp.conditions?.orderType || 'all',
+    orderAmount: typeof cart !== 'undefined' ? cart.reduce((s,c)=>s+c.price*c.qty,0) : 0,
+    deliveryType: typeof deliveryType !== 'undefined' ? deliveryType : '' };
+
+  const ref = _compRef(compId + '/predictions/' + phone);
+  if (ref) {
+    ref.set(pred).then(() => {
+      document.getElementById('_compPredUserModal').style.display = 'none';
+      if(typeof showNotif==='function') showNotif('✅ تم إرسال توقعك — ' + result);
+    }).catch(() => { if(typeof showNotif==='function') showNotif('❌ حدث خطأ'); });
+  } else { if(typeof showNotif==='function') showNotif('❌ تحتاج اتصال بالإنترنت'); }
+}
+
+/* ══════════════════ PRIZES — CUSTOMER CART HOOK ══════════════════ */
+function _compLoadUserPrize() {
+  if (!currentUser?.phone) return;
+  const phone = currentUser.phone.replace(/\D/g,'');
+  const ref = typeof db !== 'undefined' && db ? db.ref('comp_prizes/' + phone) : null;
+  if (!ref) return;
+  ref.get().then(snap => {
+    if (!snap.exists()) return;
+    snap.forEach(c => {
+      const p = c.val();
+      if (p && !p.used && new Date() < new Date(p.expiresAt||'2099-01-01')) {
+        _compShowPrizeBanner(c.key, p);
+      }
+    });
+  });
+}
+
+function _compShowPrizeBanner(compId, prize) {
+  const existing = document.getElementById('_compPrizeBanner_' + compId);
+  if (existing) return;
+  const section = document.getElementById('compCardsSection');
+  if (!section) return;
+  const prizeText = prize.type === 'discount' ? `خصم ${prize.value}%` : prize.type === 'free_delivery' ? 'توصيل مجاني' : `${prize.value}`;
+  const banner = document.createElement('div');
+  banner.id = '_compPrizeBanner_' + compId;
+  banner.style.cssText = 'background:linear-gradient(135deg,#16a34a,#15803d);color:#fff;border-radius:14px;padding:14px;margin-bottom:10px';
+  banner.innerHTML = `<div style="font-size:13px;font-weight:900;margin-bottom:4px">🎁 جائزتك في انتظارك!</div>
+    <div style="font-size:12px;opacity:.9;margin-bottom:10px">من مسابقة: ${prize.competitionTitle||''} | الجائزة: ${prizeText}</div>
+    <button onclick="_compApplyPrize('${compId}')" style="width:100%;padding:8px;background:#fff;color:#16a34a;border:none;border-radius:8px;font-size:13px;font-weight:900;cursor:pointer;font-family:inherit">استخدم الجائزة دلوقتي</button>`;
+  section.insertBefore(banner, section.firstChild);
+  section.style.display = 'block';
+}
+
+function _compApplyPrize(compId) {
+  if (!currentUser?.phone) return;
+  const phone = currentUser.phone.replace(/\D/g,'');
+  const ref = typeof db !== 'undefined' && db ? db.ref('comp_prizes/' + phone + '/' + compId) : null;
+  if (!ref) return;
+  ref.get().then(snap => {
+    if (!snap.exists() || snap.val().used) { if(typeof showNotif==='function') showNotif('❌ الجائزة غير متاحة'); return; }
+    const prize = snap.val();
+    /* Fix 2: تحقق من تاريخ الانتهاء */
+    if (prize.expiresAt && new Date() > new Date(prize.expiresAt)) {
+      ref.update({ used: true });
+      if(typeof showNotif==='function') showNotif('❌ انتهت صلاحية الجائزة (30 يوم من تاريخ المنح)');
+      const expBanner = document.getElementById('_compPrizeBanner_' + compId);
+      if (expBanner) expBanner.remove();
+      return;
+    }
+    if (prize.type === 'discount') {
+      var pct = parseInt(prize.value) || 0;
+      /* Option C: store percentage, recalc dynamically on every cart update */
+      window._compPrizePct  = pct;
+      window._compPrizeCid  = compId;
+      _compRecalcPrize();
+      if (typeof updateCartUI === 'function') updateCartUI();
+      if (typeof renderCartSheet === 'function') renderCartSheet();
+      window._compActivePrize = { compId: compId, phone: phone, ref: ref };
+      if(typeof showNotif==='function') showNotif('✅ تم تفعيل خصم ' + pct + '% على طلبك — بيتحدث تلقائياً مع كل تغيير');
+    } else if (prize.type === 'free_delivery') {
+      if (typeof SETTINGS !== 'undefined') window._compFreeDelivery = true;
+      if (typeof updateCartUI === 'function') updateCartUI();
+      window._compActivePrize = { compId, phone, ref };
+      if(typeof showNotif==='function') showNotif('✅ تم تفعيل التوصيل المجاني');
+    } else if (prize.type === 'free_product') {
+      var productName = (prize.value || '').trim().toLowerCase();
+      var foundItem = null;
+      if (typeof MENU !== 'undefined') {
+        Object.values(MENU).forEach(function(cat) {
+          if (!cat.items) return;
+          cat.items.forEach(function(item) {
+            if (!foundItem && item.name && item.name.trim().toLowerCase() === productName) foundItem = item;
+          });
+        });
+      }
+      if (foundItem) {
+        var freeItem = { id: foundItem.id + '_free_' + compId, name: '🎁 ' + foundItem.name + ' (هدية مسابقة)', price: 0, qty: 1, isCompPrize: true };
+        if (typeof cart !== 'undefined') { cart.push(freeItem); if (typeof updateCartUI === 'function') updateCartUI(); if (typeof renderCartSheet === 'function') renderCartSheet(); }
+        window._compActivePrize = { compId, phone, ref };
+        if(typeof showNotif==='function') showNotif('🎁 تم إضافة ' + foundItem.name + ' مجاناً إلى سلتك!');
+      } else {
+        window._compFreeProductName = prize.value;
+        window._compActivePrize = { compId, phone, ref };
+        if(typeof showNotif==='function') showNotif('🎁 جائزتك: ' + (prize.value || 'منتج مجاني') + ' — أخبر الموظف عند الاستلام');
+      }
+    }
+    ref.update({ used: true });
+    const banner = document.getElementById('_compPrizeBanner_' + compId);
+    if (banner) banner.remove();
+  });
+}
+
+/* ══ Option C: dynamic prize discount ══ */
+window._compPrizePct = 0;
+window._compPrizeCid = null;
+
+function _compRecalcPrize() {
+  if (!window._compPrizePct) return;
+  var sub = typeof cartSubtotal === 'function' ? cartSubtotal() : 0;
+  var disc = Math.round(sub * window._compPrizePct / 100);
+  window.appliedDiscount = disc > 0 ? disc : 0;
+}
+
+/* Fix 1: التوصيل المجاني — wrap calcDeliveryFee */
+(function() {
+  var _origFee = window.calcDeliveryFee;
+  window.calcDeliveryFee = function() {
+    if (window._compFreeDelivery) return 0;
+    return _origFee ? _origFee.apply(this, arguments) : 0;
+  };
+})();
+
+function _compClearPrize() {
+  window._compPrizePct = 0;
+  window._compPrizeCid = null;
+  window.appliedDiscount = 0;
+}
+
+/* Wrap updateCartUI to recalc prize discount before every render */
+(function() {
+  var _origUCUI = window.updateCartUI;
+  window.updateCartUI = function() {
+    if (window._compPrizePct) _compRecalcPrize();
+    if (_origUCUI) _origUCUI.apply(this, arguments);
+  };
+})();
+
+/* Clear prize when cart is emptied */
+(function() {
+  var _origAddToCart = window.addToCart;
+  if (_origAddToCart) {
+    /* no-op: just ensure recalc happens via updateCartUI hook */
+  }
+})();
+
+/* ══════════════════ INIT ══════════════════ */
+document.addEventListener('DOMContentLoaded', function() {
+  setTimeout(function() {
+    _compLoadForCustomer();
+    _compLoadUserPrize();
+    _compStartCountdowns();
+  }, 2000);
+});
+
+function _compStartCountdowns() {
+  setInterval(function() {
+    var section = document.getElementById('compCardsSection');
+    if (!section || section.style.display === 'none') return;
+    section.querySelectorAll('[data-comp-close]').forEach(function(el) {
+      var closeAt = new Date(el.getAttribute('data-comp-close'));
+      var now = new Date();
+      var diff = Math.max(0, closeAt - now);
+      if (diff <= 0) {
+        el.textContent = '❌ انتهى وقت التوقع';
+        var cardEl = el.closest ? el.closest('[data-comp-id]') : null;
+        if (cardEl) {
+          var cardBtn = cardEl.querySelector('button');
+          if (cardBtn && cardBtn.textContent.indexOf('توقع') >= 0) {
+            cardBtn.textContent = '❌ انتهت المسابقة';
+            cardBtn.style.background = '#9ca3af';
+            cardBtn.style.color = '#fff';
+            cardBtn.onclick = null;
+            cardBtn.style.cursor = 'default';
+          }
+        }
+        return;
+      }
+      var h = Math.floor(diff/3600000), m = Math.floor((diff%3600000)/60000), s = Math.floor((diff%60000)/1000);
+      el.textContent = '⏱ متبقي: ' + (h>0?h+':':'') + String(m).padStart(2,'0') + ':' + String(s).padStart(2,'0');
+    });
+  }, 1000);
+}
+
 </script>
 </body>
 </html>
