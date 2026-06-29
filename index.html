@@ -13721,6 +13721,7 @@ function _compRenderAdminList() {
       </div>
       <div style="display:flex;gap:6px;flex-wrap:wrap">
         <button onclick="_compViewPredictions('${c.id}')" style="flex:1;padding:8px;background:#3b82f620;color:#3b82f6;border:1.5px solid #3b82f6;border-radius:8px;font-size:12px;font-weight:800;cursor:pointer;font-family:inherit">👁️ التوقعات</button>
+        ${!isFinished ? `<button onclick="_compEditModal('${c.id}')" style="flex:1;padding:8px;background:#f59e0b20;color:#b45309;border:1.5px solid #f59e0b;border-radius:8px;font-size:12px;font-weight:800;cursor:pointer;font-family:inherit">✏️ تعديل</button>` : ''}
         ${!isFinished ? `<button onclick="_compEnterResult('${c.id}')" style="flex:1;padding:8px;background:var(--olive);color:#fff;border:none;border-radius:8px;font-size:12px;font-weight:800;cursor:pointer;font-family:inherit">⚽ النتيجة</button>` : ''}
         ${!isFinished && !isClosed ? `<button onclick="_compClosePred('${c.id}')" style="flex:1;padding:8px;background:#f59e0b20;color:#b45309;border:1.5px solid #f59e0b;border-radius:8px;font-size:12px;font-weight:800;cursor:pointer;font-family:inherit">🔒 إغلاق مبكر</button>` : ''}
         <button onclick="_compDelete('${c.id}')" style="padding:8px 12px;background:#ef444420;color:#ef4444;border:1.5px solid #ef4444;border-radius:8px;font-size:12px;font-weight:800;cursor:pointer;font-family:inherit">🗑</button>
@@ -13964,6 +13965,117 @@ function _compClosePred(compId) {
       if(typeof showNotif==='function') showNotif('🔒 تم غلق التوقعات');
       _compRenderAdminList();
     });
+  }
+}
+
+function _compCloseEditModal(){ var m=document.getElementById('_compEditModalEl'); if(m) m.remove(); }
+
+function _compEditModal(compId) {
+  var comp = _COMPETITIONS[compId];
+  if (!comp) return;
+  window._compCurrentEditId = compId;
+  var old = document.getElementById('_compEditModalEl'); if (old) old.remove();
+  var modal = document.createElement('div');
+  modal.id = '_compEditModalEl';
+  modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:99999;display:flex;align-items:flex-start;justify-content:center;overflow-y:auto;padding:20px;direction:rtl';
+  var p = comp.prize || {};
+  var c = comp.conditions || {};
+  modal.innerHTML =
+    '<div style="background:var(--bg);border-radius:18px;max-width:480px;width:100%;padding:20px;margin:auto">' +
+      '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">' +
+        '<div style="font-size:16px;font-weight:900;color:var(--text)">✏️ تعديل المسابقة</div>' +
+        '<button onclick="_compCloseEditModal()" style="background:none;border:none;font-size:22px;cursor:pointer;color:var(--text-muted)">×</button>' +
+      '</div>' +
+      '<div style="background:#fef3c7;border:1.5px solid #f59e0b;border-radius:10px;padding:10px;margin-bottom:14px;font-size:12px;color:#92400e;font-weight:700">' +
+        '⚠️ التعديل مش بيأثر على التوقعات الموجودة' +
+      '</div>' +
+      '<div style="display:flex;flex-direction:column;gap:10px">' +
+        '<input id="_eTitle" value="' + (comp.title||'') + '" placeholder="عنوان المسابقة" style="padding:10px;border:1.5px solid var(--border);border-radius:10px;font-size:14px;font-family:inherit;background:var(--bg);color:var(--text)">' +
+        '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">' +
+          '<input id="_eTeam1" value="' + (comp.team1||'') + '" placeholder="الفريق الأول" style="padding:10px;border:1.5px solid var(--border);border-radius:10px;font-size:14px;font-family:inherit;background:var(--bg);color:var(--text)">' +
+          '<input id="_eTeam2" value="' + (comp.team2||'') + '" placeholder="الفريق الثاني" style="padding:10px;border:1.5px solid var(--border);border-radius:10px;font-size:14px;font-family:inherit;background:var(--bg);color:var(--text)">' +
+        '</div>' +
+        '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">' +
+          '<div><div style="font-size:11px;font-weight:700;color:var(--text-muted);margin-bottom:4px">وقت غلق التوقعات</div>' +
+          '<input type="datetime-local" id="_eCloseAt" value="' + (comp.closeAt||'').slice(0,16) + '" style="width:100%;padding:9px;border:1.5px solid var(--border);border-radius:10px;font-size:13px;font-family:inherit;background:var(--bg);color:var(--text);box-sizing:border-box"></div>' +
+          '<div><div style="font-size:11px;font-weight:700;color:var(--text-muted);margin-bottom:4px">رابط البوستر</div>' +
+          '<input id="_eImageUrl" value="' + (comp.imageUrl||'') + '" placeholder="https://..." style="width:100%;padding:9px;border:1.5px solid var(--border);border-radius:10px;font-size:12px;font-family:inherit;background:var(--bg);color:var(--text);box-sizing:border-box"></div>' +
+        '</div>' +
+        '<div style="border:1.5px solid var(--border);border-radius:12px;padding:12px">' +
+          '<div style="font-size:13px;font-weight:800;margin-bottom:8px">🎁 الجائزة</div>' +
+          '<select id="_ePrizeType" onchange="_compEditPrizeChange()" style="width:100%;padding:9px;border:1.5px solid var(--border);border-radius:10px;font-size:13px;font-family:inherit;background:var(--bg);color:var(--text);margin-bottom:8px">' +
+            '<option value="discount"' + (p.type==='discount'?' selected':'') + '>خصم (%)</option>' +
+            '<option value="free_delivery"' + (p.type==='free_delivery'?' selected':'') + '>توصيل مجاني</option>' +
+            '<option value="free_product"' + (p.type==='free_product'?' selected':'') + '>منتج مجاني</option>' +
+          '</select>' +
+          '<input id="_ePrizeVal" value="' + (p.value||'') + '" placeholder="قيمة الجائزة" style="width:100%;padding:9px;border:1.5px solid var(--border);border-radius:10px;font-size:13px;font-family:inherit;background:var(--bg);color:var(--text);box-sizing:border-box">' +
+        '</div>' +
+        '<div style="border:1.5px solid var(--border);border-radius:12px;padding:12px">' +
+          '<div style="font-size:13px;font-weight:800;margin-bottom:8px">📋 الشروط</div>' +
+          '<select id="_eOrderType" style="width:100%;padding:9px;border:1.5px solid var(--border);border-radius:10px;font-size:13px;font-family:inherit;background:var(--bg);color:var(--text);margin-bottom:8px">' +
+            '<option value="all"' + (!c.orderType||c.orderType==='all'?' selected':'') + '>جميع الطلبات</option>' +
+            '<option value="dine_in"' + (c.orderType==='dine_in'?' selected':'') + '>داخل الكافيه (GPS)</option>' +
+            '<option value="delivery"' + (c.orderType==='delivery'?' selected':'') + '>توصيل</option>' +
+            '<option value="pickup"' + (c.orderType==='pickup'?' selected':'') + '>استلام</option>' +
+          '</select>' +
+          '<input type="number" id="_eMinOrder" value="' + (c.minOrder||0) + '" placeholder="حد أدنى للطلب (صفر = بدون)" min="0" style="width:100%;padding:9px;border:1.5px solid var(--border);border-radius:10px;font-size:13px;font-family:inherit;background:var(--bg);color:var(--text);box-sizing:border-box">' +
+        '</div>' +
+        '<button onclick="_compSaveEditFromModal()" style="padding:12px;background:var(--olive);color:#fff;border:none;border-radius:12px;font-size:15px;font-weight:900;cursor:pointer;font-family:inherit;width:100%">✅ حفظ التعديل</button>' +
+      '</div>' +
+    '</div>';
+  document.body.appendChild(modal);
+}
+
+function _compEditPrizeChange() {
+  var t = (document.getElementById('_ePrizeType')||{}).value;
+  var inp = document.getElementById('_ePrizeVal');
+  if (!inp) return;
+  if (t === 'discount') { inp.placeholder = 'نسبة الخصم % مثال: 20'; inp.style.display = 'block'; }
+  else if (t === 'free_delivery') { inp.style.display = 'none'; }
+  else { inp.placeholder = 'اسم المنتج'; inp.style.display = 'block'; }
+}
+
+function _compSaveEditFromModal() {
+  _compSaveEdit(window._compCurrentEditId);
+}
+
+function _compSaveEdit(compId) {
+  var g = function(id) { var e = document.getElementById(id); return e ? e.value.trim() : ''; };
+  var title    = g('_eTitle');
+  var team1    = g('_eTeam1');
+  var team2    = g('_eTeam2');
+  var closeAt  = g('_eCloseAt');
+  var imageUrl = g('_eImageUrl');
+  var prizeType = g('_ePrizeType');
+  var prizeVal  = g('_ePrizeVal');
+  var orderType = g('_eOrderType');
+  var minOrder  = parseInt(g('_eMinOrder')) || 0;
+
+  if (!title || !team1 || !team2 || !closeAt) {
+    if(typeof showNotif==='function') showNotif('❌ اكمل البيانات المطلوبة'); return;
+  }
+
+  var updates = {
+    title: title, team1: team1, team2: team2,
+    closeAt: closeAt, imageUrl: imageUrl,
+    prize: { type: prizeType, value: prizeVal },
+    conditions: { requireOrder: true, orderType: orderType, minOrder: minOrder }
+  };
+
+  var ref = _compRef(compId);
+  if (ref) {
+    ref.update(updates).then(function() {
+      _COMPETITIONS[compId] = Object.assign({}, _COMPETITIONS[compId], updates);
+      if(typeof showNotif==='function') showNotif('✅ تم حفظ التعديل');
+      var m = document.getElementById('_compEditModalEl'); if(m) m.remove();
+      _compRenderAdminList();
+      _compLoadForCustomer();
+    }).catch(function() { if(typeof showNotif==='function') showNotif('❌ خطأ في الحفظ'); });
+  } else {
+    _COMPETITIONS[compId] = Object.assign({}, _COMPETITIONS[compId], updates);
+    if(typeof showNotif==='function') showNotif('✅ تم حفظ التعديل');
+    var m2 = document.getElementById('_compEditModalEl'); if(m2) m2.remove();
+    _compRenderAdminList();
   }
 }
 
