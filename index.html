@@ -13720,6 +13720,9 @@ function _compOpenCreateModal() {
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
           <div><div style="font-size:12px;font-weight:700;color:var(--text-muted);margin-bottom:4px">📅 تاريخ المباراة</div>
           <input type="date" id="_cMatchDate" value="${today}" style="width:100%;padding:9px;border:1.5px solid var(--border);border-radius:10px;font-size:13px;font-family:inherit;background:var(--bg);color:var(--text);box-sizing:border-box"></div>
+          <div><div style="font-size:12px;font-weight:700;color:var(--text-muted);margin-bottom:4px">🟢 فتح التوقعات (اختياري)</div>
+          <input type="datetime-local" id="_cOpenAt" style="width:100%;padding:9px;border:1.5px solid var(--border);border-radius:10px;font-size:13px;font-family:inherit;background:var(--bg);color:var(--text);box-sizing:border-box">
+          <div style="font-size:10px;color:var(--text-muted);margin-top:3px">اتركه فارغاً = التوقعات مفتوحة الآن</div></div>
           <div><div style="font-size:12px;font-weight:700;color:var(--text-muted);margin-bottom:4px">⏰ غلق التوقعات</div>
           <input type="time" id="_cCloseTime" value="19:45" style="width:100%;padding:9px;border:1.5px solid var(--border);border-radius:10px;font-size:13px;font-family:inherit;background:var(--bg);color:var(--text);box-sizing:border-box"></div>
         </div>
@@ -13787,8 +13790,10 @@ function _compSaveNew() {
   if (!title || !team1 || !team2 || !matchDate) { if(typeof showNotif==='function') showNotif('❌ كمّل البيانات المطلوبة'); return; }
 
   const closeAt = matchDate + 'T' + (closeTime || '19:45');
+  const openAtRaw = (document.getElementById('_cOpenAt')||{}).value?.trim() || '';
+  const openAt = openAtRaw || null; /* null = التوقعات مفتوحة الآن */
   const id = 'comp_' + Date.now();
-  const comp = { id, title, team1, team2, matchDate, closeAt, status: 'active',
+  const comp = { id, title, team1, team2, matchDate, closeAt, openAt: openAt, status: 'active',
     correctResult: null, winnersAll: !!winnersAll, createdAt: new Date().toISOString(),
     prize: { type: prizeType, value: prizeVal || '' },
     imageUrl: imageUrl || '',
@@ -14238,9 +14243,10 @@ function _compSaveEdit(compId) {
     if(typeof showNotif==='function') showNotif('❌ اكمل البيانات المطلوبة'); return;
   }
 
+  var openAtEdit = (document.getElementById('_eOpenAt')||{}).value?.trim() || null;
   var updates = {
     title: title, team1: team1, team2: team2,
-    closeAt: closeAt, imageUrl: imageUrl,
+    closeAt: closeAt, openAt: openAtEdit, imageUrl: imageUrl,
     prize: { type: prizeType, value: prizeVal },
     conditions: { requireOrder: true, orderType: orderType, minOrder: minOrder }
   };
@@ -14281,7 +14287,10 @@ function _compLoadForCustomer() {
       if(v) {
         var closeAt = new Date(v.closeAt||'');
         var diff = Date.now() - closeAt.getTime();
-        if(new Date() < closeAt || diff < 3*3600*1000) comps.push(v);
+        var isActive = new Date() < closeAt || diff < 3*3600*1000;
+        /* كمان بيجيب المسابقات المعلن عنها قبل فتح التوقع */
+        var isAnnounced = v.openAt && new Date() < new Date(v.openAt);
+        if(isActive || isAnnounced) comps.push(v);
       }
     });
     if (!comps.length) { section.style.display = 'none'; return; }
@@ -14306,15 +14315,39 @@ function _compCardHTML(c) {
   var closeDate = new Date(c.closeAt);
   var closeStr = closeDate.toLocaleString('ar-EG', {hour:'2-digit', minute:'2-digit', day:'numeric', month:'short'});
   var imgHtml = c.imageUrl ? '<img src="' + c.imageUrl + '" style="width:100%;height:160px;object-fit:cover;display:block" onerror="this.remove()">' : '';
-  var condHtml = condText ? '<div style="background:rgba(255,255,255,.1);border-radius:8px;padding:6px 10px;font-size:11px;margin-bottom:10px">\u{1F4CB} \u0627\u0644\u0634\u0631\u0648\u0637: ' + condText + '</div>' : '';
+  var condHtml = condText ? '<div style="background:rgba(255,255,255,.1);border-radius:8px;padding:6px 10px;font-size:11px;margin-bottom:10px">📋 الشروط: ' + condText + '</div>' : '';
+
+  /* هل لسه في وقت الإعلان (قبل فتح التوقع)؟ */
+  var isAnnouncement = c.openAt && new Date() < new Date(c.openAt);
+  if (isAnnouncement) {
+    var openDate = new Date(c.openAt);
+    var openStr = openDate.toLocaleString('ar-EG', {weekday:'long', hour:'2-digit', minute:'2-digit', day:'numeric', month:'short'});
+    return '<div data-comp-id="' + c.id + '" style="background:linear-gradient(135deg,#1e3a5f,#1e4976);border-radius:14px;overflow:hidden;margin-bottom:10px;color:#fff">' +
+      imgHtml + '<div style="padding:14px">' +
+      '<div style="background:rgba(255,255,255,.15);border-radius:8px;padding:4px 10px;font-size:11px;font-weight:800;display:inline-block;margin-bottom:8px">📢 قريباً</div>' +
+      '<div style="font-size:15px;font-weight:900;margin-bottom:4px">' + (c.title||'') + '</div>' +
+      '<div style="font-size:13px;opacity:.9;margin-bottom:10px">' + (c.team1||'') + ' × ' + (c.team2||'') + '</div>' +
+      condHtml +
+      '<div style="background:rgba(255,255,255,.1);border-radius:10px;padding:10px;margin-bottom:10px">' +
+        '<div style="font-size:11px;opacity:.8;margin-bottom:3px">🎁 الجائزة: ' + prizeText + '</div>' +
+        '<div style="font-size:12px;font-weight:800">⏰ التوقعات تبدأ: ' + openStr + '</div>' +
+      '</div>' +
+      '<div style="width:100%;padding:10px;background:rgba(255,255,255,.15);border-radius:10px;font-size:13px;font-weight:700;text-align:center;color:rgba(255,255,255,.8)" data-comp-open="' + c.openAt + '">⏳ جاري تحميل...</div>' +
+      '</div></div>';
+  }
+
   return '<div data-comp-id="' + c.id + '" style="background:linear-gradient(135deg,#1e3a2f,#2d5a3d);border-radius:14px;overflow:hidden;margin-bottom:10px;color:#fff">' +
     imgHtml + '<div style="padding:14px">' +
     '<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px">' +
-      '<div><div style="font-size:15px;font-weight:900">' + (c.title || '') + '</div>' +
-      '<div style="font-size:12px;opacity:.8;margin-top:3px">\u23F0 \u063a\u0644\u0642 \u0627\u0644\u062a\u0648\u0642\u0639\u0627\u062a: ' + closeStr + '</div></div>' +
-      '<div style="background:rgba(255,255,255,.15);padding:6px 10px;border-radius:8px;font-size:12px;font-weight:800">\uD83C\uDF81 ' + prizeText + '</div>' +
+      '<div><div style="font-size:15px;font-weight:900">' + (c.title||'') + '</div>' +
+      '<div style="font-size:12px;opacity:.8;margin-top:3px">⏰ غلق التوقعات: ' + closeStr + '</div>' +
+      '<div style="font-size:12px;opacity:.85;margin-top:2px;font-weight:800" data-comp-close="' + (c.closeAt||'') + '">⏱ جاري التحميل...</div></div>' +
+      '<div style="background:rgba(255,255,255,.15);padding:6px 10px;border-radius:8px;font-size:12px;font-weight:800">🎁 ' + prizeText + '</div>' +
     '</div>' + condHtml +
-    '<button onclick="_compOpenPredModal(\'' + c.id + '\')" class="_compCardBtn_' + c.id + '" style="width:100%;padding:10px;background:#fff;color:#1e3a2f;border:none;border-radius:10px;font-size:14px;font-weight:900;cursor:pointer;font-family:inherit">\u26BD \u062a\u0648\u0642\u0639 \u0627\u0644\u0646\u062a\u064a\u062c\u0629</button>' +
+    (new Date() < new Date(c.closeAt||'') ?
+      '<button onclick="_compOpenPredModal(\'' + c.id + '\')" class="_compCardBtn_' + c.id + '" style="width:100%;padding:10px;background:#fff;color:#1e3a2f;border:none;border-radius:10px;font-size:14px;font-weight:900;cursor:pointer;font-family:inherit">⚽ توقع النتيجة</button>' :
+      '<div style="width:100%;padding:10px;background:rgba(255,255,255,.15);border-radius:10px;font-size:13px;font-weight:700;text-align:center">❌ انتهت المسابقة</div>'
+    ) +
     '</div></div>';
 }
 
@@ -14712,6 +14745,20 @@ document.addEventListener('DOMContentLoaded', function() {
 function _compStartCountdowns() {
   setInterval(function() {
     var section = document.getElementById('compCardsSection');
+    if (!section || section.style.display === 'none') return;
+    /* عداد فتح التوقع (بطاقات الإعلان) */
+    section.querySelectorAll('[data-comp-open]').forEach(function(el) {
+      var openAt = new Date(el.getAttribute('data-comp-open'));
+      var now2 = new Date(); var diff2 = Math.max(0, openAt - now2);
+      if (diff2 <= 0) {
+        el.textContent = '🟢 التوقعات مفتوحة دلوقتي — أعد تحميل الصفحة';
+        el.style.background = '#16a34a'; el.style.color = '#fff';
+        setTimeout(function() { _compLoadForCustomer(); }, 1500);
+        return;
+      }
+      var h2=Math.floor(diff2/3600000), m2=Math.floor((diff2%3600000)/60000), s2=Math.floor((diff2%60000)/1000);
+      el.textContent = '⏳ تبدأ التوقعات خلال: ' + (h2>0?h2+':':'') + String(m2).padStart(2,'0') + ':' + String(s2).padStart(2,'0');
+    });
     if (!section || section.style.display === 'none') return;
     section.querySelectorAll('[data-comp-close]').forEach(function(el) {
       var closeAt = new Date(el.getAttribute('data-comp-close'));
