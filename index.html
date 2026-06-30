@@ -1842,7 +1842,7 @@ input,select,textarea{font-family:inherit;}
       <button id="tabAgentsBtn" onclick="switchAdminTab('agents',this)">🛵 المندوبين</button>
       <button id="tabBlockBtn" onclick="switchAdminTab('block',this)">🚫 الحظر</button>
       <button id="tabStatsBtn" onclick="switchAdminTab('stats',this)">📊 الإحصائيات</button>
-      <button id="tabCompBtn" onclick="switchAdminTab('competitions',this)">🏆 المسابقات</button>
+      <button id="tabCompBtn" onclick="switchAdminTab('competitions',this)" style="display:none">🏆 المسابقات</button>
     </div>
 
     <!-- ORDERS TAB (Card View) -->
@@ -2125,7 +2125,10 @@ input,select,textarea{font-family:inherit;}
     <div id="tab-competitions" style="display:none;padding:12px">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
         <div style="font-size:15px;font-weight:900;color:var(--text)">🏆 المسابقات</div>
-        <button onclick="_compOpenCreateModal()" style="background:var(--olive);color:#fff;border:none;padding:8px 14px;border-radius:10px;font-size:13px;font-weight:800;cursor:pointer;font-family:inherit">+ مسابقة جديدة</button>
+        <div style="display:flex;gap:6px">
+          <button onclick="_compAuditPrizes()" style="background:#7c3aed;color:#fff;border:none;padding:8px 12px;border-radius:10px;font-size:12px;font-weight:800;cursor:pointer;font-family:inherit">🔍 تدقيق الجوائز</button>
+          <button onclick="_compOpenCreateModal()" style="background:var(--olive);color:#fff;border:none;padding:8px 14px;border-radius:10px;font-size:13px;font-weight:800;cursor:pointer;font-family:inherit">+ مسابقة جديدة</button>
+        </div>
       </div>
       <div id="compAdminList"><div style="text-align:center;padding:30px;color:var(--text-muted);font-weight:700">لا توجد مسابقات بعد</div></div>
     </div>
@@ -3035,7 +3038,7 @@ function autoCheckVIPLimits() {
 
   let promoted = 0;
   Object.values(customerStats).forEach(c => {
-    if (VIP_CUSTOMERS[c.phone]) return; // بالفعل VIP
+    if (_resolveVIP(c.phone)) return; // بالفعل VIP
     // شرط ١: عدد الطلبات خلال periodDays + حد أدنى مشتريات
     const minAmt = VIP_AUTO_SETTINGS.minOrderAmount || 0;
     const meetsOrders = VIP_AUTO_SETTINGS.ordersLimit > 0 &&
@@ -3751,7 +3754,7 @@ function _applyLoginPasswordUI(user) {
     // عميل قديم بدون كلمة سر — اعرض الخانة ليكتب كلمة سر جديدة + رسالة توضيحية
     if (passField) passField.style.display = 'block';
     if (passInput) { passInput.value = ''; passInput.setAttribute('readonly','readonly'); passInput.placeholder = 'اختر كلمة سر جديدة (4 أحرف على الأقل)'; }
-    if (needMsg) { needMsg.style.display = 'block'; needMsg.innerHTML = '🔒 حسابك محتاج كلمة سر للأمان. اكتب كلمة سر جديدة في الخانة فوق واضغط <b>دخول</b> — هيوصلك رمز تأكيد على واتساب لتفعيلها.'; }
+    if (needMsg) { needMsg.style.display = 'block'; needMsg.innerHTML = '🔒 حسابك محتاج كلمة سر للأمان. اكتب كلمة سر جديدة في الخانة فوق واضغط <b>دخول</b> — هتدخل فوراً بدون أي خطوات تانية.'; }
     if (forgotBtn) forgotBtn.style.display = 'none';
   } else {
     if (passField) passField.style.display = 'none';
@@ -3922,6 +3925,13 @@ async function doLogin() {
   // Step 1: Search local storage first
   let users = loadData('zz_users', []);
   let foundUser = users.find(u => (u.phone||'').replace(/[^0-9]/g,'') === cleanPhone);
+  if (!foundUser) {
+    /* نفس فكرة _phoneVariants — لو مفيش تطابق مباشر، نجرب باقي أشكال الرقم المحتملة (بدون أي تعديل على البيانات المخزّنة) */
+    for (const v of _phoneVariants(cleanPhone)) {
+      const f = users.find(u => (u.phone||'').replace(/[^0-9]/g,'') === v.replace(/[^0-9]/g,''));
+      if (f) { foundUser = f; break; }
+    }
+  }
 
   // Step 2: دائماً اجلب أحدث نسخة من Firebase (عشان كلمة السر المحدّثة من أي جهاز تشتغل) — المحلي fallback فقط
   if (db) {
@@ -3934,6 +3944,24 @@ async function doLogin() {
           const idx = users.findIndex(u => (u.phone||'').replace(/[^0-9]/g,'') === cleanPhone);
           if (idx >= 0) users[idx] = foundUser; else users.push(foundUser);
           saveData('zz_users', users);
+        }
+      } else {
+        /* لو الشكل الأساسي فشل، نجرب باقي أشكال الرقم — بس في حالة الفشل، بدون أي تأثير على الحالة العادية الناجحة */
+        for (const v of _phoneVariants(cleanPhone)) {
+          const vClean = v.replace(/[^0-9]/g,'');
+          if (!vClean || vClean === cleanPhone) continue;
+          try {
+            const snap2 = await db.ref('users/' + vClean).get();
+            if (snap2.exists()) {
+              foundUser = snap2.val();
+              if (foundUser && foundUser.phone) {
+                const idx2 = users.findIndex(u => (u.phone||'').replace(/[^0-9]/g,'') === cleanPhone);
+                if (idx2 >= 0) users[idx2] = foundUser; else users.push(foundUser);
+                saveData('zz_users', users);
+              }
+              break;
+            }
+          } catch(e) {}
         }
       }
     } catch(e) { console.warn('Firebase user lookup failed:', e); }
@@ -3973,12 +4001,23 @@ async function doLogin() {
       saveData('zz_session_meta', sm);
       getGPS(); _goToAppOrTracking(); return;
     } else {
-      // عميل قديم بدون كلمة سر — يعيّن واحدة عبر OTP (لا يُرفض أبداً)
+      // عميل قديم بدون كلمة سر — يعيّن مباشرة بدون OTP
       if (!pwInput || pwInput.length < 4) { showNotif('🔒 اختر كلمة سر (4 أحرف على الأقل) لتأمين حسابك'); return; }
-      const userWithPw = { ...foundUser, password: _hashPw(pwInput), verified: false };
-      showNotif('📲 هيوصلك رمز تأكيد على واتساب لتعيين كلمة السر');
-      startOTP(foundUser.whatsapp || foundUser.phone, 'setpassword', userWithPw);
-      return;
+      const userWithPw = { ...foundUser, password: _hashPw(pwInput), verified: true };
+      /* حفظ الكلمة مباشرة محلياً وعلى Firebase بدون OTP */
+      const _uIdx = users.findIndex(u => (u.phone||'').replace(/[^0-9]/g,'') === cleanPhone);
+      if (_uIdx >= 0) users[_uIdx] = userWithPw; else users.push(userWithPw);
+      saveData('zz_users', users);
+      if (db) db.ref('users/' + cleanPhone).update({ password: _hashPw(pwInput) }).catch(function(){});
+      currentUser = userWithPw;
+      saveData('zamzam_user', currentUser);
+      try { sessionStorage.setItem('zz_verified_session', cleanPhone); } catch(e) {}
+      const sm2 = loadData('zz_session_meta', {});
+      const rememberEl2 = document.getElementById('rememberToggle');
+      sm2.temporary = !(rememberEl2 && rememberEl2.classList.contains('on'));
+      saveData('zz_session_meta', sm2);
+      showNotif('✅ تم تعيين كلمة السر بنجاح — مرحباً ' + (userWithPw.name||''));
+      getGPS(); _goToAppOrTracking(); return;
     }
   }
 
@@ -4286,6 +4325,8 @@ function renderMenu() {
         : 'أهلاً بك 👋';
     }
   }
+  /* نفس منطق getVIPDiscount() — نحسبها مرة واحدة هنا لاستخدامها في شارة VIP بدل التكرار لكل عنصر */
+  let _resolvedVIP = currentUser?.phone ? _resolveVIP(currentUser.phone) : null;
   renderMainGroups();
   renderCategories();
   renderAdsSlider();
@@ -4309,7 +4350,7 @@ function renderMenu() {
         ${item.image ? `<div class="food-img-wrap"><img src="${item.image}" class="food-img-actual" alt="${item.name}" loading="lazy"/></div>` : `<div class="food-img">${item.emoji}</div>`}
         ${notAvail ? '<div class="unavail-overlay">غير متاح</div>' : ''}
         ${item.new && !notAvail ? '<div class="badge-new">جديد</div>' : ''}
-        ${currentUser?.phone && VIP_CUSTOMERS[currentUser.phone] && !notAvail ? `<div class="vip-disc-tag">👑 -${VIP_CUSTOMERS[currentUser.phone].discount||0}%</div>` : ''}
+        ${_resolvedVIP && !notAvail ? `<div class="vip-disc-tag">👑 -${_resolvedVIP.discount||0}%</div>` : ''}
         <button class="fav-btn" onclick="toggleFav(event,'${item.id}')">
           <span>${isFav ? '❤️' : '🤍'}</span>
           ${getFavCount(item.id) > 0 ? `<span class="fav-count">${getFavCount(item.id)}</span>` : ''}
@@ -4637,12 +4678,46 @@ function changeQty(id, d) {
   appliedDiscount = 0; appliedCouponId = null; updateCartUI(); renderCartSheet();
 }
 function cartSubtotal() { return cart.reduce((s, c) => s + c.price * c.qty, 0); }
+/* ══════════════════════════════════════════════════════════════
+   حماية العروض (oneTime) — 3 طبقات مع بعض
+   الطبقة 1: usedOffers المحلية (موجودة من قبل — بدون أي تغيير)
+   الطبقة 2: Firebase offer_usage/{phone} — يمنع نفس الرقم من جهاز تاني
+   الطبقة 3: localStorage zz_offer_voted_{id} — يمنع نفس الجهاز برقم تاني
+   ══════════════════════════════════════════════════════════════ */
+window._fbOfferUsage = window._fbOfferUsage || {};
+window._fbOfferUsageFetchedFor = null;
+
+function _offerSyncUsageFromFirebase() {
+  if (!currentUser || !currentUser.phone) return;
+  if (typeof db === 'undefined' || !db) return;
+  var _ph = currentUser.phone.replace(/\D/g,'');
+  if (window._fbOfferUsageFetchedFor === _ph) return; // already fetched لنفس الرقم
+  window._fbOfferUsageFetchedFor = _ph;
+  db.ref('offer_usage/' + _ph).once('value').then(function(snap) {
+    if (snap.exists()) {
+      var v = snap.val();
+      Object.keys(v).forEach(function(k){ window._fbOfferUsage[k] = true; });
+    }
+  }).catch(function(){});
+}
+
+function _isOfferBlocked(offerId) {
+  /* الطبقة 1 — usedOffers المحلية (الأصلية، بدون تعديل) */
+  if (currentUser && usedOffers[currentUser.phone + '_' + offerId]) return true;
+  /* الطبقة 2 — Firebase (نفس الرقم من أي جهاز) */
+  if (window._fbOfferUsage && window._fbOfferUsage[offerId]) return true;
+  /* الطبقة 3 — localStorage بالجهاز (نفس الجهاز بأي رقم) */
+  try { if (localStorage.getItem('zz_offer_voted_' + offerId)) return true; } catch(e) {}
+  return false;
+}
+
 function calcAutoDiscount() {
+  _offerSyncUsageFromFirebase();
   const total = cartSubtotal(); let disc = 0;
   OFFERS.filter(o => isOfferValid(o) && o.type !== 'coupon').forEach(o => {
     if (o.applyTo === 'delivery' && deliveryType !== 'delivery') return;
     if (o.applyTo === 'min' && total < (o.minAmount || 0)) return;
-    if (o.oneTime && currentUser && usedOffers[currentUser.phone + '_' + o.id]) return;
+    if (o.oneTime && currentUser && _isOfferBlocked(o.id)) return;
     if (o.type === 'percent') disc += Math.round(total * o.value / 100);
     else if (o.type === 'partial') disc += Number(o.value);
     else if (o.type === 'free_delivery') disc += Number(SETTINGS.deliveryFee) || 0;
@@ -4849,10 +4924,11 @@ function copyPayNum(num) {
 // COUPON
 // ============================================================
 function applyCoupon() {
+  _offerSyncUsageFromFirebase();
   const code = document.getElementById('couponInput').value.trim().toUpperCase();
   const offer = OFFERS.find(o => isOfferValid(o) && o.type === 'coupon' && o.coupon && o.coupon.toUpperCase() === code);
   if (!offer) { showNotif('❌ كود غير صحيح أو منتهى الصلاحية'); return; }
-  if (offer.oneTime && currentUser && usedOffers[currentUser.phone + '_' + offer.id]) { showNotif('❌ تم استخدام هذا الكوبون من قبل'); return; }
+  if (offer.oneTime && currentUser && _isOfferBlocked(offer.id)) { showNotif('❌ تم استخدام هذا الكوبون من قبل'); return; }
   const total = cartSubtotal();
   if (offer.applyTo === 'min' && total < (offer.minAmount || 0)) { showNotif(`❌ الحد الأدنى للطلب ${offer.minAmount} ج.م`); return; }
   let disc = 0;
@@ -5016,10 +5092,13 @@ ${totalDisc > 0 ? `🏷️ الخصم: - ${totalDisc} ج.م\n` : ''}${deliveryFe
   // 🎟️ لا نُسجّل استخدام العرض الآن — نخزّن قائمة مفاتيح العروض فقط، وتُسجّل لاحقاً عند التأكيد النهائي
   // (عشان لو العميل عدّل أو ألغى الطلب ما يتحرقش العرض عليه بالغلط)
   const _offerKeysToBurn = [];
+  const _offerIdsForSync = []; // 🆕 لمزامنة Firebase + قفل الجهاز (بدون أي تعديل على المنطق الأصلي فوق)
   OFFERS.filter(o => o.oneTime && isOfferValid(o)).forEach(o => {
     if (currentUser?.phone) _offerKeysToBurn.push(currentUser.phone + '_' + o.id);
+    _offerIdsForSync.push(o.id);
   });
   if (appliedCouponId && currentUser?.phone) _offerKeysToBurn.push(currentUser.phone + '_' + appliedCouponId);
+  if (appliedCouponId) _offerIdsForSync.push(appliedCouponId);
   const now = new Date();
   const newOrder = {
     id: orderNum, name: currentUser?.name || loadData('zamzam_user',{}).name || 'زائر', phone: currentUser?.phone || '—',
@@ -5043,6 +5122,7 @@ ${totalDisc > 0 ? `🏷️ الخصم: - ${totalDisc} ج.م\n` : ''}${deliveryFe
     notes: orderNotes
   };
   newOrder._offersToBurn = _offerKeysToBurn; // 🎟️ تُسجّل عند التأكيد النهائي فقط
+  newOrder._offerIdsForSync = _offerIdsForSync; // 🆕 لمزامنة Firebase + قفل الجهاز
   ordersData.unshift(newOrder);
   saveData('zz_orders', ordersData);
   // 🔥 حفظ الطلب في Firebase مؤجل — لن يُرسل للكاشير إلا بعد تأكيد العميل النهائي
@@ -5803,8 +5883,8 @@ function renderAdminOrders() {
   const canManage = (adminRoleType === 'admin' || adminRoleType === 'cashier');
 
   body.innerHTML = filtered.map((o, idx) => {
-    const isVip = !!VIP_CUSTOMERS[o.phone];
-    const vipData = VIP_CUSTOMERS[o.phone];
+    const vipData = _resolveVIP(o.phone);
+    const isVip = !!vipData;
     return `
     <div class="order-row-adm ${o.status === 'new' ? 'priority' : ''} ${isVip ? 'vip-order-row' : ''}" id="orow_${o.id}">
       <div class="order-top-row">
@@ -6149,8 +6229,8 @@ function renderCashierSheet() {
     if (aActive && bActive) {
       // VIP priority: إذا مفعّل، طلبات VIP تيجي قبل العادية
       if (isVIPPriorityEnabled()) {
-        const aVip = VIP_CUSTOMERS[a.phone] ? 1 : 0;
-        const bVip = VIP_CUSTOMERS[b.phone] ? 1 : 0;
+        const aVip = _resolveVIP(a.phone) ? 1 : 0;
+        const bVip = _resolveVIP(b.phone) ? 1 : 0;
         if (bVip !== aVip) return bVip - aVip; // VIP first
       }
       // FIFO: الأقدم أولاً
@@ -6181,7 +6261,7 @@ function renderCashierSheet() {
     const discStr = o.disc > 0 ? `<span style="color:var(--red);font-weight:800">- ${o.disc} ج</span>` : '—';
     const statusBg = statusColors[o.status] || '#fff';
     const isPending = o.status === 'payment_pending';
-    const isVip = !!VIP_CUSTOMERS[o.phone];
+    const isVip = !!_resolveVIP(o.phone);
     const isOut = o.status === 'out';
     const isDelivered = o.status === 'delivered';
     return `<tr class="${isPending ? 'priority-row' : o.status === 'new' ? 'priority-row' : ''} ${isVip ? 'vip-gold-row' : ''} ${isOut ? 'out-delivery-calmed' : ''} ${isDelivered ? 'delivered-calmed' : ''}" id="crow_${o.id}" style="cursor:pointer" onclick="openOrderDetailsModal('${o.id}')">
@@ -7881,7 +7961,7 @@ function renderCustomersReport() {
       <div class="report-section-title">🏆 أفضل 3 عملاء</div>
       ${top3.map((c,i) => {
         const medal = i===0?'🥇':i===1?'🥈':'🥉';
-        const isVip = !!VIP_CUSTOMERS[c.phone];
+        const isVip = !!_resolveVIP(c.phone);
         const avg = c.count ? Math.round(c.total/c.count) : 0;
         return `<div class="customer-rank-card">
           <div class="rank-badge">${medal}</div>
@@ -7908,7 +7988,7 @@ function renderCustomersReport() {
       ${customers.slice(0,10).map(c => {
         const val = sort === 'count' ? c.count : sort === 'avg' ? Math.round(c.total/c.count) : c.total;
         const w = Math.max(4, Math.round(val/maxVal*200));
-        const isVip = !!VIP_CUSTOMERS[c.phone];
+        const isVip = !!_resolveVIP(c.phone);
         return `<div class="cust-chart-bar">
           <div class="cust-bar-label">${isVip?'⭐ ':''}${c.name.length>8?c.name.slice(0,8)+'..':c.name}</div>
           <div class="cust-bar-fill" style="width:${w}px"></div>
@@ -7925,7 +8005,7 @@ function renderCustomersReport() {
         <tbody>${customers.map((c,i) => {
           const avg = c.count ? Math.round(c.total/c.count) : 0;
           const lastDate = c.lastOrder ? new Date(c.lastOrder).toLocaleDateString('ar-EG') : '—';
-          const isVip = !!VIP_CUSTOMERS[c.phone];
+          const isVip = !!_resolveVIP(c.phone);
           return `<tr>
             <td style="font-weight:800;color:var(--olive)">${i+1}</td>
             <td style="font-weight:700">${c.name}</td>
@@ -7943,14 +8023,20 @@ function renderCustomersReport() {
 }
 
 function toggleVIP(phone, name) {
-  if (VIP_CUSTOMERS[phone]) {
+  var _existingKey = VIP_CUSTOMERS[phone] ? phone : null;
+  if (!_existingKey) {
+    for (const v of _phoneVariants(phone)) {
+      if (VIP_CUSTOMERS[v]) { _existingKey = v; break; }
+    }
+  }
+  if (_existingKey) {
     // already VIP — manage
-    const disc = prompt(`خصم VIP لـ ${name} الحالي: ${VIP_CUSTOMERS[phone].discount||0}%\nأدخل نسبة الخصم الجديدة (0 لإلغاء VIP):`, VIP_CUSTOMERS[phone].discount || 0);
+    const disc = prompt(`خصم VIP لـ ${name} الحالي: ${VIP_CUSTOMERS[_existingKey].discount||0}%\nأدخل نسبة الخصم الجديدة (0 لإلغاء VIP):`, VIP_CUSTOMERS[_existingKey].discount || 0);
     if (disc === null) return;
     const d = Number(disc);
-    if (d <= 0) { delete VIP_CUSTOMERS[phone]; showNotif(`✓ تم إلغاء VIP من ${name}`); }
+    if (d <= 0) { delete VIP_CUSTOMERS[_existingKey]; showNotif(`✓ تم إلغاء VIP من ${name}`); }
     else {
-      VIP_CUSTOMERS[phone].discount = d;
+      VIP_CUSTOMERS[_existingKey].discount = d;
       showNotif(`✓ تم تحديث خصم VIP إلى ${d}%`);
       // إرسال رسالة واتساب بالخصم الجديد
       if (confirm(`هل تريد إرسال رسالة واتساب لـ ${name} بالخصم الجديد؟`)) {
@@ -7969,15 +8055,46 @@ function toggleVIP(phone, name) {
     }
   }
   saveData('zz_vip_customers', VIP_CUSTOMERS);
-  if (db) db.ref('vip_customers/' + phone.replace(/[^0-9]/g,'')).set(VIP_CUSTOMERS[phone] || null).catch(()=>{});
+  if (db) db.ref('vip_customers/' + phone.replace(/[^0-9]/g,'')).set(VIP_CUSTOMERS[_existingKey || phone] || null).catch(()=>{});
   renderCustomersReport();
   renderCashierSheet(); // تحديث الكاشير فوراً
 }
 
 // Apply VIP discount when placing order
+/* تنويعات شكل رقم التليفون — نفس فكرة فحص الحظر الموجود بالفعل (BLOCKED_USERS)
+   بنستخدمها بس في نقاط القراءة، مفيش أي تأثير على أي كتابة أو بيانات مخزّنة */
+function _phoneVariants(phone) {
+  const clean = (phone || '').replace(/[^0-9]/g, '');
+  if (!clean) return [];
+  const variants = new Set([clean, phone]);
+  if (clean.startsWith('20')) {
+    variants.add('0' + clean.slice(2));   // 20XXXXXXXXXX → 0XXXXXXXXXX
+    variants.add(clean.slice(2));         // 20XXXXXXXXXX → XXXXXXXXXX (بدون صفر ولا كود دولة)
+  }
+  if (clean.startsWith('0')) {
+    variants.add('20' + clean.slice(1));  // 0XXXXXXXXXX → 20XXXXXXXXXX
+    variants.add(clean.slice(1));         // 0XXXXXXXXXX → XXXXXXXXXX (بدون صفر ولا كود دولة)
+  }
+  if (!clean.startsWith('0') && !clean.startsWith('20')) {
+    variants.add('0' + clean);
+    variants.add('20' + clean);
+  }
+  return Array.from(variants);
+}
+
+/* دالة موحّدة لإيجاد سجل VIP بأي شكل للرقم — تُستخدم في كل نقاط القراءة بدل التكرار */
+function _resolveVIP(phone) {
+  if (!phone) return null;
+  if (VIP_CUSTOMERS[phone]) return VIP_CUSTOMERS[phone];
+  for (const v of _phoneVariants(phone)) {
+    if (VIP_CUSTOMERS[v]) return VIP_CUSTOMERS[v];
+  }
+  return null;
+}
+
 function getVIPDiscount() {
   if (!currentUser?.phone) return 0;
-  const vip = VIP_CUSTOMERS[currentUser.phone];
+  const vip = _resolveVIP(currentUser.phone);
   if (!vip || !vip.discount) return 0;
   return Math.round(cartSubtotal() * vip.discount / 100);
 }
@@ -7991,8 +8108,9 @@ function exportCustomersCSV() {
   customers.sort(function(a,b){ return sort==='count'?b.count-a.count:sort==='avg'?(b.total/b.count)-(a.total/a.count):b.total-a.total; });
   var rows = [['#','الاسم','الهاتف','عدد الطلبات','المشتريات','المتوسط','آخر طلب','VIP','خصم']];
   customers.forEach(function(c,i){
-    var isVip = !!VIP_CUSTOMERS[c.phone];
-    var disc = isVip?(VIP_CUSTOMERS[c.phone].discount||0)+'%':'-';
+    var _vipRec = _resolveVIP(c.phone);
+    var isVip = !!_vipRec;
+    var disc = isVip?(_vipRec.discount||0)+'%':'-';
     var avg = c.count?Math.round(c.total/c.count):0;
     rows.push([i+1, c.name||'-', c.phone||'-', c.count, c.total, avg, c.lastOrderDate||'-', isVip?'VIP':'-', disc]);
   });
@@ -9223,6 +9341,15 @@ function confirmFinalOrder() {
     order._offersToBurn.forEach(k => { if (k) usedOffers[k] = true; });
     saveData('zz_used_offers', usedOffers);
   }
+  // 🆕 مزامنة الحماية مع Firebase (نفس الرقم من أي جهاز) + قفل الجهاز (نفس الجهاز بأي رقم)
+  if (order._offerIdsForSync && order._offerIdsForSync.length && currentUser?.phone) {
+    var _syncPhone = currentUser.phone.replace(/\D/g,'');
+    order._offerIdsForSync.forEach(function(oid) {
+      if (!oid) return;
+      if (typeof db !== 'undefined' && db) { db.ref('offer_usage/' + _syncPhone + '/' + oid).set(true).catch(function(){}); }
+      try { localStorage.setItem('zz_offer_voted_' + oid, '1'); } catch(e) {}
+    });
+  }
   // كسب نقاط الولاء — للكل أو VIP حسب الإعداد
   if (currentUser?.phone) {
     earnLoyaltyPoints(order.total || 0, currentUser.phone, currentUser.name || '');
@@ -9701,7 +9828,7 @@ function openOrderDetailsModal(orderId) {
             <div style="font-size:22px;font-weight:900;font-family:monospace;letter-spacing:1px">#${o.id}</div>
           </div>
           <div style="text-align:center">
-            ${VIP_CUSTOMERS[o.phone] ? `<div style="background:linear-gradient(135deg,#f59e0b,#d97706);color:#fff;padding:4px 12px;border-radius:100px;font-size:11px;font-weight:900;margin-bottom:4px">👑 VIP ${VIP_CUSTOMERS[o.phone].discount||0}%</div>` : ''}
+            ${_resolveVIP(o.phone) ? `<div style="background:linear-gradient(135deg,#f59e0b,#d97706);color:#fff;padding:4px 12px;border-radius:100px;font-size:11px;font-weight:900;margin-bottom:4px">👑 VIP ${_resolveVIP(o.phone).discount||0}%</div>` : ''}
             <span style="background:${statusColors[o.status]||'#fff'};color:var(--dark);padding:6px 14px;border-radius:100px;font-size:12px;font-weight:900">${statusLabels[o.status]||o.status}</span>
           </div>
           <button onclick="document.getElementById('orderDetailsModal').style.display='none'" style="background:rgba(255,255,255,.2);border:none;color:#fff;width:32px;height:32px;border-radius:50%;font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center">✕</button>
@@ -9902,7 +10029,7 @@ function setupFirebaseListeners() {
           fbOrders.forEach(o => {
             if (!prevIds.has(o.id) && (adminRoleType === 'admin' || adminRoleType === 'cashier')) {
               // Check if VIP customer
-              if (VIP_CUSTOMERS[o.phone]) {
+              if (_resolveVIP(o.phone)) {
                 showVIPCashierPopup(o);
               } else {
                 showCashierPopup(o, 'new_order');
@@ -12024,7 +12151,7 @@ function buildVIPMessage(phone,name,discount){ const t=VIP_MSG_TEMPLATES.find(x=
 
 // VIP Cashier Popup
 function showVIPCashierPopup(order) {
-  const vip = VIP_CUSTOMERS[order.phone];
+  const vip = _resolveVIP(order.phone);
   if (!vip) return;
   const overlay = document.getElementById('vipCashierPopupOverlay');
   if (!overlay) return;
@@ -12096,7 +12223,7 @@ function updateVIPWelcomeBanner() {
     if (heroBannerWrap) heroBannerWrap.innerHTML = `<div class="hero-banner" id="regularHeroBanner"><div class="hero-text"><h2>أشهى المأكولات 🍽️</h2><p>طازج يومياً • توصيل سريع</p><div class="hero-btn">اطلب الآن</div></div><div class="hero-emoji">🍽️</div></div>`;
     return;
   }
-  const vip = VIP_CUSTOMERS[currentUser.phone];
+  const vip = _resolveVIP(currentUser.phone);
   if (!vip) {
     if (topbarWrap) topbarWrap.innerHTML = '';
     if (banner) banner.classList.remove('show');
@@ -12216,7 +12343,7 @@ function earnLoyaltyPoints(orderTotal, phone, name) {
   if (!phone) return 0;
 
   // تحقق هل العميل مؤهل
-  const isVip = !!VIP_CUSTOMERS[(phone||'').replace(/\D/g,'')];
+  const isVip = !!_resolveVIP((phone||'').replace(/\D/g,''));
   if (!LOYALTY_SETTINGS.forAll && !isVip) return 0;
 
   const earned = Math.floor((orderTotal || 0) * (LOYALTY_SETTINGS.pointsPerPound || 1));
@@ -12266,7 +12393,7 @@ function redeemLoyaltyPoints(phone, cartTotal) {
 // واجهة العميل — بطاقة النقاط
 function renderLoyaltyCard(phone) {
   if (!LOYALTY_SETTINGS.enabled) return '';
-  const isVip = !!VIP_CUSTOMERS[(phone||'').replace(/\D/g,'')];
+  const isVip = !!_resolveVIP((phone||'').replace(/\D/g,''));
   if (!LOYALTY_SETTINGS.forAll && !isVip) return '';
 
   const points = getLoyaltyPoints(phone);
@@ -13541,6 +13668,9 @@ let _compModalOpen = false;
 (function(){
   const _orig = window.switchAdminTab;
   window.switchAdminTab = function(tab, el) {
+    /* إظهار/إخفاء تاب المسابقات حسب الدور — أدمن بس */
+    var compBtn = document.getElementById('tabCompBtn');
+    if (compBtn) compBtn.style.display = (typeof adminRoleType !== 'undefined' && adminRoleType === 'admin') ? '' : 'none';
     const compTab = document.getElementById('tab-competitions');
     if (tab === 'competitions') {
       document.querySelectorAll('.admin-tabs button').forEach(b => b.classList.remove('active'));
@@ -13684,6 +13814,11 @@ function _compSaveNew() {
 
 /* ══════════════════ ADMIN — RENDER LIST ══════════════════ */
 function _compRenderAdmin() {
+  if (typeof adminRoleType !== 'undefined' && adminRoleType !== 'admin') {
+    var list = document.getElementById('compAdminList');
+    if (list) list.innerHTML = '<div style="text-align:center;padding:30px;color:#ef4444;font-weight:700">⛔ هذا القسم للأدمن فقط</div>';
+    return;
+  }
   const ref = _compRef('');
   if (ref) {
     ref.get().then(snap => {
@@ -13722,8 +13857,8 @@ function _compRenderAdminList() {
       <div style="display:flex;gap:6px;flex-wrap:wrap">
         <button onclick="_compViewPredictions('${c.id}')" style="flex:1;padding:8px;background:#3b82f620;color:#3b82f6;border:1.5px solid #3b82f6;border-radius:8px;font-size:12px;font-weight:800;cursor:pointer;font-family:inherit">👁️ التوقعات</button>
         ${!isFinished ? `<button onclick="_compEditModal('${c.id}')" style="flex:1;padding:8px;background:#f59e0b20;color:#b45309;border:1.5px solid #f59e0b;border-radius:8px;font-size:12px;font-weight:800;cursor:pointer;font-family:inherit">✏️ تعديل</button>` : ''}
-        ${!isFinished ? `<button onclick="_compEnterResult('${c.id}')" style="flex:1;padding:8px;background:var(--olive);color:#fff;border:none;border-radius:8px;font-size:12px;font-weight:800;cursor:pointer;font-family:inherit">⚽ النتيجة</button>` : ''}
-        ${!isFinished && !isClosed ? `<button onclick="_compClosePred('${c.id}')" style="flex:1;padding:8px;background:#f59e0b20;color:#b45309;border:1.5px solid #f59e0b;border-radius:8px;font-size:12px;font-weight:800;cursor:pointer;font-family:inherit">🔒 إغلاق مبكر</button>` : ''}
+        ${!isFinished && adminRoleType === 'admin' ? `<button onclick="_compEnterResult('${c.id}')" style="flex:1;padding:8px;background:var(--olive);color:#fff;border:none;border-radius:8px;font-size:12px;font-weight:800;cursor:pointer;font-family:inherit">⚽ النتيجة</button>` : ''}
+        ${!isFinished && !isClosed && adminRoleType === 'admin' ? `<button onclick="_compClosePred('${c.id}')" style="flex:1;padding:8px;background:#f59e0b20;color:#b45309;border:1.5px solid #f59e0b;border-radius:8px;font-size:12px;font-weight:800;cursor:pointer;font-family:inherit">🔒 إغلاق مبكر</button>` : ''}
         <button onclick="_compDelete('${c.id}')" style="padding:8px 12px;background:#ef444420;color:#ef4444;border:1.5px solid #ef4444;border-radius:8px;font-size:12px;font-weight:800;cursor:pointer;font-family:inherit">🗑</button>
       </div>
     </div>`;
@@ -13832,6 +13967,20 @@ function _compViewPredictions(compId) {
     const winners = correct ? entries.filter(([,p]) => p.result === correct) : [];
     const condText = _compCondText(comp.conditions);
 
+    /* فحص القرب الجغرافي — لو أكتر من توقع جوه نطاق 10 متر من بعض (نفس الترابيزة تقريباً) */
+    const proximityMap = {};
+    entries.forEach(([phone, p]) => {
+      if (typeof p.lat !== 'number' || typeof p.lng !== 'number') return;
+      entries.forEach(([phone2, p2]) => {
+        if (phone === phone2 || typeof p2.lat !== 'number' || typeof p2.lng !== 'number') return;
+        const d = _compCalcDistance(p.lat, p.lng, p2.lat, p2.lng);
+        if (d <= 10) {
+          if (!proximityMap[phone]) proximityMap[phone] = [];
+          proximityMap[phone].push({ name: p2.name || phone2, dist: Math.round(d) });
+        }
+      });
+    });
+
     modal.innerHTML = `<div style="background:var(--bg);border-radius:18px;max-width:500px;width:100%;padding:20px;margin:auto">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
         <div style="font-size:15px;font-weight:900">${comp.title}</div>
@@ -13840,9 +13989,10 @@ function _compViewPredictions(compId) {
       ${correct ? `<div style="background:#f0fdf4;border:1.5px solid #16a34a;border-radius:10px;padding:10px;margin-bottom:12px;text-align:center;font-size:14px;font-weight:900;color:#16a34a">⚽ النتيجة الصحيحة: ${correct}</div>` : `<div style="background:#fef3c7;border:1.5px solid #f59e0b;border-radius:10px;padding:10px;margin-bottom:12px;text-align:center;font-size:13px;font-weight:800;color:#92400e">⏳ لم تُدخل النتيجة بعد</div>`}
       ${condText ? `<div style="background:var(--bg-2,#f5f5f5);border-radius:8px;padding:8px;margin-bottom:10px;font-size:12px;font-weight:700;color:var(--text-muted)">📋 الشروط: ${condText}</div>` : ''}
       <div style="font-size:13px;font-weight:800;margin-bottom:8px">إجمالي التوقعات: ${entries.length} | توقعوا صح: ${winners.length}${(comp.conditions && (comp.conditions.orderType !== 'all' || comp.conditions.minOrder > 0)) ? ' | مستوفون الشروط: ' + winners.filter(([,p]) => { var c=comp.conditions||{}; var tOk=!c.orderType||c.orderType==='all'||(p.deliveryType||p.orderType)===c.orderType; var aOk=!c.minOrder||(p.orderAmount||0)>=c.minOrder; return tOk&&aOk; }).length : ''}</div>
-      ${correct && winners.length ? `<div style="display:flex;gap:8px;margin-bottom:12px">
-        ${!comp.winnersAll ? `<button onclick="_compPickRandom('${compId}')" style="flex:1;padding:10px;background:var(--olive);color:#fff;border:none;border-radius:10px;font-size:13px;font-weight:800;cursor:pointer;font-family:inherit">🎰 فائز عشوائي</button>` : ''}
-        <button onclick="_compGrantAll('${compId}')" style="flex:1;padding:10px;background:#16a34a;color:#fff;border:none;border-radius:10px;font-size:13px;font-weight:800;cursor:pointer;font-family:inherit">🏆 منح الكل الجائزة</button>
+      ${correct && winners.length ? `<div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px">
+        ${!comp.winnersAll ? `<button onclick="_compPickRandom('${compId}')" style="flex:1;min-width:100px;padding:10px;background:var(--olive);color:#fff;border:none;border-radius:10px;font-size:12px;font-weight:800;cursor:pointer;font-family:inherit">🎰 فائز عشوائي</button>` : ''}
+        ${!comp.winnersAll ? `<button onclick="_compPickFirst('${compId}')" style="flex:1;min-width:100px;padding:10px;background:#7c3aed;color:#fff;border:none;border-radius:10px;font-size:12px;font-weight:800;cursor:pointer;font-family:inherit">🥇 أول من توقع صح</button>` : ''}
+        <button onclick="_compGrantAll('${compId}')" style="flex:1;min-width:100px;padding:10px;background:#16a34a;color:#fff;border:none;border-radius:10px;font-size:12px;font-weight:800;cursor:pointer;font-family:inherit">🏆 منح الكل الجائزة</button>
       </div>` : ''}
       <div style="max-height:350px;overflow-y:auto">
         ${entries.length === 0 ? '<div style="text-align:center;padding:20px;color:var(--text-muted)">لا توجد توقعات بعد</div>' :
@@ -13862,21 +14012,26 @@ function _compViewPredictions(compId) {
             }
             const meetsAll = condChecks.every(c => c.ok);
             /* row bg color */
+            const hasProximityFlag = !!proximityMap[phone];
             const rowBg = !isWinner ? '' : meetsAll ? '#f0fdf4' : '#fff1f2';
-            const rowBorder = !isWinner ? 'var(--border)' : meetsAll ? '#86efac' : '#fca5a5';
+            const rowBorder = hasProximityFlag ? '#f59e0b' : (!isWinner ? 'var(--border)' : meetsAll ? '#86efac' : '#fca5a5');
             return '<div style="display:flex;align-items:flex-start;justify-content:space-between;padding:10px;border-bottom:1px solid var(--border);gap:8px;background:' + rowBg + ';border-right:3px solid ' + rowBorder + '">' +
               '<div style="flex:1">' +
                 '<div style="font-weight:800;font-size:13px">' + (p.name||phone) + '</div>' +
                 '<div style="font-size:12px;color:var(--text-muted)">' + phone + ' | توقع: <b>' + p.result + '</b></div>' +
                 (p.orderType||p.deliveryType ? '<div style="font-size:11px;color:var(--text-muted);margin-top:2px">نوع: ' + (p.deliveryType||p.orderType||'—') + ' | قيمة: ' + (p.orderAmount||0) + ' جـ</div>' : '') +
+                (isWinner && comp.prize && comp.prize.type === 'discount' && p.orderAmount > 0 ? '<div style="font-size:11px;font-weight:800;color:#b45309;margin-top:2px;background:#fef3c7;border-radius:6px;padding:3px 8px;display:inline-block">💰 قيمة الاسترجاع: ' + Math.round(p.orderAmount * (parseFloat(comp.prize.value)||0) / 100) + ' جـ (خصم ' + comp.prize.value + '% على ' + p.orderAmount + ' جـ)</div>' : '') +
                 (isWinner && condChecks.length ? '<div style="margin-top:4px">' +
                   condChecks.map(c => '<div style="font-size:10px;font-weight:700;color:' + (c.ok?'#16a34a':'#dc2626') + '">' + c.label + '</div>').join('') +
+                '</div>' : '') +
+                (proximityMap[phone] ? '<div style="margin-top:4px;background:#fef3c7;border-radius:6px;padding:4px 8px">' +
+                  '<div style="font-size:10px;font-weight:800;color:#b45309">📍 قريب جداً من: ' + proximityMap[phone].map(x => x.name + ' (~' + x.dist + 'م)').join(', ') + '</div>' +
                 '</div>' : '') +
               '</div>' +
               '<div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px;min-width:80px">' +
                 (isWinner ? '<span style="color:#16a34a;font-size:12px;font-weight:800">✅ صح</span>' : '<span style="color:#ef4444;font-size:12px;font-weight:800">❌ غلط</span>') +
                 (isWinner && !meetsAll && condChecks.length ? '<span style="background:#fee2e2;color:#dc2626;font-size:10px;font-weight:800;padding:2px 6px;border-radius:4px">مش مستوفي</span>' : '') +
-                (isWinner && meetsAll && !granted ? '<button data-cid="' + compId + '" data-ph="' + phone + '" onclick="_compGrantFromBtn(this)" style="padding:4px 10px;background:#16a34a;color:#fff;border:none;border-radius:6px;font-size:11px;font-weight:800;cursor:pointer;font-family:inherit">منح الجائزة</button>' : '') +
+                (isWinner && meetsAll && !granted ? '<button data-cid="' + compId + '" data-ph="' + phone + '" data-amt="' + (p.orderAmount||0) + '" onclick="_compGrantFromBtn(this)" style="padding:4px 10px;background:#16a34a;color:#fff;border:none;border-radius:6px;font-size:11px;font-weight:800;cursor:pointer;font-family:inherit">منح الجائزة</button>' : '') +
                 (granted ? '<span style="color:#3b82f6;font-size:11px;font-weight:700">🎁 منحت</span>' : '') +
               '</div>' +
             '</div>';
@@ -13887,6 +14042,26 @@ function _compViewPredictions(compId) {
 
   if (ref) { ref.get().then(s => render(s.exists() ? s.val() : {})); }
   else { render({}); }
+}
+
+function _compPickFirst(compId) {
+  const comp = _COMPETITIONS[compId];
+  const ref = _compRef(compId + '/predictions');
+  if (!ref) { if(typeof showNotif==='function') showNotif('❌ تحتاج اتصال بـ Firebase'); return; }
+  ref.get().then(s => {
+    if (!s.exists()) return;
+    const preds = s.val();
+    const winners = Object.entries(preds).filter(([,p]) => p.result === comp.correctResult && !p.prizeGranted);
+    if (!winners.length) { if(typeof showNotif==='function') showNotif('❌ لا يوجد فائزين متاحين'); return; }
+    winners.sort((a,b) => (a[1].submittedAt||'').localeCompare(b[1].submittedAt||''));
+    const [phone, pData] = winners[0];
+    const name = pData.name || phone;
+    const wAmt = pData.orderAmount || 0;
+    const timeStr = pData.submittedAt ? new Date(pData.submittedAt).toLocaleTimeString('ar-EG', {hour:'2-digit', minute:'2-digit'}) : '—';
+    if (confirm(`🥇 أول من توقع صح: ${name} (${phone})\nالوقت: ${timeStr}\nمنحه الجائزة؟`)) {
+      _compGrantOne(compId, phone, false, wAmt);
+    }
+  });
 }
 
 function _compPickRandom(compId) {
@@ -13900,8 +14075,9 @@ function _compPickRandom(compId) {
     if (!winners.length) { if(typeof showNotif==='function') showNotif('❌ لا يوجد فائزين متاحين'); return; }
     const [phone] = winners[Math.floor(Math.random() * winners.length)];
     const name = preds[phone]?.name || phone;
+    const wAmt = preds[phone]?.orderAmount || 0;
     if (confirm(`🏆 الفائز العشوائي: ${name} (${phone})\nمنحه الجائزة؟`)) {
-      _compGrantOne(compId, phone);
+      _compGrantOne(compId, phone, false, wAmt);
     }
   });
 }
@@ -13923,10 +14099,11 @@ function _compGrantAll(compId) {
 function _compGrantFromBtn(btn) {
   var cid = btn.getAttribute('data-cid');
   var ph  = btn.getAttribute('data-ph');
-  if (cid && ph) _compGrantOne(cid, ph, false);
+  var amt = parseFloat(btn.getAttribute('data-amt')) || 0;
+  if (cid && ph) _compGrantOne(cid, ph, false, amt);
 }
 
-function _compGrantOne(compId, phone, silent) {
+function _compGrantOne(compId, phone, silent, orderAmount) {
   var comp = _COMPETITIONS[compId];
   if (!comp) return Promise.resolve();
   var prizeText = !comp.prize ? '' :
@@ -13948,7 +14125,13 @@ function _compGrantOne(compId, phone, silent) {
       if (phone && prize.type) {
         var waPhone = phone.replace(/\D/g,'');
         if (!waPhone.startsWith('20')) waPhone = '20' + waPhone.replace(/^0/,'');
-        var waMsg = '🏆 مبروك! أنت من الفائزين في مسابقة: ' + comp.title + '\n🎁 جائزتك: ' + prizeText + '\n⏳ صالحة لمدة 30 يوم - افتح التطبيق لاستخدامها';
+        var waMsg = '🏆 مبروك! أنت من الفائزين في مسابقة: ' + comp.title + '\n🎁 جائزتك: ' + prizeText;
+        if (prize.type === 'discount' && orderAmount > 0) {
+          var refundAmt = Math.round(orderAmount * (parseFloat(comp.prize.value)||0) / 100);
+          waMsg += '\n💰 قيمة الاسترجاع: ' + refundAmt + ' جنيه (من فاتورتك بقيمة ' + orderAmount + ' جنيه)\n📞 سيتم التواصل معك من الإدارة لتسليم المبلغ';
+        } else {
+          waMsg += '\n⏳ صالحة لمدة 30 يوم - افتح التطبيق لاستخدامها';
+        }
         window.open('https://wa.me/' + waPhone + '?text=' + encodeURIComponent(waMsg), '_blank');
       }
       _compViewPredictions(compId);
@@ -14156,6 +14339,14 @@ function _compCalcDistance(lat1,lon1,lat2,lon2){
 }
 
 function _compOpenPredModal(compId) {
+  /* قفل الجهاز: يمنع نفس الجهاز من التوقع مرتين بأرقام مختلفة لنفس المسابقة */
+  var _devKey = 'zz_comp_voted_' + compId;
+  try {
+    if (localStorage.getItem(_devKey)) {
+      if(typeof showNotif==='function') showNotif('❌ تم التوقع بالفعل من هذا الجهاز لهذه المسابقة');
+      return;
+    }
+  } catch(e) {}
   if (typeof currentUser === 'undefined' || !currentUser?.phone) {
     if(typeof showNotif==='function') showNotif('❌ سجّل دخولك أولاً');
     if(typeof openScreen==='function') openScreen('settings'); return;
@@ -14184,6 +14375,8 @@ function _compOpenPredModal(compId) {
       function(pos) {
         var dist = _compCalcDistance(pos.coords.latitude, pos.coords.longitude, RESTAURANT.lat, RESTAURANT.lng);
         if (dist > 300) { if(typeof showNotif==='function') showNotif('❌ أنت لست داخل الكافيه — المسافة: ' + Math.round(dist) + 'م'); return; }
+        /* حفظ الإحداثيات مؤقتاً عشان نخزنها مع التوقع للمراجعة الإدارية */
+        window._compLastGPS = { lat: pos.coords.latitude, lng: pos.coords.longitude };
         proceed();
       },
       function(err) {
@@ -14240,14 +14433,35 @@ function _compSubmitPred(compId) {
     prizeGranted: false, orderType: comp.conditions?.orderType || 'all',
     orderAmount: typeof cart !== 'undefined' ? cart.reduce((s,c)=>s+c.price*c.qty,0) : 0,
     deliveryType: typeof deliveryType !== 'undefined' ? deliveryType : '' };
+  /* إرفاق إحداثيات الـ GPS (لو متوفرة) لمراجعة الأدمن لاحقاً */
+  if (window._compLastGPS) {
+    pred.lat = window._compLastGPS.lat;
+    pred.lng = window._compLastGPS.lng;
+  }
 
   const ref = _compRef(compId + '/predictions/' + phone);
   if (ref) {
     ref.set(pred).then(() => {
-      document.getElementById('_compPredUserModal').style.display = 'none';
-      if(typeof showNotif==='function') showNotif('✅ تم إرسال توقعك — ' + result);
+      try { localStorage.setItem('zz_comp_voted_' + compId, phone); } catch(e) {}
+      window._compLastGPS = null;
+      _compShowSubmitConfirmation(result);
     }).catch(() => { if(typeof showNotif==='function') showNotif('❌ حدث خطأ'); });
   } else { if(typeof showNotif==='function') showNotif('❌ تحتاج اتصال بالإنترنت'); }
+}
+
+function _compShowSubmitConfirmation(result) {
+  var modal = document.getElementById('_compPredUserModal');
+  if (!modal) return;
+  var card = modal.querySelector('div');
+  if (!card) return;
+  card.innerHTML =
+    '<div style="text-align:center;padding:10px 5px">' +
+      '<div style="font-size:46px;margin-bottom:10px">✅</div>' +
+      '<div style="font-size:16px;font-weight:900;color:var(--text);margin-bottom:6px">تم تسجيل توقعك بنجاح</div>' +
+      '<div style="font-size:13px;color:var(--text-muted);line-height:1.7;margin-bottom:4px">سيتم التواصل معك عبر واتساب في حال الفوز</div>' +
+      '<div style="font-size:12px;color:var(--text-muted);opacity:.8">التوقعات متاحة حتى بدء المباراة</div>' +
+      '<button onclick="document.getElementById(\'_compPredUserModal\').style.display=\'none\'" style="margin-top:18px;width:100%;padding:11px;background:var(--olive);color:#fff;border:none;border-radius:12px;font-size:14px;font-weight:900;cursor:pointer;font-family:inherit">تم</button>' +
+    '</div>';
 }
 
 /* ══════════════════ PRIZES — CUSTOMER CART HOOK ══════════════════ */
@@ -14276,11 +14490,33 @@ function _compShowPrizeBanner(compId, prize) {
   const banner = document.createElement('div');
   banner.id = '_compPrizeBanner_' + compId;
   banner.style.cssText = 'background:linear-gradient(135deg,#16a34a,#15803d);color:#fff;border-radius:14px;padding:14px;margin-bottom:10px';
-  banner.innerHTML = `<div style="font-size:13px;font-weight:900;margin-bottom:4px">🎁 جائزتك في انتظارك!</div>
-    <div style="font-size:12px;opacity:.9;margin-bottom:10px">من مسابقة: ${prize.competitionTitle||''} | الجائزة: ${prizeText}</div>
-    <button onclick="_compApplyPrize('${compId}')" style="width:100%;padding:8px;background:#fff;color:#16a34a;border:none;border-radius:8px;font-size:13px;font-weight:900;cursor:pointer;font-family:inherit">استخدم الجائزة دلوقتي</button>`;
+  if (prize.type === 'discount') {
+    /* خصم: إعلام فقط — بدون أي تطبيق تلقائي على السلة، التسوية يدوية بمعرفة الإدارة */
+    banner.innerHTML = `<div style="font-size:13px;font-weight:900;margin-bottom:4px">🏆 مبروك! أنت فائز في المسابقة</div>
+      <div style="font-size:12px;opacity:.9;margin-bottom:8px">من مسابقة: ${prize.competitionTitle||''} | جائزتك: ${prizeText}</div>
+      <div style="font-size:11px;opacity:.85;margin-bottom:10px;background:rgba(255,255,255,.15);border-radius:8px;padding:6px 10px">📞 سيتم التواصل معك من الإدارة لتسوية قيمة الجائزة</div>
+      <button onclick="_compAcknowledgePrize('${compId}')" style="width:100%;padding:8px;background:#fff;color:#16a34a;border:none;border-radius:8px;font-size:13px;font-weight:900;cursor:pointer;font-family:inherit">✅ تم، شكراً</button>`;
+  } else {
+    /* توصيل مجاني / منتج مجاني — نفس السلوك التلقائي السابق بدون أي تغيير */
+    banner.innerHTML = `<div style="font-size:13px;font-weight:900;margin-bottom:4px">🎁 جائزتك في انتظارك!</div>
+      <div style="font-size:12px;opacity:.9;margin-bottom:10px">من مسابقة: ${prize.competitionTitle||''} | الجائزة: ${prizeText}</div>
+      <button onclick="_compApplyPrize('${compId}')" style="width:100%;padding:8px;background:#fff;color:#16a34a;border:none;border-radius:8px;font-size:13px;font-weight:900;cursor:pointer;font-family:inherit">استخدم الجائزة دلوقتي</button>`;
+  }
   section.insertBefore(banner, section.firstChild);
   section.style.display = 'block';
+}
+
+function _compAcknowledgePrize(compId) {
+  if (!currentUser || !currentUser.phone) return;
+  var phone = currentUser.phone.replace(/\D/g,'');
+  var ref = (typeof db !== 'undefined' && db) ? db.ref('comp_prizes/' + phone + '/' + compId) : null;
+  if (ref) {
+    ref.update({ used: true, acknowledgedAt: new Date().toISOString() }).then(function() {
+      if(typeof showNotif==='function') showNotif('✅ تم تسجيل علمك بالجائزة — سيتم التواصل معك لتسويتها');
+      var banner = document.getElementById('_compPrizeBanner_' + compId);
+      if (banner) banner.remove();
+    });
+  }
 }
 
 function _compApplyPrize(compId) {
@@ -14384,6 +14620,85 @@ function _compClearPrize() {
     /* no-op: just ensure recalc happens via updateCartUI hook */
   }
 })();
+
+/* ══════════════════ تدقيق الجوائز ══════════════════
+   يقارن كل سجل في comp_prizes مع التوقع الفعلي المطابق له
+   عشان يكشف أي جائزة اتمنحت من غير ما تمر بمسار الأدمن الطبيعي
+   ══════════════════════════════════════════════════════ */
+function _compAuditPrizes() {
+  if (typeof db === 'undefined' || !db) { if(typeof showNotif==='function') showNotif('❌ تحتاج اتصال بـ Firebase'); return; }
+  if(typeof showNotif==='function') showNotif('⏳ جاري تدقيق الجوائز...');
+  db.ref('comp_prizes').once('value').then(function(snap) {
+    if (!snap.exists()) { _compShowAuditResults([]); return; }
+    var allPrizes = [];
+    snap.forEach(function(phoneSnap) {
+      var phone = phoneSnap.key;
+      phoneSnap.forEach(function(compSnap) {
+        allPrizes.push({ phone: phone, compId: compSnap.key, prize: compSnap.val() });
+      });
+    });
+    if (!allPrizes.length) { _compShowAuditResults([]); return; }
+    var promises = allPrizes.map(function(p) {
+      return db.ref('competitions/' + p.compId).once('value').then(function(compSnap) {
+        var comp = compSnap.val();
+        var pred = comp && comp.predictions ? comp.predictions[p.phone] : null;
+        var flag = null;
+        if (!comp) flag = '⚠️ المسابقة غير موجودة (محذوفة)';
+        else if (!pred) flag = '🚩 لا يوجد توقع مطابق لهذا العميل في المسابقة — مشبوهة جداً';
+        else if (!comp.correctResult) flag = 'ℹ️ النتيجة لم تُدخل بعد في هذه المسابقة';
+        else if (pred.result !== comp.correctResult) flag = '🚩 توقع العميل كان غلط لكن الجائزة اتمنحت — مشبوهة';
+        else if (!pred.prizeGranted) flag = '🚩 لم تُمنح عبر لوحة الأدمن — ممكن تكون كُتبت مباشرة';
+        return { phone: p.phone, compId: p.compId, compTitle: comp ? comp.title : '(محذوفة)', prize: p.prize, flag: flag };
+      }).catch(function() {
+        return { phone: p.phone, compId: p.compId, compTitle: '؟', prize: p.prize, flag: '⚠️ تعذّر التحقق' };
+      });
+    });
+    Promise.all(promises).then(_compShowAuditResults);
+  }).catch(function() { if(typeof showNotif==='function') showNotif('❌ خطأ في جلب البيانات'); });
+}
+
+function _compShowAuditResults(results) {
+  var old = document.getElementById('_compAuditModal'); if (old) old.remove();
+  var modal = document.createElement('div');
+  modal.id = '_compAuditModal';
+  modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:99999;display:flex;align-items:flex-start;justify-content:center;overflow-y:auto;padding:20px;direction:rtl';
+  var suspicious = results.filter(function(r) { return r.flag; });
+  var clean = results.length - suspicious.length;
+  var rowsHtml = results.length === 0
+    ? '<div style="text-align:center;padding:30px;color:var(--text-muted)">لا توجد جوائز ممنوحة بعد</div>'
+    : results.map(function(r) {
+        var bg = r.flag ? '#fff1f2' : '#f0fdf4';
+        var border = r.flag ? '#fca5a5' : '#86efac';
+        var prizeText = r.prize.type === 'discount' ? 'خصم ' + r.prize.value + '%' : r.prize.type === 'free_delivery' ? 'توصيل مجاني' : 'هدية: ' + (r.prize.value || '');
+        return '<div style="background:' + bg + ';border-right:3px solid ' + border + ';border-radius:8px;padding:10px;margin-bottom:8px">' +
+          '<div style="font-weight:800;font-size:13px">' + r.phone + ' — ' + r.compTitle + '</div>' +
+          '<div style="font-size:12px;color:var(--text-muted);margin-top:2px">🎁 ' + prizeText + (r.prize.used ? ' | استُخدمت' : ' | لم تُستخدم') + '</div>' +
+          (r.flag ? '<div style="font-size:11px;font-weight:800;color:#dc2626;margin-top:4px">' + r.flag + '</div>' +
+            (!r.prize.used ? '<button onclick="_compRevokePrize(\'' + r.phone + '\',\'' + r.compId + '\')" style="margin-top:6px;padding:5px 10px;background:#dc2626;color:#fff;border:none;border-radius:6px;font-size:11px;font-weight:800;cursor:pointer;font-family:inherit">🚫 إلغاء هذه الجائزة</button>' : '')
+            : '<div style="font-size:11px;font-weight:700;color:#16a34a;margin-top:4px">✅ سليمة — مطابقة لتوقع صحيح ومُمنوحة عبر الأدمن</div>') +
+        '</div>';
+      }).join('');
+  modal.innerHTML =
+    '<div style="background:var(--bg);border-radius:18px;max-width:520px;width:100%;padding:20px;margin:auto">' +
+      '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">' +
+        '<div style="font-size:15px;font-weight:900;color:var(--text)">🔍 تدقيق الجوائز</div>' +
+        '<button onclick="document.getElementById(\'_compAuditModal\').remove()" style="background:none;border:none;font-size:22px;cursor:pointer;color:var(--text-muted)">×</button>' +
+      '</div>' +
+      '<div style="font-size:13px;font-weight:800;margin-bottom:12px">إجمالي: ' + results.length + ' | سليمة: ' + clean + ' | ' + (suspicious.length ? '<span style="color:#dc2626">مشبوهة: ' + suspicious.length + '</span>' : 'مشبوهة: 0') + '</div>' +
+      '<div style="max-height:450px;overflow-y:auto">' + rowsHtml + '</div>' +
+    '</div>';
+  document.body.appendChild(modal);
+}
+
+function _compRevokePrize(phone, compId) {
+  if (!confirm('إلغاء هذه الجائزة المشبوهة؟ لن يقدر العميل يستخدمها بعد كده.')) return;
+  var ref = typeof db !== 'undefined' && db ? db.ref('comp_prizes/' + phone + '/' + compId) : null;
+  if (!ref) return;
+  ref.update({ used: true, revokedByAdmin: true, revokedAt: new Date().toISOString() }).then(function() {
+    if(typeof showNotif==='function') showNotif('🚫 تم إلغاء الجائزة');
+    _compAuditPrizes();
+  });
+}
 
 /* ══════════════════ INIT ══════════════════ */
 document.addEventListener('DOMContentLoaded', function() {
