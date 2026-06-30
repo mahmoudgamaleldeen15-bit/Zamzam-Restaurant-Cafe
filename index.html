@@ -5802,6 +5802,8 @@ function applyRoleRestrictions() {
   if (tabAdsBtn) tabAdsBtn.style.display = isAdmin ? 'block' : 'none';
   if (tabAgentsBtn) tabAgentsBtn.style.display = isAdmin ? 'block' : 'none';
   if (tabStatsBtn) tabStatsBtn.style.display = isAdmin ? 'block' : 'none';
+  const tabCompBtn = document.getElementById('tabCompBtn');
+  if (tabCompBtn) tabCompBtn.style.display = isAdmin ? '' : 'none';
   if (revenueCard) revenueCard.style.display = isAdmin ? 'block' : 'none';
   if (adminActionBtns) adminActionBtns.style.display = isAdmin ? 'flex' : 'none';
   if (!isAdmin) {
@@ -13721,7 +13723,7 @@ function _compOpenCreateModal() {
           <div><div style="font-size:12px;font-weight:700;color:var(--text-muted);margin-bottom:4px">📅 تاريخ المباراة</div>
           <input type="date" id="_cMatchDate" value="${today}" style="width:100%;padding:9px;border:1.5px solid var(--border);border-radius:10px;font-size:13px;font-family:inherit;background:var(--bg);color:var(--text);box-sizing:border-box"></div>
           <div><div style="font-size:12px;font-weight:700;color:var(--text-muted);margin-bottom:4px">🟢 فتح التوقعات (اختياري)</div>
-          <input type="datetime-local" id="_cOpenAt" style="width:100%;padding:9px;border:1.5px solid var(--border);border-radius:10px;font-size:13px;font-family:inherit;background:var(--bg);color:var(--text);box-sizing:border-box">
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px"><input type="date" id="_cOpenDate" style="padding:9px;border:1.5px solid var(--border);border-radius:10px;font-size:13px;font-family:inherit;background:var(--bg);color:var(--text);box-sizing:border-box;width:100%"><input type="time" id="_cOpenTime" value="12:00" style="padding:9px;border:1.5px solid var(--border);border-radius:10px;font-size:13px;font-family:inherit;background:var(--bg);color:var(--text);box-sizing:border-box;width:100%"></div>
           <div style="font-size:10px;color:var(--text-muted);margin-top:3px">اتركه فارغاً = التوقعات مفتوحة الآن</div></div>
           <div><div style="font-size:12px;font-weight:700;color:var(--text-muted);margin-bottom:4px">⏰ غلق التوقعات</div>
           <input type="time" id="_cCloseTime" value="19:45" style="width:100%;padding:9px;border:1.5px solid var(--border);border-radius:10px;font-size:13px;font-family:inherit;background:var(--bg);color:var(--text);box-sizing:border-box"></div>
@@ -13790,8 +13792,9 @@ function _compSaveNew() {
   if (!title || !team1 || !team2 || !matchDate) { if(typeof showNotif==='function') showNotif('❌ كمّل البيانات المطلوبة'); return; }
 
   const closeAt = matchDate + 'T' + (closeTime || '19:45');
-  const openAtRaw = (document.getElementById('_cOpenAt')||{}).value?.trim() || '';
-  const openAt = openAtRaw || null; /* null = التوقعات مفتوحة الآن */
+  const openDate = (document.getElementById('_cOpenDate')||{}).value?.trim() || '';
+  const openTime = (document.getElementById('_cOpenTime')||{}).value?.trim() || '12:00';
+  const openAt = openDate ? openDate + 'T' + openTime : null; /* null = التوقعات مفتوحة الآن */
   const id = 'comp_' + Date.now();
   const comp = { id, title, team1, team2, matchDate, closeAt, openAt: openAt, status: 'active',
     correctResult: null, winnersAll: !!winnersAll, createdAt: new Date().toISOString(),
@@ -14243,7 +14246,9 @@ function _compSaveEdit(compId) {
     if(typeof showNotif==='function') showNotif('❌ اكمل البيانات المطلوبة'); return;
   }
 
-  var openAtEdit = (document.getElementById('_eOpenAt')||{}).value?.trim() || null;
+  var openDateEdit = (document.getElementById('_eOpenDate')||{}).value?.trim() || '';
+  var openTimeEdit = (document.getElementById('_eOpenTime')||{}).value?.trim() || '12:00';
+  var openAtEdit = openDateEdit ? openDateEdit + 'T' + openTimeEdit : null;
   var updates = {
     title: title, team1: team1, team2: team2,
     closeAt: closeAt, openAt: openAtEdit, imageUrl: imageUrl,
