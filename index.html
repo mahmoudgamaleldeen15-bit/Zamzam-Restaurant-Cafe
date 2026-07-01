@@ -14565,6 +14565,9 @@ function _compSubmitPred(compId) {
   if (ref) {
     ref.set(pred).then(() => {
       try { localStorage.setItem('zz_comp_voted_' + compId, phone); } catch(e) {}
+      /* تسجيل في tracker الجلسة عشان مراقب السلة يعرف */
+      if (!window._compVotedInSession) window._compVotedInSession = {};
+      window._compVotedInSession[compId] = true;
       window._compLastGPS = null;
       _compShowSubmitConfirmation(result);
     }).catch(() => { if(typeof showNotif==='function') showNotif('❌ حدث خطأ'); });
@@ -14726,14 +14729,61 @@ function _compClearPrize() {
   window.appliedDiscount = 0;
 }
 
-/* Wrap updateCartUI to recalc prize discount before every render */
+/* Wrap updateCartUI to recalc prize discount + مراقبة السلة لحذف التوقع لو اتفرّغت */
 (function() {
   var _origUCUI = window.updateCartUI;
   window.updateCartUI = function() {
     if (window._compPrizePct) _compRecalcPrize();
     if (_origUCUI) _origUCUI.apply(this, arguments);
+    /* ── مراقبة السلة: لو اتفرّغت بعد توقع يشترط أوردر → نحذف التوقع تلقائياً ── */
+    _compCheckCartEmptyAfterVote();
   };
 })();
+
+function _compCheckCartEmptyAfterVote() {
+  if (typeof cart === 'undefined' || cart.length > 0) return;
+  if (!currentUser || !currentUser.phone) return;
+  if (typeof _COMPETITIONS === 'undefined') return;
+  var phone = (currentUser.phone || '').replace(/\D/g,'');
+  Object.values(_COMPETITIONS).forEach(function(comp) {
+    if (!comp || !comp.id) return;
+    if (!comp.conditions || !comp.conditions.requireOrder) return; /* المسابقة مش مشترطة أوردر */
+    var devKey = 'zz_comp_voted_' + comp.id;
+    var votedThisSession = window._compVotedInSession && window._compVotedInSession[comp.id];
+    var hasDevLock = false;
+    try { hasDevLock = !!localStorage.getItem(devKey); } catch(e) {}
+    if (!hasDevLock && !votedThisSession) return; /* لم يتوقع */
+    /* بيحاول يتحقق من Firebase */
+    var predRef = _compRef(comp.id + '/predictions/' + phone);
+    if (!predRef) return;
+    predRef.get().then(function(s) {
+      if (!s.exists()) return; /* مفيش توقع محفوظ */
+      /* احذف التوقع من Firebase */
+      predRef.remove().then(function() {
+        /* ارفع قفل الجهاز عشان يقدر يتوقع تاني لو عمل أوردر فعلي */
+        try { localStorage.removeItem(devKey); } catch(e) {}
+        if (window._compVotedInSession) delete window._compVotedInSession[comp.id];
+        /* تحديث الكارت (الزرار يرجع) */
+        _compLoadForCustomer();
+        /* إشعار احترافي */
+        _compShowCancelPredNotif(comp.title || '');
+      }).catch(function(){});
+    }).catch(function(){});
+  });
+}
+
+function _compShowCancelPredNotif(compTitle) {
+  var old = document.getElementById('_compCancelNotif'); if (old) old.remove();
+  var el = document.createElement('div');
+  el.id = '_compCancelNotif';
+  el.style.cssText = 'position:fixed;bottom:80px;right:0;left:0;margin:auto;max-width:320px;background:#1e293b;color:#fff;border-radius:14px;padding:14px 16px;z-index:99999;box-shadow:0 4px 20px rgba(0,0,0,.3);direction:rtl;font-family:inherit';
+  el.innerHTML =
+    '<div style="font-size:14px;font-weight:900;margin-bottom:4px">🗑️ تم حذف توقعك</div>' +
+    '<div style="font-size:12px;opacity:.85;line-height:1.6">تم إلغاء مشاركتك في مسابقة <b>' + compTitle + '</b> لأن السلة أصبحت فارغة.<br>أضف طلبك مرة أخرى للمشاركة من جديد.</div>' +
+    '<button onclick="this.parentElement.remove()" style="margin-top:10px;width:100%;padding:8px;background:rgba(255,255,255,.15);border:none;border-radius:8px;color:#fff;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit">حسناً</button>';
+  document.body.appendChild(el);
+  setTimeout(function() { if (el.parentElement) el.remove(); }, 8000);
+}
 
 /* Clear prize when cart is emptied */
 (function() {
