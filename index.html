@@ -14312,6 +14312,8 @@ function _compLoadForCustomer() {
       }
     });
     if (!comps.length) { section.style.display = 'none'; return; }
+    /* حفظ بيانات المسابقات في _COMPETITIONS عشان _compOpenPredModal تلاقيها */
+    comps.forEach(function(c) { if(c.id) _COMPETITIONS[c.id] = c; });
     section.style.display = 'block';
     section.innerHTML = '<div style="font-size:14px;font-weight:900;color:var(--text);margin-bottom:8px">🏆 المسابقات</div>' +
       comps.map(function(c) { return _compCardHTML(c); }).join('');
