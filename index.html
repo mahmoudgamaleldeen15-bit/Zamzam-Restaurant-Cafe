@@ -3311,7 +3311,10 @@ let _pwaInstallPrompt=null;
 function _goToAppOrTracking() {
   openScreen('app');
   /* تحديث كارت المسابقات لما العميل يدخل الصفحة الرئيسية */
-  if (typeof _compLoadForCustomer === 'function') _compLoadForCustomer();
+  if (typeof _compLoadForCustomer === 'function') {
+    _compLoadForCustomer();
+    setTimeout(_compLoadForCustomer, 1500); /* retry بعد 1.5 ثانية */
+  }
   const _on = currentOrderNum || loadData('zz_current_order_num', null);
   if (_on && db) {
     db.ref('orders/' + _on).get().then(snap => {
@@ -13692,7 +13695,7 @@ let _compModalOpen = false;
 
 /* ══════════════════ FIREBASE HELPERS ══════════════════ */
 function _compRef(path) {
-  if (typeof db !== 'undefined' && db) return db.ref('competitions/' + path);
+  if (typeof db !== 'undefined' && db) return db.ref(path ? 'competitions/' + path : 'competitions');
   return null;
 }
 function _prizeRef(phone, compId) {
@@ -14292,15 +14295,18 @@ function _compLoadForCustomer() {
   const section = document.getElementById('compCardsSection');
   if (!section) return;
   const ref = _compRef('');
-  if (!ref) { section.style.display = 'none'; return; }
-  ref.orderByChild('status').equalTo('active').get().then(snap => {
+  if (!ref) {
+    /* Firebase مش جاهز — حاول تاني بعد ثانية */
+    setTimeout(_compLoadForCustomer, 1000);
+    return;
+  }
+  ref.get().then(snap => {
     var comps = [];
     if (snap.exists()) snap.forEach(function(c) { var v = c.val();
-      if(v) {
+      if(v && v.status === 'active') {
         var closeAt = new Date(v.closeAt||'');
         var diff = Date.now() - closeAt.getTime();
         var isActive = new Date() < closeAt || diff < 3*3600*1000;
-        /* كمان بيجيب المسابقات المعلن عنها قبل فتح التوقع */
         var isAnnounced = v.openAt && new Date() < new Date(v.openAt);
         if(isActive || isAnnounced) comps.push(v);
       }
@@ -14316,7 +14322,10 @@ function _compLoadForCustomer() {
         if (pRef) pRef.get().then(function(s) { if (s.exists()) _compUpdateCardAfterPred(c.id, s.val().result); });
       });
     }
-  }).catch(function() { section.style.display = 'none'; });
+  }).catch(function(e) {
+    console.warn('_compLoadForCustomer error:', e);
+    section.style.display = 'none';
+  });
 }
 
 function _compCardHTML(c) {
