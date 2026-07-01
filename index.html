@@ -14407,7 +14407,7 @@ function _compCalcDistance(lat1,lon1,lat2,lon2){
 }
 
 function _compOpenPredModal(compId) {
-  /* قفل الجهاز: يمنع نفس الجهاز من التوقع مرتين بأرقام مختلفة لنفس المسابقة */
+  /* قفل الجهاز */
   var _devKey = 'zz_comp_voted_' + compId;
   try {
     if (localStorage.getItem(_devKey)) {
@@ -14421,6 +14421,39 @@ function _compOpenPredModal(compId) {
   }
   var comp = _COMPETITIONS[compId];
   if (!comp) { _compLoadForCustomer(); return; }
+
+  /* ══ فحص الشروط ══ */
+  var cond = comp.conditions || {};
+  var _cart = typeof cart !== 'undefined' ? cart : [];
+  var _sub  = typeof cartSubtotal === 'function' ? cartSubtotal() : 0;
+  var _dtype = typeof deliveryType !== 'undefined' ? deliveryType : '';
+  var _tbl   = typeof selectedTableNum !== 'undefined' ? selectedTableNum : null;
+
+  /* شرط: لازم يكون عامل أوردر (فيه عناصر في السلة) */
+  if (cond.requireOrder && _cart.length === 0) {
+    if(typeof showNotif==='function') showNotif('❌ لازم تضيف طلب في السلة أولاً للمشاركة');
+    return;
+  }
+
+  /* شرط نوع الطلب */
+  if (cond.orderType === 'delivery') {
+    if (_dtype !== 'delivery') {
+      if(typeof showNotif==='function') showNotif('❌ يجب اختيار "توصيل" في السلة أولاً للمشاركة');
+      return;
+    }
+  } else if (cond.orderType === 'pickup') {
+    if (_dtype !== 'pickup') {
+      if(typeof showNotif==='function') showNotif('❌ يجب اختيار "استلام من الفرع" في السلة أولاً للمشاركة');
+      return;
+    }
+  }
+
+  /* شرط الحد الأدنى للطلب */
+  if (cond.minOrder > 0 && _sub < cond.minOrder) {
+    if(typeof showNotif==='function') showNotif('❌ الحد الأدنى للمشاركة ' + cond.minOrder + ' جـ — قيمة سلتك ' + _sub + ' جـ');
+    return;
+  }
+
   var phone = currentUser.phone.replace(/\D/g,'');
   var predRef = _compRef(compId + '/predictions/' + phone);
   var proceed = function() {
@@ -14431,9 +14464,17 @@ function _compOpenPredModal(compId) {
       });
     } else { _compShowPredModal(comp); }
   };
-  if (comp.conditions && comp.conditions.orderType === 'dine_in') {
-    if (typeof deliveryType === 'undefined' || deliveryType !== 'cafe') {
-      if(typeof showNotif==='function') showNotif('❌ اختر "كافيه" في السلة أولاً للمشاركة'); return;
+
+  /* شرط داخل الكافيه (GPS) */
+  if (cond.orderType === 'dine_in') {
+    if (_dtype !== 'cafe') {
+      if(typeof showNotif==='function') showNotif('❌ اختر "كافيه" في السلة أولاً للمشاركة');
+      return;
+    }
+    /* شرط رقم الترابيزة */
+    if (!_tbl) {
+      if(typeof showNotif==='function') showNotif('❌ اختر رقم الترابيزة في السلة أولاً للمشاركة');
+      return;
     }
     if (!navigator.geolocation) {
       if(typeof showNotif==='function') showNotif('❌ GPS غير متاح على هذا الجهاز'); return;
@@ -14443,7 +14484,6 @@ function _compOpenPredModal(compId) {
       function(pos) {
         var dist = _compCalcDistance(pos.coords.latitude, pos.coords.longitude, RESTAURANT.lat, RESTAURANT.lng);
         if (dist > 300) { if(typeof showNotif==='function') showNotif('❌ أنت لست داخل الكافيه — المسافة: ' + Math.round(dist) + 'م'); return; }
-        /* حفظ الإحداثيات مؤقتاً عشان نخزنها مع التوقع للمراجعة الإدارية */
         window._compLastGPS = { lat: pos.coords.latitude, lng: pos.coords.longitude };
         proceed();
       },
