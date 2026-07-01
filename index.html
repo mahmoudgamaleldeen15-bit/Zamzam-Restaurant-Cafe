@@ -3310,6 +3310,8 @@ let _pwaInstallPrompt=null;
 // بعد أي دخول ناجح: لو فيه طلب نشط → اعرض شاشة التتبع (والتزامن يشتغل)، غير كده → الصفحة الرئيسية
 function _goToAppOrTracking() {
   openScreen('app');
+  /* تحديث كارت المسابقات لما العميل يدخل الصفحة الرئيسية */
+  if (typeof _compLoadForCustomer === 'function') _compLoadForCustomer();
   const _on = currentOrderNum || loadData('zz_current_order_num', null);
   if (_on && db) {
     db.ref('orders/' + _on).get().then(snap => {
@@ -14187,6 +14189,11 @@ function _compEditModal(compId) {
           '<input id="_eTeam2" value="' + (comp.team2||'') + '" placeholder="الفريق الثاني" style="padding:10px;border:1.5px solid var(--border);border-radius:10px;font-size:14px;font-family:inherit;background:var(--bg);color:var(--text)">' +
         '</div>' +
         '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">' +
+          '<div><div style="font-size:11px;font-weight:700;color:var(--text-muted);margin-bottom:4px">🟢 فتح التوقعات (اختياري)</div>' +
+          '<div style="display:grid;grid-template-columns:1fr 1fr;gap:4px">' +
+          '<input type="date" id="_eOpenDate" value="' + (comp.openAt||'').slice(0,10) + '" style="padding:8px;border:1.5px solid var(--border);border-radius:8px;font-size:12px;font-family:inherit;background:var(--bg);color:var(--text);box-sizing:border-box;width:100%">' +
+          '<input type="time" id="_eOpenTime" value="' + ((comp.openAt||'').slice(11,16)||'12:00') + '" style="padding:8px;border:1.5px solid var(--border);border-radius:8px;font-size:12px;font-family:inherit;background:var(--bg);color:var(--text);box-sizing:border-box;width:100%">' +
+          '</div><div style="font-size:10px;color:var(--text-muted);margin-top:2px">اتركه فارغاً = التوقعات مفتوحة الآن</div></div>' +
           '<div><div style="font-size:11px;font-weight:700;color:var(--text-muted);margin-bottom:4px">وقت غلق التوقعات</div>' +
           '<input type="datetime-local" id="_eCloseAt" value="' + (comp.closeAt||'').slice(0,16) + '" style="width:100%;padding:9px;border:1.5px solid var(--border);border-radius:10px;font-size:13px;font-family:inherit;background:var(--bg);color:var(--text);box-sizing:border-box"></div>' +
           '<div><div style="font-size:11px;font-weight:700;color:var(--text-muted);margin-bottom:4px">رابط البوستر</div>' +
