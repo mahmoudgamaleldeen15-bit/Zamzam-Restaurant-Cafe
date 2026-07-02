@@ -14424,13 +14424,25 @@ function _compOpenPredModal(compId) {
 
   /* ══ فحص الشروط ══ */
   var cond = comp.conditions || {};
-  var _cart = typeof cart !== 'undefined' ? cart : [];
-  var _sub  = typeof cartSubtotal === 'function' ? cartSubtotal() : 0;
-  var _dtype = typeof deliveryType !== 'undefined' ? deliveryType : '';
-  var _tbl   = typeof selectedTableNum !== 'undefined' ? selectedTableNum : null;
+  /* ══ قراءة حالة السلة بالكامل من الـ DOM — بدون أي اعتماد على متغيرات ══ */
+
+  /* 1. نوع التوصيل: نقرأ من الزرار الـ active في السلة مباشرة */
+  var _activeBtn = document.querySelector('.d-opt.active');
+  var _dtypeMatch = _activeBtn ? (_activeBtn.getAttribute('onclick') || '').match(/selectDelivery\('([^']+)'/) : null;
+  var _dtype = _dtypeMatch ? _dtypeMatch[1] : 'delivery';
+
+  /* 2. رقم الترابيزة: نقرأ من الـ input مباشرة */
+  var _tblEl = document.getElementById('tableNum');
+  var _tbl = _tblEl ? ((_tblEl.value || '') + '').trim() : '';
+
+  /* 3. السلة: عدد العناصر من الـ badge (مصدر واحد موثوق) */
+  var _badgeEl = document.getElementById('cartBadge');
+  var _cartCount = _badgeEl ? (parseInt(_badgeEl.textContent) || 0) : 0;
+  var _sub = 0;
+  try { _sub = typeof cartSubtotal === 'function' ? cartSubtotal() : 0; } catch(e) {}
 
   /* شرط: لازم يكون عامل أوردر (فيه عناصر في السلة) */
-  if (cond.requireOrder && _cart.length === 0) {
+  if (cond.requireOrder && _cartCount === 0) {
     if(typeof showNotif==='function') showNotif('❌ لازم تضيف طلب في السلة أولاً للمشاركة');
     return;
   }
