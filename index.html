@@ -14495,7 +14495,17 @@ function _compOpenPredModal(compId) {
     navigator.geolocation.getCurrentPosition(
       function(pos) {
         var dist = _compCalcDistance(pos.coords.latitude, pos.coords.longitude, RESTAURANT.lat, RESTAURANT.lng);
-        if (dist > 300) { if(typeof showNotif==='function') showNotif('❌ أنت لست داخل الكافيه — المسافة: ' + Math.round(dist) + 'م'); return; }
+        var accuracy = Math.round(pos.coords.accuracy || 0);
+        /* الحد = 150م — لكن بنحسب المسافة + دقة الـ GPS مع بعض
+           لو dist=80م ودقة=±90م → 80+90=170 > 150 → مش مأكد إنك جوه → مرفوض
+           لو dist=30م ودقة=±20م → 30+20=50 < 150 → مأكد إنك جوه → مقبول */
+        var THRESHOLD = 150;
+        if (dist > THRESHOLD || (dist + accuracy) > THRESHOLD) {
+          var msg = dist > THRESHOLD
+            ? '❌ أنت لست داخل الكافيه — المسافة: ' + Math.round(dist) + 'م'
+            : '❌ دقة GPS ضعيفة (' + accuracy + 'م) — حاول في مكان مكشوف أو أعد المحاولة';
+          if(typeof showNotif==='function') showNotif(msg); return;
+        }
         window._compLastGPS = { lat: pos.coords.latitude, lng: pos.coords.longitude };
         proceed();
       },
