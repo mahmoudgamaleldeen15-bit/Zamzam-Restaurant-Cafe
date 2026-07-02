@@ -3939,9 +3939,41 @@ async function doLogin() {
   }
 
   // Step 2: دائماً اجلب أحدث نسخة من Firebase (عشان كلمة السر المحدّثة من أي جهاز تشتغل) — المحلي fallback فقط
+  /* helper: إظهار رسالة شبكة inline ثابتة تحت زرار الدخول */
+  function _showNetworkError(msg) {
+    let _el = document.getElementById('_loginNetErr');
+    if (!_el) {
+      _el = document.createElement('div');
+      _el.id = '_loginNetErr';
+      _el.style.cssText = 'text-align:center;padding:10px;background:#fff1f2;border-radius:10px;margin-top:8px;font-size:13px;font-weight:700;color:#be123c';
+      const _btn = document.getElementById('loginBtn') || document.querySelector('button[onclick*="doLogin"]');
+      if (_btn) _btn.insertAdjacentElement('afterend', _el);
+    }
+    _el.textContent = msg;
+    setTimeout(function() { if (_el.parentElement) _el.remove(); }, 6000);
+  }
   if (db) {
     try {
-      const snap = await db.ref('users/' + cleanPhone).get();
+      /* كشف النت: مقطوع تماماً */
+      if (!navigator.onLine) {
+        _showNetworkError('📶 شبكة / باقة إنترنت ضعيفة — تأكد من الاتصال وحاول مجدداً');
+        return;
+      }
+      /* كشف النت: بطيء (2G) عبر Network Information API لو متاح */
+      if (navigator.connection && navigator.connection.effectiveType) {
+        const _ect = navigator.connection.effectiveType;
+        if (_ect === 'slow-2g' || _ect === '2g') {
+          _showNetworkError('📶 شبكة / باقة إنترنت ضعيفة — تأكد من الاتصال وحاول مجدداً');
+          return;
+        }
+      }
+      /* Timeout 5 ثوان — لو Firebase بطيء */
+      let _fbTimedOut = false;
+      const _fbTimeout = new Promise((_, rej) => setTimeout(() => { _fbTimedOut = true; rej(new Error('timeout')); }, 5000));
+      const snap = await Promise.race([
+        db.ref('users/' + cleanPhone).get(),
+        _fbTimeout
+      ]);
       if (snap.exists()) {
         foundUser = snap.val();
         // Cache locally for future use
@@ -3969,7 +4001,15 @@ async function doLogin() {
           } catch(e) {}
         }
       }
-    } catch(e) { console.warn('Firebase user lookup failed:', e); }
+    } catch(e) {
+      /* النت ضعيف أو فيه مشكلة في Firebase */
+      if (e.message === 'timeout') {
+        _showNetworkError('📶 شبكة / باقة إنترنت ضعيفة — يرجى المحاولة مجدداً');
+        return;
+      } else {
+        console.warn('Firebase user lookup failed:', e);
+      }
+    }
   }
 
   // Step 3: Build userData — treat 'عميل' / 'مجهول' / 'زائر' as NO name (corrupted data)
@@ -3996,7 +4036,38 @@ async function doLogin() {
     if (_userHasPassword(foundUser)) {
       // الحساب عنده كلمة سر — تحقق منها
       if (!pwInput) { showNotif('🔒 أدخل كلمة السر'); return; }
-      if (!_verifyPw(pwInput, foundUser.password)) { showNotif('❌ كلمة السر غير صحيحة'); return; }
+      /* عداد المحاولات الغلط */
+      const _wrongKey = 'zz_wrong_pw_' + cleanPhone;
+      let _wrongCount = 0;
+      try { _wrongCount = parseInt(localStorage.getItem(_wrongKey) || '0'); } catch(e) {}
+      if (!_verifyPw(pwInput, foundUser.password)) {
+        _wrongCount++;
+        try { localStorage.setItem(_wrongKey, String(_wrongCount)); } catch(e) {}
+        /* رسالة الباس الغلط — inline ثابتة بجانب الحقل بدل toast سريع */
+        let _hint = document.getElementById('_wrongPwHint');
+        if (!_hint) {
+          _hint = document.createElement('div');
+          _hint.id = '_wrongPwHint';
+          _hint.style.cssText = 'text-align:center;padding:8px;border-radius:10px;margin-top:8px;font-size:13px;font-weight:700';
+          const _passField = document.getElementById('loginPass')?.parentElement;
+          if (_passField) _passField.insertAdjacentElement('afterend', _hint);
+        }
+        if (_wrongCount >= 2) {
+          _hint.style.background = '#fef3c7';
+          _hint.style.color = '#92400e';
+          _hint.innerHTML = '❌ كلمة السر غير صحيحة<br><span style="font-size:12px">🔑 نسيت كلمة السر؟ <button onclick="contactAdminForRecovery()" style="background:none;border:none;color:#b45309;font-weight:900;font-size:12px;cursor:pointer;text-decoration:underline;font-family:inherit">تواصل مع الإدارة</button></span>';
+        } else {
+          _hint.style.background = '#fff1f2';
+          _hint.style.color = '#be123c';
+          _hint.innerHTML = '❌ كلمة السر غير صحيحة';
+        }
+        return;
+      }
+      /* كلمة السر صح — امسح العداد */
+      try { localStorage.removeItem(_wrongKey); } catch(e) {}
+      /* امسح رسالة "تواصل مع الإدارة" لو كانت ظاهرة */
+      const _oldHint = document.getElementById('_wrongPwHint');
+      if (_oldHint) _oldHint.remove();
       currentUser = { ...foundUser, verified: true };
       saveData('zamzam_user', currentUser);
       try { sessionStorage.setItem('zz_verified_session', cleanPhone); } catch(e){}
@@ -14349,7 +14420,7 @@ function _compCardHTML(c) {
   var condText = _compCondText(c.conditions);
   var closeDate = new Date(c.closeAt);
   var closeStr = closeDate.toLocaleString('ar-EG', {hour:'2-digit', minute:'2-digit', day:'numeric', month:'short'});
-  var imgHtml = c.imageUrl ? '<img src="' + c.imageUrl + '" style="width:100%;height:160px;object-fit:cover;display:block" onerror="this.remove()">' : '';
+  var imgHtml = c.imageUrl ? '<img src="' + c.imageUrl + '" style="width:100%;height:auto;max-height:280px;object-fit:contain;display:block;border-radius:14px 14px 0 0;background:#000" onerror="this.remove()">' : '';
   var condHtml = condText ? '<div style="background:rgba(255,255,255,.1);border-radius:8px;padding:6px 10px;font-size:11px;margin-bottom:10px">📋 الشروط: ' + condText + '</div>' : '';
 
   /* هل لسه في وقت الإعلان (قبل فتح التوقع)؟ */
@@ -14534,7 +14605,7 @@ function _compShowPredModal(comp) {
       <div style="font-size:15px;font-weight:900;color:var(--text)">⚽ توقع النتيجة</div>
       <button onclick="document.getElementById('_compPredUserModal').style.display='none'" style="background:none;border:none;font-size:20px;cursor:pointer;color:var(--text-muted)">✕</button>
     </div>
-    ${comp.imageUrl ? `<img src="${comp.imageUrl}" style="width:100%;height:120px;object-fit:cover;border-radius:10px;margin-bottom:10px" onerror="this.style.display='none'">` : ''}
+    ${comp.imageUrl ? `<img src="${comp.imageUrl}" style="width:100%;height:auto;max-height:200px;object-fit:contain;border-radius:10px;margin-bottom:10px;background:#000" onerror="this.style.display='none'">` : ''}
     <div style="text-align:center;font-size:12px;color:var(--text-muted);margin-bottom:14px">📅 ${comp.matchDate||''}</div>
     ${condText ? `<div style="background:#fef3c7;border-radius:10px;padding:10px;margin-bottom:12px;font-size:12px;font-weight:700;color:#92400e">📋 شروط المشاركة: ${condText}</div>` : ''}
     <div style="font-size:12px;font-weight:800;color:var(--text-muted);text-align:center;margin-bottom:10px">أدخل توقعك للنتيجة</div>
