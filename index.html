@@ -1670,7 +1670,6 @@ input,select,textarea{font-family:inherit;}
     <div style="margin-top:14px;font-size:10px;color:rgba(165,180,252,.6)">يمكنك متابعة طلباتك السابقة</div>
   </div>
 </div>
-ّل -->
 <div id="prayerStaffBanner">🕌 وقت الصلاة مفعّل — استقبال الطلبات متوقف حالياً ⛔</div>
 
 <!-- ===== DELIVERY CONTROL — رسالة منع الدليفري للعميل (مستقل) ===== -->
@@ -3686,7 +3685,12 @@ function showScreen(id) {
   document.querySelectorAll('.sheet-overlay.open, .modal-overlay.open').forEach(s => s.classList.remove('open'));
   // ④ تغيير الشاشة
   document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-  document.getElementById(id)?.classList.add('active');
+  const _targetScreen = document.getElementById(id);
+  if (_targetScreen) {
+    _targetScreen.classList.add('active');
+    _targetScreen.scrollTop = 0; /* إعادة الـ scroll لأعلى الشاشة */
+  }
+  window.scrollTo(0, 0); /* إعادة الـ scroll لأعلى الصفحة */
 }
 function openScreen(id) {
   showScreen(id);
