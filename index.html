@@ -16003,25 +16003,40 @@ function _updateOSSubscribeBtn() {
   if (wrap) wrap.style.display = 'block';
 }
 
+function _osNotif(msg) {
+  /* رسالة تظهر تحت زرار الإشعارات مباشرة — مش بتتأثر بشاشة الإعدادات */
+  var el = document.getElementById('_osMsg');
+  if (!el) {
+    el = document.createElement('div');
+    el.id = '_osMsg';
+    el.style.cssText = 'padding:8px 12px;border-radius:8px;font-size:12px;font-weight:700;text-align:center;margin-top:4px;transition:opacity .3s';
+    var btn = document.getElementById('osSubscribeBtn');
+    if (btn && btn.parentElement) btn.parentElement.insertAdjacentElement('afterend', el);
+  }
+  el.style.background = '#f0fdf4';
+  el.style.color = '#166534';
+  el.style.opacity = '1';
+  el.textContent = msg;
+  setTimeout(function() { el.style.opacity = '0'; }, 4000);
+}
+
 async function toggleOSSubscription() {
-  if (!ONESIGNAL_APP_ID || ONESIGNAL_APP_ID === 'YOUR_ONESIGNAL_APP_ID') { showNotif('⚙️ OneSignal App ID غير مضبوط'); return; }
-  /* لو OneSignal لسه بيتحمل */
   if (typeof window.OneSignal === 'undefined') {
-    showNotif('⏳ جاري تحميل نظام الإشعارات... حاول بعد ثانية');
-    /* محاولة تانية بعد 2 ثانية */
+    _osNotif('⏳ نظام الإشعارات يتحمل... حاول مجدداً');
     setTimeout(async function() {
       if (typeof window.OneSignal !== 'undefined') {
-        try { await window.OneSignal.User.PushSubscription.optIn(); showNotif('🔔 تم تفعيل الإشعارات!'); _updateOSSubscribeBtn(); } catch(e) { showNotif('⚠️ ' + e.message); }
-      } else { showNotif('⚠️ المتصفح لا يدعم الإشعارات أو يحتاج HTTPS'); }
+        try { await window.OneSignal.User.PushSubscription.optIn(); _osNotif('🔔 تم تفعيل الإشعارات!'); _updateOSSubscribeBtn(); }
+        catch(e) { _osNotif('⚠️ ' + e.message); }
+      } else { _osNotif('⚠️ المتصفح لا يدعم الإشعارات — جرب Chrome'); }
     }, 2000);
     return;
   }
   try {
     const isOptedIn = window.OneSignal.User.PushSubscription.optedIn;
-    if (isOptedIn) { await window.OneSignal.User.PushSubscription.optOut(); showNotif('🔕 تم إيقاف الإشعارات'); }
-    else { await window.OneSignal.User.PushSubscription.optIn(); showNotif('🔔 تم تفعيل الإشعارات!'); }
+    if (isOptedIn) { await window.OneSignal.User.PushSubscription.optOut(); _osNotif('🔕 تم إيقاف الإشعارات'); }
+    else { await window.OneSignal.User.PushSubscription.optIn(); _osNotif('🔔 تم تفعيل الإشعارات!'); }
     _updateOSSubscribeBtn();
-  } catch(e) { showNotif('⚠️ ' + e.message); }
+  } catch(e) { _osNotif('⚠️ ' + e.message); }
 }
 </script>
 </body>
