@@ -4,7 +4,7 @@ importScripts('https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.sw.js');
 // Offline Cache + Push Notifications
 // ============================================================
 
-const CACHE_NAME = 'zamzam-cache-v2';
+const CACHE_NAME = 'zamzam-cache-v3';
 
 // ====== INSTALL ======
 self.addEventListener('install', e => {
