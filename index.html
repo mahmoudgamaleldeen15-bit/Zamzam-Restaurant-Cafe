@@ -1645,7 +1645,7 @@ input,select,textarea{font-family:inherit;}
   <div class="prayer-time-block-card">
     <div style="font-size:58px;margin-bottom:10px">🕌</div>
     <div style="font-size:19px;font-weight:800;color:#ffd86b;margin-bottom:12px">وقت الصلاة</div>
-    <div style="font-size:14.5px;color:#f4f1e6;line-height:2;margin-bottom:22px">نعتذر لكم، تم إيقاف استقبال الطلبات مؤقتاً لأداء الصلاة 🤲<br/><br/>نعود لخدمتكم خلال دقائق قليلة بإذن الله.<br/><br/>شكراً لتفهمكم، ونسأل الله أن يتقبل منا ومنكم صالح الأعمال 🌙</div>
+    <div style="font-size:14.5px;color:#f4f1e6;line-height:2;margin-bottom:22px"> تم إيقاف استقبال الطلبات مؤقتاً لأداء الصلاة 🤲<br/><br/>نعود لخدمتكم خلال دقائق قليلة بإذن الله.<br/><br/>شكراً لتفهمكم، ونسأل الله أن يتقبل منا ومنكم صالح الأعمال 🌙</div>
     <button onclick="document.getElementById('prayerTimeBlockOverlay').classList.remove('show')" style="background:#d4af37;color:#0f3d2e;border:none;border-radius:12px;padding:13px 30px;font-size:14px;font-weight:800;cursor:pointer">حسناً ✓</button>
   </div>
 </div>
@@ -6651,23 +6651,35 @@ function _updateMaintDhikr() {
 
 /* إضافة ذكر دعوي في بانر الصلاة */
 function _injectPrayerDhikr() {
-  const card = document.querySelector('.prayer-time-block-card');
-  if (!card || document.getElementById('_prayerDhikrEl')) return;
-  const dhikrEl = document.createElement('div');
-  dhikrEl.id = '_prayerDhikrEl';
-  dhikrEl.style.cssText = 'background:rgba(255,255,255,.08);border-radius:12px;padding:12px 14px;margin-top:14px;font-size:12.5px;color:#f4f1e6;line-height:1.9;text-align:center;transition:opacity .5s';
-  dhikrEl.textContent = _PRAYER_DHIKR[Math.floor(Math.random() * _PRAYER_DHIKR.length)];
-  card.appendChild(dhikrEl);
-  /* يتغير كل 8 ثوان */
+  /* نستخدم بانر مستقل فوق الـ overlay بدل الحقن جوه الكارت */
+  var existing = document.getElementById('_prayerDhikrBanner');
+  if (existing) { existing.style.display = 'flex'; return; }
+  var el = document.createElement('div');
+  el.id = '_prayerDhikrBanner';
+  el.style.cssText = 'position:fixed;top:0;right:0;left:0;z-index:600;background:linear-gradient(135deg,#0a2a1f,#0f3d2e);border-bottom:2px solid #d4af37;padding:12px 16px;display:flex;align-items:center;gap:10px;direction:rtl;font-family:inherit';
+  el.innerHTML =
+    '<div style="font-size:22px;flex-shrink:0">📿</div>' +
+    '<div id="_prayerDhikrTxt" style="font-size:12.5px;color:#f4f1e6;line-height:1.7;flex:1;transition:opacity .5s">' +
+      _PRAYER_DHIKR[Math.floor(Math.random() * _PRAYER_DHIKR.length)] +
+    '</div>';
+  document.body.appendChild(el);
+  /* تغيير كل 8 ثوان */
   var pIdx = 0;
   setInterval(function() {
-    dhikrEl.style.opacity = '0';
+    var txt = document.getElementById('_prayerDhikrTxt');
+    if (!txt) return;
+    txt.style.opacity = '0';
     setTimeout(function() {
       pIdx = (pIdx + 1) % _PRAYER_DHIKR.length;
-      dhikrEl.textContent = _PRAYER_DHIKR[pIdx];
-      dhikrEl.style.opacity = '1';
+      txt.textContent = _PRAYER_DHIKR[pIdx];
+      txt.style.opacity = '1';
     }, 500);
   }, 8000);
+}
+
+function _hidePrayerDhikr() {
+  var el = document.getElementById('_prayerDhikrBanner');
+  if (el) el.style.display = 'none';
 }
 
 function togglePrayerTime() {
@@ -6682,6 +6694,7 @@ function togglePrayerTime() {
     // إخفاء الرسالة فوراً عن أي عميل فاتحها
     const ov = document.getElementById('prayerTimeBlockOverlay');
     if (ov) ov.classList.remove('show');
+    _hidePrayerDhikr();
     showNotif('✓ تم إلغاء وقت الصلاة — عاد استقبال الطلبات');
   }
   // 🔥 مزامنة مع Firebase عشان كل العملاء يشوفوا التغيير فوراً
@@ -10812,10 +10825,13 @@ function setupFirebaseListeners() {
         const btn = document.getElementById('prayerTimeBtn');
         if (prayerTimeActive) {
           if (btn) { btn.textContent = '🕌 إيقاف وقت الصلاة — 🔴 الحالة: مفعّل'; btn.style.background = '#7a1f1f'; }
+          /* إظهار الذكر الدعوي للعملاء عبر Firebase */
+          setTimeout(_injectPrayerDhikr, 400);
         } else {
           if (btn) { btn.textContent = '🕌 تفعيل وقت الصلاة — 🟢 الحالة: معطل'; btn.style.background = '#1b5e43'; }
           const ov = document.getElementById('prayerTimeBlockOverlay');
           if (ov) ov.classList.remove('show');
+          _hidePrayerDhikr();
         }
         updatePrayerReminder();
       }
