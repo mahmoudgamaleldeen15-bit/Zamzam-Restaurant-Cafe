@@ -3432,6 +3432,10 @@ let _pwaInstallPrompt=null;
 // بعد أي دخول ناجح: لو فيه طلب نشط → اعرض شاشة التتبع (والتزامن يشتغل)، غير كده → الصفحة الرئيسية
 function _goToAppOrTracking() {
   openScreen('app');
+  /* إعادة الـ scroll لأعلى عند تسجيل الدخول فقط */
+  window.scrollTo(0, 0);
+  const _appScreen = document.getElementById('app');
+  if (_appScreen) _appScreen.scrollTop = 0;
   /* تحديث كارت المسابقات لما العميل يدخل الصفحة الرئيسية */
   if (typeof _compLoadForCustomer === 'function') {
     _compLoadForCustomer();
@@ -3685,12 +3689,7 @@ function showScreen(id) {
   document.querySelectorAll('.sheet-overlay.open, .modal-overlay.open').forEach(s => s.classList.remove('open'));
   // ④ تغيير الشاشة
   document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-  const _targetScreen = document.getElementById(id);
-  if (_targetScreen) {
-    _targetScreen.classList.add('active');
-    _targetScreen.scrollTop = 0; /* إعادة الـ scroll لأعلى الشاشة */
-  }
-  window.scrollTo(0, 0); /* إعادة الـ scroll لأعلى الصفحة */
+  document.getElementById(id)?.classList.add('active');
 }
 function openScreen(id) {
   showScreen(id);
