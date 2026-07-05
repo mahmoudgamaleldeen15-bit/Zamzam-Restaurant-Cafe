@@ -3435,12 +3435,13 @@ let _pwaInstallPrompt=null;
 // بعد أي دخول ناجح: لو فيه طلب نشط → اعرض شاشة التتبع (والتزامن يشتغل)، غير كده → الصفحة الرئيسية
 function _goToAppOrTracking() {
   openScreen('app');
-  /* إعادة الـ scroll لأعلى عند تسجيل الدخول فقط */
+  /* عند تسجيل الدخول: ابدأ من الأعلى دايماً */
+  _appScrollY = 0;
   window.scrollTo(0, 0);
   const _appScreen = document.getElementById('app');
   if (_appScreen) _appScreen.scrollTop = 0;
-  /* عرض popup الإشعارات بعد 3 ثوان — مرة واحدة فقط */
-  setTimeout(_showOSPromptSheet, 3000);
+  /* عرض popup الإشعارات بعد 5 ثوان — مرة واحدة فقط */
+  setTimeout(_showOSPromptSheet, 5000);
   /* تحديث كارت المسابقات لما العميل يدخل الصفحة الرئيسية */
   if (typeof _compLoadForCustomer === 'function') {
     _compLoadForCustomer();
@@ -3693,8 +3694,17 @@ function showScreen(id) {
   // ③ إغلاق كل الـ sheets والـ modals
   document.querySelectorAll('.sheet-overlay.open, .modal-overlay.open').forEach(s => s.classList.remove('open'));
   // ④ تغيير الشاشة
+  /* حفظ scroll الشاشة الحالية قبل إخفائها */
+  const _curActive = document.querySelector('.screen.active');
+  if (_curActive && _curActive.id === 'app') {
+    _appScrollY = window.scrollY || _curActive.scrollTop || 0;
+  }
   document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
   document.getElementById(id)?.classList.add('active');
+  /* استعادة scroll لو رجع لشاشة app */
+  if (id === 'app' && typeof _appScrollY !== 'undefined') {
+    setTimeout(function() { window.scrollTo(0, _appScrollY); }, 0);
+  }
 }
 function openScreen(id) {
   showScreen(id);
@@ -15987,11 +15997,10 @@ window.OneSignalDeferred.push(async function(OneSignal) {
 
 function _showOSPromptSheet() {
   /* مرة واحدة بس طول عمر التطبيق */
-  if (localStorage.getItem('zz_os_prompt_shown')) return;
+  if (localStorage.getItem('zz_os_prompt_v2')) return;
   if (!ONESIGNAL_APP_ID || ONESIGNAL_APP_ID === 'YOUR_ONESIGNAL_APP_ID') return;
-  if (typeof window.OneSignal === 'undefined') return;
   /* لو مشترك بالفعل مش نعرضه */
-  try { if (window.OneSignal.User.PushSubscription.optedIn) return; } catch(e) {}
+  try { if (window.OneSignal && window.OneSignal.User.PushSubscription.optedIn) return; } catch(e) {}
 
   const sheet = document.createElement('div');
   sheet.id = '_osPromptSheet';
@@ -16021,7 +16030,7 @@ function _showOSPromptSheet() {
 
   /* تفعيل */
   document.getElementById('_osPromptAllow').onclick = async function() {
-    localStorage.setItem('zz_os_prompt_shown', '1');
+    localStorage.setItem('zz_os_prompt_v2', '1');
     sheet.style.transform = 'translateY(100%)';
     setTimeout(function() { sheet.remove(); }, 400);
     try {
@@ -16033,7 +16042,7 @@ function _showOSPromptSheet() {
 
   /* لاحقاً */
   document.getElementById('_osPromptLater').onclick = function() {
-    localStorage.setItem('zz_os_prompt_shown', '1');
+    localStorage.setItem('zz_os_prompt_v2', '1');
     sheet.style.transform = 'translateY(100%)';
     setTimeout(function() { sheet.remove(); }, 400);
   };
