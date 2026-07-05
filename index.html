@@ -16021,6 +16021,7 @@ function _osNotif(msg) {
 }
 
 async function toggleOSSubscription() {
+  alert('✅ الزرار شغال — OneSignal: ' + (typeof window.OneSignal !== 'undefined' ? 'محمّل' : 'مش محمّل'));
   if (typeof window.OneSignal === 'undefined') {
     _osNotif('⏳ نظام الإشعارات يتحمل... حاول مجدداً');
     setTimeout(async function() {
