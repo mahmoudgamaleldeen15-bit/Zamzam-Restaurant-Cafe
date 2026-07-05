@@ -1,3 +1,4 @@
+importScripts('https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.sw.js');
 // ============================================================
 // ZAMZAM RESTAURANT — Service Worker v2.0
 // Offline Cache + Push Notifications
