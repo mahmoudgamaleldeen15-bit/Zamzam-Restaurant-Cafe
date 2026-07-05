@@ -1645,7 +1645,7 @@ input,select,textarea{font-family:inherit;}
   <div class="prayer-time-block-card">
     <div style="font-size:58px;margin-bottom:10px">🕌</div>
     <div style="font-size:19px;font-weight:800;color:#ffd86b;margin-bottom:12px">وقت الصلاة</div>
-    <div style="font-size:14.5px;color:#f4f1e6;line-height:2;margin-bottom:22px"> تم إيقاف استقبال الطلبات مؤقتاً لأداء الصلاة 🤲<br/><br/>نعود لخدمتكم خلال دقائق قليلة بإذن الله.<br/><br/>شكراً لتفهمكم، ونسأل الله أن يتقبل منا ومنكم صالح الأعمال 🌙</div>
+    <div style="font-size:14.5px;color:#f4f1e6;line-height:2;margin-bottom:22px">نعتذر لكم، تم إيقاف استقبال الطلبات مؤقتاً لأداء الصلاة 🤲<br/><br/>نعود لخدمتكم خلال دقائق قليلة بإذن الله.<br/><br/>شكراً لتفهمكم، ونسأل الله أن يتقبل منا ومنكم صالح الأعمال 🌙</div>
     <button onclick="document.getElementById('prayerTimeBlockOverlay').classList.remove('show')" style="background:#d4af37;color:#0f3d2e;border:none;border-radius:12px;padding:13px 30px;font-size:14px;font-weight:800;cursor:pointer">حسناً ✓</button>
   </div>
 </div>
@@ -3444,6 +3444,17 @@ function _goToAppOrTracking() {
       if (!snap.exists()) return;
       const ord = snap.val();
       if (ord && ord.status !== 'delivered' && ord.status !== 'cancelled') {
+        /* تحقق إن الأوردر بتاع العميل الحالي وليس قديم أكثر من 24 ساعة */
+        const _userPhone = (typeof currentUser !== 'undefined' && currentUser?.phone || '').replace(/\D/g,'');
+        const _ordPhone  = (ord.phone || '').replace(/\D/g,'');
+        const _ordAge    = Date.now() - (ord.timestamp || 0);
+        const _maxAge    = 24 * 60 * 60 * 1000;
+        if (_userPhone && _ordPhone && _userPhone !== _ordPhone) return;
+        if (ord.timestamp && _ordAge > _maxAge) {
+          saveData('zz_current_order_num', null);
+          currentOrderNum = null;
+          return;
+        }
         currentOrderNum = _on;
         saveData('zz_current_order_num', _on);
         openScreen('tracking');
@@ -3459,6 +3470,11 @@ function _goToAppOrTracking() {
 }
 
 window.onload = () => {
+  /* ══ إعادة ضبط الشاشة لأول مرة — يمنع الـ PWA من حفظ آخر شاشة مفتوحة ══ */
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  const splashEl = document.getElementById('splash');
+  if (splashEl) splashEl.classList.add('active');
+
   // ===== إغلاق أي overlays مفتوحة عند بدء التطبيق =====
   document.getElementById('productModal')?.classList.remove('open');
   const upsellOverlay = document.getElementById('upsellOverlay');
