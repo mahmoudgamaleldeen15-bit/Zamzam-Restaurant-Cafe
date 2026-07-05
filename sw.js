@@ -100,7 +100,7 @@ self.addEventListener('notificationclick', e => {
           return;
         }
       }
-      return clients.openWindow(url || '/');
+      return clients.openWindow(url || '/Zamzam-Restaurant-Cafe/');
     })
   );
 });
