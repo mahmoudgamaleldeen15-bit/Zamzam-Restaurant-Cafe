@@ -1539,10 +1539,7 @@ input,select,textarea{font-family:inherit;}
     <div style="padding:12px 16px 6px;font-size:14px;font-weight:800;color:var(--text-muted)">الحساب</div>
     <div class="settings-section">
       <div class="settings-row"><div class="info"><strong id="settingsUserName">—</strong><span id="settingsUserPhone">—</span></div></div>
-      <div onclick="toggleOSSubscription()" style="cursor:pointer;background:var(--olive);border-radius:12px;padding:13px 16px;margin-bottom:8px;display:flex;justify-content:space-between;align-items:center">
-        <strong id="osSubscribeBtn" style="color:#fff;font-size:13px;font-family:inherit">🔔 تفعيل إشعارات العروض</strong>
-        <span style="color:rgba(255,255,255,.7);font-size:16px">←</span>
-      </div>
+      <button onclick="window.toggleOSSubscription()" id="osSubscribeBtn" style="width:100%;padding:13px 16px;margin-bottom:8px;background:var(--olive);color:#fff;border:none;border-radius:12px;font-size:13px;font-weight:800;font-family:inherit;cursor:pointer;display:flex;justify-content:space-between;align-items:center;direction:rtl"><span>🔔 تفعيل إشعارات العروض</span><span style="opacity:.7">←</span></button>
       <div class="settings-row" style="cursor:pointer" onclick="doClientLogout()"><div class="info"><strong style="color:var(--red)">تسجيل الخروج</strong></div><span style="color:var(--red)">←</span></div>
     </div>
     <div style="text-align:center;padding:28px 20px 32px;color:var(--text-muted)">
@@ -15968,8 +15965,7 @@ window.OneSignalDeferred.push(async function(OneSignal) {
   try {
     await OneSignal.init({
       appId: ONESIGNAL_APP_ID,
-      serviceWorkerPath: 'sw.js',
-      serviceWorkerParam: { scope: '/Zamzam-Restaurant-Cafe/' },
+      serviceWorkerPath: 'OneSignalSDKWorker.js',
       notifyButton: { enable: false },
       allowLocalhostAsSecureOrigin: true,
     });
@@ -16020,7 +16016,7 @@ function _osNotif(msg) {
   setTimeout(function() { el.style.opacity = '0'; }, 4000);
 }
 
-async function toggleOSSubscription() {
+window.toggleOSSubscription = async function toggleOSSubscription() {
   alert('✅ الزرار شغال — OneSignal: ' + (typeof window.OneSignal !== 'undefined' ? 'محمّل' : 'مش محمّل'));
   if (typeof window.OneSignal === 'undefined') {
     _osNotif('⏳ نظام الإشعارات يتحمل... حاول مجدداً');
