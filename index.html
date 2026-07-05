@@ -3439,6 +3439,8 @@ function _goToAppOrTracking() {
   window.scrollTo(0, 0);
   const _appScreen = document.getElementById('app');
   if (_appScreen) _appScreen.scrollTop = 0;
+  /* عرض popup الإشعارات بعد 3 ثوان — مرة واحدة فقط */
+  setTimeout(_showOSPromptSheet, 3000);
   /* تحديث كارت المسابقات لما العميل يدخل الصفحة الرئيسية */
   if (typeof _compLoadForCustomer === 'function') {
     _compLoadForCustomer();
@@ -15976,6 +15978,90 @@ window.OneSignalDeferred.push(async function(OneSignal) {
       }
       _updateOSSubscribeBtn();
     });
+    if (!OneSignal.User.PushSubscription.optedIn) {
+      await OneSignal.User.PushSubscription.optIn();
+    }
+    _updateOSSubscribeBtn();
+  } catch(e) { console.warn('OneSignal init error:', e); }
+});
+
+function _showOSPromptSheet() {
+  /* مرة واحدة بس طول عمر التطبيق */
+  if (localStorage.getItem('zz_os_prompt_shown')) return;
+  if (!ONESIGNAL_APP_ID || ONESIGNAL_APP_ID === 'YOUR_ONESIGNAL_APP_ID') return;
+  if (typeof window.OneSignal === 'undefined') return;
+  /* لو مشترك بالفعل مش نعرضه */
+  try { if (window.OneSignal.User.PushSubscription.optedIn) return; } catch(e) {}
+
+  const sheet = document.createElement('div');
+  sheet.id = '_osPromptSheet';
+  sheet.style.cssText = 'position:fixed;bottom:0;right:0;left:0;z-index:99990;background:#fff;border-radius:22px 22px 0 0;padding:20px 20px 32px;box-shadow:0 -4px 30px rgba(0,0,0,.15);direction:rtl;font-family:inherit;transform:translateY(100%);transition:transform .4s cubic-bezier(.34,1.56,.64,1)';
+  sheet.innerHTML =
+    '<div style="width:40px;height:4px;background:#e0e0e0;border-radius:4px;margin:0 auto 16px"></div>' +
+    '<div style="display:flex;align-items:center;gap:12px;margin-bottom:12px">' +
+      '<div style="font-size:36px">🔔</div>' +
+      '<div><div style="font-size:16px;font-weight:900;color:#1a1a1a">فعّل إشعارات العروض</div>' +
+      '<div style="font-size:12px;color:#666;margin-top:2px">احصل على خصومات وعروض حصرية فورياً</div></div>' +
+    '</div>' +
+    '<div style="background:#f8f9fa;border-radius:12px;padding:10px 14px;margin-bottom:16px">' +
+      '<div style="font-size:12px;color:#444;line-height:1.8">' +
+        '🎁 عروض وخصومات حصرية<br>' +
+        '⚡ إشعار فوري بتأكيد طلبك<br>' +
+        '🌟 مفاجآت ومسابقات VIP' +
+      '</div>' +
+    '</div>' +
+    '<div style="display:flex;gap:10px">' +
+      '<button id="_osPromptAllow" style="flex:1;padding:13px;background:var(--olive);color:#fff;border:none;border-radius:12px;font-size:14px;font-weight:800;cursor:pointer;font-family:inherit">🔔 تفعيل الإشعارات</button>' +
+      '<button id="_osPromptLater" style="padding:13px 16px;background:#f0f0f0;color:#666;border:none;border-radius:12px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit">لاحقاً</button>' +
+    '</div>' +
+    '<div style="text-align:center;margin-top:10px;font-size:11px;color:#999">يمكنك تفعيلها في أي وقت من <b>الإعدادات ← تفعيل إشعارات العروض</b></div>';
+
+  document.body.appendChild(sheet);
+  setTimeout(function() { sheet.style.transform = 'translateY(0)'; }, 100);
+
+  /* تفعيل */
+  document.getElementById('_osPromptAllow').onclick = async function() {
+    localStorage.setItem('zz_os_prompt_shown', '1');
+    sheet.style.transform = 'translateY(100%)';
+    setTimeout(function() { sheet.remove(); }, 400);
+    try {
+      await window.OneSignal.User.PushSubscription.optIn();
+      showNotif('🔔 تم تفعيل الإشعارات بنجاح!');
+      _updateOSSubscribeBtn();
+    } catch(e) { showNotif('⚠️ ' + e.message); }
+  };
+
+  /* لاحقاً */
+  document.getElementById('_osPromptLater').onclick = function() {
+    localStorage.setItem('zz_os_prompt_shown', '1');
+    sheet.style.transform = 'translateY(100%)';
+    setTimeout(function() { sheet.remove(); }, 400);
+  };
+
+  /* تختفي تلقائياً بعد 8 ثوان */
+  setTimeout(function() {
+    if (document.getElementById('_osPromptSheet')) {
+      sheet.style.transform = 'translateY(100%)';
+      setTimeout(function() { if (sheet.parentElement) sheet.remove(); }, 400);
+    }
+  }, 8000);
+}
+window.OneSignalDeferred.push(async function(OneSignal) {
+  if (!ONESIGNAL_APP_ID || ONESIGNAL_APP_ID === 'YOUR_ONESIGNAL_APP_ID') return;
+  try {
+    await OneSignal.init({
+      appId: ONESIGNAL_APP_ID,
+      serviceWorkerPath: 'OneSignalSDKWorker.js',
+      notifyButton: { enable: false },
+      allowLocalhostAsSecureOrigin: true,
+    });
+    OneSignal.User.PushSubscription.addEventListener('change', function(event) {
+      if (event.current.token && typeof db !== 'undefined' && db) {
+        const phone = (typeof currentUser !== 'undefined' && currentUser?.phone) ? currentUser.phone.replace(/\D/g,'') : 'guest';
+        db.ref('onesignal_tokens/' + phone).set({ token: event.current.token, phone, name: (typeof currentUser !== 'undefined' && currentUser?.name) || '', savedAt: new Date().toISOString() }).catch(function(){});
+      }
+      _updateOSSubscribeBtn();
+    });
     /* اشتراك تلقائي — المتصفح يسأل مرة واحدة فقط */
     if (!OneSignal.User.PushSubscription.optedIn) {
       await OneSignal.User.PushSubscription.optIn();
@@ -16017,7 +16103,6 @@ function _osNotif(msg) {
 }
 
 window.toggleOSSubscription = async function toggleOSSubscription() {
-  alert('✅ الزرار شغال — OneSignal: ' + (typeof window.OneSignal !== 'undefined' ? 'محمّل' : 'مش محمّل'));
   if (typeof window.OneSignal === 'undefined') {
     _osNotif('⏳ نظام الإشعارات يتحمل... حاول مجدداً');
     setTimeout(async function() {
