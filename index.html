@@ -979,6 +979,8 @@ input,select,textarea{font-family:inherit;}
 .vip-benefit-admin-label{font-size:13px;font-weight:800;flex:1;min-width:140px;}
 .vip-benefit-admin-val{width:70px;padding:6px 8px;border:1.5px solid var(--border);border-radius:8px;font-size:12px;background:var(--white);outline:none;text-align:center;}
 </style>
+<!-- OneSignal Push Notifications SDK -->
+<script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
 </head>
 <body>
 
@@ -1537,7 +1539,8 @@ input,select,textarea{font-family:inherit;}
     <div style="padding:12px 16px 6px;font-size:14px;font-weight:800;color:var(--text-muted)">الحساب</div>
     <div class="settings-section">
       <div class="settings-row"><div class="info"><strong id="settingsUserName">—</strong><span id="settingsUserPhone">—</span></div></div>
-      <div class="settings-row" style="cursor:pointer" onclick="doClientLogout()"><div class="info"><strong style="color:var(--red)">تسجيل الخروج</strong></div><span style="color:var(--red)">←</span></div>
+      <div class="settings-row" onclick="toggleOSSubscription()" style="cursor:pointer;background:var(--olive);border-radius:12px;padding:12px 16px;margin-bottom:6px;display:flex;justify-content:space-between;align-items:center"><strong id="osSubscribeBtn" style="color:#fff;font-size:13px">🔕 تفعيل إشعارات العروض</strong><span style="color:rgba(255,255,255,.7)">←</span></div>
+      <div style="cursor:pointer" onclick="doClientLogout()"><div class="info"><strong style="color:var(--red)">تسجيل الخروج</strong></div><span style="color:var(--red)">←</span></div>
     </div>
     <div style="text-align:center;padding:28px 20px 32px;color:var(--text-muted)">
       <div style="width:60px;height:60px;border-radius:16px;background:linear-gradient(135deg,var(--olive-dark),var(--olive));display:flex;align-items:center;justify-content:center;font-size:28px;margin:0 auto 12px;box-shadow:0 4px 16px rgba(45,80,22,.3)">🍽️</div>
@@ -15943,6 +15946,69 @@ function _compStartCountdowns() {
   }, 1000);
 }
 
+</script>
+
+<!-- ====== OneSignal Push Notifications ====== -->
+<script>
+/* ══ إعداد OneSignal ══
+   1. اعمل حساب مجاني على onesignal.com
+   2. أنشئ Web App وخذ الـ App ID
+   3. ضع الـ App ID في المتغير أدناه
+   4. أضف ملف OneSignalSDKWorker.js في repo بمحتوى:
+      importScripts('https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.sw.js');
+   ════════════════════════ */
+var ONESIGNAL_APP_ID = '7cadafd5-74a1-42bf-ad94-1509d1924cc5';
+
+window.OneSignalDeferred = window.OneSignalDeferred || [];
+window.OneSignalDeferred.push(async function(OneSignal) {
+  if (!ONESIGNAL_APP_ID || ONESIGNAL_APP_ID === 'YOUR_ONESIGNAL_APP_ID') return;
+  try {
+    await OneSignal.init({
+      appId: ONESIGNAL_APP_ID,
+      serviceWorkerPath: 'OneSignalSDKWorker.js',
+      notifyButton: { enable: false },
+      allowLocalhostAsSecureOrigin: true,
+    });
+    OneSignal.User.PushSubscription.addEventListener('change', function(event) {
+      if (event.current.token && typeof db !== 'undefined' && db) {
+        const phone = (typeof currentUser !== 'undefined' && currentUser?.phone) ? currentUser.phone.replace(/\D/g,'') : 'guest';
+        db.ref('onesignal_tokens/' + phone).set({ token: event.current.token, phone, name: (typeof currentUser !== 'undefined' && currentUser?.name) || '', savedAt: new Date().toISOString() }).catch(function(){});
+      }
+      _updateOSSubscribeBtn();
+    });
+    /* اشتراك تلقائي — المتصفح يسأل مرة واحدة فقط */
+    if (!OneSignal.User.PushSubscription.optedIn) {
+      await OneSignal.User.PushSubscription.optIn();
+    }
+    _updateOSSubscribeBtn();
+  } catch(e) { console.warn('OneSignal init error:', e); }
+});
+
+function _updateOSSubscribeBtn() {
+  var btn = document.getElementById('osSubscribeBtn');
+  if (!btn || !window.OneSignal) return;
+  if (window.OneSignal.User.PushSubscription.optedIn) {
+    btn.textContent = '🔔 الإشعارات مفعّلة — اضغط للإيقاف';
+    btn.style.background = '#16a34a';
+  } else {
+    btn.textContent = '🔕 تفعيل إشعارات العروض والأخبار';
+    btn.style.background = 'var(--olive)';
+  }
+  /* الزرار دايماً ظاهر */
+  var wrap = btn.closest ? btn.closest('[onclick]') : btn.parentElement;
+  if (wrap) wrap.style.display = 'block';
+}
+
+async function toggleOSSubscription() {
+  if (!ONESIGNAL_APP_ID || ONESIGNAL_APP_ID === 'YOUR_ONESIGNAL_APP_ID') { showNotif('⚙️ OneSignal App ID غير مضبوط'); return; }
+  if (!window.OneSignal) { showNotif('⚠️ جاري تحميل نظام الإشعارات...'); return; }
+  try {
+    const isOptedIn = window.OneSignal.User.PushSubscription.optedIn;
+    if (isOptedIn) { await window.OneSignal.User.PushSubscription.optOut(); showNotif('🔕 تم إيقاف الإشعارات'); }
+    else { await window.OneSignal.User.PushSubscription.optIn(); showNotif('🔔 تم تفعيل الإشعارات!'); }
+    _updateOSSubscribeBtn();
+  } catch(e) { showNotif('⚠️ ' + e.message); }
+}
 </script>
 </body>
 </html>
