@@ -551,6 +551,13 @@ input,select,textarea{font-family:inherit;}
 @keyframes slideUp{from{transform:translateY(60px);opacity:0}to{transform:translateY(0);opacity:1}}
 @keyframes spin{to{transform:rotate(360deg)}}
 @keyframes pulse{0%,100%{opacity:.5}50%{opacity:1}}
+@keyframes compFeedIn{from{opacity:0;transform:translateY(-8px)}to{opacity:1;transform:translateY(0)}}
+@keyframes vipGiftPulse{0%,100%{box-shadow:0 0 0 0 rgba(251,191,36,.4)}50%{box-shadow:0 0 16px 6px rgba(251,191,36,.25)}}
+@keyframes maintSpin{0%{transform:rotate(0deg)}100%{transform:rotate(360deg)}}
+@keyframes maintBar{0%{transform:translateX(-100%)}50%{transform:translateX(200%)}100%{transform:translateX(-100%)}}
+#compLiveFeedList::-webkit-scrollbar{width:4px}
+#compLiveFeedList::-webkit-scrollbar-thumb{background:var(--border);border-radius:4px}
+.comp-feed-card{animation:compFeedIn .3s ease}
 @keyframes shimmer{0%{background-position:200% 0}100%{background-position:-200% 0}}
 @keyframes popIn{0%{transform:scale(.8);opacity:0}100%{transform:scale(1);opacity:1}}
 @keyframes glow{0%,100%{box-shadow:0 0 8px rgba(224,48,48,.6)}50%{box-shadow:0 0 20px rgba(224,48,48,.9)}}
@@ -1643,7 +1650,27 @@ input,select,textarea{font-family:inherit;}
   </div>
 </div>
 
-<!-- بانر تذكير الكاشير/الأدمن إن وقت الصلاة مفعّل -->
+<!-- ══ بانر وضع الصيانة / التطوير ══ -->
+<div class="prayer-time-block-overlay" id="maintenanceOverlay">
+  <div class="prayer-time-block-card" style="max-width:380px;background:linear-gradient(160deg,#0c1a3d,#1a2e6b);border-color:#6366f1;position:relative;overflow:hidden">
+    <!-- خلفية نجوم متحركة -->
+    <div style="position:absolute;inset:0;background:radial-gradient(ellipse at 50% 0%,rgba(99,102,241,.3),transparent 70%);pointer-events:none"></div>
+    <!-- أيقونة متحركة -->
+    <div style="font-size:56px;margin-bottom:8px;animation:maintSpin 3s linear infinite">⚙️</div>
+    <div style="font-size:18px;font-weight:900;color:#a5b4fc;margin-bottom:6px;position:relative">جارٍ التحديث</div>
+    <div style="font-size:12px;color:#c7d2fe;margin-bottom:16px;line-height:1.6;position:relative">نعمل على تحسين تجربتك<br>نعود إليك بخدمة أفضل قريباً 🚀</div>
+    <!-- شريط تقدم متحرك -->
+    <div style="width:100%;background:rgba(255,255,255,.15);border-radius:20px;height:6px;margin-bottom:20px;overflow:hidden;position:relative">
+      <div style="width:40%;height:100%;background:linear-gradient(90deg,#6366f1,#818cf8,#6366f1);border-radius:20px;animation:maintBar 2s ease-in-out infinite"></div>
+    </div>
+    <!-- الذكر الدوار -->
+    <div id="maintDhikrText" style="background:rgba(255,255,255,.08);border-radius:14px;padding:14px 16px;font-size:13px;color:#e0e7ff;line-height:1.9;text-align:center;min-height:80px;display:flex;align-items:center;justify-content:center;position:relative;transition:opacity .5s">
+      🌿 سنعود بعد قليل... وفي انتظارنا، عطِّر لسانك بذكر الله والصلاة على النبي ﷺ.
+    </div>
+    <div style="margin-top:14px;font-size:10px;color:rgba(165,180,252,.6)">يمكنك متابعة طلباتك السابقة</div>
+  </div>
+</div>
+ّل -->
 <div id="prayerStaffBanner">🕌 وقت الصلاة مفعّل — استقبال الطلبات متوقف حالياً ⛔</div>
 
 <!-- ===== DELIVERY CONTROL — رسالة منع الدليفري للعميل (مستقل) ===== -->
@@ -1817,6 +1844,9 @@ input,select,textarea{font-family:inherit;}
     </div>
     <div style="padding:0 16px 12px">
       <button onclick="togglePrayerTime()" id="prayerTimeBtn" style="width:100%;padding:13px;background:#1b5e43;color:#fff;border:1.5px solid #d4af37;border-radius:12px;font-size:13px;font-weight:800">🕌 تفعيل وقت الصلاة — 🟢 الحالة: معطل</button>
+    </div>
+    <div style="padding:0 16px 12px">
+      <button onclick="toggleMaintenanceMode()" id="maintenanceBtn" style="width:100%;padding:13px;background:#1e1b4b;color:#a5b4fc;border:1.5px solid #6366f1;border-radius:12px;font-size:13px;font-weight:800">⚙️ وضع الصيانة / التطوير — 🟢 الحالة: معطل</button>
     </div>
     <div style="padding:0 16px 12px">
       <button onclick="toggleDeliveryManual()" id="deliveryCtrlBtn" style="width:100%;padding:13px;background:#5a3e1b;color:#fff;border:1.5px solid #e0a84e;border-radius:12px;font-size:13px;font-weight:800">🛵 إيقاف الدليفري للمناطق — 🟢 معطل</button>
@@ -2118,8 +2148,93 @@ input,select,textarea{font-family:inherit;}
       <!-- Reviews List -->
       <div class="tab-section-header">💬 تعليقات العملاء <span style="background:var(--olive-pale);color:var(--olive-dark);padding:2px 8px;border-radius:100px;font-size:11px" id="reviewsCountBadge">0</span></div>
       <div id="adminReviewsList"><div style="text-align:center;padding:30px;color:var(--text-muted);font-weight:700">لا توجد تعليقات بعد</div></div>
-    </div>
 
+      <!-- ══ إحصائيات المستخدمين الشاملة ══ -->
+      <div class="tab-section-header">👥 إحصائيات المستخدمين</div>
+      <div class="stats-grid" id="usersStatsGrid">
+        <div class="stat-card blue"><div class="stat-val blue" id="statTotalUsers">—</div><div class="stat-lbl">إجمالي المسجلين</div></div>
+        <div class="stat-card gold"><div class="stat-val gold" id="statVIPUsers">—</div><div class="stat-lbl">عملاء VIP</div></div>
+        <div class="stat-card" style="border-color:#22c55e"><div class="stat-val" style="color:#16a34a" id="statActiveUsers">—</div><div class="stat-lbl">نشطين (30 يوم)</div></div>
+        <div class="stat-card red"><div class="stat-val red" id="statNewUsers">—</div><div class="stat-lbl">جدد هذا الشهر</div></div>
+      </div>
+      <!-- نسب المستخدمين المتحركة -->
+      <div class="conversion-bar-wrap" id="usersRatioWrap" style="display:none">
+        <div class="conversion-bar-title">📊 توزيع العملاء</div>
+        <div class="conv-row">
+          <div class="conv-label">VIP</div>
+          <div class="conv-track"><div class="conv-fill" id="urVIP" style="width:0%;background:linear-gradient(90deg,#f59e0b,#fbbf24)"></div></div>
+          <div class="conv-pct" id="urVIPPct">0%</div>
+        </div>
+        <div class="conv-row">
+          <div class="conv-label">نشطين</div>
+          <div class="conv-track"><div class="conv-fill" id="urActive" style="width:0%;background:linear-gradient(90deg,#22c55e,#4ade80)"></div></div>
+          <div class="conv-pct" id="urActivePct">0%</div>
+        </div>
+        <div class="conv-row">
+          <div class="conv-label">عائدون</div>
+          <div class="conv-track"><div class="conv-fill" id="urReturn" style="width:0%;background:linear-gradient(90deg,#6366f1,#818cf8)"></div></div>
+          <div class="conv-pct" id="urReturnPct">0%</div>
+        </div>
+      </div>
+
+      <!-- ══ إحصائيات فتح التطبيق ══ -->
+      <div class="tab-section-header">🔗 فتحات التطبيق (بديل ضغطات اللينك)</div>
+      <div class="stats-grid">
+        <div class="stat-card blue"><div class="stat-val blue" id="statAppOpens">—</div><div class="stat-lbl">إجمالي الفتحات</div></div>
+        <div class="stat-card"><div class="stat-val" id="statAppOpensToday">—</div><div class="stat-lbl">اليوم</div></div>
+        <div class="stat-card gold"><div class="stat-val gold" id="statUniqueUsers">—</div><div class="stat-lbl">مستخدمين فريدين</div></div>
+        <div class="stat-card" style="border-color:#8b5cf6"><div class="stat-val" style="color:#7c3aed" id="statAvgDaily">—</div><div class="stat-lbl">متوسط يومي</div></div>
+      </div>
+
+      <!-- ══ إحصائيات الطلبات التفصيلية ══ -->
+      <div class="tab-section-header">🛒 إحصائيات الطلبات</div>
+      <div class="stats-grid">
+        <div class="stat-card blue"><div class="stat-val blue" id="statTotalOrders">—</div><div class="stat-lbl">إجمالي الطلبات</div></div>
+        <div class="stat-card gold"><div class="stat-val gold" id="statAvgOrder">—</div><div class="stat-lbl">متوسط الطلب</div></div>
+        <div class="stat-card" style="border-color:#22c55e"><div class="stat-val" style="color:#16a34a" id="statReturnRate">—</div><div class="stat-lbl">معدل العودة</div></div>
+        <div class="stat-card"><div class="stat-val" id="statPeakHour">—</div><div class="stat-lbl">ساعة الذروة</div></div>
+      </div>
+      <!-- توزيع أنواع الطلبات -->
+      <div class="conversion-bar-wrap" id="ordersTypeWrap" style="display:none">
+        <div class="conversion-bar-title">🚀 توزيع أنواع الطلبات</div>
+        <div class="conv-row">
+          <div class="conv-label">توصيل 🛵</div>
+          <div class="conv-track"><div class="conv-fill blue" id="otDelivery" style="width:0%"></div></div>
+          <div class="conv-pct" id="otDeliveryPct">0%</div>
+        </div>
+        <div class="conv-row">
+          <div class="conv-label">كافيه ☕</div>
+          <div class="conv-track"><div class="conv-fill" id="otCafe" style="width:0%;background:linear-gradient(90deg,#f59e0b,#fbbf24)"></div></div>
+          <div class="conv-pct" id="otCafePct">0%</div>
+        </div>
+        <div class="conv-row">
+          <div class="conv-label">استلام 🏪</div>
+          <div class="conv-track"><div class="conv-fill" id="otPickup" style="width:0%;background:linear-gradient(90deg,#8b5cf6,#a78bfa)"></div></div>
+          <div class="conv-pct" id="otPickupPct">0%</div>
+        </div>
+      </div>
+
+      <!-- ══ أكثر المنتجات طلباً ══ -->
+      <div class="tab-section-header">🏆 أكثر المنتجات طلباً</div>
+      <div id="topProductsList" style="background:var(--white);border-radius:14px;border:1px solid var(--border);padding:14px;margin-bottom:14px">
+        <div style="text-align:center;color:var(--text-muted);padding:20px">جاري التحميل...</div>
+      </div>
+
+      <!-- ══ تصدير بيانات العملاء ══ -->
+      <div class="tab-section-header">📤 تصدير بيانات العملاء</div>
+      <div style="background:var(--white);border-radius:14px;border:1px solid var(--border);padding:14px;margin-bottom:14px">
+        <div style="font-size:12px;color:var(--text-muted);margin-bottom:12px;line-height:1.6">
+          📋 تصدير أرقام هواتف العملاء بصيغة CSV — يمكن فتحها في Excel أو استخدامها لحملات واتساب.
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+          <button onclick="_exportCustomers('all')" style="padding:10px;background:var(--olive);color:#fff;border:none;border-radius:10px;font-size:12px;font-weight:800;cursor:pointer;font-family:inherit">📥 كل العملاء</button>
+          <button onclick="_exportCustomers('vip')" style="padding:10px;background:linear-gradient(135deg,#d97706,#f59e0b);color:#fff;border:none;border-radius:10px;font-size:12px;font-weight:800;cursor:pointer;font-family:inherit">👑 VIP فقط</button>
+          <button onclick="_exportCustomers('active')" style="padding:10px;background:linear-gradient(135deg,#16a34a,#22c55e);color:#fff;border:none;border-radius:10px;font-size:12px;font-weight:800;cursor:pointer;font-family:inherit">✅ النشطين (30 يوم)</button>
+          <button onclick="_exportCustomers('new')" style="padding:10px;background:linear-gradient(135deg,#2563eb,#3b82f6);color:#fff;border:none;border-radius:10px;font-size:12px;font-weight:800;cursor:pointer;font-family:inherit">🆕 الجدد (هذا الشهر)</button>
+        </div>
+        <div id="exportStatsInfo" style="margin-top:10px;font-size:11px;color:var(--text-muted);text-align:center"></div>
+      </div>
+    </div>
 
 
     <div id="tab-competitions" style="display:none;padding:12px">
@@ -2129,6 +2244,14 @@ input,select,textarea{font-family:inherit;}
           <button onclick="_compAuditPrizes()" style="background:#7c3aed;color:#fff;border:none;padding:8px 12px;border-radius:10px;font-size:12px;font-weight:800;cursor:pointer;font-family:inherit">🔍 تدقيق الجوائز</button>
           <button onclick="_compOpenCreateModal()" style="background:var(--olive);color:#fff;border:none;padding:8px 14px;border-radius:10px;font-size:13px;font-weight:800;cursor:pointer;font-family:inherit">+ مسابقة جديدة</button>
         </div>
+      </div>
+      <div id="compLiveFeed" style="display:none;margin-bottom:12px">
+        <div style="font-size:13px;font-weight:900;color:var(--text);margin-bottom:6px;display:flex;align-items:center;gap:6px">
+          <span style="width:8px;height:8px;background:#22c55e;border-radius:50%;display:inline-block;animation:pulse 1.5s infinite"></span>
+          توقعات مباشرة
+          <span id="compLiveFeedCount" style="background:#ef4444;color:#fff;font-size:10px;font-weight:900;padding:1px 6px;border-radius:20px"></span>
+        </div>
+        <div id="compLiveFeedList" style="max-height:220px;overflow-y:auto;display:flex;flex-direction:column;gap:6px"></div>
       </div>
       <div id="compAdminList"><div style="text-align:center;padding:30px;color:var(--text-muted);font-weight:700">لا توجد مسابقات بعد</div></div>
     </div>
@@ -2482,7 +2605,7 @@ input,select,textarea{font-family:inherit;}
           <span style="font-size:14px;font-weight:900;color:#92400e">مزايا عملاء VIP</span>
         </div>
         <div id="vipBenefitsAdminList"></div>
-        <button onclick="saveVIPBenefits()" style="width:100%;padding:11px;background:linear-gradient(135deg,#d97706,#f59e0b);color:#fff;border-radius:10px;font-size:13px;font-weight:800;border:none;cursor:pointer;margin-top:8px">💾 حفظ المزايا</button>
+        <button id="saveVIPBenefitsBtn" onclick="saveVIPBenefits()" style="width:100%;padding:11px;background:linear-gradient(135deg,#d97706,#f59e0b);color:#fff;border-radius:10px;font-size:13px;font-weight:800;border:none;cursor:pointer;margin-top:8px">💾 حفظ المزايا</button>
       </div>
 
       <!-- VIP Message Templates -->
@@ -4628,6 +4751,12 @@ function quickAdd(e, cat, id) {
   addToCart({ id: item.id + '_quick', name: item.name, size: item.prices ? 'S' : null, emoji: item.emoji, price, basePrice: price, extras: [], qty: 1, _catKey: cat });
 }
 function addToCart(ci) {
+  /* فحص وضع الصيانة — العميل يقدر يتصفح بس مش يضيف للسلة */
+  if (_maintenanceActive && !(typeof adminRoleType !== 'undefined' && adminRoleType)) {
+    var overlay = document.getElementById('maintenanceOverlay');
+    if (overlay) { overlay.classList.add('show'); _startMaintDhikr(); }
+    return;
+  }
   const ex = cart.find(c => c.id === ci.id);
   if (ex) ex.qty += ci.qty; else cart.push({ ...ci });
   playSound(); updateCartUI(); showNotif('✓ تمت الإضافة إلى السلة');
@@ -5620,6 +5749,10 @@ function _completeStaffLogin(role) {
     return;
   }
   adminRoleType = role;
+  /* إخفاء بانر الصيانة فوراً — الأدمن والكاشير مش بيشوفوه */
+  var _mOv = document.getElementById('maintenanceOverlay');
+  if (_mOv) _mOv.classList.remove('show');
+  _stopMaintDhikr();
   if (db && window._ordersHandler && (role === 'admin' || role === 'cashier') && !window._ordersHandlerOn) {
     window._ordersHandlerOn = true;
     db.ref('orders').on('value', window._ordersHandler);
@@ -5881,6 +6014,9 @@ function applyRoleRestrictions() {
   const tabCompBtn = document.getElementById('tabCompBtn');
   if (tabCompBtn) tabCompBtn.style.display = isAdmin ? '' : 'none';
   if (revenueCard) revenueCard.style.display = isAdmin ? 'block' : 'none';
+  /* زرار الصيانة — أدمن فقط */
+  const maintBtn = document.getElementById('maintenanceBtn');
+  if (maintBtn) maintBtn.style.display = isAdmin ? 'block' : 'none';
   if (adminActionBtns) adminActionBtns.style.display = isAdmin ? 'flex' : 'none';
   if (!isAdmin) {
     ['vodafoneNum','instapayNum','visaDetails','waNumSetting',
@@ -5922,7 +6058,7 @@ function switchAdminTab(tab, el) {
   if (tab === 'ads') renderAdsAdmin();
   if (tab === 'agents') { renderAgentsAdmin(); renderAgentReports(); startAdminAgentsTracking(); }
   if (tab === 'block') { renderBlockedUsers(); }
-  if (tab === 'stats') { loadRatingsFromFirebase(); renderStatsTab(); }
+  if (tab === 'stats') { loadRatingsFromFirebase(); renderStatsTab(); _renderExtendedStats(); }
 }
 
 // ============================================================
@@ -6411,12 +6547,136 @@ function toggleLastOrder() {
 // ============================================================
 // PRAYER TIME MODE — إيقاف الطلبات وقت الصلاة (إضافة مستقلة)
 // ============================================================
+/* ══ أذكار الصيانة ══ */
+const _MAINT_DHIKR = [
+  '🌿 سنعود بعد قليل... وفي انتظارنا، عطِّر لسانك بذكر الله والصلاة على النبي ﷺ.',
+  '🤍 سنعود بعد قليل... استغل هذه اللحظات في قول: سبحان الله، والحمد لله، ولا إله إلا الله، والله أكبر.',
+  '✨ سنعود بعد قليل... أكثر من الصلاة والسلام على سيدنا محمد ﷺ، فهي من أحب الأعمال.',
+  '🌸 سنعود بعد قليل... استغفر الله، فلعلها تكون سببًا في تفريج همٍّ أو مغفرة ذنب.',
+  '💚 سنعود بعد قليل... اجعل هذه الدقائق في طاعة، واذكر الله يذكرك.',
+  '🌙 سنعود بعد قليل... لا تنسَ أن تردد: اللهم صلِّ وسلم وبارك على نبينا محمد ﷺ.',
+  '🌺 سنعود بعد قليل... دقيقة مع الله خيرٌ من دقائق في الغفلة، فأكثر من الذكر والاستغفار.',
+  '📿 سنعود بعد قليل... ردد: لا حول ولا قوة إلا بالله، فإنها كنزٌ من كنوز الجنة.'
+];
+
+/* ══ أذكار الصلاة ══ */
+const _PRAYER_DHIKR = [
+  '🌿 حافظ على صلاتك، فهي صلتك بربك، وبها تطمئن القلوب.',
+  '🕌 إذا أذَّن المؤذن، فاترك ما بيدك وأقبل على لقاء الله.',
+  '🤍 الصلاة في وقتها من أحب الأعمال إلى الله، فلا تؤخرها.',
+  '✨ اجعل يومك يبدأ وينتهي بالصلاة، ففيها البركة والسكينة.',
+  '🌸 لا تدع مشاغل الدنيا تحرمك من أعظم لقاء... لقاء الله في الصلاة.',
+  '💚 كلما حان وقت الصلاة، تذكَّر أنها دعوة من الله لك، فأجبها.',
+  '🌙 الصلاة نورٌ للقلب، وراحةٌ للنفس، وبركةٌ في الرزق والعمر.',
+  '📿 دقائق تقضيها في الصلاة، قد تكون سببًا في سعادة الدنيا والآخرة.',
+  '🌺 حافظ على صلاتك، فالفلاح يبدأ من سجدةٍ خاشعة.',
+  '🤲 إذا ضاقت بك الدنيا، فافزع إلى الصلاة، ففيها السكينة والطمأنينة.',
+  '🌹 لا تؤخر الصلاة من أجل الدنيا، فكل ما عند الله خيرٌ وأبقى.',
+  '⭐ أعظم استثمار في يومك... صلاة تؤديها في وقتها ابتغاء مرضاة الله.',
+  '🍃 الصلاة بابٌ للرحمة، فلا تُغلقه بالتأخير أو الانشغال.',
+  '💛 كل سجدة ترفعك درجة، وتمحو عنك خطيئة، فلا تحرم نفسك هذا الفضل.',
+  '🌼 اجعل الأذان نداءً يملأ قلبك شوقًا للوقوف بين يدي الله.',
+  '🕊️ حافظ على صلاتك، فإنها مفتاح الطمأنينة في كل وقت.',
+  '🌟 مهما كثرت أعمالك، اجعل الصلاة أول أولوياتك.',
+  '🌿 من حافظ على الصلاة، جعل الله له من كل همٍّ فرجًا، ومن كل ضيقٍ مخرجًا.',
+  '💖 لا تجعل الصلاة آخر اهتماماتك، فهي أول ما يُحاسب عليه العبد يوم القيامة.',
+  '🕌 اللهم أعنَّا على ذكرك، وشكرك، وحسن عبادتك، واجعلنا من المحافظين على الصلاة في أوقاتها.'
+];
+
+var _maintDhikrIdx = 0;
+var _maintDhikrTimer = null;
+var _maintenanceActive = false;
+
+function toggleMaintenanceMode() {
+  _maintenanceActive = !_maintenanceActive;
+  const btn = document.getElementById('maintenanceBtn');
+  const overlay = document.getElementById('maintenanceOverlay');
+  if (_maintenanceActive) {
+    if (btn) { btn.textContent = '⚙️ وضع الصيانة / التطوير — 🔴 الحالة: مفعّل'; btn.style.background = '#312e81'; btn.style.color = '#fff'; }
+    /* الأدمن والكاشير مش بيشوفوا البانر — للعملاء فقط */
+    _startMaintDhikr();
+    showNotif('⚙️ تم تفعيل وضع الصيانة — الطلبات موقوفة مؤقتاً');
+    if (typeof db !== 'undefined' && db) db.ref('maintenance_mode').set(true).catch(function(){});
+  } else {
+    if (btn) { btn.textContent = '⚙️ وضع الصيانة / التطوير — 🟢 الحالة: معطل'; btn.style.background = '#1e1b4b'; btn.style.color = '#a5b4fc'; }
+    if (overlay) overlay.classList.remove('show');
+    _stopMaintDhikr();
+    showNotif('✅ تم إلغاء وضع الصيانة — عاد استقبال الطلبات');
+    if (typeof db !== 'undefined' && db) db.ref('maintenance_mode').set(false).catch(function(){});
+  }
+}
+
+function _startMaintDhikr() {
+  _maintDhikrIdx = Math.floor(Math.random() * _MAINT_DHIKR.length);
+  _updateMaintDhikr();
+  _maintDhikrTimer = setInterval(_updateMaintDhikr, 7000);
+}
+
+function _stopMaintDhikr() {
+  if (_maintDhikrTimer) { clearInterval(_maintDhikrTimer); _maintDhikrTimer = null; }
+}
+
+function _updateMaintDhikr() {
+  const el = document.getElementById('maintDhikrText');
+  if (!el) return;
+  el.style.opacity = '0';
+  setTimeout(function() {
+    _maintDhikrIdx = (_maintDhikrIdx + 1) % _MAINT_DHIKR.length;
+    el.textContent = _MAINT_DHIKR[_maintDhikrIdx];
+    el.style.opacity = '1';
+  }, 500);
+}
+
+/* مراقبة Firebase لعرض الصيانة للعملاء تلقائياً */
+(function() {
+  var _maintChecked = false;
+  function _checkMaint() {
+    if (_maintChecked || typeof db === 'undefined' || !db) return;
+    _maintChecked = true;
+    if (typeof db !== 'undefined' && db) {
+      db.ref('maintenance_mode').on('value', function(snap) {
+        /* نحفظ الحالة فقط — البانر بيظهر عند الإضافة للسلة */
+        _maintenanceActive = snap.val() === true;
+        /* لو تم إلغاء الصيانة → نشيل البانر لو كان ظاهر */
+        if (!_maintenanceActive) {
+          var overlay = document.getElementById('maintenanceOverlay');
+          if (overlay) overlay.classList.remove('show');
+          _stopMaintDhikr();
+        }
+      });
+    }
+  }
+  document.addEventListener('DOMContentLoaded', function() { setTimeout(_checkMaint, 3000); });
+})();
+
+/* إضافة ذكر دعوي في بانر الصلاة */
+function _injectPrayerDhikr() {
+  const card = document.querySelector('.prayer-time-block-card');
+  if (!card || document.getElementById('_prayerDhikrEl')) return;
+  const dhikrEl = document.createElement('div');
+  dhikrEl.id = '_prayerDhikrEl';
+  dhikrEl.style.cssText = 'background:rgba(255,255,255,.08);border-radius:12px;padding:12px 14px;margin-top:14px;font-size:12.5px;color:#f4f1e6;line-height:1.9;text-align:center;transition:opacity .5s';
+  dhikrEl.textContent = _PRAYER_DHIKR[Math.floor(Math.random() * _PRAYER_DHIKR.length)];
+  card.appendChild(dhikrEl);
+  /* يتغير كل 8 ثوان */
+  var pIdx = 0;
+  setInterval(function() {
+    dhikrEl.style.opacity = '0';
+    setTimeout(function() {
+      pIdx = (pIdx + 1) % _PRAYER_DHIKR.length;
+      dhikrEl.textContent = _PRAYER_DHIKR[pIdx];
+      dhikrEl.style.opacity = '1';
+    }, 500);
+  }, 8000);
+}
+
 function togglePrayerTime() {
   prayerTimeActive = !prayerTimeActive;
   const btn = document.getElementById('prayerTimeBtn');
   if (prayerTimeActive) {
     if (btn) { btn.textContent = '🕌 إيقاف وقت الصلاة — 🔴 الحالة: مفعّل'; btn.style.background = '#7a1f1f'; }
     showNotif('🕌 تم تفعيل وقت الصلاة — تم إيقاف استقبال الطلبات');
+    setTimeout(_injectPrayerDhikr, 300); /* إضافة الذكر الدعوي */
   } else {
     if (btn) { btn.textContent = '🕌 تفعيل وقت الصلاة — 🟢 الحالة: معطل'; btn.style.background = '#1b5e43'; }
     // إخفاء الرسالة فوراً عن أي عميل فاتحها
@@ -8116,10 +8376,8 @@ function toggleVIP(phone, name) {
     else {
       VIP_CUSTOMERS[_existingKey].discount = d;
       showNotif(`✓ تم تحديث خصم VIP إلى ${d}%`);
-      // إرسال رسالة واتساب بالخصم الجديد
-      if (confirm(`هل تريد إرسال رسالة واتساب لـ ${name} بالخصم الجديد؟`)) {
-        sendVIPWelcomeMessage(phone, name, d);
-      }
+      /* زرار مباشر بدل confirm — لتفادي popup blocker */
+      _showVIPWAPrompt(phone, name, d, 'update');
     }
   } else {
     const disc = prompt(`تحويل ${name} إلى VIP\nأدخل نسبة الخصم الثابتة (%):`, 10);
@@ -8127,10 +8385,8 @@ function toggleVIP(phone, name) {
     const discNum = Number(disc);
     VIP_CUSTOMERS[phone] = { name, discount: discNum, since: new Date().toLocaleDateString('ar-EG') };
     showNotif(`⭐ تم تحويل ${name} إلى VIP بخصم ${disc}%`);
-    // إرسال رسالة واتساب ترحيبية تلقائياً
-    if (confirm(`هل تريد إرسال رسالة واتساب ترحيبية لـ ${name}؟`)) {
-      sendVIPWelcomeMessage(phone, name, discNum);
-    }
+    /* زرار مباشر بدل confirm — لتفادي popup blocker */
+    _showVIPWAPrompt(phone, name, discNum, 'new');
   }
   saveData('zz_vip_customers', VIP_CUSTOMERS);
   if (db) db.ref('vip_customers/' + phone.replace(/[^0-9]/g,'')).set(VIP_CUSTOMERS[_existingKey || phone] || null).catch(()=>{});
@@ -9450,6 +9706,89 @@ function confirmFinalOrder() {
     const loMsg = `السلام عليكم ورحمة الله وبركاته\n\nعزيزنا *${currentUser.name}* 🌹\n\nنعتذر، يوجد ضغط كبير حالياً على الطلبات 🙏\nوقد يستغرق تجهيز الطلب وقتاً إضافياً، شكراً لتفهمكم.\n\n*${RESTAURANT.name}*`;
     setTimeout(() => window.open(`https://wa.me/${waLO}?text=${encodeURIComponent(loMsg)}`, '_blank'), 1500);
   }
+  /* ══ تتبع هدية VIP ══ */
+  _checkVIPGiftEligibility(order);
+}
+
+/* ══ نظام هدية VIP ═══════════════════════════════════════ */
+function _checkVIPGiftEligibility(order) {
+  try {
+    const giftBenefit = VIP_BENEFITS.find(b => b.id === 'gift' && b.enabled);
+    if (!giftBenefit) return;
+    const orderCount = parseInt(giftBenefit.value)     || 10;
+    const minOrder   = parseFloat(giftBenefit.minOrder) || 0;
+    const periodDays = parseInt(giftBenefit.period)    || 30;
+    const giftName   = giftBenefit.note || 'هدية مجانية';
+
+    /* تطبيع الرقم — نفس منطق _resolveVIP لضمان مفتاح واحد بصرف النظر عن الشكل */
+    const rawPhone = (order.phone || '').replace(/\D/g,'');
+    if (!rawPhone || !_resolveVIP(rawPhone)) return;
+    /* نستخدم المفتاح الفعلي الموجود في VIP_CUSTOMERS (الشكل المخزّن فعلاً) */
+    let _normPhone = rawPhone;
+    for (const v of _phoneVariants(rawPhone)) {
+      if (VIP_CUSTOMERS[v]) { _normPhone = v.replace(/\D/g,''); break; }
+    }
+
+    const orderTotal = order.subtotal || order.total || 0;
+    if (minOrder > 0 && orderTotal < minOrder) return;
+
+    if (typeof db === 'undefined' || !db) return;
+
+    /* العداد في Firebase — لا يمكن للعميل مسحه أو تجاوزه */
+    const counterRef = db.ref('vip_gift_counter/' + _normPhone);
+    counterRef.get().then(function(snap) {
+      const data = snap.val() || { orders: [], delivered: 0 };
+      const now  = Date.now();
+      const periodMs = periodDays * 24 * 3600 * 1000;
+
+      /* نضيف الطلب الحالي (مع ID لمنع التكرار) */
+      const orders = (data.orders || []).filter(o => (now - o.ts) <= periodMs);
+      if (orders.some(o => o.id === order.id)) return; /* طلب محسوب قبل كده */
+      orders.push({ id: order.id, total: orderTotal, ts: now });
+
+      /* هل وصل العدد؟ */
+      if (orders.length >= orderCount) {
+        /* ✅ استحق الهدية — نعيد العداد من الصفر في Firebase */
+        counterRef.set({ orders: [], delivered: (data.delivered || 0) + 1 }).catch(function(){});
+        db.ref('vip_gift_due/' + _normPhone).set({
+          name: order.name || '', phone: _normPhone, giftName,
+          ordersCount: orderCount, minOrder, period: periodDays,
+          earnedAt: new Date().toISOString(), delivered: false
+        }).catch(function(){});
+        _showVIPGiftCashierAlert(order.name || rawPhone, giftName, _normPhone);
+      } else {
+        /* نحدّث العداد بالطلب الجديد */
+        counterRef.update({ orders: orders }).catch(function(){});
+      }
+    }).catch(function(e) { console.warn('VIP gift counter error:', e); });
+  } catch(e) { console.warn('VIP gift check error:', e); }
+}
+
+function _showVIPGiftCashierAlert(customerName, giftName, phone) {
+  var alertId = '_vipGiftAlert_' + phone;
+  var old = document.getElementById(alertId); if (old) old.remove();
+  var el = document.createElement('div');
+  el.id = alertId;
+  el.style.cssText = 'position:fixed;top:16px;right:0;left:0;margin:auto;max-width:340px;background:linear-gradient(135deg,#065f46,#059669);color:#fff;border-radius:16px;padding:16px;z-index:99999;box-shadow:0 6px 24px rgba(0,0,0,.3);direction:rtl;font-family:inherit';
+  el.innerHTML =
+    '<div style="font-size:13px;font-weight:900;margin-bottom:4px">🎁 عميل VIP مستحق هدية!</div>' +
+    '<div style="font-size:14px;font-weight:700;margin-bottom:2px">' + customerName + '</div>' +
+    '<div style="font-size:13px;opacity:.9;margin-bottom:12px">الهدية: <b>' + giftName + '</b></div>' +
+    '<div style="display:flex;gap:8px">' +
+      '<button onclick="_markVIPGiftDelivered(\'' + phone + '\',\'' + alertId + '\')" ' +
+        'style="flex:1;padding:9px;background:#fff;color:#065f46;border:none;border-radius:10px;font-size:13px;font-weight:900;cursor:pointer;font-family:inherit">✅ تم التسليم</button>' +
+      '<button onclick="document.getElementById(\'' + alertId + '\').remove()" ' +
+        'style="padding:9px 14px;background:rgba(255,255,255,.2);border:none;border-radius:10px;color:#fff;font-size:13px;cursor:pointer;font-family:inherit">لاحقاً</button>' +
+    '</div>';
+  document.body.appendChild(el);
+}
+
+function _markVIPGiftDelivered(phone, alertId) {
+  if (typeof db !== 'undefined' && db) {
+    db.ref('vip_gift_due/' + phone).update({ delivered: true, deliveredAt: new Date().toISOString() }).catch(function(){});
+  }
+  var el = document.getElementById(alertId); if (el) el.remove();
+  showNotif('✅ تم تسجيل تسليم الهدية');
 }
 function cancelOrderFromReview() {
   if (!_pendingOrderForReview) { closeOrderReview(); return; }
@@ -10657,6 +10996,64 @@ function adsSlideNav(dir) {
   startAdsAutoSlide(_adsTotalSlides);
 }
 
+function _adCTAAction(btn) {
+  const action  = btn.getAttribute('data-action') || 'none';
+  const product = btn.getAttribute('data-product') || '';
+  const url     = btn.getAttribute('data-url') || '';
+
+  if (action === 'url' && url) {
+    window.open(url, '_blank'); return;
+  }
+  if ((action === 'add_to_cart' || action === 'scroll_to') && product) {
+    /* نبحث عن المنتج في كل الكاتيجوريز */
+    let foundItem = null;
+    Object.values(MENU).forEach(function(cat) {
+      (cat.items || []).forEach(function(item) {
+        if (item.id === product) foundItem = item;
+      });
+    });
+    if (!foundItem) { showNotif('❌ المنتج غير متاح حالياً'); return; }
+
+    if (action === 'add_to_cart') {
+      addToCart({ id: foundItem.id, name: foundItem.name, price: foundItem.price, emoji: foundItem.emoji || '🍽️', qty: 1 });
+      return;
+    }
+    if (action === 'scroll_to') {
+      /* فتح المنيو والتمرير للمنتج */
+      if (typeof openScreen === 'function') openScreen('app');
+      setTimeout(function() {
+        const el = document.getElementById('citem_' + foundItem.id) || document.querySelector('[data-item-id="' + foundItem.id + '"]');
+        if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        else showNotif('📌 ' + foundItem.name + ' — ابحث عنه في المنيو');
+      }, 400);
+    }
+  }
+}
+
+function _adToggleCtaFields() {
+  const action = (document.getElementById('adCtaAction')||{}).value || 'none';
+  const productRow = document.getElementById('adCtaProductRow');
+  const urlRow     = document.getElementById('adCtaUrlRow');
+  if (productRow) productRow.style.display = (action === 'add_to_cart' || action === 'scroll_to') ? 'block' : 'none';
+  if (urlRow)     urlRow.style.display     = action === 'url' ? 'block' : 'none';
+  /* نملي قائمة المنتجات لو محتاجينها */
+  if (action === 'add_to_cart' || action === 'scroll_to') _adPopulateProductSelect();
+}
+
+function _adPopulateProductSelect() {
+  const sel = document.getElementById('adCtaProductId');
+  if (!sel || sel.options.length > 1) return; /* مملية بالفعل */
+  Object.entries(MENU).forEach(function([catId, cat]) {
+    (cat.items || []).forEach(function(item) {
+      if (item.disabled) return;
+      const opt = document.createElement('option');
+      opt.value = item.id;
+      opt.textContent = (cat.emoji || '') + ' ' + item.name + ' — ' + item.price + 'ج';
+      sel.appendChild(opt);
+    });
+  });
+}
+
 function startAdsAutoSlide(total) {
   clearInterval(_adsAutoSlideTimer);
   _adsTotalSlides = total;
@@ -10734,6 +11131,19 @@ function openEditAd(id) {
   document.getElementById('adUrlInput').value = ad.mediaUrl || '';
   document.getElementById('adCtaText').value = ad.cta || '';
   document.getElementById('adMediaType').value = ad.mediaType || 'image';
+  /* حقول الإجراء الجديدة */
+  const _ctaActionEl = document.getElementById('adCtaAction');
+  if (_ctaActionEl) { _ctaActionEl.value = ad.ctaAction || 'none'; _adToggleCtaFields(); }
+  const _ctaUrlEl = document.getElementById('adCtaUrl');
+  if (_ctaUrlEl) _ctaUrlEl.value = ad.ctaUrl || '';
+  const _oldPriceEl = document.getElementById('adOldPrice');
+  if (_oldPriceEl) _oldPriceEl.value = ad.oldPrice || '';
+  const _newPriceEl = document.getElementById('adNewPrice');
+  if (_newPriceEl) _newPriceEl.value = ad.newPrice || '';
+  setTimeout(function() {
+    const _prodEl = document.getElementById('adCtaProductId');
+    if (_prodEl && ad.ctaProduct) _prodEl.value = ad.ctaProduct;
+  }, 100);
   if (ad.active) document.getElementById('adActiveToggle').classList.add('on');
   else document.getElementById('adActiveToggle').classList.remove('on');
   previewAdUrl(ad.mediaUrl || '');
@@ -10800,7 +11210,14 @@ function saveAd() {
   const mediaType = document.getElementById('adMediaType').value;
   const cta = document.getElementById('adCtaText').value.trim();
   const active = document.getElementById('adActiveToggle').classList.contains('on');
-  const ad = { id: editId || 'ad_' + Date.now(), title, caption, mediaUrl, mediaType, cta, active, slides: _adSlides.length > 0 ? _adSlides : undefined };
+  const ctaAction  = (document.getElementById('adCtaAction')||{}).value || 'none';
+  const ctaProduct = (document.getElementById('adCtaProductId')||{}).value || '';
+  const ctaUrl     = (document.getElementById('adCtaUrl')||{}).value?.trim() || '';
+  const oldPrice   = parseFloat((document.getElementById('adOldPrice')||{}).value) || 0;
+  const newPrice   = parseFloat((document.getElementById('adNewPrice')||{}).value) || 0;
+  const ad = { id: editId || 'ad_' + Date.now(), title, caption, mediaUrl, mediaType, cta, active,
+    ctaAction, ctaProduct, ctaUrl, oldPrice, newPrice,
+    slides: _adSlides.length > 0 ? _adSlides : undefined };
   if (editId) { const idx = ADS.findIndex(a => a.id === editId); if (idx >= 0) ADS[idx] = ad; }
   else ADS.push(ad);
   saveAds(); renderAdsAdmin(); renderAdsSlider();
@@ -11501,6 +11918,8 @@ function openSecurityModal(action) {
 function _renderSecStep1() {
   // تغيير باسورد الأدمن: يتطلب الكلمة السرية + OTP معاً (الاثنان إجباري)
   if (_secAction === 'admin_pass') { _renderSecAdminPp(); return; }
+  /* الكود الاحتياطي: لا يُسمح بـ OTP — فقط الكود الحالي أو كلمة سر الأدمن */
+  if (_secAction === 'emergency_code') { _renderSecEmergencyVerifyOptions(); return; }
   const phone = getSecOtpPhone();
   const masked = '+' + phone.slice(0,3) + '****' + phone.slice(-4);
   document.getElementById('secModalContent').innerHTML = `
@@ -11573,6 +11992,45 @@ function _secVerifyOTP() {
   if (!_secOtpCode) { showNotif('❌ انتهت صلاحية الكود'); return; }
   if (entered !== _secOtpCode) { document.getElementById('secOtpInput').style.border='2px solid var(--red)'; showNotif('❌ الكود غير صحيح'); return; }
   clearInterval(_secOtpTimer); _secVerified = true; _renderSecChangeForm();
+}
+
+function _renderSecEmergencyVerifyOptions() {
+  document.getElementById('secModalContent').innerHTML = `
+    <div style="background:#fef3c7;border-radius:10px;padding:10px 14px;margin-bottom:14px;font-size:12px;color:#92400e;font-weight:700">🔒 لتغيير الكود الاحتياطي، يجب التحقق بإحدى الطريقتين التاليتين فقط.</div>
+    <div style="font-size:13px;font-weight:800;color:var(--dark);margin-bottom:10px">اختر طريقة التحقق:</div>
+    <div onclick="_renderSecEmergency()" style="background:var(--white);border:2px solid var(--olive);border-radius:14px;padding:14px;margin-bottom:10px;cursor:pointer;display:flex;align-items:center;gap:12px">
+      <div style="font-size:28px">🆘</div>
+      <div><div style="font-size:14px;font-weight:800;color:var(--dark)">الكود الاحتياطي الحالي</div><div style="font-size:11px;color:var(--text-muted)">أدخل كودك الاحتياطي السري الحالي</div></div>
+      <div style="margin-right:auto;font-size:18px">←</div>
+    </div>
+    <div onclick="_renderSecAdminPassForEmergency()" style="background:var(--white);border:1.5px solid var(--border);border-radius:14px;padding:14px;cursor:pointer;display:flex;align-items:center;gap:12px">
+      <div style="font-size:28px">🔑</div>
+      <div><div style="font-size:14px;font-weight:800;color:var(--dark)">كلمة سر الأدمن</div><div style="font-size:11px;color:var(--text-muted)">استخدم كلمة سر الأدمن للتحقق</div></div>
+      <div style="margin-right:auto;font-size:18px">←</div>
+    </div>`;
+}
+
+function _renderSecAdminPassForEmergency() {
+  document.getElementById('secModalContent').innerHTML = `
+    <div style="text-align:center;margin-bottom:14px"><div style="font-size:36px">🔑</div><div style="font-size:14px;font-weight:800;color:var(--dark)">أدخل كلمة سر الأدمن</div></div>
+    <input type="password" id="secAdminPassForEmergency" placeholder="كلمة سر الأدمن"
+      style="width:100%;padding:13px;font-size:15px;border:2px solid var(--border);border-radius:12px;outline:none;box-sizing:border-box;text-align:center;letter-spacing:4px;margin-bottom:10px">
+    <button onclick="_secVerifyAdminPassForEmergency()" style="width:100%;padding:13px;background:var(--olive);color:#fff;border:none;border-radius:12px;font-size:14px;font-weight:800;cursor:pointer;font-family:inherit">تحقق</button>
+    <button onclick="_renderSecEmergencyVerifyOptions()" style="width:100%;padding:10px;margin-top:6px;background:none;border:none;color:var(--text-muted);font-size:13px;cursor:pointer;font-family:inherit">← رجوع</button>`;
+  setTimeout(() => document.getElementById('secAdminPassForEmergency')?.focus(), 300);
+}
+
+function _secVerifyAdminPassForEmergency() {
+  const entered = (document.getElementById('secAdminPassForEmergency')?.value || '').trim();
+  if (!entered) { showNotif('❌ أدخل كلمة سر الأدمن'); return; }
+  /* نتحقق من كلمة سر الأدمن بنفس طريقة _verifyAuth */
+  if (!_verifyAuth('admin', entered)) {
+    document.getElementById('secAdminPassForEmergency').style.border = '2px solid var(--red)';
+    showNotif('❌ كلمة السر غير صحيحة');
+    return;
+  }
+  _secVerified = true;
+  _renderSecChangeForm();
 }
 
 function _renderSecEmergency() {
@@ -11977,6 +12435,215 @@ function setStatsPeriod(period, el) {
   document.querySelectorAll('.period-pill').forEach(p => p.classList.remove('active'));
   if (el) el.classList.add('active');
   renderStatsTab();
+  _renderExtendedStats(); /* تحديث الإحصائيات الموسعة عند تغيير الفترة */
+}
+
+/* ══ تتبع فتحات التطبيق ══ */
+function _trackAppOpen() {
+  if (typeof db === 'undefined' || !db) return;
+  const today = new Date().toISOString().slice(0,10);
+  const phone = (typeof currentUser !== 'undefined' && currentUser?.phone) ? currentUser.phone.replace(/\D/g,'') : 'guest';
+  db.ref('app_opens/' + today).transaction(function(val) { return (val||0) + 1; }).catch(function(){});
+  db.ref('app_opens_users/' + phone).set(today).catch(function(){});
+}
+
+/* ══ الإحصائيات الموسعة ══ */
+function _renderExtendedStats() {
+  const users = loadData('zz_users', []);
+  const ordersAll = loadData('zz_orders_history', ordersData && ordersData.length ? ordersData : []);
+  const now = Date.now();
+  const period30 = 30 * 24 * 3600 * 1000;
+  const monthStart = new Date(); monthStart.setDate(1); monthStart.setHours(0,0,0,0);
+
+  /* ── إحصائيات المستخدمين ── */
+  const totalUsers  = users.length;
+  const vipCount    = users.filter(u => !!_resolveVIP((u.phone||'').replace(/\D/g,''))).length;
+  const activeUsers = users.filter(u => {
+    const phone = (u.phone||'').replace(/\D/g,'');
+    return ordersAll.some(o => o.phone && o.phone.replace(/\D/g,'') === phone && (now - new Date(o.timestamp||o.date||0).getTime()) <= period30);
+  }).length;
+  const newUsers = users.filter(u => {
+    if (!u.joinedAt) return false;
+    return new Date(u.joinedAt) >= monthStart;
+  }).length;
+
+  _setStatVal('statTotalUsers', totalUsers);
+  _setStatVal('statVIPUsers', vipCount);
+  _setStatVal('statActiveUsers', activeUsers);
+  _setStatVal('statNewUsers', newUsers);
+
+  if (totalUsers > 0) {
+    const wrap = document.getElementById('usersRatioWrap');
+    if (wrap) wrap.style.display = 'block';
+    _animateBar('urVIP', 'urVIPPct', vipCount, totalUsers);
+    _animateBar('urActive', 'urActivePct', activeUsers, totalUsers);
+    const returnUsers = users.filter(u => {
+      const ph = (u.phone||'').replace(/\D/g,'');
+      return ordersAll.filter(o => o.phone && o.phone.replace(/\D/g,'') === ph).length > 1;
+    }).length;
+    _animateBar('urReturn', 'urReturnPct', returnUsers, totalUsers);
+  }
+
+  /* ── إحصائيات الطلبات ── */
+  const filteredOrders = _currentStatsPeriod === 'all' ? ordersAll : ordersAll.filter(o => {
+    const ts = new Date(o.timestamp || o.date || 0);
+    if (_currentStatsPeriod === 'today') return ts.toDateString() === new Date().toDateString();
+    if (_currentStatsPeriod === 'week') return (now - ts) <= 7*24*3600*1000;
+    if (_currentStatsPeriod === 'month') return ts >= monthStart;
+    return true;
+  });
+  const totalOrders = filteredOrders.length;
+  const avgOrder    = totalOrders ? Math.round(filteredOrders.reduce((s,o) => s+(o.total||0),0) / totalOrders) : 0;
+
+  /* معدل العودة */
+  const phoneSet = {}; filteredOrders.forEach(o => { const ph=(o.phone||'').replace(/\D/g,''); phoneSet[ph]=(phoneSet[ph]||0)+1; });
+  const returnCount = Object.values(phoneSet).filter(c => c > 1).length;
+  const uniqueOrderers = Object.keys(phoneSet).length;
+  const returnRate = uniqueOrderers ? Math.round(returnCount/uniqueOrderers*100) : 0;
+
+  /* ساعة الذروة */
+  const hours = {}; filteredOrders.forEach(o => { const h = new Date(o.timestamp||o.date||0).getHours(); hours[h]=(hours[h]||0)+1; });
+  const peakH = Object.entries(hours).sort((a,b)=>b[1]-a[1])[0];
+  const peakStr = peakH ? (peakH[0]>12 ? (peakH[0]-12)+'م' : peakH[0]+'ص') : '—';
+
+  _setStatVal('statTotalOrders', totalOrders);
+  _setStatVal('statAvgOrder', avgOrder ? avgOrder+'ج' : '—');
+  _setStatVal('statReturnRate', returnRate+'%');
+  _setStatVal('statPeakHour', peakStr);
+
+  /* توزيع أنواع الطلبات */
+  if (totalOrders > 0) {
+    const tw = document.getElementById('ordersTypeWrap'); if (tw) tw.style.display = 'block';
+    const del = filteredOrders.filter(o => o.type === 'delivery').length;
+    const caf = filteredOrders.filter(o => o.type === 'cafe').length;
+    const pic = filteredOrders.filter(o => o.type === 'pickup').length;
+    _animateBar('otDelivery','otDeliveryPct', del, totalOrders);
+    _animateBar('otCafe','otCafePct', caf, totalOrders);
+    _animateBar('otPickup','otPickupPct', pic, totalOrders);
+  }
+
+  /* ── أكثر المنتجات طلباً ── */
+  const productCounts = {};
+  filteredOrders.forEach(o => (o.items||[]).forEach(it => { productCounts[it.name] = (productCounts[it.name]||0) + (it.qty||1); }));
+  const top5 = Object.entries(productCounts).sort((a,b)=>b[1]-a[1]).slice(0,5);
+  const maxQty = top5[0]?.[1] || 1;
+  const topEl = document.getElementById('topProductsList');
+  if (topEl) {
+    if (!top5.length) { topEl.innerHTML = '<div style="text-align:center;color:var(--text-muted);padding:20px">لا توجد بيانات</div>'; }
+    else topEl.innerHTML = top5.map(([name, qty], i) =>
+      `<div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
+        <div style="font-size:13px;font-weight:900;color:var(--text-muted);width:18px">#${i+1}</div>
+        <div style="flex:1">
+          <div style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:4px">${name}</div>
+          <div style="background:var(--border);border-radius:20px;height:8px;overflow:hidden">
+            <div style="width:0%;height:100%;background:linear-gradient(90deg,var(--olive),var(--olive-light));border-radius:20px;transition:width 1s ease" data-target="${Math.round(qty/maxQty*100)}"></div>
+          </div>
+        </div>
+        <div style="font-size:13px;font-weight:900;color:var(--olive);min-width:30px;text-align:left">${qty}×</div>
+      </div>`).join('');
+    /* تحريك الـ bars */
+    setTimeout(function() {
+      topEl.querySelectorAll('[data-target]').forEach(function(el) {
+        el.style.width = el.getAttribute('data-target') + '%';
+      });
+    }, 100);
+  }
+
+  /* ── app_opens من Firebase ── */
+  if (typeof db !== 'undefined' && db) {
+    db.ref('app_opens').get().then(function(snap) {
+      if (!snap.exists()) return;
+      const data = snap.val() || {};
+      const todayKey = new Date().toISOString().slice(0,10);
+      let total = 0, todayCount = 0;
+      Object.entries(data).forEach(([date, count]) => { total += count; if (date === todayKey) todayCount = count; });
+      const days = Object.keys(data).length || 1;
+      _setStatVal('statAppOpens', total);
+      _setStatVal('statAppOpensToday', todayCount);
+      _setStatVal('statAvgDaily', Math.round(total/days));
+    }).catch(function(){});
+    db.ref('app_opens_users').get().then(function(snap) {
+      _setStatVal('statUniqueUsers', snap.exists() ? Object.keys(snap.val()||{}).length : '—');
+    }).catch(function(){});
+  }
+}
+
+function _setStatVal(id, val) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  /* أنيميشن عداد من 0 للقيمة */
+  const isNum = typeof val === 'number' || (typeof val === 'string' && /^\d+$/.test(val));
+  if (isNum) {
+    const target = parseInt(val); let current = 0;
+    const step = Math.max(1, Math.ceil(target / 30));
+    const timer = setInterval(function() {
+      current = Math.min(current + step, target);
+      el.textContent = current;
+      if (current >= target) clearInterval(timer);
+    }, 30);
+  } else { el.textContent = val; }
+}
+
+function _animateBar(barId, pctId, value, total) {
+  const pct = total > 0 ? Math.round(value/total*100) : 0;
+  const barEl = document.getElementById(barId);
+  const pctEl = document.getElementById(pctId);
+  if (pctEl) pctEl.textContent = pct + '%';
+  if (barEl) setTimeout(function() { barEl.style.width = pct + '%'; }, 150);
+}
+
+/* ══ تصدير بيانات العملاء ══ */
+function _exportCustomers(filter) {
+  const users = loadData('zz_users', []);
+  const ordersAll = loadData('zz_orders_history', ordersData && ordersData.length ? ordersData : []);
+  const now = Date.now(); const period30 = 30*24*3600*1000;
+  const monthStart = new Date(); monthStart.setDate(1); monthStart.setHours(0,0,0,0);
+
+  let filtered = users;
+  let label = 'all';
+  if (filter === 'vip') {
+    filtered = users.filter(u => !!_resolveVIP((u.phone||'').replace(/\D/g,'')));
+    label = 'VIP';
+  } else if (filter === 'active') {
+    filtered = users.filter(u => {
+      const ph = (u.phone||'').replace(/\D/g,'');
+      return ordersAll.some(o => o.phone && o.phone.replace(/\D/g,'') === ph && (now - new Date(o.timestamp||o.date||0)) <= period30);
+    });
+    label = 'Active';
+  } else if (filter === 'new') {
+    filtered = users.filter(u => u.joinedAt && new Date(u.joinedAt) >= monthStart);
+    label = 'New';
+  }
+
+  if (!filtered.length) { showNotif('❌ لا يوجد عملاء في هذه الفئة'); return; }
+
+  /* بناء CSV مع BOM للعربية في Excel */
+  const BOM = '\uFEFF';
+  const rows = [['الاسم', 'رقم الهاتف', 'واتساب', 'VIP', 'تاريخ التسجيل', 'عدد الطلبات']];
+  filtered.forEach(function(u) {
+    const ph = (u.phone||'').replace(/\D/g,'');
+    const isVip = !!_resolveVIP(ph);
+    const orderCount = ordersAll.filter(o => o.phone && o.phone.replace(/\D/g,'') === ph).length;
+    rows.push([
+      u.name||'—',
+      u.phone||'—',
+      u.whatsapp||u.phone||'—',
+      isVip ? 'VIP' : '—',
+      u.joinedAt ? new Date(u.joinedAt).toLocaleDateString('ar-EG') : '—',
+      orderCount
+    ]);
+  });
+  const csv = BOM + rows.map(r => r.map(c => '"' + String(c).replace(/"/g,'""') + '"').join(',')).join('\r\n');
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
+  a.href = url;
+  a.download = 'zamzam_customers_' + label + '_' + new Date().toISOString().slice(0,10) + '.csv';
+  a.click();
+  URL.revokeObjectURL(url);
+  const info = document.getElementById('exportStatsInfo');
+  if (info) info.textContent = '✅ تم تصدير ' + filtered.length + ' عميل — ' + new Date().toLocaleTimeString('ar-EG');
+  showNotif('✅ تم تصدير ' + filtered.length + ' عميل');
 }
 
 function filterStatsByPeriod(events, period) {
@@ -11993,8 +12660,7 @@ function renderStatsTab() {
   const events = filterStatsByPeriod(PWA_STATS.events || [], _currentStatsPeriod);
   const shown = events.filter(e => e.type === 'shown').length || ((_currentStatsPeriod === 'all') ? PWA_STATS.shown : 0);
   const clicked = events.filter(e => e.type === 'clicked').length || ((_currentStatsPeriod === 'all') ? PWA_STATS.clicked : 0);
-  const installed = events.filter(e => e.type === 'installed').length || ((_currentStatsPeriod === 'all') ? PWA_STATS.installed : 0);
-  const dismissed = events.filter(e => e.type === 'dismissed').length || ((_currentStatsPeriod === 'all') ? PWA_STATS.dismissed : 0);
+  const installed = events.filter(e => e.type === 'installed').length || ((_currentStatsPeriod === 'all') ? PWA_STATS.installed : 0);  const dismissed = events.filter(e => e.type === 'dismissed').length || ((_currentStatsPeriod === 'all') ? PWA_STATS.dismissed : 0);
 
   const shownN = _currentStatsPeriod === 'all' ? (PWA_STATS.shown || 0) : shown;
   const clickedN = _currentStatsPeriod === 'all' ? (PWA_STATS.clicked || 0) : clicked;
@@ -12192,7 +12858,13 @@ function renderVIPBenefitsAdmin() {
       <span class="vip-benefit-admin-label">${b.label}</span>
       ${b.type === 'toggle' ? `<div class="toggle-sw ${b.enabled ? 'on' : ''}" id="vb_tog_${b.id}" onclick="this.classList.toggle('on')"></div>` : ''}
       ${b.type !== 'toggle' ? `<input type="${b.type==='number'?'number':'text'}" class="vip-benefit-admin-val" id="vb_val_${b.id}" value="${b.value}" placeholder="—"/><div class="toggle-sw ${b.enabled ? 'on' : ''}" id="vb_tog_${b.id}" onclick="this.classList.toggle('on')"></div>` : ''}
-    </div>`).join('');
+    </div>
+    ${b.id === 'gift' ? `<div id="vb_gift_extra" style="background:#f0fdf4;border-radius:10px;padding:10px 12px;margin-top:-6px;margin-bottom:6px;display:grid;grid-template-columns:1fr 1fr;gap:8px">
+      <div><div style="font-size:11px;font-weight:700;color:#166534;margin-bottom:3px">💰 حد أدنى للطلب (ج.م)</div><input type="number" id="vb_gift_minOrder" value="${b.minOrder||0}" min="0" placeholder="0" style="width:100%;padding:7px;border:1.5px solid #86efac;border-radius:8px;font-size:13px;box-sizing:border-box;font-family:inherit"></div>
+      <div><div style="font-size:11px;font-weight:700;color:#166534;margin-bottom:3px">📅 خلال (يوم)</div><input type="number" id="vb_gift_period" value="${b.period||30}" min="1" placeholder="30" style="width:100%;padding:7px;border:1.5px solid #86efac;border-radius:8px;font-size:13px;box-sizing:border-box;font-family:inherit"></div>
+      <div style="grid-column:1/-1"><div style="font-size:11px;font-weight:700;color:#166534;margin-bottom:3px">🎁 اسم الهدية</div><input type="text" id="vb_gift_name" value="${b.note||''}" placeholder="مثال: كنافة مجانية" style="width:100%;padding:7px;border:1.5px solid #86efac;border-radius:8px;font-size:13px;box-sizing:border-box;font-family:inherit"></div>
+    </div>` : ''}
+  `).join('');
 }
 function saveVIPBenefits() {
   VIP_BENEFITS.forEach(b => {
@@ -12200,11 +12872,34 @@ function saveVIPBenefits() {
     const val = document.getElementById('vb_val_'+b.id);
     if (tog) b.enabled = tog.classList.contains('on');
     if (val) b.value = val.value;
+    /* حقول الهدية الإضافية */
+    if (b.id === 'gift') {
+      const minOrd = document.getElementById('vb_gift_minOrder');
+      const period = document.getElementById('vb_gift_period');
+      const name   = document.getElementById('vb_gift_name');
+      if (minOrd) b.minOrder = Number(minOrd.value) || 0;
+      if (period) b.period   = Number(period.value) || 30;
+      if (name)   b.note     = name.value.trim();
+    }
   });
   saveData('zz_vip_benefits', VIP_BENEFITS);
   if (db) fbUpdate('config', { vipBenefits: VIP_BENEFITS }).catch(()=>{});
   showNotif('✓ تم حفظ مزايا VIP');
   updateVIPWelcomeBanner();
+  /* تغذية راجعة مرئية على الزرار نفسه */
+  const _btn = document.getElementById('saveVIPBenefitsBtn');
+  if (_btn) {
+    const _orig = _btn.style.background;
+    const _origTxt = _btn.textContent;
+    _btn.style.background = 'linear-gradient(135deg,#16a34a,#22c55e)';
+    _btn.textContent = '✅ تم الحفظ';
+    _btn.disabled = true;
+    setTimeout(function() {
+      _btn.style.background = _orig;
+      _btn.textContent = _origTxt;
+      _btn.disabled = false;
+    }, 2000);
+  }
 }
 function getVIPBenefitsSummary() {
   return VIP_BENEFITS.filter(b=>b.enabled).map(b=>{
@@ -12385,12 +13080,96 @@ function updateVIPWelcomeBanner() {
         </div>
       </div>
       ${benefitChips ? `<div class="vip-benefits-strip">${benefitChips}</div>` : ''}`;
+    /* كارت تقدم الهدية — يظهر بعد تحميل العداد من Firebase */
+    _renderVIPGiftProgress(loyaltyWrap, currentUser.phone);
   }
 
   // 4) Legacy banner (نخليه مخفي لأن الـ loyalty card بيغطيه)
   if (banner) banner.classList.remove('show');
 }
 function isVIPPriorityEnabled() { return VIP_BENEFITS.find(b=>b.id==='priority')?.enabled||false; }
+
+function _renderVIPGiftProgress(loyaltyWrap, phone) {
+  const giftBenefit = VIP_BENEFITS.find(b => b.id === 'gift' && b.enabled);
+  if (!giftBenefit || !phone || !loyaltyWrap) return;
+  if (typeof db === 'undefined' || !db) return;
+
+  const orderCount = parseInt(giftBenefit.value)     || 10;
+  const minOrder   = parseFloat(giftBenefit.minOrder) || 0;
+  const periodDays = parseInt(giftBenefit.period)    || 30;
+  const giftName   = giftBenefit.note || 'هدية مجانية';
+
+  /* تطبيع الرقم */
+  let _normPhone = phone.replace(/\D/g,'');
+  for (const v of _phoneVariants(_normPhone)) {
+    if (VIP_CUSTOMERS[v]) { _normPhone = v.replace(/\D/g,''); break; }
+  }
+
+  db.ref('vip_gift_counter/' + _normPhone).get().then(function(snap) {
+    const data = snap.val() || { orders: [] };
+    const now  = Date.now();
+    const periodMs = periodDays * 24 * 3600 * 1000;
+    const validOrders = (data.orders || []).filter(o => (now - o.ts) <= periodMs);
+    const done  = validOrders.length;
+    const left  = Math.max(0, orderCount - done);
+    const pct   = Math.min(100, Math.round(done / orderCount * 100));
+
+    /* أقرب طلب للانتهاء */
+    const oldest = validOrders.length ? Math.min(...validOrders.map(o => o.ts)) : null;
+    const daysLeft = oldest ? Math.ceil((oldest + periodMs - now) / 86400000) : periodDays;
+
+    /* لو وصل → مش محتاج يعرض شيء (الكاشير اتعلم) */
+    if (left === 0) return;
+
+    const card = document.createElement('div');
+    card.id = '_vipGiftProgressCard';
+    card.style.cssText = 'margin:8px 12px 0;border-radius:16px;overflow:hidden;position:relative;animation:vipGiftPulse 2.5s ease-in-out infinite';
+    card.innerHTML = `
+      <div style="background:linear-gradient(135deg,#78350f,#d97706,#fbbf24);padding:14px 16px;direction:rtl">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+          <div>
+            <div style="font-size:13px;font-weight:900;color:#fff">🎁 طريقك للهدية المجانية</div>
+            <div style="font-size:11px;color:rgba(255,255,255,.85);margin-top:2px">${giftName}</div>
+          </div>
+          <div style="text-align:center;background:rgba(255,255,255,.2);border-radius:12px;padding:6px 12px">
+            <div style="font-size:22px;font-weight:900;color:#fff">${done}/${orderCount}</div>
+            <div style="font-size:9px;color:rgba(255,255,255,.8)">طلب مؤهل</div>
+          </div>
+        </div>
+        <!-- Progress Bar -->
+        <div style="background:rgba(255,255,255,.25);border-radius:20px;height:10px;overflow:hidden;margin-bottom:8px">
+          <div style="width:${pct}%;height:100%;background:#fff;border-radius:20px;transition:width 1s ease;box-shadow:0 0 8px rgba(255,255,255,.8)"></div>
+        </div>
+        <div style="display:flex;justify-content:space-between;align-items:center">
+          <div style="font-size:11px;color:rgba(255,255,255,.9)">
+            ${left > 0 ? `باقي <b>${left} طلب</b> للحصول على هديتك` : '🎉 مبروك! مستحق هديتك'}
+            ${minOrder > 0 ? `<br><span style="opacity:.75">كل طلب بـ ${minOrder}ج على الأقل</span>` : ''}
+          </div>
+          <div style="text-align:center">
+            <div style="font-size:11px;color:rgba(255,255,255,.9)">⏳ <span id="_vipGiftCountdown"></span></div>
+          </div>
+        </div>
+      </div>`;
+
+    /* نضيف الكارت بعد الـ VIP card مباشرة */
+    loyaltyWrap.appendChild(card);
+
+    /* عداد تنازلي بالثواني */
+    function _updateGiftCountdown() {
+      const el = document.getElementById('_vipGiftCountdown');
+      if (!el) return;
+      if (!oldest) { el.textContent = daysLeft + ' يوم'; return; }
+      const remaining = oldest + periodMs - Date.now();
+      if (remaining <= 0) { el.textContent = 'انتهت المدة'; return; }
+      const d = Math.floor(remaining / 86400000);
+      const h = Math.floor((remaining % 86400000) / 3600000);
+      const m = Math.floor((remaining % 3600000) / 60000);
+      el.textContent = d > 0 ? d + ' يوم ' + h + ' س' : h + ':' + String(m).padStart(2,'0');
+    }
+    _updateGiftCountdown();
+    setInterval(_updateGiftCountdown, 60000);
+  }).catch(function(){});
+}
 
 // ============================================================
 // ============================================================
@@ -12707,7 +13486,7 @@ function renderAdsSliderEnhanced() {
       });
     } else {
       // إعلان عادي (صورة/فيديو واحدة)
-      allSlides.push({ imgSrc: ad.mediaUrl || '', title: ad.title, caption: ad.caption, cta: ad.cta, mediaType: ad.mediaType, adId: ad.id });
+      allSlides.push({ imgSrc: ad.mediaUrl || '', title: ad.title, caption: ad.caption, cta: ad.cta, mediaType: ad.mediaType, adId: ad.id, ctaAction: ad.ctaAction||'none', ctaProduct: ad.ctaProduct||'', ctaUrl: ad.ctaUrl||'', oldPrice: ad.oldPrice||0, newPrice: ad.newPrice||0 });
     }
   });
 
@@ -12727,7 +13506,7 @@ function renderAdsSliderEnhanced() {
             <div class="ad-multi-overlay" style="border-radius:0 0 0 0">
               ${s.title?`<div class="ad-multi-title">${s.title}</div>`:''}
               ${s.caption?`<div class="ad-multi-caption">${s.caption}</div>`:''}
-              ${s.cta?`<button class="ad-multi-cta">${s.cta}</button>`:''}
+              ${s.cta?`<button class="ad-multi-cta" onclick="_adCTAAction(this)" data-action="${s.ctaAction||'none'}" data-product="${s.ctaProduct||''}" data-url="${s.ctaUrl||''}">${s.cta}</button>`:''}
             </div>
           </div>`;
         } else {
@@ -12736,13 +13515,13 @@ function renderAdsSliderEnhanced() {
             <div class="ad-multi-overlay">
               ${s.title?`<div class="ad-multi-title">${s.title}</div>`:''}
               ${s.caption?`<div class="ad-multi-caption">${s.caption}</div>`:''}
-              ${s.cta?`<button class="ad-multi-cta">${s.cta}</button>`:''}
+              ${s.cta?`<button class="ad-multi-cta" onclick="_adCTAAction(this)" data-action="${s.ctaAction||'none'}" data-product="${s.ctaProduct||''}" data-url="${s.ctaUrl||''}">${s.cta}</button>`:''}
             </div>
           </div>`;
         }
       }
     }
-    const textBody = !src ? `<div class="ad-slide-body">${s.title?`<div class="ad-slide-title">${s.title}</div>`:''}${s.caption?`<div class="ad-slide-caption">${s.caption}</div>`:''}${s.cta?`<button class="ad-cta-btn">${s.cta}</button>`:''}</div>` : '';
+    const textBody = !src ? `<div class="ad-slide-body">${s.title?`<div class="ad-slide-title">${s.title}</div>`:''}${s.caption?`<div class="ad-slide-caption">${s.caption}</div>`:''}${s.cta?`<button class="ad-cta-btn" onclick="_adCTAAction(this)" data-action="${s.ctaAction||'none'}" data-product="${s.ctaProduct||''}" data-url="${s.ctaUrl||''}">${s.cta}</button>`:''}</div>` : '';
     return `<div class="ad-slide">${mediaHtml}${textBody}</div>`;
   }).join('');
 
@@ -13184,6 +13963,28 @@ function closeWorkHoursBlock() {
 // ============================================================
 // VIP WHATSAPP MESSAGE — إرسال رسالة ترحيب لـ VIP جديد
 // ============================================================
+function _showVIPWAPrompt(phone, name, discount, type) {
+  /* نعمل بطاقة ثابتة فيها زرار مباشر — المستخدم بيضغطه مباشرة
+     ده بيضمن إن window.open() يتعمل كـ direct user gesture بدون popup block */
+  var old = document.getElementById('_vipWAPrompt'); if (old) old.remove();
+  var el = document.createElement('div');
+  el.id = '_vipWAPrompt';
+  el.style.cssText = 'position:fixed;bottom:80px;right:0;left:0;margin:auto;max-width:320px;background:#fff;border-radius:16px;padding:16px;z-index:99999;box-shadow:0 4px 24px rgba(0,0,0,.2);direction:rtl;font-family:inherit;border:2px solid #25D366';
+  var label = type === 'new'
+    ? '⭐ تم تحويل <b>' + name + '</b> إلى VIP بخصم ' + discount + '%<br><small style="color:#666">أرسل رسالة تهنئة على واتساب؟</small>'
+    : '✓ تم تحديث خصم <b>' + name + '</b> إلى ' + discount + '%<br><small style="color:#666">أرسل إشعاراً على واتساب؟</small>';
+  el.innerHTML =
+    '<div style="font-size:13px;font-weight:700;color:#1a1a1a;margin-bottom:10px">' + label + '</div>' +
+    '<div style="display:flex;gap:8px">' +
+      '<a href="https://wa.me/' + normalizePhoneForWA(phone) + '?text=' + encodeURIComponent((typeof buildVIPMessage === 'function' ? buildVIPMessage(phone, name, discount) : null) || 'مرحباً *' + name + '* ❤️\n\nيسعدنا إبلاغك بخصم VIP الخاص بك:\n🎁 *' + discount + '%*\n\nشكراً لثقتك في *' + (RESTAURANT && RESTAURANT.name ? RESTAURANT.name : 'مطعمنا') + '* 🌟') + '" target="_blank" onclick="document.getElementById(\'_vipWAPrompt\').remove()" ' +
+        'style="flex:1;background:#25D366;color:#fff;border:none;border-radius:10px;padding:10px;font-size:13px;font-weight:800;cursor:pointer;text-align:center;text-decoration:none;display:flex;align-items:center;justify-content:center;gap:4px">📱 إرسال واتساب</a>' +
+      '<button onclick="document.getElementById(\'_vipWAPrompt\').remove()" style="padding:10px 14px;background:#f5f5f5;border:none;border-radius:10px;font-size:13px;color:#666;cursor:pointer;font-family:inherit">تخطي</button>' +
+    '</div>';
+  document.body.appendChild(el);
+  /* تختفي تلقائياً بعد 15 ثانية لو ما ضغطش */
+  setTimeout(function() { if (el.parentElement) el.remove(); }, 15000);
+}
+
 function sendVIPWelcomeMessage(phone, name, discount) {
   const num = normalizePhoneForWA(phone);
   if (!num) return;
@@ -13411,6 +14212,34 @@ function _fullRebuildAfterImport() {
       <div class="field">
         <label>زر CTA (اختياري)</label>
         <input type="text" id="adCtaText" placeholder="مثال: اطلب الآن / شاهد العرض / خصم اليوم"/>
+      </div>
+      <div class="field" style="background:var(--olive-ultra);border-radius:10px;padding:10px 12px;margin-top:4px">
+        <label style="font-weight:800;color:var(--olive-dark)">🎯 إجراء الزر (اختياري)</label>
+        <select id="adCtaAction" onchange="_adToggleCtaFields()" style="width:100%;padding:9px;border:1.5px solid var(--border);border-radius:10px;font-size:13px;font-family:inherit;background:var(--bg);margin-top:4px">
+          <option value="none">بدون إجراء (عرض فقط)</option>
+          <option value="add_to_cart">🛒 أضف منتج للسلة مباشرة</option>
+          <option value="scroll_to">📌 انتقل لمنتج في المنيو</option>
+          <option value="url">🔗 افتح رابط خارجي</option>
+        </select>
+        <div id="adCtaProductRow" style="display:none;margin-top:8px">
+          <label style="font-size:11px;font-weight:700;color:var(--text-muted)">اختر المنتج من المنيو</label>
+          <select id="adCtaProductId" style="width:100%;padding:9px;border:1.5px solid var(--border);border-radius:10px;font-size:13px;font-family:inherit;background:var(--bg);margin-top:3px">
+            <option value="">— اختر منتج —</option>
+          </select>
+        </div>
+        <div id="adCtaUrlRow" style="display:none;margin-top:8px">
+          <input type="url" id="adCtaUrl" placeholder="https://..." style="width:100%;padding:9px;border:1.5px solid var(--border);border-radius:10px;font-size:13px;font-family:inherit;box-sizing:border-box">
+        </div>
+        <div id="adPriceRow" style="margin-top:8px;display:grid;grid-template-columns:1fr 1fr;gap:8px">
+          <div>
+            <label style="font-size:11px;font-weight:700;color:var(--text-muted)">💰 السعر القديم (اختياري)</label>
+            <input type="number" id="adOldPrice" min="0" placeholder="100" style="width:100%;padding:8px;border:1.5px solid var(--border);border-radius:8px;font-size:13px;font-family:inherit;box-sizing:border-box;margin-top:3px">
+          </div>
+          <div>
+            <label style="font-size:11px;font-weight:700;color:var(--olive-dark)">🏷️ السعر الجديد</label>
+            <input type="number" id="adNewPrice" min="0" placeholder="70" style="width:100%;padding:8px;border:1.5px solid var(--olive);border-radius:8px;font-size:13px;font-family:inherit;box-sizing:border-box;margin-top:3px">
+          </div>
+        </div>
       </div>
       <div style="display:flex;align-items:center;gap:12px;padding:12px 0;border-top:1px solid var(--border);margin-bottom:12px">
         <div class="toggle-sw on" id="adActiveToggle" onclick="this.classList.toggle('on')"></div>
@@ -13769,9 +14598,11 @@ let _compModalOpen = false;
         const e = document.getElementById('tab-' + t); if (e) e.style.display = 'none';
       });
       if (compTab) { compTab.style.display = 'block'; _compRenderAdmin(); }
+      /* ابدأ الـ live feed بعد ما _compRenderAdmin يملي _COMPETITIONS */
+      setTimeout(_compStartLiveFeed, 800);
       return;
     }
-    if (compTab) compTab.style.display = 'none';
+    if (compTab) { compTab.style.display = 'none'; _compStopLiveFeed(); }
     if (_orig) _orig(tab, el);
   };
 })();
@@ -14965,12 +15796,72 @@ function _compRevokePrize(phone, compId) {
   });
 }
 
+/* ══ Live Predictions Feed — الأدمن يشوف التوقعات فورياً ══ */
+var _compLiveListeners = [];   /* listeners مفتوحة */
+var _compLiveSeen = {};        /* بنتجنب تكرار نفس التوقع */
+
+function _compStartLiveFeed() {
+  _compStopLiveFeed(); /* أوقف أي listener قديم */
+  if (typeof db === 'undefined' || !db) return;
+  var feedEl   = document.getElementById('compLiveFeed');
+  var listEl   = document.getElementById('compLiveFeedList');
+  var countEl  = document.getElementById('compLiveFeedCount');
+  if (!feedEl || !listEl) return;
+  var totalNew = 0;
+  /* بنسمع على كل مسابقة نشطة */
+  Object.values(_COMPETITIONS).forEach(function(comp) {
+    if (!comp || !comp.id) return;
+    var ref = _compRef(comp.id + '/predictions');
+    if (!ref) return;
+    var listener = ref.on('child_added', function(snap) {
+      if (!snap.exists()) return;
+      var phone = snap.key;
+      var pred  = snap.val();
+      /* تجنب التكرار لو نفس التوقع بيجيله مرتين */
+      var uid = comp.id + '_' + phone;
+      if (_compLiveSeen[uid]) return;
+      _compLiveSeen[uid] = true;
+      totalNew++;
+      feedEl.style.display = 'block';
+      if (countEl) countEl.textContent = totalNew;
+      /* بناء بطاقة التوقع */
+      var timeStr = pred.submittedAt ? new Date(pred.submittedAt).toLocaleTimeString('ar-EG', {hour:'2-digit',minute:'2-digit'}) : '';
+      var card = document.createElement('div');
+      card.className = 'comp-feed-card';
+      card.style.cssText = 'background:var(--bg);border:1.5px solid var(--border);border-right:3px solid var(--olive);border-radius:10px;padding:8px 12px;display:flex;justify-content:space-between;align-items:center;gap:8px;direction:rtl';
+      card.innerHTML =
+        '<div>' +
+          '<div style="font-size:12px;font-weight:900;color:var(--text)">' + (pred.name || phone) + '</div>' +
+          '<div style="font-size:11px;color:var(--text-muted);margin-top:2px">📌 ' + (comp.title || comp.id) + '</div>' +
+        '</div>' +
+        '<div style="text-align:center">' +
+          '<div style="font-size:18px;font-weight:900;color:var(--olive);letter-spacing:2px">' + (pred.result || '—') + '</div>' +
+          '<div style="font-size:10px;color:var(--text-muted)">' + timeStr + '</div>' +
+        '</div>';
+      /* الجديد بيظهر في الأعلى */
+      listEl.insertBefore(card, listEl.firstChild);
+    });
+    _compLiveListeners.push({ ref: ref, listener: listener });
+  });
+}
+
+function _compStopLiveFeed() {
+  _compLiveListeners.forEach(function(l) {
+    try { l.ref.off('child_added', l.listener); } catch(e) {}
+  });
+  _compLiveListeners = [];
+  /* نعيد الـ counter بس، مش نمسح الـ feed عشان الأدمن يفضل شايفه */
+  var countEl = document.getElementById('compLiveFeedCount');
+  if (countEl) countEl.textContent = '';
+}
+
 /* ══════════════════ INIT ══════════════════ */
 document.addEventListener('DOMContentLoaded', function() {
   setTimeout(function() {
     _compLoadForCustomer();
     _compLoadUserPrize();
     _compStartCountdowns();
+    _trackAppOpen(); /* تسجيل فتحة التطبيق */
   }, 2000);
 });
 
