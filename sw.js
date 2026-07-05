@@ -100,7 +100,11 @@ self.addEventListener('notificationclick', e => {
           return;
         }
       }
-      return clients.openWindow(url || '/Zamzam-Restaurant-Cafe/');
+      return clients.openWindow(
+  (url && url.startsWith('http')) 
+    ? url 
+    : 'https://mahmoudgamaleldeen15-bit.github.io/Zamzam-Restaurant-Cafe/'
+);
     })
   );
 });
