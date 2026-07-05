@@ -15965,7 +15965,8 @@ window.OneSignalDeferred.push(async function(OneSignal) {
   try {
     await OneSignal.init({
       appId: ONESIGNAL_APP_ID,
-      serviceWorkerPath: 'OneSignalSDKWorker.js',
+      serviceWorkerPath: '/Zamzam-Restaurant-Cafe/OneSignalSDKWorker.js',
+      serviceWorkerParam: { scope: '/Zamzam-Restaurant-Cafe/' },
       notifyButton: { enable: false },
       allowLocalhostAsSecureOrigin: true,
     });
