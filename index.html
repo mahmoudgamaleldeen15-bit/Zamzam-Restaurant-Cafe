@@ -3703,7 +3703,7 @@ function showScreen(id) {
   document.getElementById(id)?.classList.add('active');
   /* استعادة scroll لو رجع لشاشة app */
   if (id === 'app' && typeof _appScrollY !== 'undefined') {
-    setTimeout(function() { window.scrollTo(0, _appScrollY); }, 0);
+    setTimeout(function() { window.scrollTo({top: _appScrollY, behavior: 'instant'}); }, 0);
   }
 }
 function openScreen(id) {
@@ -15999,8 +15999,6 @@ function _showOSPromptSheet() {
   /* مرة واحدة بس طول عمر التطبيق */
   if (localStorage.getItem('zz_os_prompt_v2')) return;
   if (!ONESIGNAL_APP_ID || ONESIGNAL_APP_ID === 'YOUR_ONESIGNAL_APP_ID') return;
-  /* لو مشترك بالفعل مش نعرضه */
-  try { if (window.OneSignal && window.OneSignal.User.PushSubscription.optedIn) return; } catch(e) {}
 
   const sheet = document.createElement('div');
   sheet.id = '_osPromptSheet';
