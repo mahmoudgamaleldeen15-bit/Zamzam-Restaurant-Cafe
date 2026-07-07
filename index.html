@@ -552,6 +552,8 @@ input,select,textarea{font-family:inherit;}
 @keyframes spin{to{transform:rotate(360deg)}}
 @keyframes pulse{0%,100%{opacity:.5}50%{opacity:1}}
 @keyframes compFeedIn{from{opacity:0;transform:translateY(-8px)}to{opacity:1;transform:translateY(0)}}
+@keyframes cmAlertIn{from{opacity:0;transform:translateY(-20px) scale(.95)}to{opacity:1;transform:translateY(0) scale(1)}}
+@keyframes cmCardIn{from{opacity:0;transform:translateX(10px)}to{opacity:1;transform:translateX(0)}}
 @keyframes vipGiftPulse{0%,100%{box-shadow:0 0 0 0 rgba(251,191,36,.4)}50%{box-shadow:0 0 16px 6px rgba(251,191,36,.25)}}
 @keyframes maintSpin{0%{transform:rotate(0deg)}100%{transform:rotate(360deg)}}
 @keyframes maintBar{0%{transform:translateX(-100%)}50%{transform:translateX(200%)}100%{transform:translateX(-100%)}}
@@ -980,7 +982,7 @@ input,select,textarea{font-family:inherit;}
 .vip-benefit-admin-val{width:70px;padding:6px 8px;border:1.5px solid var(--border);border-radius:8px;font-size:12px;background:var(--white);outline:none;text-align:center;}
 </style>
 <!-- OneSignal Push Notifications SDK -->
-<script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
+<script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" async></script>
 </head>
 <body>
 
@@ -1653,7 +1655,71 @@ input,select,textarea{font-family:inherit;}
   </div>
 </div>
 
-<!-- ══ بانر وضع الصيانة / التطوير ══ -->
+<!-- ══ شاشة متابع حجوزات الكافيه ══ -->
+<div id="cafemonitorPanel" class="screen" style="background:var(--bg);flex-direction:column">
+  <!-- Header -->
+  <div style="background:linear-gradient(135deg,#0f3d2e,#1b5e43);padding:16px;display:flex;align-items:center;justify-content:space-between;direction:rtl">
+    <div>
+      <div style="font-size:16px;font-weight:900;color:#ffd86b">☕ متابع حجوزات الكافيه</div>
+      <div style="font-size:11px;color:rgba(255,255,255,.7);margin-top:2px" id="cmDate">—</div>
+    </div>
+    <button onclick="doLogout()" style="background:rgba(255,255,255,.15);border:none;color:#fff;padding:8px 14px;border-radius:10px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit">خروج</button>
+  </div>
+
+  <!-- بطاقات التنبيه الجديدة -->
+  <div id="cmAlertArea" style="padding:0 12px;direction:rtl"></div>
+
+  <!-- بطاقات التذكير -->
+  <div id="cmReminderArea" style="padding:0 12px;direction:rtl"></div>
+
+  <!-- توفّر الترابيزات -->
+  <div id="cmTableAvailPanel" style="padding:10px 12px;background:var(--white);border-bottom:1px solid var(--border)"></div>
+
+  <!-- فلتر وسيرش -->
+  <div style="padding:10px 12px;background:var(--white);border-bottom:1px solid var(--border);direction:rtl">
+    <div style="display:flex;gap:8px;margin-bottom:8px">
+      <input id="cmSearch" type="tel" inputmode="numeric" placeholder="🔍 بحث برقم الهاتف..." oninput="renderCafeMonitorBookings()" style="flex:1;padding:9px 12px;border:1.5px solid var(--border);border-radius:10px;font-size:13px;font-family:inherit;background:var(--bg);color:var(--text)">
+      <select id="cmFilter" onchange="renderCafeMonitorBookings();_cmUpdateLegend()" style="padding:9px;border:1.5px solid var(--border);border-radius:10px;font-size:12px;font-family:inherit;background:var(--bg);color:var(--text)">
+        <option value="new">🟡 جديد</option>
+        <option value="active">⚡ النشطة</option>
+        <option value="confirmed">🟢 مؤكدة</option>
+        <option value="arrived">🔵 حضروا</option>
+        <option value="noshow">⚫ لم يحضروا</option>
+        <option value="unavailable">⛔ غير متاحة</option>
+        <option value="cancelled">🔴 ملغاة</option>
+        <option value="all">🗂️ الكل</option>
+      </select>
+    </div>
+    <!-- ألوان الحالات — تتحدث حسب الفلتر -->
+    <div id="cmLegend" style="display:flex;gap:6px;flex-wrap:wrap;font-size:10px;font-weight:700">
+      <span id="leg_pending"  style="padding:2px 8px;border-radius:20px">🟡 جديد</span>
+      <span id="leg_active"   style="padding:2px 8px;border-radius:20px">🟢 مؤكد</span>
+      <span id="leg_arrived"  style="padding:2px 8px;border-radius:20px">🔵 حضر</span>
+      <span id="leg_noshow"   style="padding:2px 8px;border-radius:20px">⚫ لم يحضر</span>
+      <span id="leg_unavail"  style="padding:2px 8px;border-radius:20px">⛔ غير متاحة</span>
+      <span id="leg_cancelled"style="padding:2px 8px;border-radius:20px">🔴 ملغي</span>
+    </div>
+  </div>
+
+  <!-- قائمة الحجوزات -->
+  <div id="cmBookingsList" style="flex:1;overflow-y:auto;padding:12px;direction:rtl"></div>
+</div>
+
+<!-- ══ نهاية شاشة متابع الكافيه ══ -->
+
+<!-- Modal تفاصيل الحجز للكافيه مونيتور -->
+<div id="cmBookingModal" style="display:none;position:fixed;inset:0;z-index:99999;background:rgba(0,0,0,.5);direction:rtl" onclick="if(event.target===this)this.style.display='none'">
+  <div style="position:absolute;bottom:0;right:0;left:0;background:var(--white);border-radius:22px 22px 0 0;padding:20px;max-height:85vh;overflow-y:auto">
+    <div style="width:40px;height:4px;background:#e0e0e0;border-radius:4px;margin:0 auto 16px"></div>
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+      <div style="font-size:16px;font-weight:900;color:var(--text)">📋 تفاصيل الحجز</div>
+      <button onclick="document.getElementById('cmBookingModal').style.display='none'" style="background:#f3f4f6;border:none;border-radius:50%;width:32px;height:32px;cursor:pointer;font-size:16px">✕</button>
+    </div>
+    <div id="cmBookingModalBody"></div>
+    <div id="cmBookingModalBtns" style="display:flex;gap:8px;flex-wrap:wrap;margin-top:16px;padding-top:12px;border-top:1px solid var(--border)"></div>
+  </div>
+</div>
+
 <div class="prayer-time-block-overlay" id="maintenanceOverlay">
   <div class="prayer-time-block-card" style="max-width:380px;background:linear-gradient(160deg,#0c1a3d,#1a2e6b);border-color:#6366f1;position:relative;overflow:hidden">
     <!-- خلفية نجوم متحركة -->
@@ -1748,6 +1814,7 @@ input,select,textarea{font-family:inherit;}
         <option value="admin">🔑 مدير النظام</option>
         <option value="cashier">💳 كاشير</option>
         <option value="pickup">🍳 Pickup / التجهيز</option>
+        <option value="cafemonitor">☕ متابع حجوزات الكافيه</option>
       </select>
     </div>
     <div class="field"><label>كلمة السر</label><input type="password" id="adminPass" placeholder="أدخل كلمة السر"/></div>
@@ -2460,6 +2527,7 @@ input,select,textarea{font-family:inherit;}
         <!-- باسورد الكاشير -->
         <div class="settings-row"><div class="info"><strong>باسورد الكاشير 1</strong></div><input class="settings-input" type="password" id="newCashier1" placeholder="باسورد 1"/></div>
         <div class="settings-row"><div class="info"><strong>باسورد الكاشير 2</strong></div><input class="settings-input" type="password" id="newCashier2" placeholder="باسورد 2"/></div>
+        <div class="settings-row"><div class="info"><strong>☕ باسورد متابع الكافيه</strong></div><input class="settings-input" type="password" id="newCafeMonitor" placeholder="cafe#2024"/></div>
         <!-- رموز PIN للدخول (كاشير/بيكاب) — تُحفظ وتتزامن -->
         <div class="settings-row"><div class="info"><strong>🔢 رمز PIN — كاشير 1</strong></div><input class="settings-input" type="tel" inputmode="numeric" maxlength="4" id="newPinCashier1" placeholder="٤ أرقام"/></div>
         <div class="settings-row"><div class="info"><strong>🔢 رمز PIN — كاشير 2</strong></div><input class="settings-input" type="tel" inputmode="numeric" maxlength="4" id="newPinCashier2" placeholder="٤ أرقام"/></div>
@@ -2952,9 +3020,11 @@ const _AUTH_TABLE = [
   {r:'admin',   h:'zp_195ee9d95da89a'},
   {r:'cashier', h:'zp_1d3eecc165ad3d'},
   {r:'cashier', h:'zp_2c7409a5b7c49'},
-  {r:'pickup',  h:'zp_1184676ca1dad6'}
+  {r:'pickup',      h:'zp_1184676ca1dad6'},
+  {r:'cafemonitor', h:'zp_80f0ee510796a'}
 ];
 // pickup default pass: pickup#1234
+// cafemonitor default pass: cafe#2024
 function _verifyAuth(role, pass) {
   return _AUTH_TABLE.some(e => e.r === role && e.h === _hashPw(role + ':' + pass));
 }
@@ -2971,6 +3041,7 @@ function _getStaffIdentity(role, pass) {
     if (e.r === role && e.h === _hashPw(role + ':' + pass)) {
       if (role === 'admin') return 'admin';
       if (role === 'pickup') return 'pickup';
+      if (role === 'cafemonitor') return 'cafemonitor';
       if (role === 'cashier') return (i === 1) ? 'cashier1' : 'cashier2';
     }
   }
@@ -3527,7 +3598,7 @@ window.onload = () => {
   // فحص الـ hash فوراً قبل أي حاجة
   (function checkHashImmediate() {
     const hash = window.location.hash.replace('#','').toLowerCase();
-    const PROTECTED_ROLES = ['admin', 'cashier', 'pickup'];
+    const PROTECTED_ROLES = ['admin', 'cashier', 'pickup', 'cafemonitor'];
     if (PROTECTED_ROLES.includes(hash)) {
       // إغلاق كل حاجة فوراً
       document.getElementById('productModal')?.classList.remove('open');
@@ -3556,6 +3627,12 @@ window.onload = () => {
     const PROTECTED_ROLES = ['admin', 'cashier', 'pickup'];
 
     if (PROTECTED_ROLES.includes(hash)) {
+      /* cafemonitor له route خاص */
+      if (hash === 'cafemonitor') {
+        showScreen('adminLogin');
+        setTimeout(function() { const r=document.getElementById('adminRole'); if(r) r.value='cafemonitor'; }, 100);
+        return;
+      }
       // تأكيد عرض Admin Login مع إغلاق كل الـ overlays
       showScreen('adminLogin');
       const roleEl = document.getElementById('adminRole');
@@ -3657,7 +3734,7 @@ window.onload = () => {
       }
     }
     else showScreen('auth');
-  }, 2000);
+  }, 1000);
 
   // Listen for hash changes — block unauthorized access
   window.addEventListener('hashchange', () => {
@@ -5730,6 +5807,8 @@ function doAdminLogin() {
 let _staffPinPending = null;
 function _startStaffPin(role, identity) {
   if (!identity) { showNotif('❌ تعذّر تحديد المستخدم'); return; }
+  /* متابع الكافيه: بدون PIN — يدخل مباشرة */
+  if (role === 'cafemonitor') { _completeStaffLogin('cafemonitor'); return; }
   _staffPinPending = { role, identity };
   document.querySelectorAll('#staffPinInputs input').forEach(inp => { inp.value=''; inp.classList.remove('otp-error'); });
   const box = document.getElementById('staffPinMsgBox'); if (box) box.style.display='none';
@@ -5780,6 +5859,11 @@ function _completeStaffLogin(role) {
   if (role === 'pickup') {
     showScreen('pickupPanel');
     setupPickupPanel();
+    return;
+  }
+  if (role === 'cafemonitor') {
+    showScreen('cafemonitorPanel');
+    enterCafeMonitor();
     return;
   }
   adminRoleType = role;
@@ -7237,21 +7321,23 @@ function renderAdminBookings() {
 
 // === توفّر الترابيزات (يتحكم فيه الكاشير) ===
 function renderTableAvailPanel() {
-  const el = document.getElementById('tableAvailPanel');
-  if (!el) return;
   const tablesCount = Number(SETTINGS.tablesCount) || 17;
-  let html = '<div style="font-size:13px;font-weight:800;color:var(--dark);margin-bottom:8px">🪑 توفّر الترابيزات الآن — اضغط لتغيير الحالة</div>';
-  html += '<div style="font-size:11px;color:var(--text-muted);margin-bottom:10px">علّم الترابيزة "مشغولة" لو فيه حد قاعد عليها — العميل مش هيقدر يحجزها وهي مشغولة.</div>';
-  html += '<div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:18px">';
+  let content = '<div style="font-size:13px;font-weight:800;color:var(--dark);margin-bottom:8px">🪑 توفّر الترابيزات الآن — اضغط لتغيير الحالة</div>';
+  content += '<div style="font-size:11px;color:var(--text-muted);margin-bottom:10px">علّم الترابيزة "مشغولة" لو فيه حد قاعد عليها — العميل مش هيقدر يحجزها وهي مشغولة.</div>';
+  content += '<div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:18px">';
   for (let t = 1; t <= tablesCount; t++) {
     const unavail = TABLE_AVAIL[t] === false;
-    html += `<div onclick="toggleTableAvail(${t})" style="cursor:pointer;min-width:56px;text-align:center;padding:8px 6px;border-radius:10px;font-weight:800;border:2px solid ${unavail?'#dc2626':'#16a34a'};background:${unavail?'#fef2f2':'#f0fdf4'};color:${unavail?'#dc2626':'#15803d'}">
+    content += `<div onclick="toggleTableAvail(${t})" style="cursor:pointer;min-width:56px;text-align:center;padding:8px 6px;border-radius:10px;font-weight:800;border:2px solid ${unavail?'#dc2626':'#16a34a'};background:${unavail?'#fef2f2':'#f0fdf4'};color:${unavail?'#dc2626':'#15803d'}">
       <div style="font-size:15px">${t}</div>
       <div style="font-size:10px">${unavail?'🔴 مشغولة':'🟢 متاحة'}</div>
     </div>`;
   }
-  html += '</div>';
-  el.innerHTML = html;
+  content += '</div>';
+  /* عرض في الكاشير والكافيه مونيتور */
+  const el  = document.getElementById('tableAvailPanel');
+  const el2 = document.getElementById('cmTableAvailPanel');
+  if (el)  el.innerHTML  = content;
+  if (el2) el2.innerHTML = content;
 }
 function toggleTableAvail(t) {
   if (TABLE_AVAIL[t] === false) { delete TABLE_AVAIL[t]; }
@@ -7268,6 +7354,7 @@ function approveBooking(id) {
   fbUpdate('bookings/' + id, { status: 'confirmed' });
   saveData('zz_bookings', bookingsData);
   renderAdminBookings();
+  if (document.getElementById('cafemonitorPanel')?.classList.contains('active')) renderCafeMonitorBookings();
   showNotif('✅ تم تأكيد الحجز — العميل هيشوفه في التتبع');
 }
 function rejectBooking(id) {
@@ -7277,6 +7364,7 @@ function rejectBooking(id) {
   fbUpdate('bookings/' + id, { status: 'unavailable' });
   saveData('zz_bookings', bookingsData);
   renderAdminBookings();
+  if (document.getElementById('cafemonitorPanel')?.classList.contains('active')) renderCafeMonitorBookings();
   const wa = normalizePhoneForWA(b.whatsapp || b.phone || '');
   if (wa) {
     const msg = `عزيزنا *${b.name}* 🌟\n\nنعتذر، الترابيزة المطلوبة غير متاحة في الموعد المحدد (${b.date} - ${b.time}).\nيسعدنا استقبالك في موعد آخر — تواصل معنا لاختيار وقت مناسب 💚`;
@@ -7288,9 +7376,11 @@ function markBookingArrived(id) {
   const b = bookingsData.find(x => x.id === id);
   if (!b) return;
   b.status = 'arrived';
-  fbUpdate('bookings/' + id, { status: 'arrived' });
+  b.arrivedAt = new Date().toISOString(); /* ⏱ وقت الحضور */
+  fbUpdate('bookings/' + id, { status: 'arrived', arrivedAt: b.arrivedAt });
   saveData('zz_bookings', bookingsData);
   renderAdminBookings();
+  if (document.getElementById('cafemonitorPanel')?.classList.contains('active')) renderCafeMonitorBookings();
   showNotif('✓ تم تسجيل حضور العميل');
 }
 function sendBookingEntryMsg(id) {
@@ -7320,6 +7410,7 @@ function cancelBooking(id) {
   }
   saveData('zz_bookings', bookingsData);
   renderAdminBookings();
+  if (document.getElementById('cafemonitorPanel')?.classList.contains('active')) renderCafeMonitorBookings();
   showNotif('✓ تم إلغاء الحجز');
 }
 function deleteBooking(id) {
@@ -7328,6 +7419,7 @@ function deleteBooking(id) {
   fbRemove('bookings/' + id);
   saveData('zz_bookings', bookingsData);
   renderAdminBookings();
+  if (document.getElementById('cafemonitorPanel')?.classList.contains('active')) renderCafeMonitorBookings();
   showNotif('✓ تم حذف الحجز نهائياً');
 }
 
@@ -7876,6 +7968,9 @@ function saveAllSettings() {
   if (newAdmin) { _AUTH_TABLE.find(a => a.r === 'admin').h = _hashPw('admin:' + newAdmin); document.getElementById('newAdminPass').value = ''; }
   if (newC1) { _AUTH_TABLE[1].h = _hashPw('cashier:' + newC1); document.getElementById('newCashier1').value = ''; }
   if (newC2) { _AUTH_TABLE[2].h = _hashPw('cashier:' + newC2); document.getElementById('newCashier2').value = ''; }
+  /* حفظ باسورد متابع الكافيه */
+  const newCM = document.getElementById('newCafeMonitor')?.value;
+  if (newCM) { const _cmEntry = _AUTH_TABLE.find(a => a.r === 'cafemonitor'); if (_cmEntry) { _cmEntry.h = _hashPw('cafemonitor:' + newCM); document.getElementById('newCafeMonitor').value = ''; } }
   // حفظ رموز PIN (كاشير/بيكاب) — مع تحقق ٤ أرقام وتخزين وتزامن
   const _np1 = document.getElementById('newPinCashier1')?.value.trim();
   const _np2 = document.getElementById('newPinCashier2')?.value.trim();
@@ -10976,10 +11071,25 @@ function setupFirebaseListeners() {
   });
 }
 
-async function fbSaveOrder(order) { 
+async function fbSaveOrder(order) {
   if (!order || !order.id) { console.warn('تم تجاهل حفظ طلب بدون رقم صحيح'); return; }
   const enriched = { ...order, createdAt: new Date().toISOString() };
-  await fbSet('orders/' + order.id, enriched); 
+  try {
+    await db.ref('orders/' + order.id).set(enriched);
+  } catch(e) {
+    console.warn('fbSaveOrder failed:', e);
+    /* تنبيه واضح للعميل + retry تلقائي */
+    showNotif('⚠️ جاري إعادة إرسال الطلب...');
+    setTimeout(async function() {
+      try {
+        await db.ref('orders/' + order.id).set(enriched);
+        showNotif('✅ تم إرسال الطلب للكاشير');
+      } catch(e2) {
+        console.error('fbSaveOrder retry failed:', e2);
+        showNotif('❌ تعذر إرسال الطلب — تواصل مع المطعم على واتساب');
+      }
+    }, 3000);
+  }
 }
 async function fbUpdateOrderStatus(orderId, status) { await fbUpdate('orders/' + orderId, { status }); }
 async function fbSaveBooking(booking) { await fbSet('bookings/' + booking.id, booking); }
@@ -15905,6 +16015,307 @@ function _compStopLiveFeed() {
   if (countEl) countEl.textContent = '';
 }
 
+/* ══════════════════════════════════════════════════════
+   متابع حجوزات الكافيه — نظام كامل
+   ══════════════════════════════════════════════════════ */
+var _cmBookingListener = null;
+var _cmReminderTimer   = null;
+var _cmSeenAlerts      = {};
+var _cmAudioCtx        = null;
+
+function enterCafeMonitor() {
+  /* تحديث التاريخ في الـ header */
+  var dateEl = document.getElementById('cmDate');
+  if (dateEl) dateEl.textContent = new Date().toLocaleDateString('ar-EG', {weekday:'long', year:'numeric', month:'long', day:'numeric'});
+  renderTableAvailPanel();
+  _cmUpdateLegend();
+
+  /* Firebase listener للحجوزات */
+  if (typeof db !== 'undefined' && db) {
+    if (_cmBookingListener) db.ref('bookings').off('value', _cmBookingListener);
+    _cmBookingListener = db.ref('bookings').on('value', function(snap) {
+      bookingsData = [];
+      if (snap.exists()) snap.forEach(function(c) { if (c.val()) bookingsData.push(c.val()); });
+      renderCafeMonitorBookings();
+      /* تنبيه الحجوزات الجديدة */
+      bookingsData.forEach(function(b) {
+        if (!_cmSeenAlerts[b.id] && b.status === 'pending') {
+          _cmSeenAlerts[b.id] = true;
+          /* مش أول تحميل */
+          if (Object.keys(_cmSeenAlerts).length > 1 || Date.now() - new Date(b.createdAt || b.date).getTime() < 30000) {
+            _cmNewBookingAlert(b);
+            _cmPlaySound();
+          }
+        }
+      });
+    });
+  }
+  renderCafeMonitorBookings();
+  _startCmReminderChecker();
+  /* تحديث عدادات الجلوس كل دقيقة */
+  if (window._cmTableTimerInterval) clearInterval(window._cmTableTimerInterval);
+  window._cmTableTimerInterval = setInterval(function() {
+    if (document.getElementById('cafemonitorPanel')?.classList.contains('active')) renderCafeMonitorBookings();
+    else clearInterval(window._cmTableTimerInterval);
+  }, 60000);
+}
+
+/* ── عرض الحجوزات ── */
+function renderCafeMonitorBookings() {
+  var el = document.getElementById('cmBookingsList');
+  if (!el) return;
+  var search = (document.getElementById('cmSearch')?.value || '').replace(/\D/g,'');
+  var filter = (document.getElementById('cmFilter')?.value || 'active');
+  var sorted = [...bookingsData].sort(function(a,b) {
+    if (a.date !== b.date) return a.date.localeCompare(b.date);
+    return timeToMin(a.time) - timeToMin(b.time);
+  });
+  /* فلتر */
+  var filtered = sorted.filter(function(b) {
+    if (search && !(b.phone||'').replace(/\D/g,'').includes(search) && !(b.whatsapp||'').replace(/\D/g,'').includes(search)) return false;
+    if (filter === 'new')    return b.status === 'pending';
+    if (filter === 'active') return b.status === 'pending' || b.status === 'confirmed' || b.status === 'arrived';
+    if (filter === 'pending') return b.status === 'pending';
+    if (filter === 'confirmed') return b.status === 'confirmed';
+    if (filter === 'arrived') return b.status === 'arrived';
+    if (filter === 'unavailable') return b.status === 'unavailable';
+    if (filter === 'cancelled') return b.status === 'cancelled';
+    if (filter === 'noshow') return b.status === 'noshow';
+    return true;
+  });
+  if (!filtered.length) {
+    el.innerHTML = '<div style="text-align:center;padding:40px;color:var(--text-muted);font-weight:700">لا توجد حجوزات</div>';
+    return;
+  }
+  el.innerHTML = filtered.map(function(b) {
+    var color = _cmStatusColor(b.status);
+    var badge  = _cmStatusBadge(b.status);
+    var now = Date.now();
+    var bookMs = new Date(b.date + 'T' + b.time).getTime();
+    var diffMin = (now - bookMs) / 60000;
+    var isLate = diffMin > 5 && b.status === 'confirmed';
+    /* عداد وقت الجلوس للحجوزات الحاضرة */
+    var tableTimer = '';
+    if (b.status === 'arrived' && b.arrivedAt) {
+      var sitMin = Math.floor((Date.now() - new Date(b.arrivedAt).getTime()) / 60000);
+      var sitH = Math.floor(sitMin / 60), sitM = sitMin % 60;
+      var sitStr = sitH > 0 ? sitH + 'س ' + sitM + 'د' : sitM + ' دقيقة';
+      var timerColor = sitMin >= 90 ? '#dc2626' : sitMin >= 60 ? '#f59e0b' : '#059669';
+      tableTimer = '<div style="background:' + timerColor + '10;border:1px solid ' + timerColor + ';border-radius:8px;padding:5px 10px;margin-bottom:8px;display:flex;align-items:center;gap:6px">' +
+        '<span style="font-size:14px">⏱</span>' +
+        '<span style="font-size:12px;font-weight:800;color:' + timerColor + '">على الطاولة منذ: ' + sitStr + '</span>' +
+        '</div>';
+    }
+    return '<div class="cm-booking-card" id="cmBook_' + b.id + '" onclick="cmShowBookingDetails(\'' + b.id + '\')" style="cursor:pointer;border-radius:16px;padding:16px;background:var(--white);border:2px solid ' + color + ';margin-bottom:12px;animation:cmCardIn .3s ease">' +
+      '<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px">' +
+        '<div>' +
+          '<div style="font-size:14px;font-weight:900;color:var(--text)">' + b.name + '</div>' +
+          '<div style="font-size:11px;color:var(--text-muted);margin-top:2px">📱 ' + (b.whatsapp||b.phone||'—') + '</div>' +
+        '</div>' +
+        '<div style="text-align:left">' +
+          badge +
+          (isLate ? '<div style="background:#fef3c7;color:#92400e;padding:2px 8px;border-radius:20px;font-size:10px;font-weight:800;margin-top:4px">⚠️ تأخر</div>' : '') +
+        '</div>' +
+      '</div>' +
+      '<div style="font-size:12px;color:var(--text-muted);margin-bottom:10px">' +
+        '📅 ' + b.date + ' — ⏰ ' + _cmTo12h(b.time) + ' &nbsp;|&nbsp; 🪑 طاولة ' + b.tableNum + ' &nbsp;|&nbsp; 👥 ' + b.persons + ' أشخاص' +
+        (b.notes ? '<br>📝 ' + b.notes : '') +
+      '</div>' +
+      tableTimer +
+      '<div style="display:flex;gap:6px;flex-wrap:wrap">' +
+        '<button class="action-btn" style="background:#d1fae5;color:#065f46" onclick="approveBooking(\'' + b.id + '\')">✅ موافقة</button>' +
+        '<button class="action-btn" style="background:#fef3c7;color:#92400e" onclick="cmUnavailableBooking(\'' + b.id + '\')">⛔ غير متاحة</button>' +
+        '<button class="action-btn" style="background:#fee2e2;color:#991b1b" onclick="rejectBooking(\'' + b.id + '\')">❌ رفض</button>' +
+        '<button class="action-btn" style="background:#dbeafe;color:#1e40af" onclick="markBookingArrived(\'' + b.id + '\')">👋 حضر</button>' +
+        '<button class="action-btn" style="background:#f3f4f6;color:#374151" onclick="cancelBooking(\'' + b.id + '\')">🚫 إلغاء</button>' +
+        '<button class="action-btn" style="background:#25D366;color:#fff" onclick="cmSendWA(\'' + b.id + '\')">📱 واتساب</button>' +
+      '</div>' +
+    '</div>';
+  }).join('');
+}
+
+function _cmStatusColor(status) {
+  var m = { pending:'#f59e0b', confirmed:'#22c55e', arrived:'#3b82f6', cancelled:'#ef4444', noshow:'#6b7280', unavailable:'#f97316' };
+  return m[status] || '#e5e7eb';
+}
+
+function _cmStatusBadge(status) {
+  var m = {
+    pending:     '<span style="background:#fef3c7;color:#92400e;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:800">🟡 جديد</span>',
+    confirmed:   '<span style="background:#d1fae5;color:#065f46;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:800">🟢 مؤكد</span>',
+    arrived:     '<span style="background:#dbeafe;color:#1e40af;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:800">🔵 حضر</span>',
+    cancelled:   '<span style="background:#fee2e2;color:#991b1b;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:800">🔴 ملغي</span>',
+    noshow:      '<span style="background:#f3f4f6;color:#374151;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:800">⚫ لم يحضر</span>',
+    unavailable: '<span style="background:#ffedd5;color:#c2410c;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:800">⛔ غير متاحة</span>',
+  };
+  return m[status] || m['pending'];
+}
+
+/* ── غير متاحة ── */
+function cmUnavailableBooking(id) {
+  var b = bookingsData.find(function(x) { return x.id === id; });
+  if (!b) return;
+  if (typeof db !== 'undefined' && db) db.ref('bookings/' + id).update({ status: 'unavailable' }).catch(function(){});
+  bookingsData = bookingsData.map(function(x) { return x.id===id ? {...x, status:'unavailable'} : x; });
+  renderCafeMonitorBookings();
+  showNotif('⛔ تم تحديد الوقت غير متاح');
+  /* واتساب للعميل */
+  var wa = normalizePhoneForWA(b.whatsapp || b.phone || '');
+  var msg = 'السلام عليكم ' + (b.name||'') + ' 🌹\n\nنأسف، الوقت المطلوب (' + b.time + ' — ' + b.date + ') غير متاح حالياً.\n\nيُرجى التواصل معنا لاختيار وقت آخر مناسب 🙏\n\n' + (RESTAURANT?.name || 'كافيه زمزم');
+  if (wa) {
+    var el = document.createElement('div');
+    el.style.cssText = 'position:fixed;bottom:80px;right:0;left:0;margin:auto;max-width:320px;background:#fff;border-radius:16px;padding:14px;z-index:99999;box-shadow:0 4px 20px rgba(0,0,0,.2);direction:rtl;border:2px solid #25D366';
+    el.innerHTML = '<div style="font-size:13px;font-weight:700;margin-bottom:10px">📱 إرسال إشعار "غير متاحة" للعميل؟</div>' +
+      '<a href="https://wa.me/' + wa + '?text=' + encodeURIComponent(msg) + '" target="_blank" onclick="this.parentElement.remove()" style="display:block;text-align:center;padding:10px;background:#25D366;color:#fff;border-radius:10px;font-weight:800;text-decoration:none;font-size:13px">📱 إرسال واتساب</a>' +
+      '<button onclick="this.parentElement.remove()" style="width:100%;margin-top:6px;padding:8px;background:none;border:none;color:#999;cursor:pointer;font-size:12px;font-family:inherit">تخطي</button>';
+    document.body.appendChild(el);
+    setTimeout(function() { if (el.parentElement) el.remove(); }, 15000);
+  }
+}
+
+/* ── واتساب مباشر ── */
+function cmSendWA(id) {
+  var b = bookingsData.find(function(x) { return x.id === id; });
+  if (!b) return;
+  var wa = normalizePhoneForWA(b.whatsapp || b.phone || '');
+  if (!wa) { showNotif('❌ لا يوجد رقم واتساب'); return; }
+  var msg = 'السلام عليكم ' + (b.name||'') + ' 🌹\n\nبخصوص حجزكم:\n📅 ' + b.date + ' — ⏰ ' + b.time + '\n🪑 طاولة ' + b.tableNum + ' — 👥 ' + b.persons + ' أشخاص\n\n' + (RESTAURANT?.name || 'كافيه زمزم');
+  window.open('https://wa.me/' + wa + '?text=' + encodeURIComponent(msg), '_blank');
+}
+
+/* ── صوت تنبيه للكافيه فقط ── */
+function _cmPlaySound() {
+  try {
+    if (!_cmAudioCtx) _cmAudioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    var osc = _cmAudioCtx.createOscillator();
+    var gain = _cmAudioCtx.createGain();
+    osc.connect(gain); gain.connect(_cmAudioCtx.destination);
+    osc.frequency.setValueAtTime(880, _cmAudioCtx.currentTime);
+    osc.frequency.setValueAtTime(1100, _cmAudioCtx.currentTime + 0.1);
+    osc.frequency.setValueAtTime(880, _cmAudioCtx.currentTime + 0.2);
+    gain.gain.setValueAtTime(0.3, _cmAudioCtx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, _cmAudioCtx.currentTime + 0.5);
+    osc.start(); osc.stop(_cmAudioCtx.currentTime + 0.5);
+  } catch(e) {}
+}
+
+/* ── بطاقة تنبيه حجز جديد ── */
+function _cmNewBookingAlert(b) {
+  var area = document.getElementById('cmAlertArea');
+  if (!area) return;
+  var card = document.createElement('div');
+  card.id = 'cmAlert_' + b.id;
+  card.style.cssText = 'background:linear-gradient(135deg,#065f46,#059669);color:#fff;border-radius:14px;padding:14px 16px;margin-top:8px;direction:rtl;animation:cmAlertIn .4s cubic-bezier(.34,1.56,.64,1);cursor:pointer';
+  card.innerHTML =
+    '<div style="display:flex;justify-content:space-between;align-items:center">' +
+      '<div>' +
+        '<div style="font-size:13px;font-weight:900;margin-bottom:4px">🔔 حجز جديد!</div>' +
+        '<div style="font-size:14px;font-weight:700">' + (b.name||'') + '</div>' +
+        '<div style="font-size:11px;opacity:.85;margin-top:2px">🪑 طاولة ' + b.tableNum + ' &nbsp;|&nbsp; 👥 ' + b.persons + ' &nbsp;|&nbsp; ' + b.date + ' ' + b.time + '</div>' +
+      '</div>' +
+      '<button onclick="document.getElementById(\'cmAlert_' + b.id + '\').remove()" style="background:rgba(255,255,255,.2);border:none;color:#fff;padding:4px 8px;border-radius:8px;cursor:pointer;font-size:16px">✕</button>' +
+    '</div>';
+  card.onclick = function(e) {
+    if (e.target.tagName === 'BUTTON') return;
+    card.remove();
+    /* سكرول للحجز المحدد في القائمة */
+    setTimeout(function() {
+      var el = document.getElementById('cmBook_' + b.id);
+      if (el) {
+        el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        el.style.boxShadow = '0 0 0 3px #059669';
+        setTimeout(function() { el.style.boxShadow = ''; }, 2000);
+      }
+    }, 100);
+  };
+  area.insertBefore(card, area.firstChild);
+  setTimeout(function() { if (card.parentElement) { card.style.opacity='0'; card.style.transition='opacity .3s'; setTimeout(function(){card.remove();},300); } }, 15000);
+}
+
+/* ── تفاصيل الحجز ── */
+function _cmTo12h(t) {
+  if (!t) return '—';
+  var parts = t.split(':');
+  var h = parseInt(parts[0]), m = parts[1] || '00';
+  var ampm = h >= 12 ? 'م' : 'ص';
+  h = h % 12 || 12;
+  return h + ':' + m + ' ' + ampm;
+}
+
+function cmShowBookingDetails(id) {
+  var b = bookingsData.find(function(x) { return x.id === id; });
+  if (!b) return;
+  var badge = _cmStatusBadge(b.status);
+  var rows = [
+    ['👤 الاسم', b.name || '—'],
+    ['📱 الهاتف', b.whatsapp || b.phone || '—'],
+    ['📅 التاريخ', b.date || '—'],
+    ['⏰ الوقت', _cmTo12h(b.time)],
+    ['🪑 الطاولة', 'طاولة ' + (b.tableNum || '—')],
+    ['👥 عدد الأشخاص', (b.persons || '—') + ' أشخاص'],
+    ['📌 الحالة', ''],
+  ];
+  var body = '<div style="background:var(--bg);border-radius:12px;overflow:hidden;margin-bottom:4px">';
+  rows.forEach(function(r) {
+    if (r[0] === '📌 الحالة') {
+      body += '<div style="display:flex;justify-content:space-between;align-items:center;padding:10px 14px;border-bottom:1px solid var(--border)">' +
+        '<span style="font-size:12px;color:var(--text-muted);font-weight:700">' + r[0] + '</span>' +
+        '<span>' + badge + '</span></div>';
+    } else {
+      body += '<div style="display:flex;justify-content:space-between;align-items:center;padding:10px 14px;border-bottom:1px solid var(--border)">' +
+        '<span style="font-size:12px;color:var(--text-muted);font-weight:700">' + r[0] + '</span>' +
+        '<span style="font-size:13px;font-weight:800;color:var(--text);text-align:left">' + r[1] + '</span></div>';
+    }
+  });
+  body += '</div>';
+  document.getElementById('cmBookingModalBody').innerHTML = body;
+  document.getElementById('cmBookingModalBtns').innerHTML =
+    '<button class="action-btn" style="background:#d1fae5;color:#065f46" onclick="approveBooking(\'' + id + '\');document.getElementById(\'cmBookingModal\').style.display=\'none\'">✅ موافقة</button>' +
+    '<button class="action-btn" style="background:#fef3c7;color:#92400e" onclick="cmUnavailableBooking(\'' + id + '\');document.getElementById(\'cmBookingModal\').style.display=\'none\'">⛔ غير متاحة</button>' +
+    '<button class="action-btn" style="background:#fee2e2;color:#991b1b" onclick="rejectBooking(\'' + id + '\');document.getElementById(\'cmBookingModal\').style.display=\'none\'">❌ رفض</button>' +
+    '<button class="action-btn" style="background:#dbeafe;color:#1e40af" onclick="markBookingArrived(\'' + id + '\');document.getElementById(\'cmBookingModal\').style.display=\'none\'">👋 حضر</button>' +
+    '<button class="action-btn" style="background:#f3f4f6;color:#374151" onclick="cancelBooking(\'' + id + '\');document.getElementById(\'cmBookingModal\').style.display=\'none\'">🚫 إلغاء</button>' +
+    '<button class="action-btn" style="background:#25D366;color:#fff" onclick="cmSendWA(\'' + id + '\')">📱 واتساب</button>';
+  document.getElementById('cmBookingModal').style.display = 'block';
+}
+
+/* ── تذكير الحجوزات (كل 5 دقايق) ── */
+function _startCmReminderChecker() {
+  if (_cmReminderTimer) clearInterval(_cmReminderTimer);
+  _cmCheckReminders();
+  _cmReminderTimer = setInterval(_cmCheckReminders, 5 * 60 * 1000);
+}
+
+function _cmCheckReminders() {
+  var area = document.getElementById('cmReminderArea');
+  if (!area) return;
+  var now = Date.now();
+  var upcoming = bookingsData.filter(function(b) {
+    if (b.status !== 'confirmed') return false;
+    if (b.reminderSent) return false;
+    var ms = new Date(b.date + 'T' + b.time).getTime();
+    var diff = ms - now;
+    return diff > 0 && diff <= 60 * 60 * 1000; /* خلال ساعة */
+  });
+  area.innerHTML = '';
+  upcoming.forEach(function(b) {
+    var ms = new Date(b.date + 'T' + b.time).getTime();
+    var minsLeft = Math.round((ms - now) / 60000);
+    var card = document.createElement('div');
+    card.style.cssText = 'background:#fef3c7;border:1.5px solid #f59e0b;border-radius:12px;padding:12px 14px;margin-top:8px;direction:rtl;display:flex;justify-content:space-between;align-items:center';
+    card.innerHTML =
+      '<div style="font-size:12px;font-weight:800;color:#92400e">' +
+        '⏰ حجز <b>' + b.name + '</b> خلال <b>' + minsLeft + ' دقيقة</b>' +
+      '</div>' +
+      '<a href="https://wa.me/' + normalizePhoneForWA(b.whatsapp||b.phone||'') + '?text=' + encodeURIComponent('تذكير 🌹\n' + b.name + '، حجزكم في كافيه زمزم اليوم الساعة ' + b.time + ' ☕ نرحب بكم!') + '" target="_blank" onclick="_cmMarkReminderSent(\'' + b.id + '\');this.parentElement.remove();" style="background:#25D366;color:#fff;padding:7px 12px;border-radius:10px;font-size:11px;font-weight:800;text-decoration:none">📱 إرسال تذكير</a>';
+    area.appendChild(card);
+  });
+}
+
+function _cmMarkReminderSent(id) {
+  if (typeof db !== 'undefined' && db) db.ref('bookings/' + id + '/reminderSent').set(true).catch(function(){});
+}
+
 /* ══════════════════ INIT ══════════════════ */
 document.addEventListener('DOMContentLoaded', function() {
   setTimeout(function() {
@@ -15994,6 +16405,28 @@ window.OneSignalDeferred.push(async function(OneSignal) {
     _updateOSSubscribeBtn();
   } catch(e) { console.warn('OneSignal init error:', e); }
 });
+
+/* ── legend يتحدث حسب الفلتر ── */
+function _cmUpdateLegend() {
+  var filter = document.getElementById('cmFilter')?.value || 'active';
+  var items = {
+    leg_active:    { bg:'#d1fae5', color:'#065f46', filters:['active','confirmed'] },
+    leg_pending:   { bg:'#fef3c7', color:'#92400e', filters:['active','pending','new'] },
+    leg_arrived:   { bg:'#dbeafe', color:'#1e40af', filters:['active','arrived'] },
+    leg_cancelled: { bg:'#fee2e2', color:'#991b1b', filters:['cancelled'] },
+    leg_noshow:    { bg:'#f3f4f6', color:'#374151', filters:['noshow'] },
+    leg_unavail:   { bg:'#ffedd5', color:'#c2410c', filters:['unavailable'] },
+  };
+  Object.keys(items).forEach(function(id) {
+    var el = document.getElementById(id);
+    if (!el) return;
+    var cfg = items[id];
+    var isActive = filter === 'all' || cfg.filters.includes(filter);
+    el.style.background = isActive ? cfg.bg : 'transparent';
+    el.style.color      = isActive ? cfg.color : '#ccc';
+    el.style.opacity    = isActive ? '1' : '0.35';
+  });
+}
 
 function _showOSPromptSheet() {
   /* مرة واحدة بس طول عمر التطبيق */
