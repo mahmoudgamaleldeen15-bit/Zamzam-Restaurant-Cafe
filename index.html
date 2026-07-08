@@ -1650,7 +1650,7 @@ input,select,textarea{font-family:inherit;}
   <div class="prayer-time-block-card">
     <div style="font-size:58px;margin-bottom:10px">🕌</div>
     <div style="font-size:19px;font-weight:800;color:#ffd86b;margin-bottom:12px">وقت الصلاة</div>
-    <div style="font-size:14.5px;color:#f4f1e6;line-height:2;margin-bottom:22px">نعتذر لكم، تم إيقاف استقبال الطلبات مؤقتاً لأداء الصلاة 🤲<br/><br/>نعود لخدمتكم خلال دقائق قليلة بإذن الله.<br/><br/>شكراً لتفهمكم، ونسأل الله أن يتقبل منا ومنكم صالح الأعمال 🌙</div>
+    <div style="font-size:14.5px;color:#f4f1e6;line-height:2;margin-bottom:22px"> تم إيقاف استقبال الطلبات مؤقتاً لأداء الصلاة 🤲<br/><br/>نعود لخدمتكم خلال دقائق قليلة بإذن الله.<br/><br/>شكراً لتفهمكم، ونسأل الله أن يتقبل منا ومنكم صالح الأعمال 🌙</div>
     <button onclick="document.getElementById('prayerTimeBlockOverlay').classList.remove('show')" style="background:#d4af37;color:#0f3d2e;border:none;border-radius:12px;padding:13px 30px;font-size:14px;font-weight:800;cursor:pointer">حسناً ✓</button>
   </div>
 </div>
@@ -1687,6 +1687,7 @@ input,select,textarea{font-family:inherit;}
         <option value="noshow">⚫ لم يحضروا</option>
         <option value="unavailable">⛔ غير متاحة</option>
         <option value="cancelled">🔴 ملغاة</option>
+        <option value="session_ended">✅ انتهت الجلسة</option>
         <option value="all">🗂️ الكل</option>
       </select>
     </div>
@@ -1697,6 +1698,7 @@ input,select,textarea{font-family:inherit;}
       <span id="leg_arrived"  style="padding:2px 8px;border-radius:20px">🔵 حضر</span>
       <span id="leg_noshow"   style="padding:2px 8px;border-radius:20px">⚫ لم يحضر</span>
       <span id="leg_unavail"  style="padding:2px 8px;border-radius:20px">⛔ غير متاحة</span>
+      <span id="leg_session"  style="padding:2px 8px;border-radius:20px">✅ انتهت الجلسة</span>
       <span id="leg_cancelled"style="padding:2px 8px;border-radius:20px">🔴 ملغي</span>
     </div>
   </div>
@@ -16075,12 +16077,14 @@ function renderCafeMonitorBookings() {
     if (search && !(b.phone||'').replace(/\D/g,'').includes(search) && !(b.whatsapp||'').replace(/\D/g,'').includes(search)) return false;
     if (filter === 'new')    return b.status === 'pending';
     if (filter === 'active') return b.status === 'pending' || b.status === 'confirmed' || b.status === 'arrived';
+    /* session_ended مش في النشطة */
     if (filter === 'pending') return b.status === 'pending';
     if (filter === 'confirmed') return b.status === 'confirmed';
     if (filter === 'arrived') return b.status === 'arrived';
     if (filter === 'unavailable') return b.status === 'unavailable';
     if (filter === 'cancelled') return b.status === 'cancelled';
     if (filter === 'noshow') return b.status === 'noshow';
+    if (filter === 'session_ended') return b.status === 'session_ended';
     return true;
   });
   if (!filtered.length) {
@@ -16105,6 +16109,14 @@ function renderCafeMonitorBookings() {
         '<span style="font-size:14px">⏱</span>' +
         '<span style="font-size:12px;font-weight:800;color:' + timerColor + '">على الطاولة منذ: ' + sitStr + '</span>' +
         '</div>';
+    } else if (b.status === 'session_ended' && b.arrivedAt && b.sessionEndedAt) {
+      var totalMin = Math.floor((new Date(b.sessionEndedAt).getTime() - new Date(b.arrivedAt).getTime()) / 60000);
+      var tH = Math.floor(totalMin / 60), tM = totalMin % 60;
+      var totalStr = tH > 0 ? tH + 'س ' + tM + 'د' : totalMin + ' دقيقة';
+      tableTimer = '<div style="background:#e0e7ff;border:1px solid #6366f1;border-radius:8px;padding:5px 10px;margin-bottom:8px;display:flex;align-items:center;gap:6px">' +
+        '<span style="font-size:14px">✅</span>' +
+        '<span style="font-size:12px;font-weight:800;color:#3730a3">مدة الجلسة: ' + totalStr + '</span>' +
+        '</div>';
     }
     return '<div class="cm-booking-card" id="cmBook_' + b.id + '" onclick="cmShowBookingDetails(\'' + b.id + '\')" style="cursor:pointer;border-radius:16px;padding:16px;background:var(--white);border:2px solid ' + color + ';margin-bottom:12px;animation:cmCardIn .3s ease">' +
       '<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px">' +
@@ -16127,6 +16139,7 @@ function renderCafeMonitorBookings() {
         '<button class="action-btn" style="background:#fef3c7;color:#92400e" onclick="cmUnavailableBooking(\'' + b.id + '\')">⛔ غير متاحة</button>' +
         '<button class="action-btn" style="background:#fee2e2;color:#991b1b" onclick="rejectBooking(\'' + b.id + '\')">❌ رفض</button>' +
         '<button class="action-btn" style="background:#dbeafe;color:#1e40af" onclick="markBookingArrived(\'' + b.id + '\')">👋 حضر</button>' +
+        (b.status === 'arrived' ? '<button class="action-btn" style="background:#e0e7ff;color:#3730a3" onclick="endCafeSession(\'' + b.id + '\')">🏁 انتهت الجلسة</button>' : '') +
         '<button class="action-btn" style="background:#f3f4f6;color:#374151" onclick="cancelBooking(\'' + b.id + '\')">🚫 إلغاء</button>' +
         '<button class="action-btn" style="background:#25D366;color:#fff" onclick="cmSendWA(\'' + b.id + '\')">📱 واتساب</button>' +
       '</div>' +
@@ -16135,7 +16148,7 @@ function renderCafeMonitorBookings() {
 }
 
 function _cmStatusColor(status) {
-  var m = { pending:'#f59e0b', confirmed:'#22c55e', arrived:'#3b82f6', cancelled:'#ef4444', noshow:'#6b7280', unavailable:'#f97316' };
+  var m = { pending:'#f59e0b', confirmed:'#22c55e', arrived:'#3b82f6', cancelled:'#ef4444', noshow:'#6b7280', unavailable:'#f97316', session_ended:'#6366f1' };
   return m[status] || '#e5e7eb';
 }
 
@@ -16146,7 +16159,8 @@ function _cmStatusBadge(status) {
     arrived:     '<span style="background:#dbeafe;color:#1e40af;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:800">🔵 حضر</span>',
     cancelled:   '<span style="background:#fee2e2;color:#991b1b;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:800">🔴 ملغي</span>',
     noshow:      '<span style="background:#f3f4f6;color:#374151;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:800">⚫ لم يحضر</span>',
-    unavailable: '<span style="background:#ffedd5;color:#c2410c;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:800">⛔ غير متاحة</span>',
+    unavailable:    '<span style="background:#ffedd5;color:#c2410c;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:800">⛔ غير متاحة</span>',
+    session_ended: '<span style="background:#e0e7ff;color:#3730a3;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:800">✅ انتهت الجلسة</span>',
   };
   return m[status] || m['pending'];
 }
@@ -16171,6 +16185,23 @@ function cmUnavailableBooking(id) {
     document.body.appendChild(el);
     setTimeout(function() { if (el.parentElement) el.remove(); }, 15000);
   }
+}
+
+/* ── إنهاء الجلسة ── */
+function endCafeSession(id) {
+  var b = bookingsData.find(function(x) { return x.id === id; });
+  if (!b) return;
+  b.status = 'session_ended';
+  b.sessionEndedAt = new Date().toISOString();
+  /* حساب مدة الجلسة */
+  var dur = b.arrivedAt ? Math.floor((Date.now() - new Date(b.arrivedAt).getTime()) / 60000) : null;
+  b.sessionDuration = dur;
+  fbUpdate('bookings/' + id, { status: 'session_ended', sessionEndedAt: b.sessionEndedAt, sessionDuration: dur });
+  saveData('zz_bookings', bookingsData);
+  renderAdminBookings();
+  if (document.getElementById('cafemonitorPanel')?.classList.contains('active')) renderCafeMonitorBookings();
+  var durStr = dur ? (dur >= 60 ? Math.floor(dur/60) + 'س ' + (dur%60) + 'د' : dur + ' دقيقة') : '';
+  showNotif('✅ انتهت الجلسة' + (durStr ? ' — المدة: ' + durStr : ''));
 }
 
 /* ── واتساب مباشر ── */
@@ -16416,6 +16447,7 @@ function _cmUpdateLegend() {
     leg_cancelled: { bg:'#fee2e2', color:'#991b1b', filters:['cancelled'] },
     leg_noshow:    { bg:'#f3f4f6', color:'#374151', filters:['noshow'] },
     leg_unavail:   { bg:'#ffedd5', color:'#c2410c', filters:['unavailable'] },
+    leg_session:   { bg:'#e0e7ff', color:'#3730a3', filters:['session_ended'] },
   };
   Object.keys(items).forEach(function(id) {
     var el = document.getElementById(id);
