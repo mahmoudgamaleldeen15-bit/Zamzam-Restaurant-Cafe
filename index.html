@@ -7266,13 +7266,24 @@ function startBookingCountdown(b) {
     if (diff <= 0) {
       el.textContent = '⏰ حان الموعد!';
       el.style.color = 'var(--red)';
+      el.style.fontWeight = '900';
       clearInterval(_bookingCountdownIntervals[key]);
       return;
     }
-    const h = Math.floor(diff / 3600000);
-    const m = Math.floor((diff % 3600000) / 60000);
-    const s = Math.floor((diff % 60000) / 1000);
-    el.textContent = (h > 0 ? String(h).padStart(2,'0') + ':' : '') + String(m).padStart(2,'0') + ':' + String(s).padStart(2,'0');
+    /* تنبيه قبل 15 دقيقة */
+    if (diff <= 15 * 60 * 1000) {
+      el.textContent = '🔔 موعدك بعد أقل من 15 دقيقة!';
+      el.style.color = '#f59e0b';
+      el.style.fontWeight = '800';
+    } else {
+      /* عداد عادي */
+      el.style.color = 'var(--olive)';
+      el.style.fontWeight = '700';
+      const h = Math.floor(diff / 3600000);
+      const m = Math.floor((diff % 3600000) / 60000);
+      const s = Math.floor((diff % 60000) / 1000);
+      el.textContent = (h > 0 ? String(h).padStart(2,'0') + ':' : '') + String(m).padStart(2,'0') + ':' + String(s).padStart(2,'0');
+    }
   }
   tick();
   _bookingCountdownIntervals[key] = setInterval(tick, 1000);
