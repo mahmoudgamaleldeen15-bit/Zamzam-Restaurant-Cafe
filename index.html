@@ -1944,6 +1944,7 @@ input,select,textarea{font-family:inherit;}
       <button id="tabBlockBtn" onclick="switchAdminTab('block',this)">🚫 الحظر</button>
       <button id="tabStatsBtn" onclick="switchAdminTab('stats',this)">📊 الإحصائيات</button>
       <button id="tabCompBtn" onclick="switchAdminTab('competitions',this)" style="display:none">🏆 المسابقات</button>
+      <button id="tabLoyaltyBtn" data-admin-only onclick="switchAdminTab('loyalty',this)">🏆 نقاط الولاء</button>
     </div>
 
     <!-- ORDERS TAB (Card View) -->
@@ -2025,6 +2026,24 @@ input,select,textarea{font-family:inherit;}
         <div style="font-size:13px;font-weight:800;color:var(--dark);margin-bottom:12px">📅 حجوزات الكافيه — مرتبة حسب التاريخ والوقت</div>
         <div id="adminBookingsList"></div>
       </div>
+    </div>
+
+    <!-- LOYALTY TAB -->
+    <div id="tab-loyalty" style="display:none;padding:0 16px 24px;direction:rtl">
+      <!-- إشعارات استبدال النقاط -->
+      <div id="loyaltyRedeemAlerts" style="margin-bottom:12px"></div>
+      <!-- بحث وفلتر -->
+      <div style="display:flex;gap:8px;margin-bottom:12px">
+        <input id="loyaltySearch" type="text" placeholder="🔍 بحث بالاسم أو الهاتف..." oninput="renderLoyaltyAdmin()" style="flex:1;padding:9px 12px;border:1.5px solid var(--border);border-radius:10px;font-size:13px;font-family:inherit;background:var(--bg);color:var(--text)">
+        <select id="loyaltyFilter" onchange="renderLoyaltyAdmin()" style="padding:9px;border:1.5px solid var(--border);border-radius:10px;font-size:12px;font-family:inherit;background:var(--bg);color:var(--text)">
+          <option value="all">الكل</option>
+          <option value="redeemed">استبدل نقاط</option>
+          <option value="eligible">مؤهل للاستبدال</option>
+          <option value="vip">VIP</option>
+        </select>
+        <button onclick="exportLoyaltyExcel()" style="padding:9px 12px;background:var(--olive);color:#fff;border:none;border-radius:10px;font-size:12px;font-weight:800;cursor:pointer;font-family:inherit">📊 Excel</button>
+      </div>
+      <div id="loyaltyAdminList" style="display:flex;flex-direction:column;gap:10px"></div>
     </div>
 
     <!-- MENU TAB -->
@@ -5060,7 +5079,8 @@ function updateCartUI() {
   document.getElementById('fcCount').textContent = count;
   const subtotal = cartSubtotal();
   const autoDisc = calcAutoDiscount();
-  const totalDisc = Math.max(appliedDiscount, autoDisc);
+  /* تجميع الخصومات: عروض+VIP + نقاط الولاء معاً */
+  const totalDisc = Math.min(subtotal, autoDisc + _loyaltyDiscountApplied);
   const deliveryFee = calcDeliveryFee();
   const finalTotal = Math.max(0, subtotal - totalDisc) + deliveryFee;
   document.getElementById('fcTotal').textContent = finalTotal + ' ج';
@@ -5071,7 +5091,8 @@ function updateCartUI() {
   const sumEl = document.getElementById('cartSummary');
   if (sumEl) {
     let sumHtml = `<div class="cart-summary-row"><span>المجموع الفرعى</span><span>${subtotal} ج.م</span></div>`;
-    if (totalDisc > 0) sumHtml += `<div class="cart-summary-row disc"><span>🏷️ الخصم</span><span>- ${totalDisc} ج.م</span></div>`;
+    if (autoDisc > 0) sumHtml += `<div class="cart-summary-row disc"><span>🏷️ خصم العروض/VIP</span><span>- ${autoDisc} ج.م</span></div>`;
+    if (_loyaltyDiscountApplied > 0) sumHtml += `<div class="cart-summary-row disc" style="color:#059669"><span>🏆 كاش باك النقاط</span><span>- ${_loyaltyDiscountApplied} ج.م</span></div>`;
     if (deliveryFee > 0) sumHtml += `<div class="cart-summary-row"><span>🛵 رسوم التوصيل</span><span>${deliveryFee} ج.م</span></div>`;
     else if (deliveryType === 'delivery') sumHtml += `<div class="cart-summary-row" style="color:var(--olive);font-weight:700"><span>🛵 التوصيل</span><span>مجانى</span></div>`;
     sumHtml += `<div class="cart-summary-row total"><span>الإجمالى النهائى</span><span>${finalTotal} ج.م</span></div>`;
@@ -5349,7 +5370,8 @@ function placeOrder() {
   _cashierViewedCurrentOrder = false;
   const subtotal = cartSubtotal();
   const autoDisc = calcAutoDiscount();
-  const totalDisc = Math.max(appliedDiscount, autoDisc);
+  /* تجميع الخصومات: عروض+VIP + كاش باك النقاط */
+  const totalDisc = Math.min(subtotal, autoDisc + _loyaltyDiscountApplied);
   const deliveryFee = calcDeliveryFee();
   const finalTotal = Math.max(0, subtotal - totalDisc) + deliveryFee;
   const dist = gpsCoords ? calcDist(gpsCoords.lat, gpsCoords.lng) : null;
@@ -5403,7 +5425,7 @@ ${itemsLines}
 📱 *رقم محفظة العميل:* ${clientWalletNum}` : ''}${gpsLine}
 ━━━━━━━━━━━━━━━━━━━━━
 💰 المجموع: ${subtotal} ج.م
-${totalDisc > 0 ? `🏷️ الخصم: - ${totalDisc} ج.م\n` : ''}${deliveryFee > 0 ? `🛵 التوصيل: ${deliveryFee} ج.م\n` : deliveryType === 'delivery' ? '🛵 التوصيل: مجانى\n' : ''}✅ *الإجمالى النهائى: ${finalTotal} ج.م*
+${autoDisc > 0 ? `🏷️ خصم العروض/VIP: - ${autoDisc} ج.م\\n` : ''}${_loyaltyDiscountApplied > 0 ? `🏆 كاش باك النقاط: - ${_loyaltyDiscountApplied} ج.م\\n` : ''}${deliveryFee > 0 ? `🛵 التوصيل: ${deliveryFee} ج.م\n` : deliveryType === 'delivery' ? '🛵 التوصيل: مجانى\n' : ''}✅ *الإجمالى النهائى: ${finalTotal} ج.م*
 ━━━━━━━━━━━━━━━━━━━━━
 ⏱️ سيتم تحديد وقت التوصيل المتوقع من قِبل الكاشير
 🕐 ${new Date().toLocaleString('ar-EG')}${lastOrderNote}`;
@@ -6157,10 +6179,11 @@ function applyRoleRestrictions() {
 function switchAdminTab(tab, el) {
   document.querySelectorAll('.admin-tabs button').forEach(b => b.classList.remove('active'));
   el.classList.add('active');
-  ['orders','cashier','bookings','menu','addons','offers','settings','notify','ads','agents','block','stats'].forEach(t => {
+  ['orders','cashier','bookings','menu','addons','offers','settings','notify','ads','agents','block','stats','loyalty','competitions'].forEach(t => {
     const tabEl = document.getElementById('tab-' + t);
     if (tabEl) tabEl.style.display = t === tab ? 'block' : 'none';
   });
+  if (tab === 'loyalty') { _loadLoyaltyAdmin(); return; }
   if (tab === 'orders') renderAdminOrders();
   if (tab === 'cashier') {
     renderCashierSheet();
@@ -7108,34 +7131,51 @@ function confirmBooking() {
   const time = document.getElementById('bookTime')?.value;
   const persons = document.getElementById('bookPersons')?.value;
   if (!date || !time) { showNotif('اختر التاريخ والوقت'); return; }
-  const bookCode = 'BK-' + String(Date.now()).slice(-6);
-  const booking = {
-    id: bookCode, tableNum: selectedTableNum, date, time, persons,
-    name: currentUser.name, phone: currentUser.phone,
-    whatsapp: currentUser.whatsapp || currentUser.phone,
-    status: 'pending', timestamp: Date.now()
+
+  /* ══ فحص التعارض قبل الحجز ══ */
+  const _btn = document.querySelector('#bookingFormView .btn-primary');
+  if (_btn) { _btn.disabled = true; _btn.textContent = '⏳ جاري التحقق...'; }
+  const _tableNum = selectedTableNum;
+
+  const _doConflictCheck = function(callback) {
+    if (!db) { callback(false); return; }
+    db.ref('bookings').orderByChild('date').equalTo(date).once('value', function(snap) {
+      let conflict = false;
+      if (snap.exists()) {
+        snap.forEach(function(c) {
+          const b = c.val();
+          if (!b) return;
+          if (['cancelled','rejected','noshow','unavailable','session_ended'].includes(b.status)) return;
+          if (String(b.tableNum) === String(_tableNum) && b.time === time) conflict = true;
+        });
+      }
+      callback(conflict);
+    }).catch(function() { callback(false); });
   };
-  bookingsData.push(booking);
-  saveData('zz_bookings', bookingsData);
-  // 🔥 حفظ الحجز في Firebase — الكاشير يشوفه فوراً
-  fbSaveBooking(booking);
-  // Send WA to restaurant
-  const restMsg = `🍽️ *حجز جديد — ${bookCode}*
-━━━━━━━━━━━━━━━━
-👤 *الاسم:* ${currentUser.name}
-📱 *واتساب:* ${booking.whatsapp}
-🪑 *رقم الترابيزة:* ${selectedTableNum}
-👥 *عدد الأشخاص:* ${persons}
-📅 *التاريخ:* ${date}
-⏰ *الوقت:* ${time}
-🆔 *كود الحجز:* ${bookCode}`;
-  const waNum = SETTINGS.waNum || RESTAURANT.waNum;
-  window.open(`https://wa.me/${waNum}?text=${encodeURIComponent(restMsg)}`, '_blank');
-  // Show confirm screen
-  showBookingConfirm(booking);
-  selectedTableNum = null;
-  // Start late alert timer
-  startBookingAlertTimer(booking);
+
+  _doConflictCheck(function(hasConflict) {
+    if (_btn) { _btn.disabled = false; _btn.textContent = '✓ تأكيد الحجز'; }
+    if (hasConflict) {
+      showNotif('⚠️ الترابيزة ' + _tableNum + ' محجوزة في هذا الوقت — اختر وقتاً آخر أو ترابيزة أخرى');
+      return;
+    }
+    const bookCode = 'BK-' + String(Date.now()).slice(-6);
+    const booking = {
+      id: bookCode, tableNum: _tableNum, date, time, persons,
+      name: currentUser.name, phone: currentUser.phone,
+      whatsapp: currentUser.whatsapp || currentUser.phone,
+      status: 'pending', timestamp: Date.now()
+    };
+    bookingsData.push(booking);
+    saveData('zz_bookings', bookingsData);
+    fbSaveBooking(booking);
+    const restMsg = `🍽️ *حجز جديد — ${bookCode}*\n━━━━━━━━━━━━━━━━\n👤 *الاسم:* ${currentUser.name}\n📱 *واتساب:* ${booking.whatsapp}\n🪑 *رقم الترابيزة:* ${_tableNum}\n👥 *عدد الأشخاص:* ${persons}\n📅 *التاريخ:* ${date}\n⏰ *الوقت:* ${time}\n🆔 *كود الحجز:* ${bookCode}`;
+    const waNum = SETTINGS.waNum || RESTAURANT.waNum;
+    window.open(`https://wa.me/${waNum}?text=${encodeURIComponent(restMsg)}`, '_blank');
+    showBookingConfirm(booking);
+    selectedTableNum = null;
+    startBookingAlertTimer(booking);
+  });
 }
 function _bookingHeaderHtml(status){
   if (status === 'pending') return '<div style="font-size:26px;margin-bottom:8px">🔍</div><div style="font-size:18px;font-weight:800;margin-bottom:4px">تم إرسال طلب الحجز</div><div style="font-size:13px;opacity:.85;margin-bottom:12px">في انتظار مراجعة الكافيه وتأكيد توفّر الترابيزة</div>';
@@ -7983,7 +8023,16 @@ function saveAllSettings() {
   if (newC2) { _AUTH_TABLE[2].h = _hashPw('cashier:' + newC2); document.getElementById('newCashier2').value = ''; }
   /* حفظ باسورد متابع الكافيه */
   const newCM = document.getElementById('newCafeMonitor')?.value;
-  if (newCM) { const _cmEntry = _AUTH_TABLE.find(a => a.r === 'cafemonitor'); if (_cmEntry) { _cmEntry.h = _hashPw('cafemonitor:' + newCM); document.getElementById('newCafeMonitor').value = ''; } }
+  if (newCM) {
+    const _cmEntry = _AUTH_TABLE.find(a => a.r === 'cafemonitor');
+    if (_cmEntry) {
+      const _cmHash = _hashPw('cafemonitor:' + newCM);
+      _cmEntry.h = _cmHash;
+      /* حفظ في Firebase علشان يفضل بعد ريفريش الصفحة */
+      if (db) db.ref('settings/cafemonitorHash').set(_cmHash).catch(function(){});
+      document.getElementById('newCafeMonitor').value = '';
+    }
+  }
   // حفظ رموز PIN (كاشير/بيكاب) — مع تحقق ٤ أرقام وتخزين وتزامن
   const _np1 = document.getElementById('newPinCashier1')?.value.trim();
   const _np2 = document.getElementById('newPinCashier2')?.value.trim();
@@ -10769,6 +10818,11 @@ function setupFirebaseListeners() {
         SETTINGS = { ...SETTINGS, ...fbSettings };
       } else {
         SETTINGS = { ...SETTINGS, ...fbSettings };
+      /* استعادة باسورد متابع الكافيه من Firebase */
+      if (fbSettings.cafemonitorHash) {
+        const _cmE = _AUTH_TABLE.find(function(a) { return a.r === 'cafemonitor'; });
+        if (_cmE) _cmE.h = fbSettings.cafemonitorHash;
+      }
         if (!SETTINGS.ewallets || !SETTINGS.ewallets.length) {
           SETTINGS.ewallets = [
             {id:'ew1', name:'Vodafone Cash', emoji:'💳', number:'', managerPhone:''},
@@ -13427,8 +13481,19 @@ function redeemLoyaltyPoints(phone, cartTotal) {
   const data = getLoyaltyData(phone);
   data.points = Math.max(0, (data.points || 0) - usedPoints);
   data.redeemed = (data.redeemed || 0) + usedPoints;
+  data.lastRedeem = new Date().toISOString().slice(0,10);
   saveLoyaltyData(phone, data);
-
+  /* إشعار الأدمن والكاشير بالاستبدال */
+  if (db) {
+    var _redeemKey = 'reedm_' + Date.now();
+    db.ref('loyalty_redemptions/' + _redeemKey).set({
+      phone: (phone||'').replace(/\D/g,''),
+      name: (typeof currentUser !== 'undefined' && currentUser?.name) || '',
+      points: usedPoints,
+      discount: discount,
+      date: new Date().toISOString()
+    }).catch(function(){});
+  }
   return discount;
 }
 
@@ -16356,6 +16421,115 @@ function _cmCheckReminders() {
 
 function _cmMarkReminderSent(id) {
   if (typeof db !== 'undefined' && db) db.ref('bookings/' + id + '/reminderSent').set(true).catch(function(){});
+}
+
+/* ══════════════════════════════════════════════════════
+   لوحة إدارة نقاط الولاء
+   ══════════════════════════════════════════════════════ */
+var _loyaltyAdminData = {};
+
+function _loadLoyaltyAdmin() {
+  if (!db) return;
+  db.ref('loyalty').once('value', function(snap) {
+    _loyaltyAdminData = {};
+    if (snap.exists()) snap.forEach(function(c) {
+      _loyaltyAdminData[c.key] = c.val();
+    });
+    renderLoyaltyAdmin();
+  });
+  db.ref('loyalty_redemptions').on('child_added', function(snap) {
+    _showLoyaltyRedeemAlert(snap.val());
+  });
+}
+
+function _showLoyaltyRedeemAlert(data) {
+  var area = document.getElementById('loyaltyRedeemAlerts');
+  if (!area || !data) return;
+  var card = document.createElement('div');
+  card.style.cssText = 'background:linear-gradient(135deg,#059669,#10b981);color:#fff;border-radius:12px;padding:12px 16px;margin-bottom:8px;animation:cmAlertIn .3s ease;display:flex;justify-content:space-between;align-items:center';
+  card.innerHTML = '<div><div style="font-weight:900;font-size:13px">🏆 استبدال نقاط جديد!</div>' +
+    '<div style="font-size:11px;opacity:.85;margin-top:2px">' + (data.name||'') + ' — ' + (data.phone||'') + '</div>' +
+    '<div style="font-size:11px;opacity:.85">' + (data.points||0) + ' نقطة → خصم ' + (data.discount||0) + ' ج.م</div></div>' +
+    '<button onclick="this.parentElement.remove()" style="background:rgba(255,255,255,.2);border:none;color:#fff;padding:4px 8px;border-radius:8px;cursor:pointer;font-size:14px">✕</button>';
+  area.insertBefore(card, area.firstChild);
+  setTimeout(function() { if (card.parentElement) { card.style.opacity='0'; card.style.transition='opacity .3s'; setTimeout(function(){card.remove();},300); } }, 20000);
+}
+
+function renderLoyaltyAdmin() {
+  var el = document.getElementById('loyaltyAdminList');
+  if (!el) return;
+  var search = (document.getElementById('loyaltySearch')?.value || '').toLowerCase();
+  var filter = document.getElementById('loyaltyFilter')?.value || 'all';
+  var threshold = Number(document.getElementById('loyaltyThreshold')?.value) || 1000;
+  var allUsers = (usersData || []);
+  var entries = Object.keys(_loyaltyAdminData).map(function(phone) {
+    var d = _loyaltyAdminData[phone];
+    var user = allUsers.find(function(u) { return (u.phone||'').replace(/\D/g,'') === phone; });
+    var isVIP = user ? !!_resolveVIP((user.phone||'')) : false;
+    return { phone, name: user?.name || d.name || phone, points: d.points || 0, earned: d.earned || 0, redeemed: d.redeemed || 0, lastRedeem: d.lastRedeem || null, isVIP };
+  });
+  entries = entries.filter(function(e) {
+    if (search && !e.name.toLowerCase().includes(search) && !e.phone.includes(search)) return false;
+    if (filter === 'redeemed') return e.redeemed > 0;
+    if (filter === 'eligible') return e.points >= threshold;
+    if (filter === 'vip') return e.isVIP;
+    return true;
+  });
+  entries.sort(function(a,b) { return b.points - a.points; });
+  if (!entries.length) { el.innerHTML = '<div style="text-align:center;padding:30px;color:var(--text-muted)">لا توجد بيانات</div>'; return; }
+  el.innerHTML = entries.map(function(e) {
+    var eligible = e.points >= threshold;
+    var pct = Math.min(100, Math.round(e.points / threshold * 100));
+    var wa = normalizePhoneForWA(e.phone);
+    var waMsg = eligible
+      ? 'مبروك ' + e.name + '! 🎉\nوصلت لـ ' + e.points + ' نقطة وأصبحت مؤهلاً لخصم كاش باك عند طلبك القادم!\nاستمتع بخصمك الآن 🛍️\n' + (RESTAURANT?.name || 'زمزم')
+      : 'أهلاً ' + e.name + '! 🌟\nعندك ' + e.points + ' نقطة من أصل ' + threshold + ' للحصول على كاش باك!\nاطلب أكتر وكسب نقاط أكتر 💰\nكل جنيه = نقطة — اطلب الآن! 🚀\n' + (RESTAURANT?.name || 'زمزم');
+    return '<div style="background:var(--white);border-radius:14px;padding:14px;border:1.5px solid var(--border)">' +
+      '<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px">' +
+        '<div><div style="font-size:14px;font-weight:900">' + e.name + (e.isVIP ? ' 👑' : '') + '</div>' +
+        '<div style="font-size:11px;color:var(--text-muted)">' + e.phone + '</div></div>' +
+        '<div style="text-align:left">' +
+        '<div style="font-size:18px;font-weight:900;color:' + (eligible?'#059669':'var(--olive)') + '">' + e.points + ' نقطة</div>' +
+        (eligible ? '<div style="background:#d1fae5;color:#065f46;padding:2px 8px;border-radius:20px;font-size:10px;font-weight:800">✅ مؤهل للاستبدال</div>' : '') +
+        '</div></div>' +
+      '<div style="background:#f3f4f6;border-radius:10px;height:6px;margin-bottom:6px">' +
+        '<div style="background:' + (eligible?'#059669':'var(--olive)') + ';height:6px;border-radius:10px;width:' + pct + '%"></div>' +
+      '</div>' +
+      '<div style="display:flex;justify-content:space-between;font-size:10px;color:var(--text-muted);margin-bottom:8px">' +
+        '<span>مكتسب: ' + e.earned + '</span><span>' + pct + '%</span>' +
+        (e.redeemed > 0 ? '<span style="color:#059669">استبدل: ' + e.redeemed + ' نقطة' + (e.lastRedeem ? ' — ' + (e.lastRedeem||'').slice(0,10) : '') + '</span>' : '<span>لم يستبدل</span>') +
+      '</div>' +
+      (wa ? '<a href="https://wa.me/' + wa + '?text=' + encodeURIComponent(waMsg) + '" target="_blank" style="display:block;text-align:center;padding:8px;background:#25D366;color:#fff;border-radius:10px;font-size:12px;font-weight:800;text-decoration:none">📱 واتساب — ' + (eligible?'مؤهل للكاش باك 🏆':'تشجيع على الطلب ⭐') + '</a>' : '') +
+    '</div>';
+  }).join('');
+}
+
+function exportLoyaltyExcel() {
+  var threshold = Number(document.getElementById('loyaltyThreshold')?.value) || 1000;
+  var allUsers = (usersData || []);
+  var rows = [['الاسم','الهاتف','النقاط الحالية','مكتسب','مستبدل','مؤهل للاستبدال','آخر استبدال','نوع العميل']];
+  Object.keys(_loyaltyAdminData).forEach(function(phone) {
+    var d = _loyaltyAdminData[phone];
+    var user = allUsers.find(function(u) { return (u.phone||'').replace(/\D/g,'') === phone; });
+    var isVIP = user ? !!_resolveVIP((user.phone||'')) : false;
+    rows.push([
+      user?.name || d.name || '—',
+      phone,
+      d.points || 0,
+      d.earned || 0,
+      d.redeemed || 0,
+      (d.points || 0) >= threshold ? 'نعم' : 'لا',
+      d.lastRedeem || '—',
+      isVIP ? 'VIP 👑' : 'عادي'
+    ]);
+  });
+  var BOM = '\uFEFF';
+  var csv = BOM + rows.map(function(r) { return r.map(function(c) { return '"' + String(c).replace(/"/g,'""') + '"'; }).join(','); }).join('\n');
+  var a = document.createElement('a');
+  a.href = 'data:text/csv;charset=utf-8,' + encodeURIComponent(csv);
+  a.download = 'loyalty_points_' + new Date().toISOString().slice(0,10) + '.csv';
+  a.click();
+  showNotif('✅ تم تصدير بيانات النقاط');
 }
 
 /* ══════════════════ INIT ══════════════════ */
