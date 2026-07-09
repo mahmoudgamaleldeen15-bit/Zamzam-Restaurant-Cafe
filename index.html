@@ -11120,6 +11120,16 @@ function setupFirebaseListeners() {
       }
     }
   });
+  /* ── مزامنة إعدادات نقاط الولاء لكل العملاء ── */
+  db.ref('config/loyaltySettings').on('value', snap => {
+    if (snap.exists()) {
+      const ls = snap.val();
+      if (ls && typeof ls === 'object') {
+        LOYALTY_SETTINGS = { ...LOYALTY_SETTINGS, ...ls };
+        saveData('zz_loyalty_settings', LOYALTY_SETTINGS);
+      }
+    }
+  });
   // --------- AGENT RATINGS — Real-Time Sync ---------
   db.ref('agent_ratings').on('value', snap => {
     if (!snap.exists()) return;
