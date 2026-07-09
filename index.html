@@ -16484,32 +16484,38 @@ function _loadLoyaltyAdmin() {
     if (el) el.innerHTML = '<div style="text-align:center;padding:20px;color:var(--red)">❌ Firebase غير متصل</div>';
     return;
   }
-  db.ref('loyalty').once('value', function(snap) {
-    _loyaltyAdminData = {};
-    if (snap.exists()) {
-      snap.forEach(function(c) { if (c.val()) _loyaltyAdminData[c.key] = c.val(); });
-    }
-    /* فحص localStorage كـ fallback لو Firebase فاضية */
-    if (Object.keys(_loyaltyAdminData).length === 0) {
-      /* حاول تجميع من localStorage */
-      Object.keys(localStorage).forEach(function(k) {
-        if (k.startsWith('zz_loyalty_') && k !== 'zz_loyalty_settings') {
-          try {
-            const phone = k.replace('zz_loyalty_', '');
-            const d = JSON.parse(localStorage.getItem(k));
-            if (d && (d.points || d.earned)) {
-              _loyaltyAdminData[phone] = d;
-              /* ارفعها لـ Firebase */
-              if (db) db.ref('loyalty/' + phone).set(d).catch(function(){});
-            }
-          } catch(e) {}
-        }
-      });
-    }
-    renderLoyaltyAdmin();
-  }).catch(function(e) {
-    if (el) el.innerHTML = '<div style="text-align:center;padding:20px;color:var(--red)">❌ خطأ في قراءة البيانات: ' + e.message + '</div>';
-  });
+  /* استخدام Promise pattern صريح */
+  db.ref('loyalty').once('value')
+    .then(function(snap) {
+      _loyaltyAdminData = {};
+      if (snap.exists()) {
+        snap.forEach(function(c) { if (c.val()) _loyaltyAdminData[c.key] = c.val(); });
+      }
+      /* fallback من localStorage لو Firebase فاضية */
+      if (Object.keys(_loyaltyAdminData).length === 0) {
+        Object.keys(localStorage).forEach(function(k) {
+          if (k.startsWith('zz_loyalty_') && k !== 'zz_loyalty_settings') {
+            try {
+              const phone = k.replace('zz_loyalty_', '');
+              const d = JSON.parse(localStorage.getItem(k));
+              if (d && (d.points || d.earned)) {
+                _loyaltyAdminData[phone] = d;
+                db.ref('loyalty/' + phone).set(d).catch(function(){});
+              }
+            } catch(e) {}
+          }
+        });
+      }
+      renderLoyaltyAdmin();
+    })
+    .catch(function(err) {
+      const msg = err && err.message ? err.message : 'خطأ غير معروف';
+      if (el) el.innerHTML = '<div style="text-align:center;padding:20px;direction:rtl">' +
+        '<div style="color:var(--red);font-weight:800;margin-bottom:8px">❌ خطأ: ' + msg + '</div>' +
+        '<div style="font-size:12px;color:var(--text-muted)">تأكد من Firebase Rules — loyalty/ محتاج ".read": true</div>' +
+        '</div>';
+    });
+  /* listener لإشعارات الاستبدال */
   db.ref('loyalty_redemptions').on('child_added', function(snap) {
     _showLoyaltyRedeemAlert(snap.val());
   });
