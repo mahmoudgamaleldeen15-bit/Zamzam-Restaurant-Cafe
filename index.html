@@ -3532,6 +3532,19 @@ function _goToAppOrTracking() {
   window.scrollTo(0, 0);
   const _appScreen = document.getElementById('app');
   if (_appScreen) _appScreen.scrollTop = 0;
+  /* تحميل استخدام العروض من Firebase فوراً عند الدخول */
+  if (currentUser && currentUser.phone && db) {
+    const _ph = currentUser.phone.replace(/\D/g,'');
+    window._fbOfferUsageFetchedFor = null; /* اجبر إعادة التحميل */
+    db.ref('offer_usage/' + _ph).once('value').then(function(snap) {
+      window._fbOfferUsage = window._fbOfferUsage || {};
+      if (snap.exists()) {
+        const v = snap.val();
+        Object.keys(v).forEach(function(k) { window._fbOfferUsage[k] = true; });
+      }
+      window._fbOfferUsageFetchedFor = _ph;
+    }).catch(function(){});
+  }
   /* عرض popup الإشعارات بعد 5 ثوان — مرة واحدة فقط */
   setTimeout(_showOSPromptSheet, 5000);
   /* تحديث كارت المسابقات لما العميل يدخل الصفحة الرئيسية */
@@ -5041,10 +5054,15 @@ function _offerSyncUsageFromFirebase() {
 function _isOfferBlocked(offerId) {
   /* الطبقة 1 — usedOffers المحلية (الأصلية، بدون تعديل) */
   if (currentUser && usedOffers[currentUser.phone + '_' + offerId]) return true;
+  /* الطبقة 1b — clean phone */
+  const _cp = (currentUser?.phone || '').replace(/\D/g,'');
+  if (_cp && usedOffers[_cp + '_' + offerId]) return true;
   /* الطبقة 2 — Firebase (نفس الرقم من أي جهاز) */
   if (window._fbOfferUsage && window._fbOfferUsage[offerId]) return true;
   /* الطبقة 3 — localStorage بالجهاز (نفس الجهاز بأي رقم) */
   try { if (localStorage.getItem('zz_offer_voted_' + offerId)) return true; } catch(e) {}
+  /* الطبقة 4 — localStorage بـ phone+offerId */
+  try { if (_cp && localStorage.getItem('zz_ou_' + _cp + '_' + offerId)) return true; } catch(e) {}
   return false;
 }
 
@@ -6183,7 +6201,7 @@ function switchAdminTab(tab, el) {
     const tabEl = document.getElementById('tab-' + t);
     if (tabEl) tabEl.style.display = t === tab ? 'block' : 'none';
   });
-  if (tab === 'loyalty') { _loadLoyaltyAdmin(); return; }
+  if (tab === 'loyalty') { _loadLoyaltyAdmin(); }
   if (tab === 'orders') renderAdminOrders();
   if (tab === 'cashier') {
     renderCashierSheet();
@@ -9886,6 +9904,10 @@ function confirmFinalOrder() {
       if (!oid) return;
       if (typeof db !== 'undefined' && db) { db.ref('offer_usage/' + _syncPhone + '/' + oid).set(true).catch(function(){}); }
       try { localStorage.setItem('zz_offer_voted_' + oid, '1'); } catch(e) {}
+      /* layer 4: phone+offer key */
+      try { if (_syncPhone) localStorage.setItem('zz_ou_' + _syncPhone + '_' + oid, '1'); } catch(e) {}
+      /* تحديث الـ cache الفوري */
+      if (window._fbOfferUsage) window._fbOfferUsage[oid] = true;
     });
   }
   // كسب نقاط الولاء — للكل أو VIP حسب الإعداد
