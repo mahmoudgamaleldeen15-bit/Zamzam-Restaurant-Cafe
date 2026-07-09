@@ -3544,6 +3544,20 @@ function _goToAppOrTracking() {
       }
       window._fbOfferUsageFetchedFor = _ph;
     }).catch(function(){});
+    /* مزامنة نقاط الولاء من Firebase → localStorage عشان تكون محدّثة على كل الأجهزة */
+    db.ref('loyalty/' + _ph).once('value').then(function(snap) {
+      if (snap.exists()) {
+        const fbData = snap.val();
+        const localData = loadData('zz_loyalty_' + _ph, {});
+        /* خذ الأعلى في النقاط (الأحدث) */
+        if ((fbData.points || 0) > (localData.points || 0)) {
+          saveData('zz_loyalty_' + _ph, fbData);
+          /* تحديث العرض بعد المزامنة */
+          if (typeof updateVIPWelcomeBanner === 'function') updateVIPWelcomeBanner();
+          if (typeof updateCartUI === 'function') updateCartUI();
+        }
+      }
+    }).catch(function(){});
   }
   /* عرض popup الإشعارات بعد 5 ثوان — مرة واحدة فقط */
   setTimeout(_showOSPromptSheet, 5000);
@@ -13456,7 +13470,10 @@ function getLoyaltyPoints(phone) {
 
 function getLoyaltyData(phone) {
   const p = (phone || '').replace(/\D/g,'');
-  return loadData('zz_loyalty_' + p, { points: 0, earned: 0, redeemed: 0, lastEarned: null });
+  /* أولاً من localStorage (سريع — متزامن) */
+  const local = loadData('zz_loyalty_' + p, { points: 0, earned: 0, redeemed: 0, lastEarned: null });
+  /* Firebase بيتحدّث في الخلفية عند تسجيل الدخول — القيمة المحلية هي المرجع الآن */
+  return local;
 }
 
 function saveLoyaltyData(phone, data) {
