@@ -16540,7 +16540,7 @@ function renderLoyaltyAdmin() {
   var search = (document.getElementById('loyaltySearch')?.value || '').toLowerCase();
   var filter = document.getElementById('loyaltyFilter')?.value || 'all';
   var threshold = Number(document.getElementById('loyaltyThreshold')?.value) || 1000;
-  var allUsers = (usersData || []);
+  var allUsers = loadData('zz_users', []);
   var entries = Object.keys(_loyaltyAdminData).map(function(phone) {
     var d = _loyaltyAdminData[phone];
     var user = allUsers.find(function(u) { return (u.phone||'').replace(/\D/g,'') === phone; });
@@ -16585,7 +16585,7 @@ function renderLoyaltyAdmin() {
 
 function exportLoyaltyExcel() {
   var threshold = Number(document.getElementById('loyaltyThreshold')?.value) || 1000;
-  var allUsers = (usersData || []);
+  var allUsers = loadData('zz_users', []);
   var rows = [['الاسم','الهاتف','النقاط الحالية','مكتسب','مستبدل','مؤهل للاستبدال','آخر استبدال','نوع العميل']];
   Object.keys(_loyaltyAdminData).forEach(function(phone) {
     var d = _loyaltyAdminData[phone];
