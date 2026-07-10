@@ -14883,7 +14883,7 @@ let _compModalOpen = false;
     if (tab === 'competitions') {
       document.querySelectorAll('.admin-tabs button').forEach(b => b.classList.remove('active'));
       el.classList.add('active');
-      ['orders','cashier','bookings','menu','addons','offers','settings','notify','ads','agents','block','stats'].forEach(t => {
+      ['orders','cashier','bookings','menu','addons','offers','settings','notify','ads','agents','block','stats','loyalty'].forEach(t => {
         const e = document.getElementById('tab-' + t); if (e) e.style.display = 'none';
       });
       if (compTab) { compTab.style.display = 'block'; _compRenderAdmin(); }
