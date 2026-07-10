@@ -2042,6 +2042,7 @@ input,select,textarea{font-family:inherit;}
           <option value="vip">VIP</option>
         </select>
         <button onclick="exportLoyaltyExcel()" style="padding:9px 12px;background:var(--olive);color:#fff;border:none;border-radius:10px;font-size:12px;font-weight:800;cursor:pointer;font-family:inherit">📊 Excel</button>
+        <button onclick="_loyaltyAdminLoaded=false;_loadLoyaltyAdmin()" style="padding:9px 12px;background:#6366f1;color:#fff;border:none;border-radius:10px;font-size:12px;font-weight:800;cursor:pointer;font-family:inherit">🔄</button>
       </div>
       <div id="loyaltyAdminList" style="display:flex;flex-direction:column;gap:10px"></div>
     </div>
@@ -6216,6 +6217,7 @@ function switchAdminTab(tab, el) {
     if (tabEl) tabEl.style.display = t === tab ? 'block' : 'none';
   });
   if (tab === 'loyalty') { _loadLoyaltyAdmin(); }
+  if (tab === 'competitions') { if(typeof _compLoadAdmin==='function') _compLoadAdmin(); if(typeof _compStartLiveFeed==='function') _compStartLiveFeed(); }
   if (tab === 'orders') renderAdminOrders();
   if (tab === 'cashier') {
     renderCashierSheet();
@@ -16476,15 +16478,21 @@ function _cmMarkReminderSent(id) {
    لوحة إدارة نقاط الولاء
    ══════════════════════════════════════════════════════ */
 var _loyaltyAdminData = {};
+var _loyaltyAdminLoaded = false;
+var _loyaltyRedemptionListener = null;
 
 function _loadLoyaltyAdmin() {
   const el = document.getElementById('loyaltyAdminList');
+  /* لو عندنا data محملة → اعرضها فوراً بدون loading */
+  if (_loyaltyAdminLoaded && Object.keys(_loyaltyAdminData).length > 0) {
+    renderLoyaltyAdmin();
+    return;
+  }
   if (el) el.innerHTML = '<div style="text-align:center;padding:20px;color:var(--text-muted)">⏳ جاري تحميل البيانات...</div>';
   if (!db) {
     if (el) el.innerHTML = '<div style="text-align:center;padding:20px;color:var(--red)">❌ Firebase غير متصل</div>';
     return;
   }
-  /* استخدام Promise pattern صريح */
   db.ref('loyalty').once('value')
     .then(function(snap) {
       _loyaltyAdminData = {};
@@ -16506,6 +16514,7 @@ function _loadLoyaltyAdmin() {
           }
         });
       }
+      _loyaltyAdminLoaded = true;
       renderLoyaltyAdmin();
     })
     .catch(function(err) {
@@ -16515,10 +16524,12 @@ function _loadLoyaltyAdmin() {
         '<div style="font-size:12px;color:var(--text-muted)">تأكد من Firebase Rules — loyalty/ محتاج ".read": true</div>' +
         '</div>';
     });
-  /* listener لإشعارات الاستبدال */
-  db.ref('loyalty_redemptions').on('child_added', function(snap) {
-    _showLoyaltyRedeemAlert(snap.val());
-  });
+  /* listener لإشعارات الاستبدال — مرة واحدة فقط */
+  if (!_loyaltyRedemptionListener) {
+    _loyaltyRedemptionListener = db.ref('loyalty_redemptions').on('child_added', function(snap) {
+      _showLoyaltyRedeemAlert(snap.val());
+    });
+  }
 }
 
 function _showLoyaltyRedeemAlert(data) {
