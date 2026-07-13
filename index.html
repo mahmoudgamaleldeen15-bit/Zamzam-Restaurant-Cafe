@@ -1650,7 +1650,7 @@ input,select,textarea{font-family:inherit;}
   <div class="prayer-time-block-card">
     <div style="font-size:58px;margin-bottom:10px">🕌</div>
     <div style="font-size:19px;font-weight:800;color:#ffd86b;margin-bottom:12px">وقت الصلاة</div>
-    <div style="font-size:14.5px;color:#f4f1e6;line-height:2;margin-bottom:22px"> تم إيقاف استقبال الطلبات مؤقتاً لأداء الصلاة 🤲<br/><br/>نعود لخدمتكم خلال دقائق قليلة بإذن الله.<br/><br/>شكراً لتفهمكم، ونسأل الله أن يتقبل منا ومنكم صالح الأعمال 🌙</div>
+    <div style="font-size:14.5px;color:#f4f1e6;line-height:2;margin-bottom:22px">نعتذر لكم، تم إيقاف استقبال الطلبات مؤقتاً لأداء الصلاة 🤲<br/><br/>نعود لخدمتكم خلال دقائق قليلة بإذن الله.<br/><br/>شكراً لتفهمكم، ونسأل الله أن يتقبل منا ومنكم صالح الأعمال 🌙</div>
     <button onclick="document.getElementById('prayerTimeBlockOverlay').classList.remove('show')" style="background:#d4af37;color:#0f3d2e;border:none;border-radius:12px;padding:13px 30px;font-size:14px;font-weight:800;cursor:pointer">حسناً ✓</button>
   </div>
 </div>
@@ -11433,12 +11433,21 @@ function handleAdFile(input) {
   document.getElementById('adMediaType').value = isVideo ? 'video' : 'image';
   document.getElementById('adFilePreviewIcon').textContent = isVideo ? '🎬' : '🖼️';
   document.getElementById('adFileLabel').textContent = file.name;
-  const reader = new FileReader();
-  reader.onload = e => {
-    document.getElementById('adUrlInput').value = e.target.result;
-    previewAdUrl(e.target.result);
-  };
-  reader.readAsDataURL(file);
+  if (isVideo) {
+    /* فيديو — قراءة مباشرة */
+    const reader = new FileReader();
+    reader.onload = e => {
+      document.getElementById('adUrlInput').value = e.target.result;
+      previewAdUrl(e.target.result);
+    };
+    reader.readAsDataURL(file);
+  } else {
+    /* صورة — ضغط قبل الحفظ علشان Firebase تقبلها على كل الأجهزة */
+    compressImage(file, 900, 600, 0.82).then(function(data) {
+      document.getElementById('adUrlInput').value = data;
+      previewAdUrl(data);
+    });
+  }
 }
 
 function previewAdUrl(url) {
