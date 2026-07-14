@@ -11281,15 +11281,34 @@ function _adCTAAction(btn) {
   }
   if ((action === 'add_to_cart' || action === 'scroll_to') && product) {
     /* نبحث عن المنتج في كل الكاتيجوريز */
-    let foundItem = null;
-    Object.values(MENU).forEach(function(cat) {
+    let foundItem = null; let foundCatKey = null;
+    Object.entries(MENU).forEach(function([catKey, cat]) {
       (cat.items || []).forEach(function(item) {
-        if (item.id === product) foundItem = item;
+        if (item.id === product) { foundItem = item; foundCatKey = catKey; }
       });
     });
     if (!foundItem) { showNotif('❌ المنتج غير متاح حالياً'); return; }
 
     if (action === 'add_to_cart') {
+      /* ✅ فحص وضع الصيانة */
+      if (_maintenanceActive && !(typeof adminRoleType !== 'undefined' && adminRoleType)) {
+        var _mOv = document.getElementById('maintenanceOverlay');
+        if (_mOv) { _mOv.classList.add('show'); } else { showNotif('🔧 المطعم في وضع الصيانة مؤقتاً'); }
+        return;
+      }
+      /* ✅ فحص أوقات الصلاة */
+      if (typeof _prayerTimeActive !== 'undefined' && _prayerTimeActive) {
+        showNotif('🕌 وقت الصلاة — الطلبات متوقفة مؤقتاً'); return;
+      }
+      /* ✅ فحص مواعيد العمل */
+      if (foundCatKey) {
+        const mainGroupKey = typeof getCatMainGroup === 'function' ? getCatMainGroup(foundCatKey, MENU[foundCatKey]?.label || '') : null;
+        if (mainGroupKey && typeof isGroupOpen === 'function' && !isGroupOpen(mainGroupKey)) {
+          if (typeof showWorkHoursBlock === 'function') showWorkHoursBlock(mainGroupKey);
+          else showNotif('⏰ هذا القسم مغلق حالياً');
+          return;
+        }
+      }
       addToCart({ id: foundItem.id, name: foundItem.name, price: foundItem.price, emoji: foundItem.emoji || '🍽️', qty: 1 });
       return;
     }
