@@ -5097,9 +5097,12 @@ function calcAutoDiscount() {
     if (o.oneTime && currentUser && _isOfferBlocked(o.id)) return;
     /* فحص منتج محدد */
     if (o.applyTo === 'specific_product') {
-      if (!o.specificProduct) return;
-      const cartItem = cart.find(function(c) { return c.id === o.specificProduct; });
-      if (!cartItem) return; /* المنتج مش في السلة */
+      const spId = (o.specificProduct || '').trim();
+      if (!spId) return;
+      const cartItem = cart.find(function(c) {
+        return String(c.id).trim() === spId || String(c.name).trim() === spId;
+      });
+      if (!cartItem) return;
       const itemTotal = cartItem.price * cartItem.qty;
       if (o.type === 'percent') disc += Math.round(itemTotal * o.value / 100);
       else if (o.type === 'partial') disc += Number(o.value);
@@ -5323,18 +5326,22 @@ function applyCoupon() {
   if (offer.applyTo === 'min' && total < (offer.minAmount || 0)) { showNotif(`❌ الحد الأدنى للطلب ${offer.minAmount} ج.م`); return; }
   /* فحص منتج محدد للكوبون */
   if (offer.applyTo === 'specific_product') {
-    if (!offer.specificProduct) { showNotif('❌ الكوبون غير مرتبط بمنتج'); return; }
-    const cartItem = cart.find(c => c.id === offer.specificProduct);
+    const spId = (offer.specificProduct || '').trim();
+    if (!spId) { showNotif('❌ الكوبون غير مرتبط بمنتج محدد'); return; }
+    /* فحص وجود المنتج في السلة بطريقتين: id أو name */
+    const cartItem = cart.find(function(c) {
+      return String(c.id).trim() === spId || String(c.name).trim() === spId;
+    });
     if (!cartItem) {
-      const prodName = (function() {
-        const cats = Object.values(MENU);
-        for (const cat of cats) {
-          const item = (cat.items||[]).find(i => i.id === offer.specificProduct);
-          if (item) return item.name;
-        }
-        return offer.specificProduct;
-      })();
-      showNotif('❌ هذا الكوبون مخصص لـ "' + prodName + '" — أضفه للسلة أولاً'); return;
+      /* استخرج اسم المنتج للرسالة */
+      let prodName = spId;
+      Object.values(MENU).forEach(function(cat) {
+        (cat.items||[]).forEach(function(item) {
+          if (String(item.id).trim() === spId) prodName = item.name;
+        });
+      });
+      showNotif('❌ هذا الكوبون مخصص لـ "' + prodName + '" — أضفه للسلة أولاً');
+      return;
     }
   }
   let disc = 0;
@@ -10963,7 +10970,10 @@ function setupFirebaseListeners() {
   // --------- ADS ---------
   db.ref('ads').on('value', snap => {
     if (snap.exists() && fbConnected && !_adsSavingGuard) {
-      ADS = snap.val();
+      const val = snap.val();
+      /* snap.val() ممكن يرجع Object مش Array — نضمن Array دايماً */
+      ADS = Array.isArray(val) ? val : (val ? Object.values(val) : []);
+      ADS = ADS.filter(Boolean); /* نشيل القيم الفاضية */
       saveData('zz_ads', ADS);
       renderAdsSlider();
     }
@@ -11318,10 +11328,12 @@ function saveAds() {
   saveData('zz_ads', ADS);
   if (db) {
     _adsSavingGuard = true;
-    const _localADS = ADS.slice(); /* snapshot للـ ADS الحالية قبل أي تغيير */
-    fbSet('ads', _localADS).then(function() {
+    const _localADS = ADS.slice();
+    /* حفظ كـ Object بـ ID مش Array — يمنع مشاكل Firebase مع الـ Arrays */
+    const adsObj = {};
+    _localADS.forEach(function(ad) { if (ad && ad.id) adsObj[ad.id] = ad; });
+    db.ref('ads').set(adsObj).then(function() {
       _adsSavingGuard = false;
-      /* بعد تأكيد Firebase — نضمن العرض من البيانات المحلية */
       ADS = _localADS;
       saveData('zz_ads', ADS);
       renderAdsSlider();
