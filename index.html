@@ -10901,7 +10901,7 @@ function setupFirebaseListeners() {
 
   // --------- ADS ---------
   db.ref('ads').on('value', snap => {
-    if (snap.exists() && fbConnected) {
+    if (snap.exists() && fbConnected && !_adsSavingGuard) {
       ADS = snap.val();
       saveData('zz_ads', ADS);
       renderAdsSlider();
@@ -11251,7 +11251,19 @@ let _adsCurrentSlide = 0;
 let _adsAutoSlideTimer = null;
 let _adsTotalSlides = 0; // العدد الحقيقي للـ slides بعد الرسم
 
-function saveAds() { saveData('zz_ads', ADS); if(db) fbSet('ads', ADS); }
+let _adsSavingGuard = false;
+
+function saveAds() {
+  saveData('zz_ads', ADS);
+  if (db) {
+    _adsSavingGuard = true; /* منع الـ listener من overwrite وقت الحفظ */
+    fbSet('ads', ADS).then(function() {
+      _adsSavingGuard = false;
+    }).catch(function() {
+      _adsSavingGuard = false;
+    });
+  }
+}
 
 function renderAdsSlider() { renderAdsSliderEnhanced(); }
 
@@ -11282,28 +11294,33 @@ function _adCTAAction(btn) {
   if ((action === 'add_to_cart' || action === 'scroll_to') && product) {
     /* نبحث عن المنتج في كل الكاتيجوريز */
     let foundItem = null; let foundCatKey = null;
-    Object.entries(MENU).forEach(function([catKey, cat]) {
-      (cat.items || []).forEach(function(item) {
-        if (item.id === product) { foundItem = item; foundCatKey = catKey; }
-      });
-    });
+    const catKeys = Object.keys(MENU);
+    for (let ci = 0; ci < catKeys.length; ci++) {
+      const ck = catKeys[ci];
+      const items = (MENU[ck] && MENU[ck].items) || [];
+      for (let ii = 0; ii < items.length; ii++) {
+        if (items[ii].id === product) { foundItem = items[ii]; foundCatKey = ck; break; }
+      }
+      if (foundItem) break;
+    }
     if (!foundItem) { showNotif('❌ المنتج غير متاح حالياً'); return; }
 
     if (action === 'add_to_cart') {
       /* ✅ فحص وضع الصيانة */
-      if (_maintenanceActive && !(typeof adminRoleType !== 'undefined' && adminRoleType)) {
-        var _mOv = document.getElementById('maintenanceOverlay');
-        if (_mOv) { _mOv.classList.add('show'); } else { showNotif('🔧 المطعم في وضع الصيانة مؤقتاً'); }
+      if (_maintenanceActive && !(adminRoleType)) {
+        const _mOv = document.getElementById('maintenanceOverlay');
+        if (_mOv) _mOv.classList.add('show'); else showNotif('🔧 المطعم في وضع الصيانة مؤقتاً');
         return;
       }
-      /* ✅ فحص أوقات الصلاة */
-      if (typeof _prayerTimeActive !== 'undefined' && _prayerTimeActive) {
+      /* ✅ فحص وقت الصلاة */
+      if (typeof prayerTimeActive !== 'undefined' && prayerTimeActive) {
         showNotif('🕌 وقت الصلاة — الطلبات متوقفة مؤقتاً'); return;
       }
       /* ✅ فحص مواعيد العمل */
-      if (foundCatKey) {
-        const mainGroupKey = typeof getCatMainGroup === 'function' ? getCatMainGroup(foundCatKey, MENU[foundCatKey]?.label || '') : null;
-        if (mainGroupKey && typeof isGroupOpen === 'function' && !isGroupOpen(mainGroupKey)) {
+      if (foundCatKey && typeof getCatMainGroup === 'function' && typeof isGroupOpen === 'function') {
+        const catLabel = (MENU[foundCatKey] && MENU[foundCatKey].label) || '';
+        const mainGroupKey = getCatMainGroup(foundCatKey, catLabel);
+        if (mainGroupKey && !isGroupOpen(mainGroupKey)) {
           if (typeof showWorkHoursBlock === 'function') showWorkHoursBlock(mainGroupKey);
           else showNotif('⏰ هذا القسم مغلق حالياً');
           return;
@@ -11313,7 +11330,6 @@ function _adCTAAction(btn) {
       return;
     }
     if (action === 'scroll_to') {
-      /* فتح المنيو والتمرير للمنتج */
       if (typeof openScreen === 'function') openScreen('app');
       setTimeout(function() {
         const el = document.getElementById('citem_' + foundItem.id) || document.querySelector('[data-item-id="' + foundItem.id + '"]');
