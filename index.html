@@ -3336,7 +3336,7 @@ function _checkVIPRenewalAndWithdraw(currentStats) {
         const monthsLeft = Math.ceil(amountInactivityMonths - monthsInactive);
         _sendVIPAmountWarningMsg(phone, vip.name || '', monthsLeft);
         VIP_CUSTOMERS[phone].amountWarningSent = true;
-        if (db) db.ref('vip_customers/' + phone).update({ amountWarningSent: true }).catch(() => {});
+        if (db) db.ref('config/static_v_vip').set(Date.now()).catch(function(){}); db.ref('vip_customers/' + phone).update({ amountWarningSent: true }).catch(() => {});
       }
 
     } else {
@@ -5328,19 +5328,18 @@ function applyCoupon() {
   if (offer.applyTo === 'specific_product') {
     const spId = (offer.specificProduct || '').trim();
     if (!spId) { showNotif('❌ الكوبون غير مرتبط بمنتج محدد'); return; }
-    /* فحص وجود المنتج في السلة بطريقتين: id أو name */
+    const cartIds = cart.map(function(c) { return String(c.id); }).join(', ');
     const cartItem = cart.find(function(c) {
       return String(c.id).trim() === spId || String(c.name).trim() === spId;
     });
     if (!cartItem) {
-      /* استخرج اسم المنتج للرسالة */
       let prodName = spId;
       Object.values(MENU).forEach(function(cat) {
         (cat.items||[]).forEach(function(item) {
           if (String(item.id).trim() === spId) prodName = item.name;
         });
       });
-      showNotif('❌ هذا الكوبون مخصص لـ "' + prodName + '" — أضفه للسلة أولاً');
+      showNotif('❌ كوبون لـ "' + prodName + '" | ID: ' + spId + ' | السلة: ' + (cartIds||'فاضية'));
       return;
     }
   }
@@ -5977,7 +5976,7 @@ function _completeStaffLogin(role) {
   _stopMaintDhikr();
   if (db && window._ordersHandler && (role === 'admin' || role === 'cashier') && !window._ordersHandlerOn) {
     window._ordersHandlerOn = true;
-    db.ref('orders').on('value', window._ordersHandler);
+    db.ref('orders').limitToLast(150).on('value', window._ordersHandler);
   }
   document.getElementById('adminRoleLabel').textContent = role === 'admin' ? '🔑 مدير النظام' : '💳 كاشير';
   requestNotifPermission();
@@ -6150,7 +6149,7 @@ function verifyAdminOtp() {
   adminRoleType = role;
   if (db && window._ordersHandler && (role === 'admin' || role === 'cashier') && !window._ordersHandlerOn) {
     window._ordersHandlerOn = true;
-    db.ref('orders').on('value', window._ordersHandler);
+    db.ref('orders').limitToLast(150).on('value', window._ordersHandler);
   }
   document.getElementById('adminRoleLabel').textContent = role === 'admin' ? '🔑 مدير النظام' : '💳 كاشير';
   requestNotifPermission();
@@ -10848,47 +10847,65 @@ function setupFirebaseListeners() {
       }
     }
   };
-  if ((adminRoleType === 'admin' || adminRoleType === 'cashier') && !window._ordersHandlerOn) { window._ordersHandlerOn = true; db.ref('orders').on('value', window._ordersHandler); }
+  if ((adminRoleType === 'admin' || adminRoleType === 'cashier') && !window._ordersHandlerOn) { window._ordersHandlerOn = true; db.ref('orders').limitToLast(150).on('value', window._ordersHandler); }
 
-  // --------- BOOKINGS ---------
-  db.ref('bookings').on('value', snap => {
-    const fbBookings = [];
-    snap.forEach(child => { fbBookings.push(child.val()); });
-    if (fbBookings.length > 0 || fbConnected) {
-      bookingsData = fbBookings;
-      saveData('zz_bookings', bookingsData);
-      if (document.getElementById('adminPanel')?.classList.contains('active')) {
-        const activeTab = document.querySelector('.admin-tabs button.active')?.textContent || '';
-        if (activeTab.includes('الحجوزات')) renderAdminBookings();
+  // --------- BOOKINGS — once() (حجز الكافيه غير مشغّل حالياً) ---------
+  (function _loadBookings() {
+    const cached = loadData('zz_bookings', null);
+    if (cached) { bookingsData = cached; try { _updateMyBookingTracking(); } catch(e){} }
+    db.ref('bookings').once('value', function(snap) {
+      const fbBookings = [];
+      if (snap.exists()) snap.forEach(function(child) { fbBookings.push(child.val()); });
+      if (fbBookings.length > 0 || fbConnected) {
+        bookingsData = fbBookings;
+        saveData('zz_bookings', bookingsData);
+        if (document.getElementById('adminPanel')?.classList.contains('active')) {
+          const activeTab = document.querySelector('.admin-tabs button.active')?.textContent || '';
+          if (activeTab.includes('الحجوزات')) renderAdminBookings();
+        }
+        if (document.getElementById('booking')?.classList.contains('active')) renderTablesGrid();
+        try { _updateMyBookingTracking(); } catch(e){}
       }
-      if (document.getElementById('booking')?.classList.contains('active')) renderTablesGrid();
-      try { _updateMyBookingTracking(); } catch(e){}
-    }
-  });
+    });
+  })();
 
-  // --------- TABLE AVAILABILITY (توفّر الترابيزات) ---------
-  db.ref('table_avail').on('value', snap => {
-    TABLE_AVAIL = snap.val() || {};
-    saveData('zz_table_avail', TABLE_AVAIL);
-    if (document.getElementById('tableAvailPanel')) { try { renderTableAvailPanel(); } catch(e){} }
-    if (document.getElementById('booking')?.classList.contains('active')) { try { renderTablesGrid(); } catch(e){} }
-  });
+  // --------- TABLE AVAILABILITY — once() (حجز الكافيه غير مشغّل حالياً) ---------
+  (function _loadTableAvail() {
+    const cached = loadData('zz_table_avail', null);
+    if (cached) { TABLE_AVAIL = cached; }
+    db.ref('table_avail').once('value', function(snap) {
+      TABLE_AVAIL = snap.val() || {};
+      saveData('zz_table_avail', TABLE_AVAIL);
+      if (document.getElementById('tableAvailPanel')) { try { renderTableAvailPanel(); } catch(e){} }
+      if (document.getElementById('booking')?.classList.contains('active')) { try { renderTablesGrid(); } catch(e){} }
+    });
+  })();
 
-  // --------- MENU PRICES ---------
-  db.ref('menu').on('value', snap => {
-    if (_menuWriteLock) return;
-    if (snap.exists() && fbConnected) {
-      const incoming = snap.val();
-      // Firebase دايماً هو المرجع الصح — بدون أي مقارنة
-      MENU = incoming;
+  // --------- MENU — version-based (يحمّل بس لما يتغير) ---------
+  window._menuV = loadData('zz_static_v_menu', 0);
+  function _applyMenuSnap(snap) {
+    if (!_menuWriteLock && snap.exists() && fbConnected) {
+      MENU = snap.val();
       saveData('zz_menu', MENU);
       saveData('zz_menu_from_firebase', true);
       if (document.getElementById('app')?.classList.contains('active')) renderMenu();
-      if (document.getElementById('adminPanel')?.classList.contains('active')) {
-        renderMenuManage();
-        renderCatSelects();
-      }
+      if (document.getElementById('adminPanel')?.classList.contains('active')) { renderMenuManage(); renderCatSelects(); }
     }
+  }
+  db.ref('config/static_v_menu').on('value', function(_sv) {
+    const serverV = _sv.val() || 0;
+    if (serverV > 0 && serverV <= window._menuV && loadData('zz_menu_from_firebase', false)) {
+      /* نفس الإصدار — استخدم الكاش */
+      MENU = loadData('zz_menu', MENU);
+      if (document.getElementById('app')?.classList.contains('active')) renderMenu();
+      return;
+    }
+    /* إصدار جديد أو أول تحميل */
+    db.ref('menu').once('value', function(snap) {
+      _applyMenuSnap(snap);
+      window._menuV = serverV || Date.now();
+      saveData('zz_static_v_menu', window._menuV);
+    });
   });
 
   // --------- SETTINGS ---------
@@ -10941,11 +10958,22 @@ function setupFirebaseListeners() {
     }
   });
 
-  // --------- ADDONS ---------
-  db.ref('addons').on('value', snap => {
-    if (snap.exists() && fbConnected) {
-      ADDONS = snap.val();
-      saveData('zz_addons', ADDONS);
+  // --------- ADDONS — once() بس أول تحميل ---------
+  if (!loadData('zz_addons', null) || !loadData('zz_static_v_addons', 0)) {
+    db.ref('addons').once('value', function(snap) {
+      if (snap.exists() && fbConnected) {
+        ADDONS = snap.val();
+        saveData('zz_addons', ADDONS);
+        saveData('zz_static_v_addons', Date.now());
+      }
+    });
+  }
+  db.ref('config/static_v_addons').on('value', function(_sv) {
+    const serverV = _sv.val() || 0;
+    if (serverV > loadData('zz_static_v_addons', 0)) {
+      db.ref('addons').once('value', function(snap) {
+        if (snap.exists()) { ADDONS = snap.val(); saveData('zz_addons', ADDONS); saveData('zz_static_v_addons', serverV); }
+      });
     }
   });
 
@@ -10957,26 +10985,49 @@ function setupFirebaseListeners() {
     }
   });
 
-  // --------- OFFERS ---------
-  db.ref('offers').on('value', snap => {
-    if (snap.exists() && fbConnected) {
-      OFFERS = snap.val();
-      saveData('zz_offers', OFFERS);
-      renderActiveOfferStrip();
-      updateOffersBadge();
+  // --------- OFFERS — version-based ---------
+  window._offersV = loadData('zz_static_v_offers', 0);
+  db.ref('config/static_v_offers').on('value', function(_sv) {
+    const serverV = _sv.val() || 0;
+    if (serverV > 0 && serverV <= window._offersV && loadData('zz_offers', null)) {
+      OFFERS = loadData('zz_offers', []);
+      renderActiveOfferStrip(); updateOffersBadge(); return;
     }
+    db.ref('offers').once('value', function(snap) {
+      if (snap.exists() && fbConnected) {
+        OFFERS = snap.val();
+        saveData('zz_offers', OFFERS);
+        window._offersV = serverV || Date.now();
+        saveData('zz_static_v_offers', window._offersV);
+        renderActiveOfferStrip(); updateOffersBadge();
+      }
+    });
   });
 
-  // --------- ADS ---------
-  db.ref('ads').on('value', snap => {
-    if (snap.exists() && fbConnected && !_adsSavingGuard) {
-      const val = snap.val();
-      /* snap.val() ممكن يرجع Object مش Array — نضمن Array دايماً */
-      ADS = Array.isArray(val) ? val : (val ? Object.values(val) : []);
-      ADS = ADS.filter(Boolean); /* نشيل القيم الفاضية */
-      saveData('zz_ads', ADS);
+  // --------- ADS — version-based (يحمّل بس لما يتغير) ---------
+  window._adsV = loadData('zz_static_v_ads', 0);
+  db.ref('config/static_v_ads').on('value', function(_sv) {
+    const serverV = _sv.val() || 0;
+    if (serverV > 0 && serverV <= window._adsV && loadData('zz_ads', null)) {
+      /* نفس الإصدار — نستخدم الكاش المحلي */
+      ADS = loadData('zz_ads', []);
+      if (!Array.isArray(ADS)) ADS = Object.values(ADS || {});
+      ADS = ADS.filter(Boolean);
       renderAdsSlider();
+      return;
     }
+    /* إصدار جديد أو أول تحميل — حمّل من Firebase مرة واحدة */
+    db.ref('ads').once('value', function(snap) {
+      if (snap.exists() && !_adsSavingGuard) {
+        const val = snap.val();
+        ADS = Array.isArray(val) ? val : (val ? Object.values(val) : []);
+        ADS = ADS.filter(Boolean);
+        saveData('zz_ads', ADS);
+        window._adsV = serverV || Date.now();
+        saveData('zz_static_v_ads', window._adsV);
+        renderAdsSlider();
+      }
+    });
   });
 
   // --------- USERS — Real-Time Sync (for login name restoration) ---------
@@ -11041,38 +11092,51 @@ function setupFirebaseListeners() {
     }
   });
 
-  // --------- VIP CUSTOMERS ---------
-  db.ref('vip_customers').on('value', snap => {
-    if (snap.exists()) {
-      const data = snap.val() || {};
-      Object.keys(data).forEach(phone => {
-        if (data[phone]) VIP_CUSTOMERS[phone.replace(/^2/,'')] = data[phone];
+  // --------- VIP CUSTOMERS — once() + targeted update ---------
+  (function _loadVIP() {
+    db.ref('vip_customers').once('value', function(snap) {
+      if (snap.exists()) {
+        const data = snap.val() || {};
+        Object.keys(data).forEach(function(phone) {
+          if (data[phone]) VIP_CUSTOMERS[phone.replace(/^2/,'')] = data[phone];
+        });
+        saveData('zz_vip', VIP_CUSTOMERS);
+      }
+    });
+  })();
+  /* تحديث VIP لما الأدمن يعمل تغيير */
+  db.ref('config/static_v_vip').on('value', function(_sv) {
+    const serverV = _sv.val() || 0;
+    if (serverV > loadData('zz_static_v_vip', 0)) {
+      saveData('zz_static_v_vip', serverV);
+      db.ref('vip_customers').once('value', function(snap) {
+        if (snap.exists()) { const data=snap.val()||{}; Object.keys(data).forEach(function(p){ if(data[p]) VIP_CUSTOMERS[p.replace(/^2/,'')]=data[p]; }); saveData('zz_vip',VIP_CUSTOMERS); }
       });
-      saveData('zz_vip_customers', VIP_CUSTOMERS);
     }
   });
 
-  // --------- BLOCKED USERS ---------
-  db.ref('blocked_users').on('value', snap => {
-    if (snap.exists()) {
-      BLOCKED_USERS = snap.val() || {};
-      saveData('zz_blocked_users', BLOCKED_USERS);
-      // If current user is now blocked — kick them out
-      if (currentUser) {
-        const _p = (currentUser.phone||'').replace(/[^0-9]/g,'');
-        if (BLOCKED_USERS[_p] || BLOCKED_USERS['0'+_p.slice(1)] || BLOCKED_USERS['2'+_p]) {
-          currentUser = null;
-          saveData('zamzam_user', null);
-          openScreen('auth');
-          showNotif('🚫 تم تقييد وصولك');
-        }
-      }
-    } else {
-      BLOCKED_USERS = {};
+  // --------- BLOCKED USERS — once() + targeted update ---------
+  (function _loadBlocked() {
+    const cachedBlocked = loadData('zz_blocked_users', null);
+    if (cachedBlocked) { BLOCKED_USERS = cachedBlocked; }
+    else {
+      db.ref('blocked_users').once('value', function(snap) {
+        if (snap.exists()) { BLOCKED_USERS = snap.val() || {}; saveData('zz_blocked_users', BLOCKED_USERS); }
+      });
     }
-    // حدّث قائمة المحظورين لو كانت معروضة (عشان تتزامن من أي جهاز)
-    const _blkList = document.getElementById('blockedUsersList');
-    if (_blkList && _blkList.offsetParent !== null) renderBlockedUsers();
+  })();
+  db.ref('config/static_v_blocked').on('value', function(_sv) {
+    const serverV = _sv.val() || 0;
+    if (serverV > loadData('zz_static_v_blocked', 0)) {
+      saveData('zz_static_v_blocked', serverV);
+      db.ref('blocked_users').once('value', function(snap) {
+        if (snap.exists()) { BLOCKED_USERS=snap.val()||{}; saveData('zz_blocked_users',BLOCKED_USERS);
+          if (currentUser && BLOCKED_USERS[(currentUser.phone||'').replace(/\D/g,'')]) {
+            currentUser = null; saveData('zz_user', null); showNotif('تم حظر حسابك'); showScreen('splash');
+          }
+        }
+      });
+    }
   });
 
   // --------- APP RATINGS ---------
@@ -11294,6 +11358,9 @@ async function fbSaveMenu() {
   console.log('[fbSaveMenu] Saving...', Object.keys(cleanMenu).length, 'cats');
   try {
     await db.ref('menu').set(cleanMenu);
+    /* تحديث إصدار المنيو — يخلي كل الأجهزة تحمّله */
+    const _mv = Date.now(); window._menuV=_mv; saveData('zz_static_v_menu',_mv);
+    db.ref('config/static_v_menu').set(_mv).catch(function(){});
     console.log('[fbSaveMenu] ✅ Saved successfully');
   } catch(e) {
     console.error('[fbSaveMenu] Failed:', e);
@@ -11307,9 +11374,15 @@ async function fbSaveMenu() {
   }
 }
 async function fbSaveSettings() { await fbSet('settings', SETTINGS); }
-async function fbSaveAddons() { await fbSet('addons', ADDONS); }
+async function fbSaveAddons() {
+  await fbSet('addons', ADDONS);
+  if(db){const _v=Date.now();saveData('zz_static_v_addons',_v);db.ref('config/static_v_addons').set(_v).catch(function(){});}
+}
 async function fbSaveSpicySettings() { await fbSet('spicy_settings', SPICY_SETTINGS); }
-async function fbSaveOffers() { await fbSet('offers', OFFERS); }
+async function fbSaveOffers() {
+  await fbSet('offers', OFFERS);
+  if(db){const _v=Date.now();window._offersV=_v;saveData('zz_static_v_offers',_v);db.ref('config/static_v_offers').set(_v).catch(function(){});}
+}
 async function fbSetLastOrder(val) { await fbUpdate('config', { lastOrderActive: val }); }
 async function fbSetPrayerTime(val) { await fbUpdate('config', { prayerTimeActive: val }); }
 async function fbSetDeliveryCtrl(obj) { await fbUpdate('config', { deliveryCtrl: obj }); }
@@ -11329,13 +11402,15 @@ function saveAds() {
   if (db) {
     _adsSavingGuard = true;
     const _localADS = ADS.slice();
-    /* حفظ كـ Object بـ ID مش Array — يمنع مشاكل Firebase مع الـ Arrays */
-    const adsObj = {};
-    _localADS.forEach(function(ad) { if (ad && ad.id) adsObj[ad.id] = ad; });
-    db.ref('ads').set(adsObj).then(function() {
+    fbSet('ads', _localADS).then(function() {
       _adsSavingGuard = false;
       ADS = _localADS;
       saveData('zz_ads', ADS);
+      /* تحديث الإصدار — يخلي كل الأجهزة تحمّل الإعلانات الجديدة */
+      const _newV = Date.now();
+      window._adsV = _newV;
+      saveData('zz_static_v_ads', _newV);
+      if (db) db.ref('config/static_v_ads').set(_newV).catch(function(){});
       renderAdsSlider();
     }).catch(function() {
       _adsSavingGuard = false;
@@ -11901,7 +11976,7 @@ function _startAgentOrdersListener(agentId) {
     _agentOrdersListener = null;
   }
 
-  _agentOrdersListener = db.ref('orders').on('value', snap => {
+  _agentOrdersListener = db.ref('orders').limitToLast(50).on('value', snap => {
     if (!snap.exists()) {
       renderAgentOrders();
       return;
