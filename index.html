@@ -980,7 +980,42 @@ input,select,textarea{font-family:inherit;}
 .vip-benefit-admin-row{display:flex;align-items:center;gap:10px;padding:10px 14px;background:var(--cream);border-radius:10px;margin-bottom:8px;flex-wrap:wrap;}
 .vip-benefit-admin-label{font-size:13px;font-weight:800;flex:1;min-width:140px;}
 .vip-benefit-admin-val{width:70px;padding:6px 8px;border:1.5px solid var(--border);border-radius:8px;font-size:12px;background:var(--white);outline:none;text-align:center;}
+/* ===== MANAGEMENT REPORTS TAB ===== */
+.mgmt-period-bar{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px}
+.mgmt-period-bar select,.mgmt-period-bar input{flex:1;min-width:100px;padding:9px 12px;border:1.5px solid var(--border);border-radius:10px;font-size:13px;background:var(--white);color:var(--text);font-family:inherit}
+.mgmt-summary-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:8px;margin-bottom:16px}
+.mgmt-card{background:var(--white);border:1px solid var(--border);border-radius:14px;padding:14px 10px;text-align:center;transition:.15s}
+.mgmt-card.highlight{background:linear-gradient(135deg,var(--olive),var(--olive-light));color:#fff;border-color:transparent}
+.mgmt-card .mc-val{font-size:20px;font-weight:900;line-height:1.2;margin-bottom:4px}
+.mgmt-card .mc-lbl{font-size:10px;font-weight:700;opacity:.8;line-height:1.4}
+.mgmt-card.highlight .mc-lbl{opacity:.9}
+.mgmt-chart-box{background:var(--white);border:1px solid var(--border);border-radius:14px;padding:14px;margin-bottom:14px}
+.mgmt-chart-box .chart-title{font-size:13px;font-weight:800;color:var(--dark);margin-bottom:10px}
+.mgmt-chart-box canvas{width:100%!important;height:220px;max-height:260px}
+.mgmt-kpi-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:16px}
+.mgmt-kpi{background:var(--white);border:1px solid var(--border);border-radius:12px;padding:12px;display:flex;flex-direction:column;gap:4px}
+.mgmt-kpi .kpi-icon{font-size:20px}
+.mgmt-kpi .kpi-label{font-size:10px;font-weight:700;color:var(--text-muted)}
+.mgmt-kpi .kpi-value{font-size:15px;font-weight:900;color:var(--olive-dark)}
+.mgmt-tbl-wrap{overflow-x:auto;margin-bottom:16px}
+.mgmt-tbl{width:100%;border-collapse:collapse;font-size:11px}
+.mgmt-tbl th{background:var(--olive);color:#fff;padding:8px 6px;white-space:nowrap;font-weight:800;position:sticky;top:0}
+.mgmt-tbl td{padding:7px 6px;border-bottom:1px solid var(--border);white-space:nowrap}
+.mgmt-tbl tr:nth-child(even){background:var(--olive-ultra)}
+.mgmt-tbl tfoot td{background:var(--olive-pale);font-weight:900;font-size:12px}
+.mgmt-search-bar{display:flex;gap:6px;margin-bottom:10px}
+.mgmt-search-bar input{flex:1;padding:8px 12px;border:1.5px solid var(--border);border-radius:10px;font-size:12px;background:var(--bg);font-family:inherit}
+.mgmt-actions{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px}
+.mgmt-actions button{padding:9px 14px;border-radius:10px;font-size:12px;font-weight:800;cursor:pointer;border:none;font-family:inherit}
+.mgmt-section-hdr{font-size:14px;font-weight:900;color:var(--dark);margin:18px 0 10px;padding-bottom:6px;border-bottom:2px solid var(--olive-pale)}
+@media print{
+  .admin-tabs,.mgmt-actions,.mgmt-search-bar,.mgmt-period-bar,button{display:none!important}
+  .mgmt-card{break-inside:avoid;border:1px solid #ccc}
+  .mgmt-chart-box{break-inside:avoid;page-break-inside:avoid}
+}
 </style>
+<!-- Chart.js CDN -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <!-- OneSignal Push Notifications SDK -->
 <script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" async></script>
 </head>
@@ -1945,6 +1980,7 @@ input,select,textarea{font-family:inherit;}
       <button id="tabStatsBtn" onclick="switchAdminTab('stats',this)">📊 الإحصائيات</button>
       <button id="tabCompBtn" onclick="switchAdminTab('competitions',this)" style="display:none">🏆 المسابقات</button>
       <button id="tabLoyaltyBtn" data-admin-only onclick="switchAdminTab('loyalty',this)">🏆 نقاط الولاء</button>
+      <button id="tabMgmtBtn" data-admin-only onclick="switchAdminTab('mgmt-reports',this)">📈 تقارير الإدارة</button>
     </div>
 
     <!-- ORDERS TAB (Card View) -->
@@ -2045,6 +2081,39 @@ input,select,textarea{font-family:inherit;}
         <button onclick="_loyaltyAdminLoaded=false;_loadLoyaltyAdmin()" style="padding:9px 12px;background:#6366f1;color:#fff;border:none;border-radius:10px;font-size:12px;font-weight:800;cursor:pointer;font-family:inherit">🔄</button>
       </div>
       <div id="loyaltyAdminList" style="display:flex;flex-direction:column;gap:10px"></div>
+    </div>
+
+    <!-- MANAGEMENT REPORTS TAB (Admin Only) -->
+    <div id="tab-mgmt-reports" style="display:none;padding:0 16px 24px">
+      <!-- Period selector -->
+      <div class="mgmt-period-bar">
+        <select id="mgmtPeriod" onchange="renderMgmtReport()">
+          <option value="today">اليوم</option>
+          <option value="yesterday">أمس</option>
+          <option value="week" selected>آخر 7 أيام</option>
+          <option value="month">آخر 30 يوم</option>
+          <option value="custom">فترة مخصصة</option>
+          <option value="all">كل الوقت</option>
+        </select>
+        <select id="mgmtStatus" onchange="renderMgmtReport()">
+          <option value="delivered">المكتملة فقط</option>
+          <option value="all">كل الطلبات</option>
+        </select>
+      </div>
+      <div id="mgmtCustomRange" style="display:none;margin-bottom:12px">
+        <div style="display:flex;gap:8px">
+          <input type="date" id="mgmtDateFrom" onchange="renderMgmtReport()" style="flex:1;padding:8px;border:1.5px solid var(--border);border-radius:10px;font-size:12px;background:var(--white)"/>
+          <input type="date" id="mgmtDateTo" onchange="renderMgmtReport()" style="flex:1;padding:8px;border:1.5px solid var(--border);border-radius:10px;font-size:12px;background:var(--white)"/>
+        </div>
+      </div>
+      <!-- Actions -->
+      <div class="mgmt-actions">
+        <button onclick="printMgmtReport()" style="background:var(--olive);color:#fff">🖨️ طباعة</button>
+        <button onclick="exportMgmtExcel()" style="background:#1a5fc8;color:#fff">📊 تصدير Excel</button>
+        <button onclick="renderMgmtReport()" style="background:var(--cream);color:var(--text)">🔄 تحديث</button>
+      </div>
+      <!-- Report content -->
+      <div id="mgmtReportBody"></div>
     </div>
 
     <!-- MENU TAB -->
@@ -5977,7 +6046,14 @@ function _completeStaffLogin(role) {
   _stopMaintDhikr();
   if (db && window._ordersHandler && (role === 'admin' || role === 'cashier') && !window._ordersHandlerOn) {
     window._ordersHandlerOn = true;
-    db.ref('orders').on('value', window._ordersHandler);
+    if (role === 'admin') {
+      /* الأدمن: كل الطلبات — للتقارير والـ VIP */
+      db.ref('orders').on('value', window._ordersHandler);
+    } else {
+      /* الكاشير: child events — توفير 99% bandwidth */
+      window._ordersHandlerOn = false; /* _setupCashierOrdersListener بتعمل set لوحدها */
+      _setupCashierOrdersListener();
+    }
   }
   document.getElementById('adminRoleLabel').textContent = role === 'admin' ? '🔑 مدير النظام' : '💳 كاشير';
   requestNotifPermission();
@@ -6150,7 +6226,14 @@ function verifyAdminOtp() {
   adminRoleType = role;
   if (db && window._ordersHandler && (role === 'admin' || role === 'cashier') && !window._ordersHandlerOn) {
     window._ordersHandlerOn = true;
-    db.ref('orders').on('value', window._ordersHandler);
+    if (role === 'admin') {
+      /* الأدمن: كل الطلبات — للتقارير والـ VIP */
+      db.ref('orders').on('value', window._ordersHandler);
+    } else {
+      /* الكاشير: child events — توفير 99% bandwidth */
+      window._ordersHandlerOn = false;
+      _setupCashierOrdersListener();
+    }
   }
   document.getElementById('adminRoleLabel').textContent = role === 'admin' ? '🔑 مدير النظام' : '💳 كاشير';
   requestNotifPermission();
@@ -6259,7 +6342,7 @@ function applyRoleRestrictions() {
 function switchAdminTab(tab, el) {
   document.querySelectorAll('.admin-tabs button').forEach(b => b.classList.remove('active'));
   el.classList.add('active');
-  ['orders','cashier','bookings','menu','addons','offers','settings','notify','ads','agents','block','stats','loyalty','competitions'].forEach(t => {
+  ['orders','cashier','bookings','menu','addons','offers','settings','notify','ads','agents','block','stats','loyalty','competitions','mgmt-reports'].forEach(t => {
     const tabEl = document.getElementById('tab-' + t);
     if (tabEl) tabEl.style.display = t === tab ? 'block' : 'none';
   });
@@ -6283,6 +6366,7 @@ function switchAdminTab(tab, el) {
   if (tab === 'agents') { renderAgentsAdmin(); renderAgentReports(); startAdminAgentsTracking(); }
   if (tab === 'block') { renderBlockedUsers(); }
   if (tab === 'stats') { loadRatingsFromFirebase(); renderStatsTab(); _renderExtendedStats(); }
+  if (tab === 'mgmt-reports') { renderMgmtReport(); }
 }
 
 // ============================================================
@@ -10848,7 +10932,7 @@ function setupFirebaseListeners() {
       }
     }
   };
-  if ((adminRoleType === 'admin' || adminRoleType === 'cashier') && !window._ordersHandlerOn) { window._ordersHandlerOn = true; db.ref('orders').on('value', window._ordersHandler); }
+  if ((adminRoleType === 'admin' || adminRoleType === 'cashier') && !window._ordersHandlerOn) { window._ordersHandlerOn = true; if (adminRoleType === 'admin') { db.ref('orders').on('value', window._ordersHandler); } else { window._ordersHandlerOn = false; _setupCashierOrdersListener(); } }
 
   // --------- BOOKINGS ---------
   db.ref('bookings').on('value', snap => {
@@ -16795,6 +16879,891 @@ function _compStartCountdowns() {
       el.textContent = '⏱ متبقي: ' + (h>0?h+':':'') + String(m).padStart(2,'0') + ':' + String(s).padStart(2,'0');
     });
   }, 1000);
+}
+
+// ============================================================
+// MANAGEMENT REPORTS — تقارير الإدارة (Admin Only)
+// ============================================================
+var _mgmtCharts = {};
+function _destroyMgmtCharts() { Object.values(_mgmtCharts).forEach(c => { try { c.destroy(); } catch(e){} }); _mgmtCharts = {}; }
+
+// Custom range toggle
+document.getElementById('mgmtPeriod')?.addEventListener('change', function() {
+  const cr = document.getElementById('mgmtCustomRange');
+  if (cr) cr.style.display = this.value === 'custom' ? 'block' : 'none';
+});
+
+function _mgmtFilterOrders() {
+  const period = document.getElementById('mgmtPeriod')?.value || 'week';
+  const statusF = document.getElementById('mgmtStatus')?.value || 'delivered';
+  const now = Date.now(), day = 86400000;
+  let orders = ordersData.filter(o => {
+    if (period === 'today') { const t = new Date(); const s = new Date(t.getFullYear(),t.getMonth(),t.getDate()).getTime(); return (o.timestamp||0) >= s; }
+    if (period === 'yesterday') { const t = new Date(); const s = new Date(t.getFullYear(),t.getMonth(),t.getDate()-1).getTime(); const e = new Date(t.getFullYear(),t.getMonth(),t.getDate()).getTime(); return (o.timestamp||0) >= s && (o.timestamp||0) < e; }
+    if (period === 'week') return (now - (o.timestamp||0)) < 7*day;
+    if (period === 'month') return (now - (o.timestamp||0)) < 30*day;
+    if (period === 'custom') {
+      const f = document.getElementById('mgmtDateFrom')?.value;
+      const t = document.getElementById('mgmtDateTo')?.value;
+      if (!f || !t) return true;
+      const ts = o.timestamp || 0;
+      return ts >= new Date(f).getTime() && ts <= new Date(t).getTime() + day;
+    }
+    return true;
+  });
+  if (statusF === 'delivered') orders = orders.filter(o => o.status === 'delivered');
+  return orders;
+}
+
+function _mgmtPrevPeriodOrders(orders) {
+  const period = document.getElementById('mgmtPeriod')?.value || 'week';
+  const now = Date.now(), day = 86400000;
+  let range = 7*day;
+  if (period === 'today' || period === 'yesterday') range = day;
+  else if (period === 'month') range = 30*day;
+  else return [];
+  const statusF = document.getElementById('mgmtStatus')?.value || 'delivered';
+  let prev = ordersData.filter(o => {
+    const ts = o.timestamp || 0;
+    return ts >= (now - 2*range) && ts < (now - range);
+  });
+  if (statusF === 'delivered') prev = prev.filter(o => o.status === 'delivered');
+  return prev;
+}
+
+function renderMgmtReport() {
+  if (adminRoleType !== 'admin') return;
+  const el = document.getElementById('mgmtReportBody');
+  if (!el) return;
+  _destroyMgmtCharts();
+
+  const orders = _mgmtFilterOrders();
+  const prevOrders = _mgmtPrevPeriodOrders(orders);
+  const periodLabels = {today:'اليوم',yesterday:'أمس',week:'آخر 7 أيام',month:'آخر 30 يوم',custom:'فترة مخصصة',all:'كل الوقت'};
+  const periodVal = document.getElementById('mgmtPeriod')?.value || 'week';
+
+  // ===== KPI calculations =====
+  const totalSales = orders.reduce((s,o) => s + (o.total||0), 0);
+  const totalDisc = orders.reduce((s,o) => s + (o.disc||0), 0);
+  const netSales = totalSales - totalDisc;
+  const totalOrders = orders.length;
+  const avgOrder = totalOrders ? Math.round(totalSales / totalOrders) : 0;
+
+  // VIP
+  const vipPhones = new Set(Object.keys(VIP_CUSTOMERS || {}));
+  const vipOrders = orders.filter(o => vipPhones.has((o.phone||'').replace(/[^0-9]/g,'')));
+  const vipSales = vipOrders.reduce((s,o) => s + (o.total||0), 0);
+  const vipCount = new Set(vipOrders.map(o => (o.phone||'').replace(/[^0-9]/g,''))).size;
+
+  // New customers (first order ever in this period)
+  const allPhones = {};
+  ordersData.forEach(o => { const p = (o.phone||'').replace(/[^0-9]/g,''); if (p && !allPhones[p]) allPhones[p] = o.timestamp||0; });
+  const periodStart = orders.length ? Math.min(...orders.map(o=>o.timestamp||Infinity)) : 0;
+  const newCustomers = orders.filter(o => { const p = (o.phone||'').replace(/[^0-9]/g,''); return p && allPhones[p] >= periodStart; });
+  const newCustCount = new Set(newCustomers.map(o=>(o.phone||'').replace(/[^0-9]/g,''))).size;
+
+  // Growth
+  const prevSales = prevOrders.reduce((s,o) => s + (o.total||0), 0);
+  const growth = prevSales > 0 ? Math.round((totalSales - prevSales) / prevSales * 100) : (totalSales > 0 ? 100 : 0);
+
+  // ===== Product stats =====
+  const productMap = {};
+  orders.forEach(o => (o.items||[]).forEach(it => {
+    const key = it.name||'بدون اسم';
+    if (!productMap[key]) productMap[key] = {name:key, emoji:it.emoji||'🍽️', qty:0, rev:0};
+    productMap[key].qty += (it.qty||1);
+    productMap[key].rev += (it.price||0) * (it.qty||1);
+  }));
+  const topProducts = Object.values(productMap).sort((a,b) => b.rev - a.rev).slice(0,10);
+
+  // ===== Category stats =====
+  const catMap = {};
+  orders.forEach(o => (o.items||[]).forEach(it => {
+    let catLabel = '🍽️ أخرى';
+    Object.entries(MENU||{}).forEach(([ck,cv]) => {
+      if ((cv.items||[]).some(mi => mi.name === it.name || mi.id === it.id)) catLabel = cv.emoji + ' ' + (cv.label||ck).replace(/^[^\s]+\s/,'');
+    });
+    if (!catMap[catLabel]) catMap[catLabel] = 0;
+    catMap[catLabel] += (it.price||0) * (it.qty||1);
+  }));
+
+  // ===== Payment method stats =====
+  const payMap = {};
+  orders.forEach(o => {
+    const m = (o.payment||'كاش').split('—')[0].trim();
+    payMap[m] = (payMap[m]||0) + 1;
+  });
+
+  // ===== Daily sales =====
+  const dailyMap = {};
+  orders.forEach(o => {
+    const d = o.date || new Date(o.timestamp||0).toLocaleDateString('ar-EG');
+    if (!dailyMap[d]) dailyMap[d] = {sales:0, orders:0};
+    dailyMap[d].sales += (o.total||0);
+    dailyMap[d].orders += 1;
+  });
+  const dailyKeys = Object.keys(dailyMap).reverse().slice(0,30).reverse();
+
+  // ===== Peak hour =====
+  const hourMap = {};
+  orders.forEach(o => {
+    const h = new Date(o.timestamp||0).getHours();
+    hourMap[h] = (hourMap[h]||0) + 1;
+  });
+  const peakHour = Object.entries(hourMap).sort((a,b) => b[1]-a[1])[0];
+
+  // ===== Peak day =====
+  const dayNameMap = {};
+  const dayNames = ['الأحد','الاثنين','الثلاثاء','الأربعاء','الخميس','الجمعة','السبت'];
+  orders.forEach(o => {
+    const dn = dayNames[new Date(o.timestamp||0).getDay()];
+    dayNameMap[dn] = (dayNameMap[dn]||0) + (o.total||0);
+  });
+  const peakDay = Object.entries(dayNameMap).sort((a,b) => b[1]-a[1])[0];
+
+  // ===== Top customer =====
+  const custMap = {};
+  orders.forEach(o => {
+    const p = (o.phone||'').replace(/[^0-9]/g,'');
+    if (!p) return;
+    if (!custMap[p]) custMap[p] = {name:o.name||'—', phone:p, total:0, count:0};
+    custMap[p].total += (o.total||0);
+    custMap[p].count += 1;
+  });
+  const topCustomer = Object.values(custMap).sort((a,b) => b.total - a.total)[0];
+
+  // ===== Highest invoice =====
+  const highestOrder = [...orders].sort((a,b) => (b.total||0) - (a.total||0))[0];
+
+  // ===== BUILD HTML =====
+  el.innerHTML = `
+    <div style="text-align:center;font-size:11px;color:var(--text-muted);font-weight:700;margin-bottom:12px">
+      📅 ${periodLabels[periodVal]} | تاريخ التقرير: ${new Date().toLocaleDateString('ar-EG')} — ${new Date().toLocaleTimeString('ar-EG',{hour:'2-digit',minute:'2-digit'})}
+    </div>
+
+    <!-- ═══ الملخص التنفيذي ═══ -->
+    <div class="mgmt-section-hdr">📋 الملخص التنفيذي</div>
+    <div class="mgmt-summary-grid">
+      <div class="mgmt-card highlight"><div class="mc-val">${totalSales.toLocaleString('ar-EG')}</div><div class="mc-lbl">💰 إجمالي المبيعات (ج.م)</div></div>
+      <div class="mgmt-card highlight"><div class="mc-val">${netSales.toLocaleString('ar-EG')}</div><div class="mc-lbl">💵 صافي المبيعات (ج.م)</div></div>
+      <div class="mgmt-card"><div class="mc-val">${totalDisc.toLocaleString('ar-EG')}</div><div class="mc-lbl">🏷️ إجمالي الخصومات (ج.م)</div></div>
+      <div class="mgmt-card"><div class="mc-val">${totalOrders}</div><div class="mc-lbl">📦 عدد الطلبات</div></div>
+      <div class="mgmt-card"><div class="mc-val">${avgOrder.toLocaleString('ar-EG')}</div><div class="mc-lbl">📊 متوسط قيمة الطلب</div></div>
+      <div class="mgmt-card"><div class="mc-val">${vipCount}</div><div class="mc-lbl">👑 عملاء VIP</div></div>
+      <div class="mgmt-card"><div class="mc-val">${vipSales.toLocaleString('ar-EG')}</div><div class="mc-lbl">💎 مبيعات VIP (ج.م)</div></div>
+      <div class="mgmt-card"><div class="mc-val">${newCustCount}</div><div class="mc-lbl">🆕 عملاء جدد</div></div>
+      <div class="mgmt-card" style="border-color:${growth>=0?'var(--olive)':'var(--red)'}"><div class="mc-val" style="color:${growth>=0?'var(--olive)':'var(--red)'}">${growth>=0?'▲':'▼'} ${Math.abs(growth)}%</div><div class="mc-lbl">📈 نسبة النمو</div></div>
+    </div>
+
+    <!-- ═══ الرسوم البيانية ═══ -->
+    <div class="mgmt-section-hdr">📊 الرسوم البيانية</div>
+
+    <div class="mgmt-chart-box"><div class="chart-title">💰 المبيعات حسب الأيام</div><canvas id="mgmtChartDaily"></canvas></div>
+    <div class="mgmt-chart-box"><div class="chart-title">🏆 أعلى 10 منتجات مبيعاً</div><canvas id="mgmtChartProducts"></canvas></div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px">
+      <div class="mgmt-chart-box" style="margin-bottom:0"><div class="chart-title">🍕 نسبة الأقسام</div><canvas id="mgmtChartCats"></canvas></div>
+      <div class="mgmt-chart-box" style="margin-bottom:0"><div class="chart-title">💳 طرق الدفع</div><canvas id="mgmtChartPay"></canvas></div>
+    </div>
+    <div class="mgmt-chart-box"><div class="chart-title">👑 مبيعات VIP مقابل العملاء العاديين</div><canvas id="mgmtChartVip"></canvas></div>
+    <div class="mgmt-chart-box"><div class="chart-title">🕐 المبيعات حسب الساعة</div><canvas id="mgmtChartHours"></canvas></div>
+
+    <!-- ═══ مؤشرات الأداء ═══ -->
+    <div class="mgmt-section-hdr">🎯 مؤشرات الأداء</div>
+    <div class="mgmt-kpi-grid">
+      <div class="mgmt-kpi"><div class="kpi-icon">🥇</div><div class="kpi-label">أكثر المنتجات مبيعاً</div><div class="kpi-value">${topProducts[0]?.emoji||''} ${topProducts[0]?.name||'—'} (×${topProducts[0]?.qty||0})</div></div>
+      <div class="mgmt-kpi"><div class="kpi-icon">💰</div><div class="kpi-label">أعلى منتج إيراداً</div><div class="kpi-value">${topProducts[0]?.emoji||''} ${topProducts[0]?.name||'—'} (${(topProducts[0]?.rev||0).toLocaleString('ar-EG')} ج)</div></div>
+      <div class="mgmt-kpi"><div class="kpi-icon">📃</div><div class="kpi-label">أعلى فاتورة</div><div class="kpi-value">${highestOrder ? (highestOrder.total||0).toLocaleString('ar-EG')+' ج — '+highestOrder.name : '—'}</div></div>
+      <div class="mgmt-kpi"><div class="kpi-icon">🏅</div><div class="kpi-label">أعلى عميل إنفاقاً</div><div class="kpi-value">${topCustomer ? topCustomer.name+' ('+topCustomer.total.toLocaleString('ar-EG')+' ج)' : '—'}</div></div>
+      <div class="mgmt-kpi"><div class="kpi-icon">🕐</div><div class="kpi-label">أكثر ساعة مبيعات</div><div class="kpi-value">${peakHour ? peakHour[0]+':00 ('+peakHour[1]+' طلب)' : '—'}</div></div>
+      <div class="mgmt-kpi"><div class="kpi-icon">📅</div><div class="kpi-label">أكثر يوم مبيعات</div><div class="kpi-value">${peakDay ? peakDay[0]+' ('+peakDay[1].toLocaleString('ar-EG')+' ج)' : '—'}</div></div>
+      <div class="mgmt-kpi"><div class="kpi-icon">🏷️</div><div class="kpi-label">نسبة الخصومات من الإجمالي</div><div class="kpi-value">${totalSales>0 ? Math.round(totalDisc/totalSales*100) : 0}%</div></div>
+      <div class="mgmt-kpi"><div class="kpi-icon">👑</div><div class="kpi-label">نسبة مبيعات VIP</div><div class="kpi-value">${totalSales>0 ? Math.round(vipSales/totalSales*100) : 0}%</div></div>
+    </div>
+
+    <!-- ═══ تقييمات العملاء ═══ -->
+    ${_buildMgmtRatingsSection(orders)}
+
+    <!-- ═══ تقييم المندوبين ═══ -->
+    ${_buildMgmtAgentsSection(orders)}
+
+    <!-- ═══ جدول المبيعات (شاشة فقط — لا يُطبع) ═══ -->
+    <div class="mgmt-screen-only">
+    <div class="mgmt-section-hdr">📋 جدول المبيعات</div>
+    <div class="mgmt-search-bar">
+      <input id="mgmtTblSearch" type="text" placeholder="🔍 بحث بالاسم أو رقم الطلب..." oninput="_filterMgmtTable()"/>
+    </div>
+    <div class="mgmt-tbl-wrap" style="max-height:400px;overflow-y:auto">
+      <table class="mgmt-tbl" id="mgmtSalesTable">
+        <thead><tr><th>#</th><th>التاريخ</th><th>الوقت</th><th>العميل</th><th>الدفع</th><th>القيمة</th><th>الخصم</th><th>الصافي</th><th>الحالة</th></tr></thead>
+        <tbody>${[...orders].sort((a,b)=>(b.timestamp||0)-(a.timestamp||0)).map((o,i)=>{
+          const statusLbl = {new:'جديد',prep:'تجهيز',ready:'جاهز',out:'خرج',delivered:'✅ مكتمل',cancelled:'❌ ملغى',payment_pending:'⏳ معلّق'};
+          return `<tr data-search="${(o.name||'')+(o.id||'')}">
+            <td style="font-weight:800;color:var(--olive)">${o.id||i+1}</td>
+            <td>${o.date||'—'}</td><td>${o.time||'—'}</td>
+            <td style="font-weight:700">${o.name||'—'}</td>
+            <td style="font-size:10px">${(o.payment||'كاش').split('—')[0].trim()}</td>
+            <td style="font-weight:800">${(o.total||0).toLocaleString('ar-EG')}</td>
+            <td style="color:var(--red)">${(o.disc||0)>0?'-'+(o.disc).toLocaleString('ar-EG'):'—'}</td>
+            <td style="font-weight:800;color:var(--olive-dark)">${((o.total||0)-(o.disc||0)).toLocaleString('ar-EG')}</td>
+            <td>${statusLbl[o.status]||o.status}</td>
+          </tr>`;}).join('')}
+        </tbody>
+        <tfoot><tr>
+          <td colspan="5" style="text-align:center">الإجمالي</td>
+          <td>${totalSales.toLocaleString('ar-EG')} ج</td>
+          <td style="color:var(--red)">${totalDisc>0?'-'+totalDisc.toLocaleString('ar-EG'):'—'}</td>
+          <td style="color:var(--olive-dark)">${netSales.toLocaleString('ar-EG')} ج</td>
+          <td>${totalOrders} طلب</td>
+        </tr></tfoot>
+      </table>
+    </div>
+    </div>
+
+    <!-- ═══ التحليل المكتوب ═══ -->
+    <div class="mgmt-section-hdr">📝 تحليل وقراءة التقرير</div>
+    <div id="mgmtNarrative" style="background:var(--white);border:1px solid var(--border);border-radius:14px;padding:16px;font-size:12px;line-height:2.2;color:var(--text)">
+      ${_buildMgmtNarrative({totalSales, netSales, totalDisc, totalOrders, avgOrder, vipCount, vipSales, newCustCount, growth, topProducts, catMap, payMap, peakHour, peakDay, topCustomer, highestOrder, dailyKeys, dailyMap, periodVal, periodLabels})}
+    </div>
+
+    <!-- ═══ ملخص نهاية التقرير ═══ -->
+    <div class="mgmt-section-hdr">📋 ملخص نهاية التقرير</div>
+    <div style="background:var(--white);border:1px solid var(--border);border-radius:14px;padding:16px;font-size:12px;line-height:2.2">
+      <div style="display:flex;justify-content:space-between"><span>📦 إجمالي عدد الطلبات</span><strong>${totalOrders}</strong></div>
+      <div style="display:flex;justify-content:space-between"><span>💰 إجمالي قيمة المبيعات</span><strong>${totalSales.toLocaleString('ar-EG')} ج.م</strong></div>
+      <div style="display:flex;justify-content:space-between"><span>🏷️ إجمالي الخصومات</span><strong style="color:var(--red)">${totalDisc.toLocaleString('ar-EG')} ج.م</strong></div>
+      <div style="display:flex;justify-content:space-between"><span>💵 صافي المبيعات</span><strong style="color:var(--olive)">${netSales.toLocaleString('ar-EG')} ج.م</strong></div>
+      <div style="display:flex;justify-content:space-between"><span>📊 متوسط قيمة الطلب</span><strong>${avgOrder.toLocaleString('ar-EG')} ج.م</strong></div>
+      <div style="display:flex;justify-content:space-between"><span>👑 عدد عملاء VIP</span><strong>${vipCount}</strong></div>
+      <div style="display:flex;justify-content:space-between"><span>💎 قيمة مبيعات VIP</span><strong>${vipSales.toLocaleString('ar-EG')} ج.م</strong></div>
+      <div style="text-align:center;margin-top:10px;font-size:10px;color:var(--text-muted)">
+        📅 ${new Date().toLocaleDateString('ar-EG')} — ${new Date().toLocaleTimeString('ar-EG',{hour:'2-digit',minute:'2-digit'})} | المستخدم: مدير النظام
+      </div>
+    </div>
+  `;
+
+  // ===== RENDER CHARTS (بعد ما الـ DOM يكون جاهز) =====
+  setTimeout(function() {
+    _renderMgmtCharts(dailyKeys, dailyMap, topProducts, catMap, payMap, vipSales, totalSales - vipSales, hourMap);
+  }, 100);
+}
+
+function _renderMgmtCharts(dailyKeys, dailyMap, topProducts, catMap, payMap, vipSales, nonVipSales, hourMap) {
+  if (typeof Chart === 'undefined') {
+    /* Chart.js مش محمّلة — حمّلها lazy وارجع حاول */
+    var s = document.createElement('script');
+    s.src = 'https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js';
+    s.onload = function() { _renderMgmtCharts(dailyKeys, dailyMap, topProducts, catMap, payMap, vipSales, nonVipSales, hourMap); };
+    document.head.appendChild(s);
+    return;
+  }
+  const oliveC = '#4a7c1f', goldC = '#c8973a', blueC = '#1a5fc8', redC = '#e03030';
+  const palette = ['#4a7c1f','#c8973a','#1a5fc8','#e03030','#6366f1','#ec4899','#14b8a6','#f59e0b','#8b5cf6','#06b6d4'];
+
+  // Daily Sales
+  const c1 = document.getElementById('mgmtChartDaily');
+  if (c1) {
+    _mgmtCharts.daily = new Chart(c1, {
+      type: 'bar',
+      data: { labels: dailyKeys, datasets: [{
+        label: 'المبيعات (ج.م)', data: dailyKeys.map(k => dailyMap[k]?.sales||0),
+        backgroundColor: oliveC+'cc', borderRadius: 6, borderSkipped: false
+      }]},
+      options: { responsive:true, plugins:{legend:{display:false}}, scales:{y:{beginAtZero:true,ticks:{callback:v=>v.toLocaleString('ar-EG')}},x:{ticks:{font:{size:9},maxRotation:45}}} }
+    });
+  }
+
+  // Top products
+  const c2 = document.getElementById('mgmtChartProducts');
+  if (c2) {
+    _mgmtCharts.products = new Chart(c2, {
+      type: 'bar',
+      data: { labels: topProducts.map(p => p.emoji+' '+p.name.slice(0,12)), datasets: [{
+        label: 'الإيراد (ج.م)', data: topProducts.map(p => p.rev),
+        backgroundColor: palette.slice(0, topProducts.length), borderRadius: 6, borderSkipped: false
+      }]},
+      options: { indexAxis:'y', responsive:true, plugins:{legend:{display:false}}, scales:{x:{beginAtZero:true,ticks:{callback:v=>v.toLocaleString('ar-EG')}}} }
+    });
+  }
+
+  // Categories pie
+  const c3 = document.getElementById('mgmtChartCats');
+  if (c3) {
+    const catKeys = Object.keys(catMap);
+    _mgmtCharts.cats = new Chart(c3, {
+      type: 'doughnut',
+      data: { labels: catKeys, datasets: [{ data: catKeys.map(k=>catMap[k]), backgroundColor: palette.slice(0,catKeys.length) }] },
+      options: { responsive:true, plugins:{legend:{position:'bottom',labels:{font:{size:9},padding:6}}} }
+    });
+  }
+
+  // Payment methods pie
+  const c4 = document.getElementById('mgmtChartPay');
+  if (c4) {
+    const payKeys = Object.keys(payMap);
+    _mgmtCharts.pay = new Chart(c4, {
+      type: 'doughnut',
+      data: { labels: payKeys, datasets: [{ data: payKeys.map(k=>payMap[k]), backgroundColor: [oliveC,goldC,blueC,redC,'#6366f1'].slice(0,payKeys.length) }] },
+      options: { responsive:true, plugins:{legend:{position:'bottom',labels:{font:{size:9},padding:6}}} }
+    });
+  }
+
+  // VIP vs Regular
+  const c5 = document.getElementById('mgmtChartVip');
+  if (c5) {
+    _mgmtCharts.vip = new Chart(c5, {
+      type: 'bar',
+      data: { labels: ['VIP 👑','عملاء عاديين'], datasets: [{ data: [vipSales, nonVipSales], backgroundColor: [goldC, oliveC], borderRadius: 8, borderSkipped: false }] },
+      options: { responsive:true, plugins:{legend:{display:false}}, scales:{y:{beginAtZero:true,ticks:{callback:v=>v.toLocaleString('ar-EG')+' ج'}}} }
+    });
+  }
+
+  // Hourly
+  const c6 = document.getElementById('mgmtChartHours');
+  if (c6) {
+    const hours = Array.from({length:24},(_,i)=>i);
+    _mgmtCharts.hours = new Chart(c6, {
+      type: 'line',
+      data: { labels: hours.map(h=>h+':00'), datasets: [{
+        label: 'عدد الطلبات', data: hours.map(h=>hourMap[h]||0),
+        borderColor: oliveC, backgroundColor: oliveC+'22', fill: true, tension: 0.35, pointRadius: 3
+      }]},
+      options: { responsive:true, plugins:{legend:{display:false}}, scales:{y:{beginAtZero:true},x:{ticks:{font:{size:8},maxRotation:45}}} }
+    });
+  }
+}
+
+function _filterMgmtTable() {
+  const q = (document.getElementById('mgmtTblSearch')?.value||'').toLowerCase();
+  const rows = document.querySelectorAll('#mgmtSalesTable tbody tr');
+  rows.forEach(r => { r.style.display = (r.dataset.search||'').toLowerCase().includes(q) ? '' : 'none'; });
+}
+
+// ===== PRINT =====
+function _buildMgmtRatingsSection(orders) {
+  var ratings = (typeof APP_RATINGS !== 'undefined' ? APP_RATINGS : []);
+  /* فلترة التقييمات حسب نفس الفترة */
+  var periodStart = orders.length ? Math.min.apply(null, orders.map(function(o){return o.timestamp||Infinity;})) : 0;
+  var periodEnd = orders.length ? Math.max.apply(null, orders.map(function(o){return o.timestamp||0;})) : Date.now();
+  var filtered = ratings.filter(function(r) { var t = r.ts||0; return t >= periodStart && t <= periodEnd + 86400000; });
+  if (!filtered.length && !ratings.length) {
+    return '<div class="mgmt-section-hdr">⭐ تقييمات العملاء</div><div style="text-align:center;padding:16px;color:var(--text-muted);font-size:12px;font-weight:700">لا توجد تقييمات في هذه الفترة</div>';
+  }
+  var useRatings = filtered.length ? filtered : ratings.slice(0, 20);
+  var total = useRatings.length;
+  var avg = total ? (useRatings.reduce(function(s,r){return s+(r.rating||0);},0) / total) : 0;
+  var dist = [0,0,0,0,0];
+  useRatings.forEach(function(r){ var s = (r.rating||1)-1; if(s>=0&&s<5) dist[s]++; });
+  var maxDist = Math.max.apply(null, dist) || 1;
+  var starsHtml = avg > 0 ? '⭐'.repeat(Math.round(avg)) : '—';
+  var positive = useRatings.filter(function(r){return (r.rating||0)>=4;}).length;
+  var negative = useRatings.filter(function(r){return (r.rating||0)<=2;}).length;
+  var recentComments = useRatings.filter(function(r){return r.comment;}).slice(0,5);
+
+  var html = '<div class="mgmt-section-hdr">⭐ تقييمات العملاء</div>';
+  /* بطاقات ملخص */
+  html += '<div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:8px;margin-bottom:14px">';
+  html += '<div class="mgmt-card highlight"><div class="mc-val" style="font-size:28px">' + avg.toFixed(1) + '</div><div class="mc-lbl">' + starsHtml + '<br/>متوسط التقييم</div></div>';
+  html += '<div class="mgmt-card"><div class="mc-val">' + total + '</div><div class="mc-lbl">📊 عدد التقييمات</div></div>';
+  html += '<div class="mgmt-card"><div class="mc-val" style="color:#16a34a">' + positive + '</div><div class="mc-lbl">😊 تقييمات إيجابية</div></div>';
+  html += '<div class="mgmt-card"><div class="mc-val" style="color:#dc2626">' + negative + '</div><div class="mc-lbl">😞 تقييمات سلبية</div></div>';
+  html += '</div>';
+
+  /* توزيع النجوم */
+  html += '<div style="background:var(--white);border:1px solid var(--border);border-radius:14px;padding:14px;margin-bottom:14px">';
+  html += '<div style="font-size:12px;font-weight:800;margin-bottom:8px">📊 توزيع التقييمات</div>';
+  for (var i = 4; i >= 0; i--) {
+    var pct = total > 0 ? Math.round(dist[i]/total*100) : 0;
+    html += '<div style="display:flex;align-items:center;gap:8px;margin-bottom:4px">';
+    html += '<span style="font-size:11px;font-weight:800;min-width:20px;text-align:center">' + (i+1) + '⭐</span>';
+    html += '<div style="flex:1;height:14px;background:var(--cream);border-radius:7px;overflow:hidden"><div style="height:100%;width:' + pct + '%;background:linear-gradient(90deg,#c8973a,#e8b84a);border-radius:7px;transition:.5s"></div></div>';
+    html += '<span style="font-size:10px;font-weight:800;min-width:36px;color:var(--text-muted)">' + dist[i] + ' (' + pct + '%)</span>';
+    html += '</div>';
+  }
+  html += '</div>';
+
+  /* آخر التعليقات */
+  if (recentComments.length) {
+    html += '<div style="background:var(--white);border:1px solid var(--border);border-radius:14px;padding:14px;margin-bottom:14px">';
+    html += '<div style="font-size:12px;font-weight:800;margin-bottom:8px">💬 أحدث تعليقات العملاء</div>';
+    recentComments.forEach(function(r) {
+      html += '<div style="border-bottom:1px solid var(--border);padding:8px 0">';
+      html += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">';
+      html += '<span style="font-weight:800;font-size:12px">' + (r.name||'عميل') + '</span>';
+      html += '<span style="font-size:10px;color:var(--text-muted)">' + (r.date||'') + '</span>';
+      html += '</div>';
+      html += '<div style="font-size:12px">⭐'.repeat(r.rating||0) + '</div>';
+      html += '<div style="font-size:12px;color:var(--text);margin-top:2px">' + (r.comment||'') + '</div>';
+      html += '</div>';
+    });
+    html += '</div>';
+  }
+
+  return html;
+}
+
+function _buildMgmtAgentsSection(orders) {
+  var agents = (typeof AGENTS !== 'undefined' ? AGENTS : []);
+  if (!agents.length) {
+    return '<div class="mgmt-section-hdr">🛵 تقييم المندوبين</div><div style="text-align:center;padding:16px;color:var(--text-muted);font-size:12px;font-weight:700">لا يوجد مندوبون مسجّلون</div>';
+  }
+  var periodOrders = orders;
+
+  var html = '<div class="mgmt-section-hdr">🛵 تقييم المندوبين</div>';
+
+  /* جدول المندوبين */
+  html += '<div style="overflow-x:auto;margin-bottom:14px"><table class="mgmt-tbl"><thead><tr>';
+  html += '<th>المندوب</th><th>الطلبات المسلّمة</th><th>التقييم</th><th>عدد التقييمات</th><th>الشكاوى</th><th>الأداء</th>';
+  html += '</tr></thead><tbody>';
+
+  var agentStats = agents.map(function(ag) {
+    var agOrders = periodOrders.filter(function(o){return o.agent && o.agent.id === ag.id && o.status === 'delivered';});
+    var ratings = ag.ratings || [];
+    var periodRatings = ratings;
+    var avgR = periodRatings.length ? (periodRatings.reduce(function(s,r){return s+(r.stars||0);},0) / periodRatings.length) : 0;
+    var complaints = periodRatings.filter(function(r){return (r.stars||0) <= 2;});
+    var performance = avgR >= 4 ? '🟢 ممتاز' : avgR >= 3 ? '🟡 جيد' : avgR > 0 ? '🔴 يحتاج تحسين' : '⚪ بدون تقييم';
+    return {name:ag.name, phone:ag.phone, deliveries:agOrders.length, avgR:avgR, totalR:periodRatings.length, complaints:complaints.length, performance:performance, complaintsList:complaints};
+  });
+
+  /* ترتيب حسب عدد الطلبات */
+  agentStats.sort(function(a,b){return b.deliveries - a.deliveries;});
+
+  agentStats.forEach(function(s) {
+    var starsStr = s.avgR > 0 ? '⭐'.repeat(Math.round(s.avgR)) + ' ' + s.avgR.toFixed(1) : '—';
+    html += '<tr>';
+    html += '<td style="font-weight:800">🛵 ' + s.name + '</td>';
+    html += '<td style="font-weight:800;text-align:center">' + s.deliveries + '</td>';
+    html += '<td style="text-align:center">' + starsStr + '</td>';
+    html += '<td style="text-align:center">' + s.totalR + '</td>';
+    html += '<td style="text-align:center;color:' + (s.complaints > 0 ? '#dc2626' : 'var(--text-muted)') + ';font-weight:800">' + s.complaints + '</td>';
+    html += '<td style="text-align:center;font-size:10px;font-weight:800">' + s.performance + '</td>';
+    html += '</tr>';
+  });
+
+  html += '</tbody></table></div>';
+
+  /* بطاقات ملخص المندوبين */
+  var totalDeliveries = agentStats.reduce(function(s,a){return s+a.deliveries;},0);
+  var bestAgent = agentStats.filter(function(a){return a.avgR>0;}).sort(function(a,b){return b.avgR-a.avgR;})[0];
+  var busiestAgent = agentStats.sort(function(a,b){return b.deliveries-a.deliveries;})[0];
+  var totalComplaints = agentStats.reduce(function(s,a){return s+a.complaints;},0);
+
+  html += '<div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:8px;margin-bottom:14px">';
+  html += '<div class="mgmt-card"><div class="mc-val">' + totalDeliveries + '</div><div class="mc-lbl">📦 إجمالي التوصيلات</div></div>';
+  html += '<div class="mgmt-card"><div class="mc-val">' + (bestAgent ? bestAgent.name : '—') + '</div><div class="mc-lbl">🏆 أفضل تقييم' + (bestAgent ? ' (' + bestAgent.avgR.toFixed(1) + '⭐)' : '') + '</div></div>';
+  html += '<div class="mgmt-card"><div class="mc-val">' + (busiestAgent ? busiestAgent.name : '—') + '</div><div class="mc-lbl">📦 أكثر توصيلاً (' + (busiestAgent ? busiestAgent.deliveries : 0) + ')</div></div>';
+  html += '<div class="mgmt-card"><div class="mc-val" style="color:' + (totalComplaints > 0 ? '#dc2626' : '#16a34a') + '">' + totalComplaints + '</div><div class="mc-lbl">⚠️ إجمالي الشكاوى</div></div>';
+  html += '</div>';
+
+  /* شكاوى مفصّلة لو موجودة */
+  var allComplaints = [];
+  agentStats.forEach(function(s) {
+    s.complaintsList.forEach(function(c) {
+      allComplaints.push({agent:s.name, stars:c.stars||0, comment:c.comment||'', date:c.ratedAt ? new Date(c.ratedAt).toLocaleDateString('ar-EG') : ''});
+    });
+  });
+  if (allComplaints.length) {
+    html += '<div style="background:#fff5f5;border:1px solid #fca5a5;border-radius:14px;padding:14px;margin-bottom:14px">';
+    html += '<div style="font-size:12px;font-weight:900;color:#dc2626;margin-bottom:8px">⚠️ تفاصيل الشكاوى</div>';
+    allComplaints.slice(0,10).forEach(function(c) {
+      html += '<div style="border-bottom:1px dashed #fca5a5;padding:6px 0;font-size:11px">';
+      html += '<strong>🛵 ' + c.agent + '</strong> — ' + '⭐'.repeat(c.stars) + (c.comment ? ' — ' + c.comment : '') + ' <span style="color:#999">' + c.date + '</span>';
+      html += '</div>';
+    });
+    html += '</div>';
+  }
+
+  return html;
+}
+
+function _buildMgmtNarrative(d) {
+  var p = d.periodLabels[d.periodVal] || d.periodVal;
+  var discPct = d.totalSales > 0 ? Math.round(d.totalDisc / d.totalSales * 100) : 0;
+  var vipPct = d.totalSales > 0 ? Math.round(d.vipSales / d.totalSales * 100) : 0;
+
+  /* أعلى قسم */
+  var catEntries = Object.entries(d.catMap).sort(function(a,b){return b[1]-a[1];});
+  var topCat = catEntries[0];
+  var topCatPct = d.totalSales > 0 && topCat ? Math.round(topCat[1] / d.totalSales * 100) : 0;
+
+  /* أعلى طريقة دفع */
+  var payEntries = Object.entries(d.payMap).sort(function(a,b){return b[1]-a[1];});
+  var topPay = payEntries[0];
+  var topPayPct = d.totalOrders > 0 && topPay ? Math.round(topPay[1] / d.totalOrders * 100) : 0;
+
+  /* اتجاه المبيعات */
+  var dKeys = d.dailyKeys || [];
+  var trendText = '';
+  if (dKeys.length >= 3) {
+    var half = Math.floor(dKeys.length / 2);
+    var firstHalf = dKeys.slice(0, half).reduce(function(s,k){return s + (d.dailyMap[k]?.sales||0);}, 0);
+    var secondHalf = dKeys.slice(half).reduce(function(s,k){return s + (d.dailyMap[k]?.sales||0);}, 0);
+    if (secondHalf > firstHalf * 1.1) trendText = 'المبيعات في <strong>اتجاه تصاعدي</strong> ✅ — النصف الثاني من الفترة حقق مبيعات أعلى من الأول.';
+    else if (firstHalf > secondHalf * 1.1) trendText = 'المبيعات في <strong>اتجاه تنازلي</strong> ⚠️ — النصف الأول من الفترة كان أقوى. يُنصح بمراجعة الأسباب.';
+    else trendText = 'المبيعات <strong>مستقرة</strong> 📊 خلال الفترة بدون تذبذبات كبيرة.';
+  }
+
+  var lines = [];
+  lines.push('<div style="font-weight:900;font-size:14px;margin-bottom:8px;color:#2d5016">📊 قراءة تحليلية لبيانات الفترة: ' + p + '</div>');
+
+  lines.push('<div style="margin-bottom:6px"><strong>💰 حجم المبيعات:</strong> حقق المطعم خلال الفترة إجمالي مبيعات بقيمة <strong>' + d.totalSales.toLocaleString('ar-EG') + ' ج.م</strong> من خلال <strong>' + d.totalOrders + ' طلب</strong>، بمتوسط قيمة طلب <strong>' + d.avgOrder.toLocaleString('ar-EG') + ' ج.م</strong>. بعد خصم إجمالي الخصومات البالغة <strong>' + d.totalDisc.toLocaleString('ar-EG') + ' ج.م (' + discPct + '%)</strong>، بلغ صافي المبيعات <strong>' + d.netSales.toLocaleString('ar-EG') + ' ج.م</strong>.</div>');
+
+  if (d.growth !== 0) {
+    var gDir = d.growth >= 0 ? 'نمواً' : 'تراجعاً';
+    var gIcon = d.growth >= 0 ? '📈' : '📉';
+    lines.push('<div style="margin-bottom:6px"><strong>' + gIcon + ' النمو:</strong> سجلت المبيعات ' + gDir + ' بنسبة <strong>' + Math.abs(d.growth) + '%</strong> مقارنة بالفترة السابقة المماثلة.' + (d.growth < 0 ? ' يُوصى بمراجعة العروض والأسعار لتحسين الأداء.' : ' أداء ممتاز — استمر على هذا المستوى!') + '</div>');
+  }
+
+  if (d.topProducts.length > 0) {
+    var tp = d.topProducts[0];
+    var tp2 = d.topProducts[1];
+    lines.push('<div style="margin-bottom:6px"><strong>🏆 المنتجات:</strong> تصدّر <strong>' + tp.emoji + ' ' + tp.name + '</strong> قائمة المبيعات بإيراد <strong>' + tp.rev.toLocaleString('ar-EG') + ' ج.م</strong> (' + tp.qty + ' وحدة)' + (tp2 ? '، يليه <strong>' + tp2.emoji + ' ' + tp2.name + '</strong> بإيراد <strong>' + tp2.rev.toLocaleString('ar-EG') + ' ج.م</strong>' : '') + '. يُنصح بالتركيز على ترويج هذه المنتجات وضمان توفرها الدائم.</div>');
+  }
+
+  if (topCat) {
+    lines.push('<div style="margin-bottom:6px"><strong>🍕 الأقسام:</strong> قسم <strong>' + topCat[0] + '</strong> هو الأكثر تحقيقاً للإيرادات بنسبة <strong>' + topCatPct + '%</strong> من إجمالي المبيعات' + (catEntries.length > 1 ? '، بينما حقق <strong>' + catEntries[catEntries.length-1][0] + '</strong> أقل نسبة' : '') + '. يمكن التفكير في تعزيز الأقسام الأضعف بعروض خاصة.</div>');
+  }
+
+  if (topPay) {
+    lines.push('<div style="margin-bottom:6px"><strong>💳 طرق الدفع:</strong> <strong>' + topPay[0] + '</strong> هي الأكثر استخداماً بنسبة <strong>' + topPayPct + '%</strong> من الطلبات.' + (payEntries.length > 1 ? ' طرق الدفع الأخرى المستخدمة: ' + payEntries.slice(1).map(function(e){return e[0];}).join('، ') + '.' : '') + '</div>');
+  }
+
+  if (d.vipCount > 0) {
+    lines.push('<div style="margin-bottom:6px"><strong>👑 عملاء VIP:</strong> ساهم <strong>' + d.vipCount + ' عميل VIP</strong> بمبيعات بلغت <strong>' + d.vipSales.toLocaleString('ar-EG') + ' ج.م</strong> (' + vipPct + '% من الإجمالي). ' + (vipPct >= 30 ? 'قاعدة العملاء المميزين قوية وتمثل ركيزة أساسية للإيرادات.' : 'يُنصح بزيادة برامج الولاء لتحويل عملاء عاديين إلى VIP.') + '</div>');
+  }
+
+  if (d.newCustCount > 0) {
+    lines.push('<div style="margin-bottom:6px"><strong>🆕 العملاء الجدد:</strong> انضم <strong>' + d.newCustCount + ' عميل جديد</strong> خلال الفترة. ' + (d.newCustCount >= 10 ? 'معدل اكتساب عملاء جيد!' : 'يمكن تعزيز اكتساب العملاء عبر العروض الترويجية والإعلانات.') + '</div>');
+  }
+
+  if (d.peakHour) {
+    lines.push('<div style="margin-bottom:6px"><strong>🕐 أوقات الذروة:</strong> أكثر ساعة نشاطاً هي <strong>' + d.peakHour[0] + ':00</strong> بإجمالي <strong>' + d.peakHour[1] + ' طلب</strong>' + (d.peakDay ? '، وأكثر يوم هو <strong>' + d.peakDay[0] + '</strong> بمبيعات <strong>' + d.peakDay[1].toLocaleString('ar-EG') + ' ج.م</strong>' : '') + '. هذه المعلومات تساعد في تنظيم ورديات العمل وتوقيت العروض.</div>');
+  }
+
+  if (d.highestOrder) {
+    lines.push('<div style="margin-bottom:6px"><strong>📃 أعلى فاتورة:</strong> سجّلها العميل <strong>' + (d.highestOrder.name||'—') + '</strong> بقيمة <strong>' + (d.highestOrder.total||0).toLocaleString('ar-EG') + ' ج.م</strong>.</div>');
+  }
+
+  if (d.topCustomer) {
+    lines.push('<div style="margin-bottom:6px"><strong>🏅 أعلى عميل إنفاقاً:</strong> العميل <strong>' + d.topCustomer.name + '</strong> بإجمالي إنفاق <strong>' + d.topCustomer.total.toLocaleString('ar-EG') + ' ج.م</strong> في <strong>' + d.topCustomer.count + ' طلب</strong>.</div>');
+  }
+
+  if (trendText) {
+    lines.push('<div style="margin-bottom:6px"><strong>📈 اتجاه المبيعات:</strong> ' + trendText + '</div>');
+  }
+
+  if (discPct > 15) {
+    lines.push('<div style="margin-bottom:6px;color:#c0392b"><strong>⚠️ تنبيه:</strong> نسبة الخصومات مرتفعة (' + discPct + '%). يُنصح بمراجعة سياسة الخصومات للحفاظ على هامش الربح.</div>');
+  }
+
+  /* تحليل التقييمات */
+  var _narrRatings = (typeof APP_RATINGS !== 'undefined' ? APP_RATINGS : []);
+  if (_narrRatings.length > 0) {
+    var _narrAvg = _narrRatings.reduce(function(s,r){return s+(r.rating||0);},0) / _narrRatings.length;
+    var _narrNeg = _narrRatings.filter(function(r){return (r.rating||0)<=2;}).length;
+    var _narrNegPct = Math.round(_narrNeg / _narrRatings.length * 100);
+    lines.push('<div style="margin-bottom:6px"><strong>⭐ رضا العملاء:</strong> متوسط التقييم العام <strong>' + _narrAvg.toFixed(1) + ' من 5</strong>. ' + (_narrAvg >= 4 ? 'مستوى رضا ممتاز! استمر في الحفاظ على جودة الخدمة.' : _narrAvg >= 3 ? 'مستوى رضا مقبول — يمكن تحسينه بالتركيز على سرعة التجهيز وجودة الطعام.' : 'مستوى رضا يحتاج اهتمام عاجل — يُنصح بمراجعة ملاحظات العملاء والعمل على تحسين التجربة.') + (_narrNegPct > 20 ? ' ⚠️ نسبة التقييمات السلبية ' + _narrNegPct + '% وهي مرتفعة.' : '') + '</div>');
+  }
+
+  /* تحليل المندوبين */
+  var _narrAgents = (typeof AGENTS !== 'undefined' ? AGENTS : []);
+  if (_narrAgents.length > 0) {
+    var _narrBest = _narrAgents.filter(function(a){return a.avgRating > 0;}).sort(function(a,b){return (b.avgRating||0)-(a.avgRating||0);})[0];
+    var _narrTotalComplaints = _narrAgents.reduce(function(s,a){return s + (a.ratings||[]).filter(function(r){return (r.stars||0)<=2;}).length;},0);
+    lines.push('<div style="margin-bottom:6px"><strong>🛵 أداء المندوبين:</strong> يعمل حالياً <strong>' + _narrAgents.length + ' مندوب</strong>.' + (_narrBest ? ' أفضلهم تقييماً <strong>' + _narrBest.name + '</strong> بتقييم <strong>' + Number(_narrBest.avgRating).toFixed(1) + ' ⭐</strong>.' : '') + (_narrTotalComplaints > 0 ? ' يوجد <strong style="color:#dc2626">' + _narrTotalComplaints + ' شكوى</strong> — يُنصح بمتابعة المندوبين ذوي التقييمات المنخفضة.' : ' لا توجد شكاوى — أداء ممتاز!') + '</div>');
+  }
+
+  lines.push('<div style="margin-top:10px;padding-top:8px;border-top:1px dashed #ccc;font-size:10px;color:#999;text-align:center">تم إنشاء هذا التحليل تلقائياً بواسطة نظام زمزم للإدارة — ' + new Date().toLocaleDateString('ar-EG') + '</div>');
+
+  return lines.join('');
+}
+
+// ===== PRINT — مع تحويل الشارتات لصور =====
+function printMgmtReport() {
+  var body = document.getElementById('mgmtReportBody');
+  if (!body) return;
+
+  /* === تحويل كل canvas لصورة === */
+  var canvases = body.querySelectorAll('canvas');
+  var imgBackups = [];
+  canvases.forEach(function(cv) {
+    try {
+      var img = document.createElement('img');
+      img.src = cv.toDataURL('image/png');
+      img.style.cssText = 'width:100%;max-height:240px;display:block;margin:0 auto';
+      imgBackups.push({ canvas: cv, parent: cv.parentNode, img: img });
+      cv.parentNode.replaceChild(img, cv);
+    } catch(e) { /* تجاهل */ }
+  });
+
+  var logo = 'https://res.cloudinary.com/dk3xw0x5v/image/upload/v1778698476/Gemini_Generated_Image_1%D8%BA%D8%BAix4ur1ix4ur1ix4_x2fzvd_zgujcf.png';
+  var periodLabel = document.querySelector('#mgmtReportBody > div:first-child')?.textContent || '';
+
+  var printHTML = body.innerHTML;
+
+  /* === إرجاع الـ canvas مكان الصور === */
+  imgBackups.forEach(function(b) {
+    b.parent.replaceChild(b.canvas, b.img);
+  });
+
+  /* === فتح نافذة الطباعة === */
+  var w = window.open('','_blank');
+  w.document.write('<!DOCTYPE html><html dir="rtl"><head><meta charset="UTF-8"><title>تقرير الإدارة — زمزم</title>' +
+  '<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;800;900&display=swap" rel="stylesheet"/>' +
+  '<style>' +
+    '*{margin:0;padding:0;box-sizing:border-box}' +
+    'body{font-family:"Cairo",sans-serif;padding:24px 20px;color:#2c2c2c;direction:rtl;font-size:11px;line-height:1.7}' +
+    '.print-header{text-align:center;margin-bottom:16px;padding-bottom:12px;border-bottom:3px solid #2d5016}' +
+    '.print-header img{width:55px;height:55px;border-radius:50%;margin-bottom:6px}' +
+    '.print-header h2{font-size:18px;color:#2d5016;margin-bottom:2px}' +
+    '.print-header .sub{font-size:10px;color:#888}' +
+    '.mgmt-summary-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:5px;margin-bottom:12px}' +
+    '.mgmt-card{border:1px solid #ddd;border-radius:6px;padding:6px 4px;text-align:center}' +
+    '.mgmt-card.highlight{background:#4a7c1f;color:#fff;border-color:#4a7c1f}' +
+    '.mc-val{font-size:14px;font-weight:900}.mc-lbl{font-size:8px;font-weight:700}' +
+    '.mgmt-section-hdr{font-size:12px;font-weight:900;border-bottom:2px solid #c8e6a0;padding-bottom:3px;margin:14px 0 6px;color:#2d5016}' +
+    '.mgmt-kpi-grid{display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:5px;margin-bottom:12px}' +
+    '.mgmt-kpi{border:1px solid #ddd;border-radius:6px;padding:6px}' +
+    '.kpi-icon{font-size:14px}.kpi-label{font-size:8px;color:#666;font-weight:700}.kpi-value{font-size:11px;font-weight:900;color:#2d5016}' +
+    '.mgmt-chart-box{margin-bottom:10px;page-break-inside:avoid;border:1px solid #eee;border-radius:6px;padding:8px}' +
+    '.chart-title{font-size:11px;font-weight:800;margin-bottom:4px}' +
+    'img{max-width:100%;max-height:200px}' +
+    '.mgmt-tbl{width:100%;border-collapse:collapse;font-size:9px}' +
+    '.mgmt-tbl th{background:#4a7c1f;color:#fff;padding:5px 3px;font-size:8px}' +
+    '.mgmt-tbl td{padding:4px 3px;border-bottom:1px solid #eee}' +
+    '.mgmt-tbl tr:nth-child(even){background:#f9f9f9}' +
+    '.mgmt-tbl tfoot td{background:#e8f5d0;font-weight:900;font-size:10px}' +
+    '.mgmt-tbl-wrap{max-height:none!important;overflow:visible!important}' +
+    '.mgmt-search-bar,.mgmt-actions,.mgmt-period-bar,.mgmt-screen-only{display:none!important}' +
+    '@page{margin:12mm 10mm;size:A4}' +
+    '@media print{body{padding:0}}' +
+  '</style></head><body>' +
+    '<div class="print-header">' +
+      '<img src="' + logo + '" alt="زمزم"/>' +
+      '<h2>🏪 تقرير الإدارة — مطعم وكافيه زمزم</h2>' +
+      '<div class="sub">' + periodLabel + '</div>' +
+    '</div>' +
+    printHTML +
+    '<div style="margin-top:20px;padding-top:10px;border-top:2px solid #2d5016;text-align:center;font-size:9px;color:#999">' +
+      '📄 تم استخراج هذا التقرير بواسطة نظام زمزم للإدارة | مدير النظام | ' + new Date().toLocaleDateString('ar-EG') + ' — ' + new Date().toLocaleTimeString('ar-EG',{hour:'2-digit',minute:'2-digit'}) +
+      '<br/>MG AppHouse © ' + new Date().getFullYear() +
+    '</div>' +
+    '<script>setTimeout(function(){window.print();},600);<\/script>' +
+  '</body></html>');
+  w.document.close();
+}
+
+// ===== EXPORT EXCEL =====
+function exportMgmtExcel() {
+  const orders = _mgmtFilterOrders();
+  if (!orders.length) { showNotif('لا توجد بيانات للتصدير'); return; }
+  const BOM = '\uFEFF';
+  const headers = ['#','رقم الطلب','التاريخ','الوقت','اسم العميل','الهاتف','طريقة الدفع','قيمة الطلب','قيمة الخصم','صافي الفاتورة','نوع الطلب','حالة الطلب'];
+  const statusLbl = {new:'جديد',prep:'تجهيز',ready:'جاهز',out:'خرج للتوصيل',delivered:'مكتمل',cancelled:'ملغى',payment_pending:'معلّق'};
+  const typeLbl = {delivery:'توصيل',cafe:'كافيه',pickup:'استلام'};
+  const rows = orders.sort((a,b)=>(b.timestamp||0)-(a.timestamp||0)).map((o,i) => [
+    i+1, o.id||'', o.date||'', o.time||'', o.name||'', o.phone||'',
+    (o.payment||'كاش').split('—')[0].trim(), o.total||0, o.disc||0,
+    (o.total||0)-(o.disc||0), typeLbl[o.type]||o.type||'', statusLbl[o.status]||o.status||''
+  ]);
+  // Summary rows
+  const totalSales = orders.reduce((s,o)=>s+(o.total||0),0);
+  const totalDisc = orders.reduce((s,o)=>s+(o.disc||0),0);
+  rows.push([]);
+  rows.push(['','','','','الإجمالي','','',(totalSales),(totalDisc),(totalSales-totalDisc),'',orders.length+' طلب']);
+
+  const csv = BOM + [headers, ...rows].map(r => r.map(c => '"'+String(c).replace(/"/g,'""')+'"').join(',')).join('\n');
+  const blob = new Blob([csv], {type:'text/csv;charset=utf-8;'});
+  const link = document.createElement('a');
+  link.href = URL.createObjectURL(blob);
+  link.download = 'تقرير_الإدارة_' + new Date().toLocaleDateString('ar-EG').replace(/\//g,'-') + '.csv';
+  link.click();
+  showNotif('📊 تم تصدير التقرير بنجاح');
+}
+
+// ============================================================
+// CASHIER CHILD EVENTS — توفير 99% من bandwidth التحديثات
+// بدل ما Firebase يبعت كل الـ 100 طلب مع كل تغيير (200KB)
+// دلوقتي بيبعت الطلب اللي اتغير بس (2KB)
+// الأدمن مش متأثر — لسه بيستخدم on('value') العادي
+// ============================================================
+function _setupCashierOrdersListener() {
+  if (!db || window._ordersHandlerOn) return;
+  window._ordersHandlerOn = true;
+
+  var ref = db.ref('orders').limitToLast(100);
+  var _cashierInitDone = false;
+
+  /* ─── child_added: التحميل الأولاني + طلبات جديدة ─── */
+  ref.on('child_added', function(childSnap) {
+    var o = childSnap.val();
+    if (!o || !o.id) return;
+    var idx = ordersData.findIndex(function(x) { return x.id === o.id; });
+    if (idx >= 0) ordersData[idx] = o; else ordersData.push(o);
+
+    if (_cashierInitDone) {
+      /* === طلب جديد فعلاً (بعد التحميل الأولاني) === */
+      ordersData.sort(function(a,b) { return (b.timestamp||0) - (a.timestamp||0); });
+      saveData('zz_orders', ordersData);
+      localStorage.setItem('zz_orders_prev_ids', JSON.stringify(ordersData.map(function(x){ return x.id; })));
+
+      if (adminRoleType === 'admin' || adminRoleType === 'cashier') {
+        /* إشعارات VIP / عادي */
+        if (typeof _resolveVIP === 'function' && _resolveVIP(o.phone)) {
+          showVIPCashierPopup(o);
+        } else {
+          showCashierPopup(o, 'new_order');
+        }
+        if (typeof sendDesktopNotification === 'function') sendDesktopNotification(o);
+        playSound(); showNotif('🔔 طلب جديد وصل!');
+
+        /* تأثيرات بصرية */
+        setTimeout(function() {
+          var row = document.getElementById('orow_' + o.id) || document.getElementById('crow_' + o.id);
+          if (row) {
+            row.classList.add('order-new-arrival');
+            if (!row.querySelector('.new-order-badge')) {
+              var badge = document.createElement('div');
+              badge.className = 'new-order-badge';
+              badge.textContent = '🆕 New Order';
+              row.style.position = 'relative';
+              row.appendChild(badge);
+              setTimeout(function() { badge.remove(); }, 8000);
+            }
+            row.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            setTimeout(function() { row.classList.remove('order-new-arrival'); }, 8000);
+          }
+        }, 400);
+      }
+
+      /* إشعار الدفع الإلكتروني لو الطلب الجديد معلّق */
+      if (o.status === 'payment_pending') {
+        playSound();
+        showNotif('💳 طلب دفع إلكتروني جديد — ' + (o.name||'') + ' — ' + (o.payment||''));
+      }
+
+      /* تحديث شاشة التتبع لو العميل الحالي هو صاحب الطلب */
+      if (currentOrderNum && o.id === currentOrderNum) {
+        if (typeof updateTrackingStatus === 'function') updateTrackingStatus(o.status, o.outAt);
+      }
+
+      _cashierRerender();
+    }
+  });
+
+  /* ─── child_changed: تحديث حالة طلب (2KB بدل 200KB!) ─── */
+  ref.on('child_changed', function(childSnap) {
+    var o = childSnap.val();
+    if (!o || !o.id) return;
+    var idx = ordersData.findIndex(function(x) { return x.id === o.id; });
+    var oldOrder = idx >= 0 ? Object.assign({}, ordersData[idx]) : null;
+    if (idx >= 0) ordersData[idx] = o; else ordersData.push(o);
+    saveData('zz_orders', ordersData);
+
+    if (_cashierInitDone) {
+      /* إلغاء من العميل */
+      if (o.status === 'cancelled' && o.cancelledByClient && (!oldOrder || oldOrder.status !== 'cancelled')) {
+        var _cn = new Set(JSON.parse(localStorage.getItem('zz_cancel_notified_ids') || '[]'));
+        if (!_cn.has(o.id)) {
+          _cn.add(o.id);
+          localStorage.setItem('zz_cancel_notified_ids', JSON.stringify([..._cn]));
+          playSound();
+          showCashierPopup(o, 'order_cancelled');
+        }
+      }
+
+      /* تحويل لدفع إلكتروني */
+      if (o.status === 'payment_pending' && oldOrder && oldOrder.status !== 'payment_pending') {
+        playSound();
+        showNotif('💳 طلب دفع إلكتروني جديد — ' + (o.name||'') + ' — ' + (o.payment||''));
+      }
+
+      /* تتبع الطلب الحالي للعميل */
+      if (currentOrderNum && o.id === currentOrderNum) {
+        if (o.cashierViewedAt || o.status === 'prep' || o.status === 'ready' || o.status === 'out' || o.status === 'delivered') {
+          _cashierViewedCurrentOrder = true;
+        }
+        if (typeof updateTrackingStatus === 'function') updateTrackingStatus(o.status, o.outAt);
+        if (o.status === 'cancelled' && _pendingOrderForReview && _pendingOrderForReview.id === currentOrderNum) {
+          if (typeof closeOrderReview === 'function') closeOrderReview();
+        }
+      }
+
+      _cashierRerender();
+    }
+  });
+
+  /* ─── child_removed: طلب خرج من آخر 100 ─── */
+  ref.on('child_removed', function(childSnap) {
+    var o = childSnap.val();
+    if (!o || !o.id) return;
+    ordersData = ordersData.filter(function(x) { return x.id !== o.id; });
+    saveData('zz_orders', ordersData);
+    if (_cashierInitDone) _cashierRerender();
+  });
+
+  /* ─── once('value') = علامة نهاية التحميل الأولاني ─── */
+  /* Firebase بيضمن إن once('value') يتنفذ بعد كل child_added الأولاني */
+  ref.once('value', function() {
+    ordersData.sort(function(a,b) { return (b.timestamp||0) - (a.timestamp||0); });
+    saveData('zz_orders', ordersData);
+
+    /* تسجيل الطلبات الحالية كـ"متشافة" — بدون إشعارات */
+    window._ordersBaselineSet = true;
+    localStorage.setItem('zz_orders_prev_ids', JSON.stringify(ordersData.map(function(x){ return x.id; })));
+    var _seenCancel = new Set(JSON.parse(localStorage.getItem('zz_cancel_notified_ids') || '[]'));
+    ordersData.forEach(function(o) { if (o.status === 'cancelled' && o.cancelledByClient) _seenCancel.add(o.id); });
+    localStorage.setItem('zz_cancel_notified_ids', JSON.stringify([..._seenCancel]));
+
+    _cashierInitDone = true;
+
+    /* البحث عن طلب نشط للعميل الحالي (جهاز تاني) */
+    if (!currentOrderNum && currentUser && currentUser.phone) {
+      var activeStatuses = ['new', 'prep', 'ready', 'out', 'payment_pending'];
+      var myPhone = (currentUser.phone||'').replace(/\D/g,'');
+      var myActiveOrder = ordersData.find(function(o) {
+        var op = (o.phone||'').replace(/\D/g,'');
+        var ow = (o.whatsapp||'').replace(/\D/g,'');
+        return (op === myPhone || ow === myPhone) && activeStatuses.indexOf(o.status) >= 0;
+      });
+      if (myActiveOrder) {
+        currentOrderNum = myActiveOrder.id;
+        saveData('zz_current_order_num', myActiveOrder.id);
+        var tnEl = document.getElementById('trackOrderNum');
+        if (tnEl) tnEl.textContent = 'طلب رقم #' + myActiveOrder.id;
+        if (document.getElementById('tracking') && document.getElementById('tracking').classList.contains('active')) {
+          if (typeof updateTrackingStatus === 'function') updateTrackingStatus(myActiveOrder.status, myActiveOrder.outAt);
+        }
+      }
+    }
+
+    /* تحديث تتبع الطلب الحالي */
+    if (currentOrderNum) {
+      var myO = ordersData.find(function(o) { return o.id === currentOrderNum; });
+      if (myO) {
+        if (myO.cashierViewedAt || myO.status === 'prep' || myO.status === 'ready' || myO.status === 'out' || myO.status === 'delivered') {
+          _cashierViewedCurrentOrder = true;
+        }
+        if (typeof updateTrackingStatus === 'function') updateTrackingStatus(myO.status, myO.outAt);
+      }
+    }
+
+    /* تحديث الواجهة */
+    _cashierRerender();
+  });
+}
+
+function _cashierRerender() {
+  if (document.getElementById('adminPanel') && document.getElementById('adminPanel').classList.contains('active')) {
+    var activeTab = document.querySelector('.admin-tabs button.active');
+    var tabText = activeTab ? activeTab.textContent : '';
+    if (tabText.indexOf('الطلبات') >= 0) renderAdminOrders();
+    if (tabText.indexOf('الكاشير') >= 0) renderCashierSheet();
+  }
+  if (document.getElementById('pickupPanel') && document.getElementById('pickupPanel').classList.contains('active')) {
+    renderPickupOrders();
+  }
+  if (typeof updateOffersBadge === 'function') updateOffersBadge();
 }
 
 </script>
