@@ -1999,6 +1999,8 @@ input,select,textarea{font-family:inherit;}
         <button onclick="renderAdminOrders()" style="padding:8px 14px;background:var(--olive);color:#fff;border-radius:10px;font-size:13px;font-weight:700">↻</button>
         <button onclick="clearOldOrders()" style="padding:8px 12px;background:var(--cream);color:var(--text-muted);border-radius:10px;font-size:12px;font-weight:700" title="حذف الطلبات القديمة">🗑️</button>
         <button onclick="cleanCorruptedOrders()" style="padding:8px 12px;background:#fff4e6;color:#b45309;border-radius:10px;font-size:12px;font-weight:700" title="حذف الطلبات التالفة (الفاضية بدون بيانات)">🧹</button>
+        <button data-admin-only onclick="openArchiveDialog()" style="padding:8px 12px;background:#e0f2fe;color:#0284c7;border-radius:10px;font-size:12px;font-weight:700" title="أرشفة الطلبات القديمة لتقليل استهلاك الكاشير">📦 أرشفة</button>
+        <button data-admin-only onclick="restoreArchive()" style="padding:8px 12px;background:#f0fdf4;color:#16a34a;border-radius:10px;font-size:12px;font-weight:700" title="استرجاع الطلبات المأرشفة">📥 استرجاع</button>
       </div>
       <div class="orders-wrap">
         <div id="adminOrdersBody"></div>
@@ -3282,6 +3284,8 @@ let SETTINGS = loadData('zz_settings', {
 });
 let usedOffers   = loadData('zz_used_offers', {});
 let ordersData   = loadData('zz_orders', []);
+let archivedOrdersData = []; /* طلبات أرشيفية — الأدمن بيحمّلها مرة واحدة */
+function _getAllOrders() { return ordersData.concat(archivedOrdersData); }
 let orderHistory = loadData('zz_order_history', []);
 let bookingsData = loadData('zz_bookings', []);
 let TABLE_AVAIL = loadData('zz_table_avail', {}); // {رقم الترابيزة: false} = الكاشير علّمها غير متاحة الآن
@@ -3314,7 +3318,7 @@ function autoCheckVIPLimits() {
   const periodStart = new Date(now - periodDays * 24 * 3600 * 1000);
 
   // فلتر الطلبات في المدة المحددة فقط
-  const recentOrders = ordersData.filter(o => {
+  const recentOrders = _getAllOrders().filter(o => {
     if (!o.timestamp && !o.createdAt) return false;
     const d = new Date(o.timestamp || o.createdAt);
     return d >= periodStart && o.status !== 'cancelled';
@@ -5154,6 +5158,16 @@ function _isOfferBlocked(offerId) {
   try { if (localStorage.getItem('zz_offer_voted_' + offerId)) return true; } catch(e) {}
   /* الطبقة 4 — localStorage بـ phone+offerId */
   try { if (_cp && localStorage.getItem('zz_ou_' + _cp + '_' + offerId)) return true; } catch(e) {}
+  /* الطبقة 5 — فحص الطلبات الحقيقية (مش ممكن يتلاعب فيها) */
+  /* بتبص: هل العميل ده عنده طلب مش ملغي واستخدم فيه العرض ده؟ */
+  if (_cp) {
+    var _allOrd = typeof _getAllOrders === 'function' ? _getAllOrders() : ordersData;
+    var _hasUsed = _allOrd.some(function(o) {
+      var oPhone = (o.phone || '').replace(/\D/g,'');
+      return oPhone === _cp && o.status !== 'cancelled' && o._offerIdsForSync && o._offerIdsForSync.indexOf(offerId) >= 0;
+    });
+    if (_hasUsed) return true;
+  }
   return false;
 }
 
@@ -5163,7 +5177,7 @@ function calcAutoDiscount() {
   OFFERS.filter(o => isOfferValid(o) && o.type !== 'coupon').forEach(o => {
     if (o.applyTo === 'delivery' && deliveryType !== 'delivery') return;
     if (o.applyTo === 'min' && total < (o.minAmount || 0)) return;
-    if (o.oneTime && currentUser && _isOfferBlocked(o.id)) return;
+    if (o.oneTime) { var _ph = (currentUser?.phone||'').replace(/\D/g,''); if (!_ph || _ph === '' || _isOfferBlocked(o.id)) return; }
     /* فحص منتج محدد */
     if (o.applyTo === 'specific_product') {
       const spId = (o.specificProduct || '').trim();
@@ -5390,7 +5404,7 @@ function applyCoupon() {
   const code = document.getElementById('couponInput').value.trim().toUpperCase();
   const offer = OFFERS.find(o => isOfferValid(o) && o.type === 'coupon' && o.coupon && o.coupon.toUpperCase() === code);
   if (!offer) { showNotif('❌ كود غير صحيح أو منتهى الصلاحية'); return; }
-  if (offer.oneTime && currentUser && _isOfferBlocked(offer.id)) { showNotif('❌ تم استخدام هذا الكوبون من قبل'); return; }
+  if (offer.oneTime) { var _cph = (currentUser?.phone||'').replace(/\D/g,''); if (!_cph || _cph === '') { showNotif('❌ سجّل بياناتك الأول عشان تستخدم الكوبون'); return; } if (_isOfferBlocked(offer.id)) { showNotif('❌ تم استخدام هذا الكوبون من قبل'); return; } }
   const total = cartSubtotal();
   if (offer.applyTo === 'min' && total < (offer.minAmount || 0)) { showNotif(`❌ الحد الأدنى للطلب ${offer.minAmount} ج.م`); return; }
   /* فحص منتج محدد للكوبون */
@@ -5583,10 +5597,18 @@ ${autoDisc > 0 ? `🏷️ خصم العروض/VIP: - ${autoDisc} ج.م\\n` : ''}
   const _offerKeysToBurn = [];
   const _offerIdsForSync = []; // 🆕 لمزامنة Firebase + قفل الجهاز (بدون أي تعديل على المنطق الأصلي فوق)
   OFFERS.filter(o => o.oneTime && isOfferValid(o)).forEach(o => {
-    if (currentUser?.phone) _offerKeysToBurn.push(currentUser.phone + '_' + o.id);
+    if (currentUser?.phone) {
+      _offerKeysToBurn.push(currentUser.phone + '_' + o.id);
+      var _cpBurn = currentUser.phone.replace(/\D/g,'');
+      if (_cpBurn && _cpBurn !== currentUser.phone) _offerKeysToBurn.push(_cpBurn + '_' + o.id);
+    }
     _offerIdsForSync.push(o.id);
   });
-  if (appliedCouponId && currentUser?.phone) _offerKeysToBurn.push(currentUser.phone + '_' + appliedCouponId);
+  if (appliedCouponId && currentUser?.phone) {
+    _offerKeysToBurn.push(currentUser.phone + '_' + appliedCouponId);
+    var _cpCoupon = currentUser.phone.replace(/\D/g,'');
+    if (_cpCoupon && _cpCoupon !== currentUser.phone) _offerKeysToBurn.push(_cpCoupon + '_' + appliedCouponId);
+  }
   if (appliedCouponId) _offerIdsForSync.push(appliedCouponId);
   const now = new Date();
   const newOrder = {
@@ -6047,6 +6069,8 @@ function _completeStaffLogin(role) {
   if (db && window._ordersHandler && (role === 'admin' || role === 'cashier') && !window._ordersHandlerOn) {
     window._ordersHandlerOn = true;
     db.ref('orders').on('value', window._ordersHandler);
+    /* الأدمن بس: تحميل الأرشيف مرة واحدة للتقارير والـ VIP */
+    if (role === 'admin') _loadOrdersArchive();
   }
   document.getElementById('adminRoleLabel').textContent = role === 'admin' ? '🔑 مدير النظام' : '💳 كاشير';
   requestNotifPermission();
@@ -6220,6 +6244,7 @@ function verifyAdminOtp() {
   if (db && window._ordersHandler && (role === 'admin' || role === 'cashier') && !window._ordersHandlerOn) {
     window._ordersHandlerOn = true;
     db.ref('orders').on('value', window._ordersHandler);
+    if (role === 'admin') _loadOrdersArchive();
   }
   document.getElementById('adminRoleLabel').textContent = role === 'admin' ? '🔑 مدير النظام' : '💳 كاشير';
   requestNotifPermission();
@@ -16882,7 +16907,7 @@ function _mgmtFilterOrders() {
   const period = document.getElementById('mgmtPeriod')?.value || 'week';
   const statusF = document.getElementById('mgmtStatus')?.value || 'delivered';
   const now = Date.now(), day = 86400000;
-  let orders = ordersData.filter(o => {
+  let orders = _getAllOrders().filter(o => {
     if (period === 'today') { const t = new Date(); const s = new Date(t.getFullYear(),t.getMonth(),t.getDate()).getTime(); return (o.timestamp||0) >= s; }
     if (period === 'yesterday') { const t = new Date(); const s = new Date(t.getFullYear(),t.getMonth(),t.getDate()-1).getTime(); const e = new Date(t.getFullYear(),t.getMonth(),t.getDate()).getTime(); return (o.timestamp||0) >= s && (o.timestamp||0) < e; }
     if (period === 'week') return (now - (o.timestamp||0)) < 7*day;
@@ -16908,7 +16933,7 @@ function _mgmtPrevPeriodOrders(orders) {
   else if (period === 'month') range = 30*day;
   else return [];
   const statusF = document.getElementById('mgmtStatus')?.value || 'delivered';
-  let prev = ordersData.filter(o => {
+  let prev = _getAllOrders().filter(o => {
     const ts = o.timestamp || 0;
     return ts >= (now - 2*range) && ts < (now - range);
   });
@@ -17224,6 +17249,151 @@ function _filterMgmtTable() {
 }
 
 // ===== PRINT =====
+// ============================================================
+// ORDERS ARCHIVE — أرشفة الطلبات القديمة (للأدمن فقط)
+// بينقل الطلبات المكتملة/الملغية القديمة من orders لـ orders_archive
+// الكاشير يحمّل أقل — الأدمن يشوف كل حاجة عبر _getAllOrders()
+// ============================================================
+function restoreArchive() {
+  if (adminRoleType !== 'admin') { showNotif('⚠️ الاسترجاع متاح للأدمن فقط'); return; }
+  if (!db) { showNotif('⚠️ Firebase غير متصل'); return; }
+
+  showNotif('📥 جاري فحص الأرشيف...');
+  db.ref('orders_archive').once('value', function(snap) {
+    if (!snap.exists()) { showNotif('✅ الأرشيف فارغ — مفيش طلبات للاسترجاع'); return; }
+
+    var archived = [];
+    snap.forEach(function(child) { var v = child.val(); if (v && v.id) archived.push(v); });
+
+    if (!archived.length) { showNotif('✅ الأرشيف فارغ'); return; }
+
+    if (!confirm('📥 استرجاع الأرشيف\n\nعدد الطلبات في الأرشيف: ' + archived.length + '\n\nهيتم نقلهم من orders_archive لـ orders.\nبعد الاسترجاع تقدر ترجع لأي نسخة قديمة بأمان.\n\nمتأكد؟')) return;
+
+    showNotif('📥 جاري الاسترجاع... (' + archived.length + ' طلب)');
+
+    var batchSize = 200;
+    var batches = [];
+    for (var i = 0; i < archived.length; i += batchSize) {
+      batches.push(archived.slice(i, i + batchSize));
+    }
+
+    var completed = 0;
+    var failed = 0;
+    function processBatch(idx) {
+      if (idx >= batches.length) {
+        archivedOrdersData = [];
+        if (failed === 0) {
+          showNotif('✅ تم استرجاع ' + completed + ' طلب بنجاح! كل الطلبات رجعت لـ orders.');
+        } else {
+          showNotif('⚠️ تم استرجاع ' + completed + ' طلب — ' + failed + ' فشلوا. حاول تاني.');
+        }
+        return;
+      }
+      var batch = batches[idx];
+      var updates = {};
+      batch.forEach(function(o) {
+        updates['orders/' + o.id] = o;
+        updates['orders_archive/' + o.id] = null;
+      });
+      db.ref().update(updates).then(function() {
+        completed += batch.length;
+        showNotif('📥 تم استرجاع ' + completed + '/' + archived.length + '...');
+        processBatch(idx + 1);
+      }).catch(function(err) {
+        console.error('Restore batch failed:', err);
+        failed += batch.length;
+        showNotif('⚠️ دفعة فشلت — بنكمّل الباقي...');
+        processBatch(idx + 1);
+      });
+    }
+    processBatch(0);
+  });
+}
+
+function _loadOrdersArchive() {
+  if (!db || adminRoleType !== 'admin') return;
+  db.ref('orders_archive').once('value', function(snap) {
+    archivedOrdersData = [];
+    snap.forEach(function(child) { var v = child.val(); if (v && v.id) archivedOrdersData.push(v); });
+    archivedOrdersData.sort(function(a,b) { return (b.timestamp||0) - (a.timestamp||0); });
+  });
+}
+
+function openArchiveDialog() {
+  if (adminRoleType !== 'admin') { showNotif('⚠️ الأرشفة متاحة للأدمن فقط'); return; }
+  var totalOrders = ordersData.length;
+  var day = 86400000;
+  var now = Date.now();
+  var archivable = ordersData.filter(function(o) {
+    if (o.status !== 'delivered' && o.status !== 'cancelled') return false;
+    var ts = o.timestamp || (o.createdAt ? new Date(o.createdAt).getTime() : 0);
+    if (!ts) return false;
+    return (now - ts) > 30*day;
+  });
+  if (archivable.length === 0) {
+    showNotif('✅ لا توجد طلبات قديمة للأرشفة (أقدم من 30 يوم)');
+    return;
+  }
+  var msg = '📦 أرشفة الطلبات القديمة\n\n' +
+    'إجمالي الطلبات الحالية: ' + totalOrders + '\n' +
+    'طلبات قابلة للأرشفة (مكتملة/ملغية أقدم من 30 يوم): ' + archivable.length + '\n' +
+    'طلبات ستبقى في النظام: ' + (totalOrders - archivable.length) + '\n\n' +
+    '⚠️ الأرشفة بتنقل الطلبات لمكان تاني في Firebase.\n' +
+    '✅ التقارير والـ VIP هيفضلوا يشوفوا كل حاجة.\n' +
+    '✅ الطلبات النشطة مش هتتأثر.\n' +
+    '✅ الكاشير هيحمّل أقل = توفير bandwidth.\n\n' +
+    'متأكد تأرشف ' + archivable.length + ' طلب؟';
+  if (!confirm(msg)) return;
+  _executeArchive(archivable);
+}
+
+function _executeArchive(archivable) {
+  if (!db || !archivable.length) return;
+  showNotif('📦 جاري الأرشفة... (' + archivable.length + ' طلب)');
+
+  /* تقسيم لدفعات عشان Firebase ميرفضش — 200 طلب لكل دفعة */
+  var batchSize = 200;
+  var batches = [];
+  for (var i = 0; i < archivable.length; i += batchSize) {
+    batches.push(archivable.slice(i, i + batchSize));
+  }
+
+  var completed = 0;
+  var failed = 0;
+
+  function processBatch(batchIndex) {
+    if (batchIndex >= batches.length) {
+      /* === خلصت كل الدفعات === */
+      if (failed === 0) {
+        showNotif('✅ تم أرشفة ' + completed + ' طلب بنجاح! الكاشير هيحمّل أقل دلوقتي.');
+      } else {
+        showNotif('⚠️ تم أرشفة ' + completed + ' طلب — ' + failed + ' فشلوا. حاول تاني.');
+      }
+      _loadOrdersArchive(); /* تحديث الأرشيف في الذاكرة */
+      return;
+    }
+
+    var batch = batches[batchIndex];
+    var updates = {};
+    batch.forEach(function(o) {
+      updates['orders_archive/' + o.id] = o; /* نسخ للأرشيف */
+      updates['orders/' + o.id] = null;       /* حذف من الأساسي */
+    });
+
+    db.ref().update(updates).then(function() {
+      completed += batch.length;
+      showNotif('📦 تم أرشفة ' + completed + '/' + archivable.length + '...');
+      processBatch(batchIndex + 1);
+    }).catch(function(err) {
+      console.error('Archive batch ' + batchIndex + ' failed:', err);
+      failed += batch.length;
+      processBatch(batchIndex + 1); /* نكمّل الباقي */
+    });
+  }
+
+  processBatch(0);
+}
+
 function _buildMgmtRatingsSection(orders) {
   var ratings = (typeof APP_RATINGS !== 'undefined' ? APP_RATINGS : []);
   /* فلترة التقييمات حسب نفس الفترة */
