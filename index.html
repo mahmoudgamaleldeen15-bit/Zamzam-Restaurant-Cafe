@@ -10829,14 +10829,13 @@ function setupFirebaseListeners() {
       if (document.getElementById('adminPanel')?.classList.contains('active')) {
         const activeTab = document.querySelector('.admin-tabs button.active')?.textContent || '';
         if (activeTab.includes('الطلبات')) renderAdminOrders();
-        if (activeTab.includes('الكاشير')) renderCashierSheet();
-        if (!_isInitialOrdersLoad && fbOrders.length > oldCount && oldCount > 0) {
-          // Find new orders
-          const newOrders = fbOrders.filter(o => !ordersData.find(x => x.id === o.id) || false);
-          // Actually compare timestamps
+        if (activeTab.includes('الكاشير') || activeTab.includes('كاشير')) renderCashierSheet();
+        if (!_isInitialOrdersLoad) {
           const prevIds = new Set(JSON.parse(localStorage.getItem('zz_orders_prev_ids') || '[]'));
+          let hasNewOrder = false;
           fbOrders.forEach(o => {
             if (!prevIds.has(o.id) && (adminRoleType === 'admin' || adminRoleType === 'cashier')) {
+              hasNewOrder = true;
               // Check if VIP customer
               if (_resolveVIP(o.phone)) {
                 showVIPCashierPopup(o);
@@ -10865,7 +10864,7 @@ function setupFirebaseListeners() {
               }, 400);
             }
           });
-          playSound(); showNotif('🔔 طلب جديد وصل!');
+          if (hasNewOrder) { playSound(); showNotif('🔔 طلب جديد وصل!'); }
         }
         localStorage.setItem('zz_orders_prev_ids', JSON.stringify(fbOrders.map(o => o.id)));
         // إشعار بطلب دفع إلكتروني جديد
@@ -10890,7 +10889,7 @@ function setupFirebaseListeners() {
       }
       if (document.getElementById('pickupPanel')?.classList.contains('active')) {
         renderPickupOrders();
-        if (!_isInitialOrdersLoad && fbOrders.length > oldCount && oldCount > 0) { playSound(); showNotif('🔔 طلب جديد للتجهيز!'); }
+        if (!_isInitialOrdersLoad) { const _pickPrev = new Set(JSON.parse(localStorage.getItem('zz_orders_prev_ids') || '[]')); if (fbOrders.some(o => !_pickPrev.has(o.id))) { playSound(); showNotif('🔔 طلب جديد للتجهيز!'); } }
       }
       updateOffersBadge();
 
