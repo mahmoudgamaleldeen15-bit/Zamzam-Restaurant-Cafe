@@ -3282,6 +3282,13 @@ let SETTINGS = loadData('zz_settings', {
 });
 let usedOffers   = loadData('zz_used_offers', {});
 let ordersData   = loadData('zz_orders', []);
+/* === تنظيف تلقائي لمرة واحدة: مسح الطلبات القديمة من localStorage === */
+if (!localStorage.getItem('zz_orders_v2_migrated')) {
+  ordersData = [];
+  saveData('zz_orders', []);
+  localStorage.removeItem('zz_orders_prev_ids');
+  localStorage.setItem('zz_orders_v2_migrated', '1');
+}
 let orderHistory = loadData('zz_order_history', []);
 let bookingsData = loadData('zz_bookings', []);
 let TABLE_AVAIL = loadData('zz_table_avail', {}); // {رقم الترابيزة: false} = الكاشير علّمها غير متاحة الآن
