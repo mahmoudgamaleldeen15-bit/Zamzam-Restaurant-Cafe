@@ -3282,13 +3282,6 @@ let SETTINGS = loadData('zz_settings', {
 });
 let usedOffers   = loadData('zz_used_offers', {});
 let ordersData   = loadData('zz_orders', []);
-/* === تنظيف تلقائي لمرة واحدة: مسح الطلبات القديمة من localStorage === */
-if (!localStorage.getItem('zz_orders_v2_migrated')) {
-  ordersData = [];
-  saveData('zz_orders', []);
-  localStorage.removeItem('zz_orders_prev_ids');
-  localStorage.setItem('zz_orders_v2_migrated', '1');
-}
 let orderHistory = loadData('zz_order_history', []);
 let bookingsData = loadData('zz_bookings', []);
 let TABLE_AVAIL = loadData('zz_table_avail', {}); // {رقم الترابيزة: false} = الكاشير علّمها غير متاحة الآن
@@ -6053,13 +6046,7 @@ function _completeStaffLogin(role) {
   _stopMaintDhikr();
   if (db && window._ordersHandler && (role === 'admin' || role === 'cashier') && !window._ordersHandlerOn) {
     window._ordersHandlerOn = true;
-    if (role === 'admin') {
-      /* الأدمن: كل الطلبات — للتقارير والـ VIP */
-      db.ref('orders').on('value', window._ordersHandler);
-    } else {
-      /* الكاشير: آخر 100 طلب فقط — توفير 87% bandwidth */
-      db.ref('orders').limitToLast(100).on('value', window._ordersHandler);
-    }
+    db.ref('orders').on('value', window._ordersHandler);
   }
   document.getElementById('adminRoleLabel').textContent = role === 'admin' ? '🔑 مدير النظام' : '💳 كاشير';
   requestNotifPermission();
@@ -6232,13 +6219,7 @@ function verifyAdminOtp() {
   adminRoleType = role;
   if (db && window._ordersHandler && (role === 'admin' || role === 'cashier') && !window._ordersHandlerOn) {
     window._ordersHandlerOn = true;
-    if (role === 'admin') {
-      /* الأدمن: كل الطلبات — للتقارير والـ VIP */
-      db.ref('orders').on('value', window._ordersHandler);
-    } else {
-      /* الكاشير: آخر 100 طلب فقط — توفير 87% bandwidth */
-      db.ref('orders').limitToLast(100).on('value', window._ordersHandler);
-    }
+    db.ref('orders').on('value', window._ordersHandler);
   }
   document.getElementById('adminRoleLabel').textContent = role === 'admin' ? '🔑 مدير النظام' : '💳 كاشير';
   requestNotifPermission();
@@ -10936,7 +10917,7 @@ function setupFirebaseListeners() {
       }
     }
   };
-  if ((adminRoleType === 'admin' || adminRoleType === 'cashier') && !window._ordersHandlerOn) { window._ordersHandlerOn = true; if (adminRoleType === 'admin') { db.ref('orders').on('value', window._ordersHandler); } else { db.ref('orders').limitToLast(100).on('value', window._ordersHandler); } }
+  if ((adminRoleType === 'admin' || adminRoleType === 'cashier') && !window._ordersHandlerOn) { window._ordersHandlerOn = true; db.ref('orders').on('value', window._ordersHandler); }
 
   // --------- BOOKINGS ---------
   db.ref('bookings').on('value', snap => {
@@ -17595,7 +17576,7 @@ function _setupCashierOrdersListener() {
   if (!db || window._ordersHandlerOn) return;
   window._ordersHandlerOn = true;
 
-  var ref = db.ref('orders').limitToLast(100);
+  var ref = db.ref('orders').orderByChild('timestamp').limitToLast(100);
   var _cashierInitDone = false;
 
   /* ─── child_added: التحميل الأولاني + طلبات جديدة ─── */
