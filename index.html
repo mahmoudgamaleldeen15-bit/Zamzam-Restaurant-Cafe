@@ -980,6 +980,10 @@ input,select,textarea{font-family:inherit;}
 .vip-benefit-admin-row{display:flex;align-items:center;gap:10px;padding:10px 14px;background:var(--cream);border-radius:10px;margin-bottom:8px;flex-wrap:wrap;}
 .vip-benefit-admin-label{font-size:13px;font-weight:800;flex:1;min-width:140px;}
 .vip-benefit-admin-val{width:70px;padding:6px 8px;border:1.5px solid var(--border);border-radius:8px;font-size:12px;background:var(--white);outline:none;text-align:center;}
+/* ===== VIP GIFT CELEBRATION ANIMATIONS ===== */
+@keyframes vipGiftBounce{0%,100%{transform:scale(1) rotate(0)}25%{transform:scale(1.15) rotate(-5deg)}50%{transform:scale(1.25) rotate(5deg)}75%{transform:scale(1.15) rotate(-3deg)}}
+@keyframes confettiFall{0%{transform:translateY(-10px) rotate(0);opacity:1}100%{transform:translateY(200px) rotate(360deg);opacity:0}}
+
 /* ===== MANAGEMENT REPORTS TAB ===== */
 .mgmt-period-bar{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px}
 .mgmt-period-bar select,.mgmt-period-bar input{flex:1;min-width:100px;padding:9px 12px;border:1.5px solid var(--border);border-radius:10px;font-size:13px;background:var(--white);color:var(--text);font-family:inherit}
@@ -1980,6 +1984,7 @@ input,select,textarea{font-family:inherit;}
       <button id="tabStatsBtn" onclick="switchAdminTab('stats',this)">📊 الإحصائيات</button>
       <button id="tabCompBtn" onclick="switchAdminTab('competitions',this)" style="display:none">🏆 المسابقات</button>
       <button id="tabLoyaltyBtn" data-admin-only onclick="switchAdminTab('loyalty',this)">🏆 نقاط الولاء</button>
+      <button id="tabGiftsBtn" data-admin-only onclick="switchAdminTab('vip-gifts',this)">🎁 الهدايا</button>
       <button id="tabMgmtBtn" data-admin-only onclick="switchAdminTab('mgmt-reports',this)">📈 تقارير الإدارة</button>
     </div>
 
@@ -2083,6 +2088,15 @@ input,select,textarea{font-family:inherit;}
         <button onclick="_loyaltyAdminLoaded=false;_loadLoyaltyAdmin()" style="padding:9px 12px;background:#6366f1;color:#fff;border:none;border-radius:10px;font-size:12px;font-weight:800;cursor:pointer;font-family:inherit">🔄</button>
       </div>
       <div id="loyaltyAdminList" style="display:flex;flex-direction:column;gap:10px"></div>
+    </div>
+
+    <!-- VIP GIFTS TAB (Admin Only) -->
+    <div id="tab-vip-gifts" style="display:none;padding:0 16px 24px;direction:rtl">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+        <div style="font-size:14px;font-weight:900;color:var(--dark)">🎁 متابعة هدايا VIP</div>
+        <button onclick="_loadVIPGiftAdmin()" style="padding:7px 12px;background:#d97706;color:#fff;border:none;border-radius:10px;font-size:11px;font-weight:800;cursor:pointer;font-family:inherit">🔄 تحديث</button>
+      </div>
+      <div id="vipGiftAdminList" style="font-size:12px;color:var(--text-muted);text-align:center;padding:16px">جاري التحميل...</div>
     </div>
 
     <!-- MANAGEMENT REPORTS TAB (Admin Only) -->
@@ -3081,6 +3095,10 @@ input,select,textarea{font-family:inherit;}
     <div class="remember-row">
       <div class="toggle-sw on" id="offerOneTimeToggle" onclick="this.classList.toggle('on')"></div>
       <span style="font-size:14px;font-weight:600">مرة واحدة فقط لكل عميل</span>
+    </div>
+    <div class="remember-row">
+      <div class="toggle-sw" id="offerVipOnlyToggle" onclick="this.classList.toggle('on')"></div>
+      <span style="font-size:14px;font-weight:600">👑 حصري لعملاء VIP فقط</span>
     </div>
     <div class="remember-row">
       <div class="toggle-sw on" id="offerActiveToggle" onclick="this.classList.toggle('on')"></div>
@@ -4834,7 +4852,8 @@ function doSearch(q) { searchQuery = q; renderMenu(); }
 // ============================================================
 function renderActiveOfferStrip() {
   const strip = document.getElementById('offerStrip');
-  const active = OFFERS.filter(o => o.active && isOfferValid(o));
+  const _isUserVip = currentUser?.phone ? !!_resolveVIP(currentUser.phone.replace(/\D/g,'')) : false;
+  const active = OFFERS.filter(o => o.active && isOfferValid(o) && (!o.vipOnly || _isUserVip));
   if (!active.length) { strip.classList.add('hidden'); return; }
   strip.classList.remove('hidden');
   strip.innerHTML = '🎉 ' + active.map(o => {
@@ -5177,6 +5196,8 @@ function calcAutoDiscount() {
   OFFERS.filter(o => isOfferValid(o) && o.type !== 'coupon').forEach(o => {
     if (o.applyTo === 'delivery' && deliveryType !== 'delivery') return;
     if (o.applyTo === 'min' && total < (o.minAmount || 0)) return;
+    /* فحص VIP — العرض الحصري لا يظهر لغير VIP */
+    if (o.vipOnly) { var _vph = (currentUser?.phone||'').replace(/\D/g,''); if (!_vph || !_resolveVIP(_vph)) return; }
     if (o.oneTime) { var _ph = (currentUser?.phone||'').replace(/\D/g,''); if (!_ph || _ph === '' || _isOfferBlocked(o.id)) return; }
     /* فحص منتج محدد */
     if (o.applyTo === 'specific_product') {
@@ -5288,7 +5309,8 @@ function renderCartSheet() {
       </div>
     </div>`).join('');
   updateCartUI();
-  const active = OFFERS.filter(o => isOfferValid(o) && o.type !== 'coupon');
+  const _isUV2 = currentUser?.phone ? !!_resolveVIP(currentUser.phone.replace(/\D/g,'')) : false;
+  const active = OFFERS.filter(o => isOfferValid(o) && o.type !== 'coupon' && (!o.vipOnly || _isUV2));
   const noteEl = document.getElementById('activeOfferNote');
   if (noteEl && active.length) { noteEl.style.display = 'block'; noteEl.textContent = '🎉 عروض مفعّلة: ' + active.map(o => o.name).join(', '); }
   else if (noteEl) noteEl.style.display = 'none';
@@ -5404,6 +5426,7 @@ function applyCoupon() {
   const code = document.getElementById('couponInput').value.trim().toUpperCase();
   const offer = OFFERS.find(o => isOfferValid(o) && o.type === 'coupon' && o.coupon && o.coupon.toUpperCase() === code);
   if (!offer) { showNotif('❌ كود غير صحيح أو منتهى الصلاحية'); return; }
+  if (offer.vipOnly) { var _vcp = (currentUser?.phone||'').replace(/\D/g,''); if (!_vcp || !_resolveVIP(_vcp)) { showNotif('👑 هذا الكوبون حصري لعملاء VIP فقط'); return; } }
   if (offer.oneTime) { var _cph = (currentUser?.phone||'').replace(/\D/g,''); if (!_cph || _cph === '') { showNotif('❌ سجّل بياناتك الأول عشان تستخدم الكوبون'); return; } if (_isOfferBlocked(offer.id)) { showNotif('❌ تم استخدام هذا الكوبون من قبل'); return; } }
   const total = cartSubtotal();
   if (offer.applyTo === 'min' && total < (offer.minAmount || 0)) { showNotif(`❌ الحد الأدنى للطلب ${offer.minAmount} ج.م`); return; }
@@ -6069,9 +6092,10 @@ function _completeStaffLogin(role) {
   if (db && window._ordersHandler && (role === 'admin' || role === 'cashier') && !window._ordersHandlerOn) {
     window._ordersHandlerOn = true;
     db.ref('orders').on('value', window._ordersHandler);
-    /* الأدمن بس: تحميل الأرشيف مرة واحدة للتقارير والـ VIP */
     if (role === 'admin') _loadOrdersArchive();
+    if (typeof _startGiftDueListener === 'function') _startGiftDueListener();
   }
+  if (typeof _updateGiftsTabVisibility === 'function') _updateGiftsTabVisibility();
   document.getElementById('adminRoleLabel').textContent = role === 'admin' ? '🔑 مدير النظام' : '💳 كاشير';
   requestNotifPermission();
   initAutoBackup();
@@ -6245,7 +6269,9 @@ function verifyAdminOtp() {
     window._ordersHandlerOn = true;
     db.ref('orders').on('value', window._ordersHandler);
     if (role === 'admin') _loadOrdersArchive();
+    if (typeof _startGiftDueListener === 'function') _startGiftDueListener();
   }
+  if (typeof _updateGiftsTabVisibility === 'function') _updateGiftsTabVisibility();
   document.getElementById('adminRoleLabel').textContent = role === 'admin' ? '🔑 مدير النظام' : '💳 كاشير';
   requestNotifPermission();
   initAutoBackup();
@@ -6353,11 +6379,12 @@ function applyRoleRestrictions() {
 function switchAdminTab(tab, el) {
   document.querySelectorAll('.admin-tabs button').forEach(b => b.classList.remove('active'));
   el.classList.add('active');
-  ['orders','cashier','bookings','menu','addons','offers','settings','notify','ads','agents','block','stats','loyalty','competitions','mgmt-reports'].forEach(t => {
+  ['orders','cashier','bookings','menu','addons','offers','settings','notify','ads','agents','block','stats','loyalty','competitions','vip-gifts','mgmt-reports'].forEach(t => {
     const tabEl = document.getElementById('tab-' + t);
     if (tabEl) tabEl.style.display = t === tab ? 'block' : 'none';
   });
   if (tab === 'loyalty') { _loadLoyaltyAdmin(); }
+  if (tab === 'vip-gifts') { _loadVIPGiftAdmin(); }
   if (tab === 'competitions') { if(typeof _compLoadAdmin==='function') _compLoadAdmin(); if(typeof _compStartLiveFeed==='function') _compStartLiveFeed(); }
   if (tab === 'orders') renderAdminOrders();
   if (tab === 'cashier') {
@@ -8023,6 +8050,7 @@ function renderOffersAdmin() {
       ${o.value ? `<div style="font-size:14px;font-weight:700;color:var(--olive-dark);margin-bottom:6px">الخصم: ${o.value}${o.type === 'percent' ? '%' : ' ج.م'}</div>` : ''}
       ${o.applyTo === 'min' ? `<div style="font-size:12px;color:var(--text-muted);margin-bottom:6px">📋 عند طلب ${o.minAmount} ج.م فأكثر</div>` : ''}
       ${o.oneTime ? '<div style="font-size:11px;color:var(--text-muted);margin-bottom:8px">🔒 مرة واحدة لكل عميل</div>' : ''}
+      ${o.vipOnly ? '<div style="font-size:11px;color:#92400e;font-weight:800;margin-bottom:8px">👑 حصري لعملاء VIP فقط</div>' : ''}
       <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:8px">
         <div class="toggle-sw ${o.active ? 'on' : ''}" onclick="toggleOffer('${o.id}',this)"></div>
         <span style="font-size:12px;font-weight:700;color:var(--text-muted)">${o.active && valid ? 'مفعّل' : o.active && !valid ? 'مجدوَل' : 'معطّل'}</span>
@@ -8079,6 +8107,7 @@ function openAddOfferModal() {
   document.getElementById('offerTypeInput').value = 'coupon';
   document.getElementById('offerActiveToggle').classList.add('on');
   document.getElementById('offerOneTimeToggle').classList.add('on');
+  document.getElementById('offerVipOnlyToggle').classList.remove('on');
   document.getElementById('offerApplyTo').value = 'all';
   updateOfferFields(); toggleMinRow(); openModal('addOfferModal');
 }
@@ -8093,6 +8122,7 @@ function openEditOffer(id) {
   document.getElementById('offerValueInput').value = o.value || '';
   if (o.active) document.getElementById('offerActiveToggle').classList.add('on'); else document.getElementById('offerActiveToggle').classList.remove('on');
   if (o.oneTime) document.getElementById('offerOneTimeToggle').classList.add('on'); else document.getElementById('offerOneTimeToggle').classList.remove('on');
+  if (o.vipOnly) document.getElementById('offerVipOnlyToggle').classList.add('on'); else document.getElementById('offerVipOnlyToggle').classList.remove('on');
   document.getElementById('offerApplyTo').value = o.applyTo || 'all';
   updateOfferFields(); toggleMinRow();
   if (o.applyTo === 'specific_product' && o.specificProduct) { const _sel = document.getElementById('offerProductSelect'); if (_sel) setTimeout(function(){ _sel.value = o.specificProduct; }, 150); }
@@ -8114,6 +8144,7 @@ function saveOffer() {
     value: Number(document.getElementById('offerValueInput').value) || 0,
     active: document.getElementById('offerActiveToggle').classList.contains('on'),
     oneTime: document.getElementById('offerOneTimeToggle').classList.contains('on'),
+    vipOnly: document.getElementById('offerVipOnlyToggle').classList.contains('on'),
     applyTo: document.getElementById('offerApplyTo').value,
     minAmount: Number(document.getElementById('offerMinInput').value) || 0,
     specificProduct: document.getElementById('offerProductSelect')?.value || '',
@@ -9944,7 +9975,8 @@ function checkDeliveryConfirmBtn(status) {
 // OFFERS SHEET
 // ============================================================
 function openOffersSheet() {
-  const activeOffers = OFFERS.filter(o => o.active && isOfferValid(o));
+  const _isUV3 = currentUser?.phone ? !!_resolveVIP(currentUser.phone.replace(/\D/g,'')) : false;
+  const activeOffers = OFFERS.filter(o => o.active && isOfferValid(o) && (!o.vipOnly || _isUV3));
   const typeLabels = { coupon: '🎟️ كوبون', percent: '📊 نسبة %', partial: '💰 مبلغ ثابت', free_delivery: '🛵 توصيل مجانى', duration: '⏰ لمدة محددة', custom: '✨ مخصص' };
   let html = '';
   if (!activeOffers.length) {
@@ -9978,7 +10010,8 @@ function openOffersSheet() {
 // Update offers badge
 function updateOffersBadge() {
   const badge = document.getElementById('offersBtnBadge');
-  const activeOffers = OFFERS.filter(o => o.active && isOfferValid(o));
+  const _isUV4 = currentUser?.phone ? !!_resolveVIP(currentUser.phone.replace(/\D/g,'')) : false;
+  const activeOffers = OFFERS.filter(o => o.active && isOfferValid(o) && (!o.vipOnly || _isUV4));
   if (badge) {
     badge.style.display = activeOffers.length ? 'flex' : 'none';
     badge.textContent = activeOffers.length;
@@ -10194,6 +10227,221 @@ function _markVIPGiftDelivered(phone, alertId) {
   }
   var el = document.getElementById(alertId); if (el) el.remove();
   showNotif('✅ تم تسجيل تسليم الهدية');
+}
+
+/* === العميل بيطلب هديته === */
+function _claimVIPGift(phone, giftName) {
+  var btn = document.getElementById('_vipClaimGiftBtn');
+  if (btn) { btn.disabled = true; btn.textContent = '⏳ جاري الإرسال...'; }
+
+  if (typeof db === 'undefined' || !db) {
+    if (btn) { btn.textContent = '⚠️ مفيش اتصال — حاول تاني'; btn.disabled = false; }
+    return;
+  }
+
+  db.ref('vip_gift_due/' + phone).update({
+    requested: true,
+    requestedAt: new Date().toISOString(),
+    customerName: currentUser?.name || '',
+    giftName: giftName
+  }).then(function() {
+    if (btn) {
+      btn.outerHTML = '<div style="background:rgba(255,255,255,.2);border:2px solid rgba(255,255,255,.4);border-radius:12px;padding:10px 16px;font-size:13px;font-weight:800;color:#fff">' +
+        '✅ تم إرسال طلب هديتك للكاشير<br><span style="font-size:11px;opacity:.85;font-weight:600">أخبر الكاشير باسمك عند الاستلام</span></div>';
+    }
+    showNotif('🎁 تم إرسال طلب هديتك بنجاح!');
+  }).catch(function() {
+    if (btn) { btn.textContent = '⚠️ حصل خطأ — حاول تاني'; btn.disabled = false; }
+  });
+}
+
+/* === الكاشير: مراقبة طلبات الهدايا === */
+/* === إظهار/إخفاء تاب الهدايا حسب التفعيل === */
+function _updateGiftsTabVisibility() {
+  var btn = document.getElementById('tabGiftsBtn');
+  if (!btn) return;
+  var giftEnabled = (typeof VIP_BENEFITS !== 'undefined' ? VIP_BENEFITS : []).some(function(b){ return b.id === 'gift' && b.enabled; });
+  btn.style.display = (giftEnabled && adminRoleType === 'admin') ? '' : 'none';
+}
+
+/* === لوحة متابعة هدايا VIP — للأدمن فقط === */
+function _loadVIPGiftAdmin() {
+  var el = document.getElementById('vipGiftAdminList');
+  if (!el || adminRoleType !== 'admin') return;
+  if (!db) { el.innerHTML = '<div style="text-align:center;padding:16px;color:var(--text-muted)">⚠️ Firebase غير متصل</div>'; return; }
+
+  var giftBenefit = (typeof VIP_BENEFITS !== 'undefined' ? VIP_BENEFITS : []).find(function(b){ return b.id === 'gift' && b.enabled; });
+  if (!giftBenefit) { el.innerHTML = '<div style="text-align:center;padding:16px;color:var(--text-muted)">⚠️ ميزة الهدايا مش مفعّلة — فعّلها من مزايا VIP</div>'; return; }
+
+  var orderCount = parseInt(giftBenefit.value) || 10;
+  var periodDays = parseInt(giftBenefit.period) || 30;
+  var minOrder = parseFloat(giftBenefit.minOrder) || 0;
+  var giftName = giftBenefit.note || 'هدية مجانية';
+
+  el.innerHTML = '<div style="text-align:center;padding:16px;color:var(--text-muted)">⏳ جاري التحميل...</div>';
+
+  /* تحميل العدادات + الاستحقاقات */
+  Promise.all([
+    db.ref('vip_gift_counter').once('value'),
+    db.ref('vip_gift_due').once('value')
+  ]).then(function(results) {
+    var countersSnap = results[0];
+    var dueSnap = results[1];
+
+    var customers = [];
+    var now = Date.now();
+    var periodMs = periodDays * 24 * 3600 * 1000;
+
+    /* العملاء اللي عندهم تقدم */
+    countersSnap.forEach(function(child) {
+      var phone = child.key;
+      var data = child.val() || {};
+      var orders = (data.orders || []).filter(function(o){ return (now - o.ts) <= periodMs; });
+      var vip = null;
+      for (var k in VIP_CUSTOMERS) { if (k.replace(/\D/g,'') === phone.replace(/\D/g,'')) { vip = VIP_CUSTOMERS[k]; vip._key = k; break; } }
+      if (!vip) return;
+      customers.push({
+        phone: phone, name: vip.name || phone, done: orders.length,
+        target: orderCount, left: Math.max(0, orderCount - orders.length),
+        pct: Math.min(100, Math.round(orders.length / orderCount * 100)),
+        delivered: 0, status: 'progress'
+      });
+    });
+
+    /* العملاء اللي استحقوا */
+    dueSnap.forEach(function(child) {
+      var phone = child.key;
+      var data = child.val() || {};
+      var existing = customers.find(function(c){ return c.phone === phone; });
+      if (existing) {
+        existing.delivered = data.delivered ? 1 : 0;
+        existing.requested = !!data.requested;
+        existing.status = data.delivered ? 'delivered' : (data.requested ? 'requested' : 'earned');
+        existing.earnedAt = data.earnedAt || '';
+        existing.deliveredAt = data.deliveredAt || '';
+        existing.done = orderCount;
+        existing.left = 0;
+        existing.pct = 100;
+      } else {
+        var vip2 = null;
+        for (var k in VIP_CUSTOMERS) { if (k.replace(/\D/g,'') === phone.replace(/\D/g,'')) { vip2 = VIP_CUSTOMERS[k]; break; } }
+        customers.push({
+          phone: phone, name: data.customerName || (vip2 ? vip2.name : phone),
+          done: orderCount, target: orderCount, left: 0, pct: 100,
+          delivered: data.delivered ? 1 : 0, requested: !!data.requested,
+          status: data.delivered ? 'delivered' : (data.requested ? 'requested' : 'earned'),
+          earnedAt: data.earnedAt || '', deliveredAt: data.deliveredAt || ''
+        });
+      }
+    });
+
+    /* ترتيب: المستحقين أولاً ← قربوا ← البعيدين ← المسلّمين */
+    var statusOrder = {requested:0, earned:1, progress:2, delivered:3};
+    customers.sort(function(a,b) { return (statusOrder[a.status]||9) - (statusOrder[b.status]||9) || b.pct - a.pct; });
+
+    if (!customers.length) {
+      el.innerHTML = '<div style="text-align:center;padding:20px;color:var(--text-muted);font-weight:700">لا يوجد عملاء VIP لديهم تقدم في الهدايا حالياً</div>';
+      return;
+    }
+
+    /* ملخص */
+    var earned = customers.filter(function(c){ return c.status === 'earned' || c.status === 'requested'; }).length;
+    var delivered = customers.filter(function(c){ return c.status === 'delivered'; }).length;
+    var close = customers.filter(function(c){ return c.status === 'progress' && c.pct >= 60; }).length;
+
+    var html = '<div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:8px;margin-bottom:14px">';
+    html += '<div class="mgmt-card"><div class="mc-val">' + customers.length + '</div><div class="mc-lbl">👥 إجمالي المتابعين</div></div>';
+    html += '<div class="mgmt-card" style="border-color:#d97706"><div class="mc-val" style="color:#d97706">' + earned + '</div><div class="mc-lbl">🎁 مستحقين هدية</div></div>';
+    html += '<div class="mgmt-card" style="border-color:#16a34a"><div class="mc-val" style="color:#16a34a">' + delivered + '</div><div class="mc-lbl">✅ تم التسليم</div></div>';
+    html += '<div class="mgmt-card" style="border-color:#6366f1"><div class="mc-val" style="color:#6366f1">' + close + '</div><div class="mc-lbl">🔥 قربوا (60%+)</div></div>';
+    html += '</div>';
+
+    html += '<div style="font-size:11px;color:var(--text-muted);margin-bottom:10px">🎁 الهدية: <b>' + giftName + '</b> | التارجت: <b>' + orderCount + ' طلب</b> خلال <b>' + periodDays + ' يوم</b>' + (minOrder > 0 ? ' | حد أدنى: <b>' + minOrder + ' ج</b>' : '') + '</div>';
+
+    /* القائمة */
+    customers.forEach(function(c) {
+      var statusBadge = '';
+      var bgColor = 'var(--white)';
+      var borderColor = 'var(--border)';
+      if (c.status === 'requested') { statusBadge = '<span style="background:#d97706;color:#fff;font-size:9px;font-weight:800;padding:2px 8px;border-radius:100px">🎁 طلب هديته</span>'; bgColor = '#fffbeb'; borderColor = '#d97706'; }
+      else if (c.status === 'earned') { statusBadge = '<span style="background:#059669;color:#fff;font-size:9px;font-weight:800;padding:2px 8px;border-radius:100px">🎉 مستحق</span>'; bgColor = '#f0fdf4'; borderColor = '#059669'; }
+      else if (c.status === 'delivered') { statusBadge = '<span style="background:var(--text-muted);color:#fff;font-size:9px;font-weight:800;padding:2px 8px;border-radius:100px">✅ تم التسليم</span>'; }
+      else if (c.pct >= 60) { statusBadge = '<span style="background:#6366f1;color:#fff;font-size:9px;font-weight:800;padding:2px 8px;border-radius:100px">🔥 قريب</span>'; }
+
+      var whatsappBtn = '';
+      var cleanPhone = c.phone.replace(/\D/g,'');
+      if (c.status === 'earned' || c.status === 'requested') {
+        /* رسالة تهنئة */
+        var congratsMsg = '🎉 *مبروك يا ' + c.name + '!*\n\nحققت *' + orderCount + ' طلب* واستحققت هديتك المجانية:\n\n🎁 *' + giftName + '*\n\nتقدر تستلم هديتك مع طلبك الجاي أو بزيارة المطعم.\n\nشكراً لولائك! 👑\n\n*' + (typeof RESTAURANT !== 'undefined' ? RESTAURANT.name : 'زمزم') + '* 🍽️';
+        whatsappBtn = '<a href="https://wa.me/2' + cleanPhone + '?text=' + encodeURIComponent(congratsMsg) + '" target="_blank" style="padding:5px 10px;background:#25d366;color:#fff;border:none;border-radius:8px;font-size:10px;font-weight:800;cursor:pointer;text-decoration:none;display:inline-block">💬 تهنئة</a>';
+      } else if (c.status === 'progress' && c.pct >= 40) {
+        /* رسالة تشجيع */
+        var encourageMsg = '👋 *أهلاً يا ' + c.name + '!*\n\nباقي *' + c.left + ' طلب* بس وتحصل على هدية مجانية:\n\n🎁 *' + giftName + '*\n\nحققت *' + c.done + '/' + orderCount + '* طلب حتى الآن 💪\n\nاطلب دلوقتي واقترب من هديتك! 🔥\n\n*' + (typeof RESTAURANT !== 'undefined' ? RESTAURANT.name : 'زمزم') + '* 🍽️';
+        whatsappBtn = '<a href="https://wa.me/2' + cleanPhone + '?text=' + encodeURIComponent(encourageMsg) + '" target="_blank" style="padding:5px 10px;background:#25d366;color:#fff;border:none;border-radius:8px;font-size:10px;font-weight:800;cursor:pointer;text-decoration:none;display:inline-block">💬 تشجيع</a>';
+      }
+
+      var markDeliveredBtn = '';
+      if (c.status === 'earned' || c.status === 'requested') {
+        markDeliveredBtn = '<button onclick="_markVIPGiftDeliveredAdmin(\'' + cleanPhone + '\')" style="padding:5px 10px;background:var(--olive);color:#fff;border:none;border-radius:8px;font-size:10px;font-weight:800;cursor:pointer;font-family:inherit">✅ سلّم</button>';
+      }
+
+      html += '<div style="background:' + bgColor + ';border:1.5px solid ' + borderColor + ';border-radius:12px;padding:12px;margin-bottom:8px">';
+      html += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">';
+      html += '<div><span style="font-weight:800;font-size:13px">👑 ' + c.name + '</span> <span style="font-size:10px;color:var(--text-muted)">' + c.phone + '</span></div>';
+      html += '<div style="display:flex;gap:4px;align-items:center">' + statusBadge + '</div>';
+      html += '</div>';
+      /* Progress bar */
+      html += '<div style="background:var(--cream);border-radius:10px;height:8px;overflow:hidden;margin-bottom:6px"><div style="width:' + c.pct + '%;height:100%;background:' + (c.pct >= 100 ? '#059669' : c.pct >= 60 ? '#d97706' : 'var(--olive)') + ';border-radius:10px;transition:.5s"></div></div>';
+      html += '<div style="display:flex;justify-content:space-between;align-items:center">';
+      html += '<span style="font-size:11px;font-weight:700;color:var(--text)">' + c.done + '/' + c.target + ' طلب (' + c.pct + '%)</span>';
+      html += '<div style="display:flex;gap:4px">' + whatsappBtn + markDeliveredBtn + '</div>';
+      html += '</div>';
+      if (c.status === 'delivered' && c.deliveredAt) { html += '<div style="font-size:9px;color:var(--text-muted);margin-top:4px">تم التسليم: ' + new Date(c.deliveredAt).toLocaleDateString('ar-EG') + '</div>'; }
+      html += '</div>';
+    });
+
+    el.innerHTML = html;
+  }).catch(function(err) {
+    console.error('Gift admin load error:', err);
+    el.innerHTML = '<div style="text-align:center;padding:16px;color:var(--red)">⚠️ حصل خطأ في التحميل — حاول تاني</div>';
+  });
+}
+
+function _markVIPGiftDeliveredAdmin(phone) {
+  if (!confirm('✅ تأكيد تسليم الهدية لهذا العميل؟')) return;
+  if (db) {
+    db.ref('vip_gift_due/' + phone).update({ delivered: true, deliveredAt: new Date().toISOString() }).catch(function(){});
+  }
+  showNotif('✅ تم تسجيل تسليم الهدية');
+  setTimeout(function(){ _loadVIPGiftAdmin(); }, 500);
+}
+
+function _startGiftDueListener() {
+  if (typeof db === 'undefined' || !db) return;
+  if (adminRoleType !== 'admin' && adminRoleType !== 'cashier') return;
+  if (window._giftDueListenerOn) return;
+  window._giftDueListenerOn = true;
+
+  db.ref('vip_gift_due').on('child_changed', function(snap) {
+    var data = snap.val();
+    if (!data || data.delivered || !data.requested) return;
+    /* طلب هدية جديد — إشعار الكاشير */
+    var phone = snap.key;
+    if (window._lastGiftAlert === phone) return; /* منع تكرار */
+    window._lastGiftAlert = phone;
+    playSound();
+    _showVIPGiftCashierAlert(data.customerName || phone, data.giftName || 'هدية مجانية', phone);
+  });
+
+  /* فحص أولي — هل في طلبات هدايا معلّقة */
+  db.ref('vip_gift_due').once('value', function(snap) {
+    snap.forEach(function(child) {
+      var data = child.val();
+      if (data && data.requested && !data.delivered) {
+        _showVIPGiftCashierAlert(data.customerName || child.key, data.giftName || 'هدية مجانية', child.key);
+      }
+    });
+  });
 }
 function cancelOrderFromReview() {
   if (!_pendingOrderForReview) { closeOrderReview(); return; }
@@ -10942,7 +11190,7 @@ function setupFirebaseListeners() {
       }
     }
   };
-  if ((adminRoleType === 'admin' || adminRoleType === 'cashier') && !window._ordersHandlerOn) { window._ordersHandlerOn = true; db.ref('orders').on('value', window._ordersHandler); }
+  if ((adminRoleType === 'admin' || adminRoleType === 'cashier') && !window._ordersHandlerOn) { window._ordersHandlerOn = true; db.ref('orders').on('value', window._ordersHandler); if (typeof _startGiftDueListener === 'function') _startGiftDueListener(); }
 
   // --------- BOOKINGS ---------
   db.ref('bookings').on('value', snap => {
@@ -13375,6 +13623,7 @@ function saveVIPBenefits() {
   });
   saveData('zz_vip_benefits', VIP_BENEFITS);
   if (db) fbUpdate('config', { vipBenefits: VIP_BENEFITS }).catch(()=>{});
+  _updateGiftsTabVisibility();
   showNotif('✓ تم حفظ مزايا VIP');
   updateVIPWelcomeBanner();
   /* تغذية راجعة مرئية على الزرار نفسه */
@@ -13609,8 +13858,49 @@ function _renderVIPGiftProgress(loyaltyWrap, phone) {
     const oldest = validOrders.length ? Math.min(...validOrders.map(o => o.ts)) : null;
     const daysLeft = oldest ? Math.ceil((oldest + periodMs - now) / 86400000) : periodDays;
 
-    /* لو وصل → مش محتاج يعرض شيء (الكاشير اتعلم) */
-    if (left === 0) return;
+    /* لو وصل → كارت احتفال 🎉 */
+    if (left === 0) {
+      /* فحص: هل طلب الهدية قبل كده؟ */
+      db.ref('vip_gift_due/' + _normPhone).get().then(function(gSnap) {
+        var gData = gSnap.val();
+        var alreadyDelivered = gData && gData.delivered === true;
+        var alreadyRequested = gData && gData.requested === true;
+        if (alreadyDelivered) return; /* الهدية اتسلّمت — مش محتاج يعرض حاجة */
+
+        var oldGiftCard = document.getElementById('_vipGiftProgressCard');
+        if (oldGiftCard) oldGiftCard.remove();
+
+        var celebCard = document.createElement('div');
+        celebCard.id = '_vipGiftProgressCard';
+        celebCard.style.cssText = 'margin:8px 12px 0;border-radius:16px;overflow:hidden;position:relative';
+        celebCard.innerHTML =
+          '<div style="background:linear-gradient(135deg,#065f46,#059669,#10b981);padding:18px 16px;direction:rtl;text-align:center;position:relative;overflow:hidden">' +
+            '<div style="font-size:48px;animation:vipGiftBounce 1.2s ease-in-out infinite">🎁</div>' +
+            '<div style="font-size:16px;font-weight:900;color:#fff;margin:8px 0 4px">🎉 مبروك! هديتك جاهزة</div>' +
+            '<div style="font-size:13px;color:rgba(255,255,255,.9);margin-bottom:4px">حققت <b>' + orderCount + ' طلب</b> وتستحق:</div>' +
+            '<div style="font-size:18px;font-weight:900;color:#fbbf24;margin:6px 0 12px;text-shadow:0 1px 4px rgba(0,0,0,.3)">' + giftName + '</div>' +
+            (alreadyRequested ?
+              '<div style="background:rgba(255,255,255,.2);border:2px solid rgba(255,255,255,.4);border-radius:12px;padding:10px 16px;font-size:13px;font-weight:800;color:#fff">' +
+                '✅ تم إرسال طلب هديتك للكاشير<br><span style="font-size:11px;opacity:.85;font-weight:600">أخبر الكاشير باسمك عند الاستلام</span></div>'
+              :
+              '<button id="_vipClaimGiftBtn" onclick="_claimVIPGift(\'' + _normPhone + '\',\'' + giftName.replace(/'/g,"\\'") + '\')" ' +
+                'style="width:100%;padding:12px;background:#fff;color:#065f46;border:none;border-radius:12px;font-size:14px;font-weight:900;cursor:pointer;font-family:inherit;box-shadow:0 4px 12px rgba(0,0,0,.2);transition:.2s">' +
+                '🎁 احصل على هديتك الآن</button>'
+            ) +
+            '<div style="font-size:10px;color:rgba(255,255,255,.7);margin-top:8px">الهدية متاحة عند الطلب التالي أو زيارة المطعم</div>' +
+            '<!-- confetti -->' +
+            '<div style="position:absolute;top:0;left:0;right:0;bottom:0;pointer-events:none;overflow:hidden">' +
+              '<div style="position:absolute;top:-10px;left:15%;font-size:12px;animation:confettiFall 2.5s linear infinite;animation-delay:0s">🌟</div>' +
+              '<div style="position:absolute;top:-10px;left:35%;font-size:10px;animation:confettiFall 2.8s linear infinite;animation-delay:.4s">✨</div>' +
+              '<div style="position:absolute;top:-10px;left:55%;font-size:14px;animation:confettiFall 2.2s linear infinite;animation-delay:.8s">🎊</div>' +
+              '<div style="position:absolute;top:-10px;left:75%;font-size:11px;animation:confettiFall 3s linear infinite;animation-delay:1.2s">🌟</div>' +
+              '<div style="position:absolute;top:-10px;left:90%;font-size:10px;animation:confettiFall 2.6s linear infinite;animation-delay:.2s">✨</div>' +
+            '</div>' +
+          '</div>';
+        loyaltyWrap.appendChild(celebCard);
+      }).catch(function(){});
+      return;
+    }
 
     const card = document.createElement('div');
     card.id = '_vipGiftProgressCard';
