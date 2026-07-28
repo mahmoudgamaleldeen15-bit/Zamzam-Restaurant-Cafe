@@ -17096,8 +17096,56 @@ function renderLoyaltyAdmin() {
         (e.redeemed > 0 ? '<span style="color:#059669">استبدل: ' + e.redeemed + ' نقطة' + (e.lastRedeem ? ' — ' + (e.lastRedeem||'').slice(0,10) : '') + '</span>' : '<span>لم يستبدل</span>') +
       '</div>' +
       (wa ? '<a href="https://wa.me/' + wa + '?text=' + encodeURIComponent(waMsg) + '" target="_blank" style="display:block;text-align:center;padding:8px;background:#25D366;color:#fff;border-radius:10px;font-size:12px;font-weight:800;text-decoration:none">📱 واتساب — ' + (eligible?'مؤهل للكاش باك 🏆':'تشجيع على الطلب ⭐') + '</a>' : '') +
+      '<div style="display:flex;gap:6px;margin-top:8px;align-items:center">' +
+        '<input type="number" id="addPts_' + e.phone + '" placeholder="عدد النقاط" min="1" style="flex:1;padding:7px 10px;border:1.5px solid var(--border);border-radius:8px;font-size:12px;font-family:inherit;text-align:center"/>' +
+        '<button onclick="_adminAddPoints(\'' + e.phone + '\',\'' + e.name.replace(/'/g,"\\'") + '\')" style="padding:7px 14px;background:var(--olive);color:#fff;border:none;border-radius:8px;font-size:11px;font-weight:800;cursor:pointer;font-family:inherit;white-space:nowrap">🎁 أضف نقاط</button>' +
+      '</div>' +
     '</div>';
   }).join('');
+}
+
+/* === الأدمن يضيف نقاط يدوي + واتساب تهنئة === */
+function _adminAddPoints(phone, name) {
+  if (adminRoleType !== 'admin') { showNotif('⚠️ للأدمن فقط'); return; }
+  var input = document.getElementById('addPts_' + phone);
+  if (!input) return;
+  var pts = parseInt(input.value);
+  if (!pts || pts <= 0) { showNotif('⚠️ اكتب عدد نقاط صحيح'); return; }
+
+  /* إضافة النقاط */
+  var p = phone.replace(/\D/g,'');
+  var data = getLoyaltyData(p);
+  data.points = (data.points || 0) + pts;
+  data.earned = (data.earned || 0) + pts;
+  data.lastEarned = new Date().toISOString();
+  data.name = name || data.name || '';
+  saveLoyaltyData(p, data);
+
+  input.value = '';
+  showNotif('✅ تم إضافة ' + pts + ' نقطة لـ ' + name);
+
+  /* تحديث اللوحة */
+  if (_loyaltyAdminData[p]) {
+    _loyaltyAdminData[p].points = data.points;
+    _loyaltyAdminData[p].earned = data.earned;
+  }
+  renderLoyaltyAdmin();
+
+  /* فتح واتساب تهنئة */
+  var wa = normalizePhoneForWA(phone);
+  if (wa) {
+    var threshold = (typeof LOYALTY_SETTINGS !== 'undefined' ? LOYALTY_SETTINGS.redeemThreshold : 1000) || 1000;
+    var restName = (typeof RESTAURANT !== 'undefined' && RESTAURANT.name) ? RESTAURANT.name : 'زمزم';
+    var msg = '🎉 *مبروك يا ' + name + '!*\n\n' +
+      'تم إضافة *' + pts + ' نقطة هدية* 🎁 لحسابك في برنامج الولاء!\n\n' +
+      '💰 رصيدك الحالي: *' + data.points + ' نقطة*\n' +
+      (data.points >= threshold ?
+        '✅ *أنت مؤهل للكاش باك!* استبدل نقاطك بخصم مع طلبك الجاي 🛍️\n' :
+        '📊 باقي *' + (threshold - data.points) + ' نقطة* للحصول على كاش باك 💪\n') +
+      '\nاستمتع بالمكافآت واطلب الآن! 🚀\n\n' +
+      '*' + restName + '* 🍽️';
+    window.open('https://wa.me/' + wa + '?text=' + encodeURIComponent(msg), '_blank');
+  }
 }
 
 function exportLoyaltyExcel() {
