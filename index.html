@@ -5181,11 +5181,19 @@ function _isOfferBlocked(offerId) {
   /* بتبص: هل العميل ده عنده طلب مش ملغي واستخدم فيه العرض ده؟ */
   if (_cp) {
     var _allOrd = typeof _getAllOrders === 'function' ? _getAllOrders() : ordersData;
+    /* فحص 1: الطلبات الجديدة اللي عندها _offerIdsForSync */
     var _hasUsed = _allOrd.some(function(o) {
       var oPhone = (o.phone || '').replace(/\D/g,'');
       return oPhone === _cp && o.status !== 'cancelled' && o._offerIdsForSync && o._offerIdsForSync.indexOf(offerId) >= 0;
     });
     if (_hasUsed) return true;
+    /* فحص 2: الطلبات القديمة (قبل إضافة _offerIdsForSync) — لو عنده خصم > 0 والعرض oneTime */
+    var _offer = (typeof OFFERS !== 'undefined' ? OFFERS : []).find(function(x){ return x.id === offerId; });
+    if (_offer && _offer.oneTime) {
+      var _usedInFb = false;
+      try { _usedInFb = window._fbOfferUsage && window._fbOfferUsage[offerId]; } catch(e){}
+      if (_usedInFb) return true;
+    }
   }
   return false;
 }
@@ -5468,6 +5476,13 @@ function applyCoupon() {
 // ============================================================
 function placeOrder() {
   if (!cart.length) { showNotif('السلة فارغة!'); return; }
+  // 🔒 منع الطلب بدون تسجيل — لازم رقم تليفون
+  var _regPhone = (currentUser?.phone || '').replace(/\D/g,'');
+  if (!currentUser || !_regPhone || _regPhone.length < 8) {
+    showNotif('📱 سجّل بياناتك الأول عشان تقدر تطلب');
+    showScreen('auth');
+    return;
+  }
   // 🔒 فحص الحظر وقت الطلب — طبقة حماية إضافية (سدّ ثغرة)
   const _poPhone = (currentUser && currentUser.phone || '').replace(/[^0-9]/g,'');
   if (_poPhone && (BLOCKED_USERS[_poPhone] || BLOCKED_USERS['0'+_poPhone.slice(1)] || BLOCKED_USERS['2'+_poPhone])) {
@@ -10102,7 +10117,20 @@ function confirmFinalOrder() {
   // الكاش فقط: يُحفظ الآن في فايربيس ويُرسل للكاشير. الإلكتروني محفوظ ومُرسل بالفعل من placeOrder
   // (منعملش حفظ تاني للإلكتروني عشان ما نمسحش أي تغيير عمله الكاشير زي بدء التجهيز)
   if (!_isElec) {
-    fbSaveOrder(order);
+    fbSaveOrder(order).then(function() {
+      /* ✅ Firebase نجح — الطلب وصل للكاشير — ابعت الواتساب */
+      var _waNum = SETTINGS.waNum || RESTAURANT.waNum;
+      var _msgToSend = order._waMsg || '';
+      if (_msgToSend) {
+        window.open('https://wa.me/' + _waNum + '?text=' + encodeURIComponent(_msgToSend), '_blank');
+      }
+    }).catch(function() {
+      /* ❌ Firebase فشل حتى بعد الـ retry — الطلب مش عند الكاشير */
+      showNotif('❌ تعذر إرسال الطلب — تأكد من اتصالك بالإنترنت وحاول مرة أخرى');
+      /* إرجاع الأوردر في شاشة المراجعة عشان العميل يقدر يحاول تاني */
+      _pendingOrderForReview = order;
+      setTimeout(function(){ openOrderReview(order); }, 500);
+    });
   }
   // 🎟️ الآن فقط نُسجّل أن العرض اتستخدم — بعد التأكيد النهائي
   if (order._offersToBurn && order._offersToBurn.length) {
@@ -10130,14 +10158,6 @@ function confirmFinalOrder() {
   _loyaltyDiscountApplied = 0;
   closeOrderReview();
   showNotif(_isElec ? '✅ تم تأكيد طلبك' : '✅ تم إرسال الطلب للكاشير بنجاح');
-  // إرسال واتساب للكاشير — للكاش فقط هنا (الإلكتروني اتبعت وقت تأكيد الطلب في placeOrder)
-  if (!_isElec) {
-    const waNum = SETTINGS.waNum || RESTAURANT.waNum;
-    const msgToSend = order._waMsg || '';
-    if (msgToSend) {
-      window.open(`https://wa.me/${waNum}?text=${encodeURIComponent(msgToSend)}`, '_blank');
-    }
-  }
   // إرسال إشعار Last Order إن وجد
   if (lastOrderActive && currentUser?.whatsapp) {
     const waLO = (currentUser.whatsapp || '').replace(/[^0-9]/g,'');
@@ -11606,17 +11626,17 @@ async function fbSaveOrder(order) {
     await db.ref('orders/' + order.id).set(enriched);
   } catch(e) {
     console.warn('fbSaveOrder failed:', e);
-    /* تنبيه واضح للعميل + retry تلقائي */
+    /* retry تلقائي */
     showNotif('⚠️ جاري إعادة إرسال الطلب...');
-    setTimeout(async function() {
-      try {
-        await db.ref('orders/' + order.id).set(enriched);
-        showNotif('✅ تم إرسال الطلب للكاشير');
-      } catch(e2) {
-        console.error('fbSaveOrder retry failed:', e2);
-        showNotif('❌ تعذر إرسال الطلب — تواصل مع المطعم على واتساب');
-      }
-    }, 3000);
+    try {
+      await new Promise(function(r){ setTimeout(r, 3000); });
+      await db.ref('orders/' + order.id).set(enriched);
+      showNotif('✅ تم إرسال الطلب للكاشير');
+    } catch(e2) {
+      console.error('fbSaveOrder retry failed:', e2);
+      showNotif('❌ تعذر إرسال الطلب — تواصل مع المطعم على واتساب');
+      throw e2; /* بترجع reject عشان .catch() بتاعنا تشتغل */
+    }
   }
 }
 async function fbUpdateOrderStatus(orderId, status) { await fbUpdate('orders/' + orderId, { status }); }
