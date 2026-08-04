@@ -11008,6 +11008,7 @@ function _engLoadAdmin() {
         '<button onclick="_engShowLeaderboard(\''+c.id+'\')" style="flex:1;padding:8px;background:#e0f2fe;color:#0284c7;border:none;border-radius:8px;font-size:12px;font-weight:800;cursor:pointer;font-family:inherit">🏆 الترتيب</button>' +
         (isActive ? '<button onclick="_engRecalc(\''+c.id+'\')" style="flex:1;padding:8px;background:#f0fdf4;color:#16a34a;border:none;border-radius:8px;font-size:12px;font-weight:800;cursor:pointer;font-family:inherit">🔄 تحديث النتائج</button>' : '') +
         (ended && c.status!=='done' ? '<button onclick="_engFinalize(\''+c.id+'\')" style="flex:1;padding:8px;background:linear-gradient(135deg,#d97706,#f59e0b);color:#fff;border:none;border-radius:8px;font-size:12px;font-weight:800;cursor:pointer;font-family:inherit">🏅 إعلان الفائز</button>' : '') +
+        '<button onclick="_engEditModal(\''+c.id+'\')" style="padding:8px 12px;background:#f0f9ff;color:#0284c7;border:none;border-radius:8px;font-size:12px;font-weight:800;cursor:pointer;font-family:inherit">✏️ تعديل</button>' +
         '<button onclick="_engDelete(\''+c.id+'\')" style="padding:8px 12px;background:#fee2e2;color:#dc2626;border:none;border-radius:8px;font-size:12px;font-weight:800;cursor:pointer;font-family:inherit">🗑️</button>' +
         '</div></div>';
     });
@@ -11095,6 +11096,116 @@ function _engFinalize(compId) {
       window.open('https://wa.me/' + waPhone.replace(/\D/g,'') + '?text=' + encodeURIComponent(waMsg), '_blank');
     }).catch(function(){ showNotif('❌ خطأ في إرسال الجائزة'); });
   }).catch(function(){ showNotif('❌ خطأ في تحميل النتائج'); });
+}
+
+/* ══ ADMIN — تعديل مسابقة تفاعل ══ */
+function _engEditModal(compId) {
+  var comp = _ENG_COMPS[compId];
+  if (!comp) { showNotif('❌ لم يُعثر على المسابقة'); return; }
+
+  var ex = document.getElementById('_engEditModalEl');
+  if (ex) ex.remove();
+
+  var modal = document.createElement('div');
+  modal.id = '_engEditModalEl';
+  modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:9999;display:flex;align-items:flex-start;justify-content:center;overflow-y:auto;padding:20px';
+
+  var startLocal = comp.startAt ? new Date(comp.startAt).toISOString().slice(0,16) : '';
+  var endLocal   = comp.endAt   ? new Date(comp.endAt).toISOString().slice(0,16)   : '';
+  var prizeType  = (comp.prize||{}).type  || 'discount_amount';
+  var prizeVal   = (comp.prize||{}).value || '';
+
+  var prizeExtra = '';
+  if (prizeType === 'free_delivery') {
+    prizeExtra = '<div style="font-size:12px;color:var(--text-muted);padding:6px">التوصيل المجاني سيُطبَّق تلقائياً</div>';
+  } else if (prizeType === 'free_product') {
+    prizeExtra = '<input id="_engEditPrizeVal" value="'+prizeVal+'" placeholder="اسم المنتج الهدية" style="width:100%;padding:9px;border:1.5px solid var(--border);border-radius:10px;font-size:13px;font-family:inherit;background:var(--bg);color:var(--text);box-sizing:border-box">';
+  } else {
+    prizeExtra = '<input type="number" id="_engEditPrizeVal" value="'+prizeVal+'" placeholder="القيمة" min="1" style="width:100%;padding:9px;border:1.5px solid var(--border);border-radius:10px;font-size:13px;font-family:inherit;background:var(--bg);color:var(--text);box-sizing:border-box">';
+  }
+
+  modal.innerHTML =
+    '<div style="background:var(--bg);border-radius:18px;max-width:460px;width:100%;padding:20px;margin:auto">' +
+    '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">' +
+    '<div style="font-size:16px;font-weight:900;color:var(--text)">✏️ تعديل المسابقة</div>' +
+    '<button onclick="document.getElementById(\'_engEditModalEl\').remove()" style="background:none;border:none;font-size:20px;cursor:pointer;color:var(--text-muted)">✕</button>' +
+    '</div>' +
+    '<div style="display:flex;flex-direction:column;gap:10px">' +
+    '<div>' +
+    '<div style="font-size:12px;font-weight:700;color:var(--text-muted);margin-bottom:4px">اسم المسابقة</div>' +
+    '<input id="_engEditName" value="'+comp.name+'" style="width:100%;padding:10px;border:1.5px solid var(--border);border-radius:10px;font-size:14px;font-family:inherit;background:var(--bg);color:var(--text);box-sizing:border-box">' +
+    '</div>' +
+    (comp.type==='most_product' ? '<div><div style="font-size:12px;font-weight:700;color:var(--text-muted);margin-bottom:4px">المنتج المستهدف</div><input id="_engEditProduct" value="'+(comp.productTarget||'')+'" style="width:100%;padding:10px;border:1.5px solid var(--border);border-radius:10px;font-size:14px;font-family:inherit;background:var(--bg);color:var(--text);box-sizing:border-box"></div>' : '') +
+    '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">' +
+    '<div><div style="font-size:12px;font-weight:700;color:var(--text-muted);margin-bottom:4px">📅 من</div>' +
+    '<input type="datetime-local" id="_engEditStart" value="'+startLocal+'" style="width:100%;padding:9px;border:1.5px solid var(--border);border-radius:10px;font-size:12px;font-family:inherit;background:var(--bg);color:var(--text);box-sizing:border-box"></div>' +
+    '<div><div style="font-size:12px;font-weight:700;color:var(--text-muted);margin-bottom:4px">📅 إلى</div>' +
+    '<input type="datetime-local" id="_engEditEnd" value="'+endLocal+'" style="width:100%;padding:9px;border:1.5px solid var(--border);border-radius:10px;font-size:12px;font-family:inherit;background:var(--bg);color:var(--text);box-sizing:border-box"></div>' +
+    '</div>' +
+    '<div style="border:1.5px solid var(--border);border-radius:12px;padding:12px">' +
+    '<div style="font-size:13px;font-weight:800;color:var(--text);margin-bottom:8px">🎁 الجائزة</div>' +
+    '<select id="_engEditPrizeType" onchange="_engEditPrizeChange()" style="width:100%;padding:9px;border:1.5px solid var(--border);border-radius:10px;font-size:13px;font-family:inherit;background:var(--bg);color:var(--text);margin-bottom:8px">' +
+    '<option value="discount_amount"'+(prizeType==='discount_amount'?' selected':'')+'>💰 خصم مبلغ (ج.م)</option>' +
+    '<option value="discount_percent"'+(prizeType==='discount_percent'?' selected':'')+'>🏷️ خصم نسبة (%)</option>' +
+    '<option value="free_product"'+(prizeType==='free_product'?' selected':'')+'>🍽️ منتج مجاني</option>' +
+    '<option value="free_delivery"'+(prizeType==='free_delivery'?' selected':'')+'>🛵 توصيل مجاني</option>' +
+    '</select>' +
+    '<div id="_engEditPrizeExtra">'+prizeExtra+'</div>' +
+    '</div>' +
+    '<label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer;background:var(--bg-2,#f5f5f5);padding:10px;border-radius:10px">' +
+    '<input type="checkbox" id="_engEditLikes"'+(comp.likesEnabled?' checked':'')+' style="width:16px;height:16px;accent-color:var(--olive)"> ❤️ تفعيل نظام اللايكات' +
+    '</label>' +
+    '<div style="display:flex;gap:8px">' +
+    '<button onclick="_engSaveEdit(\''+compId+'\')" style="flex:1;padding:12px;background:var(--olive);color:#fff;border:none;border-radius:12px;font-size:15px;font-weight:900;cursor:pointer;font-family:inherit">✅ حفظ التعديلات</button>' +
+    '<button onclick="document.getElementById(\'_engEditModalEl\').remove()" style="padding:12px 16px;background:var(--cream);color:var(--text);border:none;border-radius:12px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit">إلغاء</button>' +
+    '</div>' +
+    '</div></div>';
+  document.body.appendChild(modal);
+}
+
+function _engEditPrizeChange() {
+  var t = (document.getElementById('_engEditPrizeType')||{}).value;
+  var ex = document.getElementById('_engEditPrizeExtra');
+  if (!ex) return;
+  if (t === 'free_delivery') ex.innerHTML = '<div style="font-size:12px;color:var(--text-muted);padding:6px">التوصيل المجاني سيُطبَّق تلقائياً</div>';
+  else if (t === 'free_product') ex.innerHTML = '<input id="_engEditPrizeVal" placeholder="اسم المنتج الهدية" style="width:100%;padding:9px;border:1.5px solid var(--border);border-radius:10px;font-size:13px;font-family:inherit;background:var(--bg);color:var(--text);box-sizing:border-box">';
+  else ex.innerHTML = '<input type="number" id="_engEditPrizeVal" placeholder="القيمة" min="1" style="width:100%;padding:9px;border:1.5px solid var(--border);border-radius:10px;font-size:13px;font-family:inherit;background:var(--bg);color:var(--text);box-sizing:border-box">';
+}
+
+function _engSaveEdit(compId) {
+  var name      = ((document.getElementById('_engEditName')||{}).value||'').trim();
+  var startAt   = (document.getElementById('_engEditStart')||{}).value;
+  var endAt     = (document.getElementById('_engEditEnd')||{}).value;
+  var prizeType = (document.getElementById('_engEditPrizeType')||{}).value || 'discount_amount';
+  var prizeVal  = ((document.getElementById('_engEditPrizeVal')||{}).value||'').trim();
+  var likes     = document.getElementById('_engEditLikes')?.checked || false;
+  var product   = ((document.getElementById('_engEditProduct')||{}).value||'').trim();
+
+  if (!name) { showNotif('❌ اكتب اسم المسابقة'); return; }
+  if (!startAt || !endAt) { showNotif('❌ حدد التواريخ'); return; }
+  if (new Date(endAt) <= new Date(startAt)) { showNotif('❌ تاريخ النهاية لازم بعد البداية'); return; }
+  if (prizeType !== 'free_delivery' && !prizeVal) { showNotif('❌ حدد قيمة الجائزة'); return; }
+
+  var updates = {
+    name: name,
+    startAt: new Date(startAt).toISOString(),
+    endAt:   new Date(endAt).toISOString(),
+    prize:   { type: prizeType, value: prizeVal },
+    likesEnabled: !!likes,
+  };
+  if (product) updates.productTarget = product;
+
+  var ref = _engRef(compId);
+  if (!ref) { showNotif('❌ لا يوجد اتصال'); return; }
+  ref.update(updates).then(function() {
+    showNotif('✅ تم حفظ التعديلات');
+    var m = document.getElementById('_engEditModalEl');
+    if (m) m.remove();
+    // تحديث الكاش
+    if (_ENG_COMPS[compId]) Object.assign(_ENG_COMPS[compId], updates);
+    _engLoadAdmin();
+    _engLoadForCustomer();
+  }).catch(function(){ showNotif('❌ خطأ في الحفظ'); });
 }
 
 function _engDelete(compId) {
@@ -11195,6 +11306,19 @@ function _engOpenLeaderboardCustomer(compId) {
       '</div>' +
       (top10.length ? rows + myRankHtml : '<div style="text-align:center;padding:24px;color:var(--text-muted);font-weight:700">لا يوجد مشتركون بعد — طلّب وكن الأول!</div>') +
       '</div>';
+    /* فحص localStorage — عطّل أزرار اللايك للعملاء اللي صوّتوا من نفس الجهاز */
+    setTimeout(function() {
+      top10.forEach(function(p) {
+        var _dk = 'zz_liked_' + compId + '_' + p.phone;
+        try {
+          if (localStorage.getItem(_dk)) {
+            var likeBtnId = 'likebtn_' + compId + '_' + p.phone;
+            var lBtn = document.getElementById(likeBtnId);
+            if (lBtn) { lBtn.disabled = true; lBtn.classList.add('_like-done'); }
+          }
+        } catch(e) {}
+      });
+    }, 100);
   }).catch(function(){ showNotif('❌ خطأ في تحميل الترتيب'); });
 }
 
@@ -11205,12 +11329,27 @@ function _engLike(compId, targetPhone, btn) {
   if (!myPh) { showNotif('📱 سجّل بياناتك الأول'); return; }
   if (myPh === targetPhone) { showNotif('😄 ما تقدرش تعمل لايك لنفسك'); return; }
   if (!btn || btn.disabled) { showNotif('👍 عملت لايك قبل كده'); return; }
+
+  /* ══ طبقة حماية الجهاز — localStorage ══
+     بتمنع نفس الجهاز من التصويت أكتر من مرة حتى لو غيّر الرقم */
+  var _likeDeviceKey = 'zz_liked_' + compId + '_' + targetPhone;
+  try {
+    if (localStorage.getItem(_likeDeviceKey)) {
+      if (btn) { btn.style.animation='none'; setTimeout(function(){ btn.style.animation='_likePop .3s ease'; },10); }
+      showNotif('👍 عملت لايك من الجهاز ده قبل كده');
+      btn.disabled = true; btn.classList.add('_like-done');
+      return;
+    }
+  } catch(e) {}
+
   var likeRef = db.ref('engagement_scores/'+compId+'/'+targetPhone+'/likedBy/'+myPh);
   likeRef.once('value').then(function(snap) {
     if (snap.val()) {
-      /* سبق عمل لايك — أظهر أنيميشن رفض خفيف */
+      /* سبق عمل لايك بنفس الرقم — سجّل في الجهاز كمان */
+      try { localStorage.setItem(_likeDeviceKey, '1'); } catch(e) {}
       if (btn) { btn.style.animation='none'; setTimeout(function(){ btn.style.animation='_likePop .3s ease'; },10); }
       showNotif('👍 عملت لايك قبل كده');
+      btn.disabled = true; btn.classList.add('_like-done');
       return;
     }
     /* === أنيميشن فوري قبل Firebase === */
@@ -11242,6 +11381,8 @@ function _engLike(compId, targetPhone, btn) {
     }
     /* === Firebase في الخلفية === */
     likeRef.set(true).then(function() {
+      /* حفظ في localStorage للجهاز فور النجاح */
+      try { localStorage.setItem(_likeDeviceKey, '1'); } catch(e) {}
       db.ref('engagement_scores/'+compId+'/'+targetPhone).transaction(function(curr) {
         if (!curr) return curr;
         curr.likes = (curr.likes||0) + 1;
