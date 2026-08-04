@@ -17971,7 +17971,13 @@ function _adminAddPoints(phone, name) {
 
   /* إضافة النقاط */
   var p = phone.replace(/\D/g,'');
+  // 🔧 نقرأ من _loyaltyAdminData (Firebase) أولاً، وbuild data منه
+  var adminEntry = _loyaltyAdminData[p] || _loyaltyAdminData[phone] || {};
   var data = getLoyaltyData(p);
+  // merge: نأخذ الأعلى بين Firebase والـ local
+  if ((adminEntry.points||0) > (data.points||0)) data.points = adminEntry.points||0;
+  if ((adminEntry.earned||0) > (data.earned||0)) data.earned = adminEntry.earned||0;
+  if ((adminEntry.redeemed||0) > (data.redeemed||0)) data.redeemed = adminEntry.redeemed||0;
   data.points = (data.points || 0) + pts;
   data.earned = (data.earned || 0) + pts;
   data.lastEarned = new Date().toISOString();
@@ -18019,12 +18025,15 @@ function _adminFixRedeemed(phone, name) {
   if (isNaN(correctRedeemed) || correctRedeemed < 0) { showNotif('⚠️ اكتب القيمة الصحيحة للمستبدل (0 أو أكثر)'); return; }
 
   var p = phone.replace(/\D/g,'');
-  var data = getLoyaltyData(p);
-  var currentRedeemed = data.redeemed || 0;
-  var currentPoints   = data.points   || 0;
 
-  // الفرق: كام نقطة اتخصمت زيادة (أو ناقص)
-  var diff = currentRedeemed - correctRedeemed; // موجب = اتخصم زيادة → نرجّع للرصيد
+  // 🔧 إصلاح: نقرأ من _loyaltyAdminData (محمّل من Firebase) مش من localStorage
+  var adminEntry = _loyaltyAdminData[p] || _loyaltyAdminData[phone] || null;
+  if (!adminEntry) { showNotif('❌ بيانات العميل مش موجودة — حدّث الصفحة وحاول تاني'); return; }
+
+  var currentRedeemed = adminEntry.redeemed || 0;
+  var currentPoints   = adminEntry.points   || 0;
+
+  var diff = currentRedeemed - correctRedeemed;
 
   if (diff === 0) { showNotif('✅ المستبدل صح بالفعل — لا يوجد تغيير'); input.value = ''; return; }
 
@@ -18041,8 +18050,10 @@ function _adminFixRedeemed(phone, name) {
     (diff > 0 ? '✅ هيترجع ' + diff + ' نقطة للعميل' : '⚠️ هيتخصم ' + Math.abs(diff) + ' نقطة من العميل')
   )) return;
 
-  data.redeemed = newRedeemed;
-  data.points   = newPoints;
+  // احفظ في Firebase + localStorage
+  var data = getLoyaltyData(p);
+  data.redeemed    = newRedeemed;
+  data.points      = newPoints;
   data.lastFixedAt = new Date().toISOString();
   data.lastFixedBy = 'admin';
   saveLoyaltyData(p, data);
