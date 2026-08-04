@@ -1017,6 +1017,35 @@ input,select,textarea{font-family:inherit;}
   .mgmt-card{break-inside:avoid;border:1px solid #ccc}
   .mgmt-chart-box{break-inside:avoid;page-break-inside:avoid}
 }
+
+/* ═══ Like Button Animations ═══ */
+@keyframes _likeHeart {
+  0%   { transform: scale(1); }
+  15%  { transform: scale(1.5) rotate(-10deg); }
+  30%  { transform: scale(0.9) rotate(5deg); }
+  45%  { transform: scale(1.35) rotate(-5deg); }
+  60%  { transform: scale(1); }
+  100% { transform: scale(1); }
+}
+@keyframes _likePop {
+  0%   { transform: scale(1); box-shadow: 0 2px 8px rgba(220,38,38,.15); }
+  30%  { transform: scale(1.12); box-shadow: 0 6px 24px rgba(220,38,38,.45); }
+  60%  { transform: scale(0.96); }
+  100% { transform: scale(1); box-shadow: 0 2px 8px rgba(220,38,38,.2); }
+}
+@keyframes _floatHeart {
+  0%   { opacity:1; transform: translateY(0) scale(1); }
+  100% { opacity:0; transform: translateY(-60px) scale(1.6); }
+}
+@keyframes _likeRipple {
+  0%   { transform: scale(0); opacity: .6; }
+  100% { transform: scale(2.8); opacity: 0; }
+}
+._like-done {
+  background: linear-gradient(135deg,#fce7f3,#fecdd3) !important;
+  border-color: #f472b6 !important;
+  cursor: default !important;
+}
 </style>
 <!-- Chart.js CDN -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
@@ -1150,6 +1179,8 @@ input,select,textarea{font-family:inherit;}
     <div id="vipLoyaltyCardWrap" style="display:none"></div>
     <!-- ADS SLIDER -->
     <div id="compCardsSection" style="display:none;padding:0 12px 8px"></div>
+    <!-- قسم مسابقات التفاعل — يظهر تلقائياً لو في مسابقات نشطة -->
+    <div id="_engCustomerSection" style="display:none"></div>
     <div id="adsSliderSection" style="display:none">
       <div class="ads-slider-wrap">
         <button class="ads-nav-btn prev" onclick="adsSlideNav(-1)">›</button>
@@ -1985,6 +2016,8 @@ input,select,textarea{font-family:inherit;}
       <button id="tabCompBtn" onclick="switchAdminTab('competitions',this)" style="display:none">🏆 المسابقات</button>
       <button id="tabLoyaltyBtn" data-admin-only onclick="switchAdminTab('loyalty',this)">🏆 نقاط الولاء</button>
       <button id="tabGiftsBtn" data-admin-only onclick="switchAdminTab('vip-gifts',this)">🎁 الهدايا</button>
+      <button id="tabPersonalGiftsBtn" data-admin-only onclick="switchAdminTab('personal-gifts',this)">🎀 هدايا شخصية</button>
+      <button id="tabEngagementBtn" data-admin-only onclick="switchAdminTab('engagement',this)">🏅 مسابقات التفاعل</button>
       <button id="tabMgmtBtn" data-admin-only onclick="switchAdminTab('mgmt-reports',this)">📈 تقارير الإدارة</button>
     </div>
 
@@ -2097,6 +2130,24 @@ input,select,textarea{font-family:inherit;}
         <button onclick="_loadVIPGiftAdmin()" style="padding:7px 12px;background:#d97706;color:#fff;border:none;border-radius:10px;font-size:11px;font-weight:800;cursor:pointer;font-family:inherit">🔄 تحديث</button>
       </div>
       <div id="vipGiftAdminList" style="font-size:12px;color:var(--text-muted);text-align:center;padding:16px">جاري التحميل...</div>
+    </div>
+
+    <!-- PERSONAL GIFTS TAB (Admin Only) -->
+    <div id="tab-personal-gifts" style="display:none;padding:0 16px 24px;direction:rtl">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;margin-top:12px">
+        <div style="font-size:15px;font-weight:900;color:var(--dark)">🎀 هدايا مخصصة للعملاء</div>
+        <button onclick="_pgOpenCreate()" style="padding:8px 14px;background:var(--olive);color:#fff;border:none;border-radius:10px;font-size:13px;font-weight:800;cursor:pointer;font-family:inherit">+ هدية جديدة</button>
+      </div>
+      <div id="pgAdminList" style="font-size:12px;color:var(--text-muted);text-align:center;padding:16px">جاري التحميل...</div>
+    </div>
+
+    <!-- ENGAGEMENT COMPETITIONS TAB (Admin Only) -->
+    <div id="tab-engagement" style="display:none;padding:0 16px 24px;direction:rtl">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;margin-top:12px">
+        <div style="font-size:15px;font-weight:900;color:var(--dark)">🏅 مسابقات التفاعل</div>
+        <button onclick="_engOpenCreate()" style="padding:8px 14px;background:var(--olive);color:#fff;border:none;border-radius:10px;font-size:13px;font-weight:800;cursor:pointer;font-family:inherit">+ مسابقة جديدة</button>
+      </div>
+      <div id="engAdminList" style="font-size:12px;color:var(--text-muted);text-align:center;padding:16px">جاري التحميل...</div>
     </div>
 
     <!-- MANAGEMENT REPORTS TAB (Admin Only) -->
@@ -3648,8 +3699,16 @@ function _goToAppOrTracking() {
       if (snap.exists()) {
         const fbData = snap.val();
         const localData = loadData('zz_loyalty_' + _ph, {});
-        /* خذ الأعلى في النقاط (الأحدث) */
-        if ((fbData.points || 0) > (localData.points || 0)) {
+        /* مزامنة Firebase دايماً هي المرجع الأصلي
+           لو الأدمن عدّل النقاط من لوحة التحكم تنعكس فوراً عند العميل */
+        const _fbTs = fbData.lastFixedAt || fbData.lastEarned || '';
+        const _lcTs = localData.lastFixedAt || localData.lastEarned || '';
+        // لو في Firebase تصحيح أدمن (lastFixedAt) → خذ Firebase دايماً
+        // لو مفيش تصحيح → خذ الأعلى (الطبيعي)
+        const _fbWins = fbData.lastFixedAt
+          ? true
+          : (fbData.points || 0) > (localData.points || 0);
+        if (_fbWins) {
           saveData('zz_loyalty_' + _ph, fbData);
           /* تحديث العرض بعد المزامنة */
           if (typeof updateVIPWelcomeBanner === 'function') updateVIPWelcomeBanner();
@@ -3664,6 +3723,14 @@ function _goToAppOrTracking() {
   if (typeof _compLoadForCustomer === 'function') {
     _compLoadForCustomer();
     setTimeout(_compLoadForCustomer, 1500); /* retry بعد 1.5 ثانية */
+  }
+  /* تحميل مسابقات التفاعل */
+  if (typeof _engLoadForCustomer === 'function') {
+    _engLoadForCustomer();
+  }
+  /* تحميل الهدية الشخصية لو العميل مسجّل */
+  if (typeof _pgLoadForCustomer === 'function' && currentUser && currentUser.phone) {
+    _pgLoadForCustomer();
   }
   const _on = currentOrderNum || loadData('zz_current_order_num', null);
   if (_on && db) {
@@ -5227,10 +5294,20 @@ function calcAutoDiscount() {
   });
   // VIP customer discount
   disc += getVIPDiscount();
+  // 🎀 الهدية المخصصة (discount_amount / discount_percent)
+  if (typeof _pgGetDiscount === 'function') {
+    var _pgResult = _pgGetDiscount(total, 0);
+    disc += _pgResult.disc;
+  }
   return disc;
 }
 function calcDeliveryFee() {
   if (deliveryType !== 'delivery') return 0;
+  // 🎀 هدية شخصية — توصيل مجاني
+  if (typeof _pgGetDiscount === 'function' && _currentPersonalGift && !_currentPersonalGift.used) {
+    var _pgRes = _pgGetDiscount(cartSubtotal(), 0);
+    if (_pgRes.freeDelivery) return 0;
+  }
   const subtotal = cartSubtotal();
   const minFree = Number(SETTINGS.freeDeliveryMin);
   if (minFree > 0 && subtotal >= minFree) return 0;
@@ -5259,6 +5336,12 @@ function updateCartUI() {
     let sumHtml = `<div class="cart-summary-row"><span>المجموع الفرعى</span><span>${subtotal} ج.م</span></div>`;
     if (autoDisc > 0) sumHtml += `<div class="cart-summary-row disc"><span>🏷️ خصم العروض/VIP</span><span>- ${autoDisc} ج.م</span></div>`;
     if (_loyaltyDiscountApplied > 0) sumHtml += `<div class="cart-summary-row disc" style="color:#059669"><span>🏆 كاش باك النقاط</span><span>- ${_loyaltyDiscountApplied} ج.م</span></div>`;
+    // 🎀 هدية شخصية
+    if (typeof _pgGetDiscount === 'function' && typeof _currentPersonalGift !== 'undefined' && _currentPersonalGift && !_currentPersonalGift.used) {
+      var _pgSumRes = _pgGetDiscount(subtotal, deliveryFee);
+      if (_pgSumRes.disc > 0) sumHtml += `<div class="cart-summary-row disc" style="color:#7c3aed"><span>🎀 هدية شخصية</span><span>- ${_pgSumRes.disc} ج.م</span></div>`;
+      if (_pgSumRes.freeDelivery && deliveryType === 'delivery') sumHtml += `<div class="cart-summary-row disc" style="color:#7c3aed"><span>🎀 توصيل مجاني (هدية)</span><span>✓</span></div>`;
+    }
     if (deliveryFee > 0) sumHtml += `<div class="cart-summary-row"><span>🛵 رسوم التوصيل</span><span>${deliveryFee} ج.م</span></div>`;
     else if (deliveryType === 'delivery') sumHtml += `<div class="cart-summary-row" style="color:var(--olive);font-weight:700"><span>🛵 التوصيل</span><span>مجانى</span></div>`;
     sumHtml += `<div class="cart-summary-row total"><span>الإجمالى النهائى</span><span>${finalTotal} ج.م</span></div>`;
@@ -5626,7 +5709,7 @@ ${itemsLines}
 📱 *رقم محفظة العميل:* ${clientWalletNum}` : ''}${gpsLine}
 ━━━━━━━━━━━━━━━━━━━━━
 💰 المجموع: ${subtotal} ج.م
-${autoDisc > 0 ? `🏷️ خصم العروض/VIP: - ${autoDisc} ج.م\\n` : ''}${_loyaltyDiscountApplied > 0 ? `🏆 كاش باك النقاط: - ${_loyaltyDiscountApplied} ج.م\\n` : ''}${deliveryFee > 0 ? `🛵 التوصيل: ${deliveryFee} ج.م\n` : deliveryType === 'delivery' ? '🛵 التوصيل: مجانى\n' : ''}✅ *الإجمالى النهائى: ${finalTotal} ج.م*
+${autoDisc > 0 ? `🏷️ خصم العروض/VIP: - ${autoDisc} ج.م\\n` : ''}${_loyaltyDiscountApplied > 0 ? `🏆 كاش باك النقاط: - ${_loyaltyDiscountApplied} ج.م\\n` : ''}${(typeof _currentPersonalGift!=='undefined'&&_currentPersonalGift&&!_currentPersonalGift.used)?`🎀 هدية شخصية: ${({'discount_amount':'خصم '+_currentPersonalGift.value+' ج.م','discount_percent':'خصم '+_currentPersonalGift.value+'%','free_product':'منتج مجاني: '+_currentPersonalGift.value,'free_delivery':'توصيل مجاني'})[_currentPersonalGift.type]||'هدية'}\\n`:''}${deliveryFee > 0 ? `🛵 التوصيل: ${deliveryFee} ج.م\n` : deliveryType === 'delivery' ? '🛵 التوصيل: مجانى\n' : ''}✅ *الإجمالى النهائى: ${finalTotal} ج.م*
 ━━━━━━━━━━━━━━━━━━━━━
 ⏱️ سيتم تحديد وقت التوصيل المتوقع من قِبل الكاشير
 🕐 ${new Date().toLocaleString('ar-EG')}${lastOrderNote}`;
@@ -6331,6 +6414,18 @@ function doLogout() {
   }
   else showScreen('auth');
 }
+/* doPickupLogin — دخول شاشة التجهيز بكلمة السر */
+function doPickupLogin() {
+  var pass = (document.getElementById('pickupPass') || {}).value || '';
+  if (!pass) { if(typeof showNotif==='function') showNotif('❌ أدخل كلمة السر'); return; }
+  if (typeof _verifyAuth === 'function' && _verifyAuth('pickup', pass)) {
+    if(typeof _completeStaffLogin==='function') _completeStaffLogin('pickup');
+  } else {
+    if(typeof showNotif==='function') showNotif('❌ كلمة السر غلط');
+    var el = document.getElementById('pickupPass');
+    if (el) { el.value=''; el.focus(); }
+  }
+}
 function doPickupLogout() {
   saveData('zz_admin_role', null);
   if (window.location.hash) history.replaceState(null, '', window.location.pathname);
@@ -6385,6 +6480,11 @@ function applyRoleRestrictions() {
     });
     // Hide admin-only settings sections (including ewallets management)
     document.querySelectorAll('[data-admin-only]').forEach(el => el.style.display = 'none');
+  } else {
+    // إظهار العناصر المخصصة للأدمن صراحةً (مهم لو دخل الكاشير قبله في نفس الجلسة)
+    document.querySelectorAll('[data-admin-only]').forEach(el => {
+      if (el.style.display === 'none') el.style.display = '';
+    });
   }
 }
 
@@ -6394,7 +6494,7 @@ function applyRoleRestrictions() {
 function switchAdminTab(tab, el) {
   document.querySelectorAll('.admin-tabs button').forEach(b => b.classList.remove('active'));
   el.classList.add('active');
-  ['orders','cashier','bookings','menu','addons','offers','settings','notify','ads','agents','block','stats','loyalty','competitions','vip-gifts','mgmt-reports'].forEach(t => {
+  ['orders','cashier','bookings','menu','addons','offers','settings','notify','ads','agents','block','stats','loyalty','competitions','vip-gifts','personal-gifts','engagement','mgmt-reports'].forEach(t => {
     const tabEl = document.getElementById('tab-' + t);
     if (tabEl) tabEl.style.display = t === tab ? 'block' : 'none';
   });
@@ -6420,6 +6520,8 @@ function switchAdminTab(tab, el) {
   if (tab === 'block') { renderBlockedUsers(); }
   if (tab === 'stats') { loadRatingsFromFirebase(); renderStatsTab(); _renderExtendedStats(); }
   if (tab === 'mgmt-reports') { renderMgmtReport(); }
+  if (tab === 'personal-gifts') { if(typeof _pgLoadAdmin==='function') _pgLoadAdmin(); }
+  if (tab === 'engagement') { if(typeof _engLoadAdmin==='function') _engLoadAdmin(); }
 }
 
 // ============================================================
@@ -10154,6 +10256,14 @@ function confirmFinalOrder() {
   if (currentUser?.phone) {
     earnLoyaltyPoints(order.total || 0, currentUser.phone, currentUser.name || '');
   }
+  // 🎀 حرق الهدية الشخصية بعد التأكيد النهائي
+  if (typeof _pgBurnGift === 'function' && currentUser?.phone) {
+    _pgBurnGift(currentUser.phone);
+  }
+  // 🏅 تحديث نتائج مسابقات التفاعل
+  if (typeof _engUpdateScoreOnOrder === 'function') {
+    _engUpdateScoreOnOrder(order);
+  }
   // إعادة تعيين خصم النقاط
   _loyaltyDiscountApplied = 0;
   closeOrderReview();
@@ -10463,6 +10573,719 @@ function _startGiftDueListener() {
     });
   });
 }
+/* ══════════════════════════════════════════════════════════════
+   🎀 PERSONAL GIFTS SYSTEM — هدايا مخصصة لعملاء بعينهم
+   Firebase: personal_gifts/{phone} = { id, phone, name, type, value, msg, createdAt, used, usedAt }
+   أنواع: discount_amount | discount_percent | free_product | free_delivery
+   ══════════════════════════════════════════════════════════════ */
+
+/* --- ثابت عالمي لتخزين هدية العميل الحالي --- */
+var _currentPersonalGift = null;
+
+/* --- تحميل هدية العميل من Firebase عند الدخول --- */
+function _pgLoadForCustomer() {
+  if (!db || !currentUser || !currentUser.phone) return;
+  var ph = currentUser.phone.replace(/\D/g,'');
+  if (!ph || ph.length < 8) return;
+  db.ref('personal_gifts/' + ph).once('value').then(function(snap) {
+    var gift = snap.val();
+    if (!gift || gift.used) { _currentPersonalGift = null; return; }
+    _currentPersonalGift = gift;
+    _pgShowCustomerCard(gift);
+  }).catch(function(){});
+}
+
+/* --- كارت الاحتفال للعميل --- */
+function _pgShowCustomerCard(gift) {
+  if (!gift) return;
+  var existing = document.getElementById('_pgCustomerCard');
+  if (existing) existing.remove();
+  var typeLabel = {
+    discount_amount: '💰 خصم ' + gift.value + ' ج.م على طلبك',
+    discount_percent: '🏷️ خصم ' + gift.value + '% على فاتورتك',
+    free_product: '🍽️ منتج مجاني: ' + gift.value,
+    free_delivery: '🛵 توصيل مجاني لطلبك القادم'
+  }[gift.type] || '🎁 هدية خاصة';
+
+  var card = document.createElement('div');
+  card.id = '_pgCustomerCard';
+  card.style.cssText = 'position:fixed;bottom:80px;left:50%;transform:translateX(-50%);z-index:8888;width:calc(100% - 32px);max-width:380px;background:linear-gradient(135deg,#16a34a,#22c55e);border-radius:18px;padding:16px;color:#fff;box-shadow:0 8px 32px rgba(22,163,74,.45);animation:_pgBounce .6s ease';
+  card.innerHTML = '<style>@keyframes _pgBounce{0%{transform:translateX(-50%) translateY(60px);opacity:0}100%{transform:translateX(-50%) translateY(0);opacity:1}}</style>' +
+    '<div style="display:flex;align-items:center;gap:10px">' +
+    '<div style="font-size:32px">🎀</div>' +
+    '<div style="flex:1">' +
+    '<div style="font-size:14px;font-weight:900;margin-bottom:2px">هدية مخصصة لك من ' + (window.RESTAURANT && RESTAURANT.name ? RESTAURANT.name : 'زمزم') + '!</div>' +
+    '<div style="font-size:13px;font-weight:700;opacity:.95">' + typeLabel + '</div>' +
+    (gift.msg ? '<div style="font-size:11px;opacity:.85;margin-top:4px">' + gift.msg + '</div>' : '') +
+    '</div>' +
+    '<button onclick="document.getElementById(\'_pgCustomerCard\').remove()" style="background:rgba(255,255,255,.25);border:none;border-radius:50%;width:28px;height:28px;color:#fff;font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-family:inherit;flex-shrink:0">✕</button>' +
+    '</div>' +
+    '<div style="margin-top:10px;font-size:11px;opacity:.8;text-align:center">✨ ستُطبَّق الهدية تلقائياً على طلبك القادم — مرة واحدة فقط</div>';
+  document.body.appendChild(card);
+  /* أزل الكارت بعد 15 ثانية تلقائياً */
+  setTimeout(function(){ if(document.getElementById('_pgCustomerCard')) document.getElementById('_pgCustomerCard').remove(); }, 15000);
+}
+
+/* --- تطبيق الهدية الشخصية على الطلب (تُستدعى من calcAutoDiscount) --- */
+var _pgAppliedThisOrder = false; /* يُعاد ضبطه بعد حرق الهدية */
+function _pgGetDiscount(subtotal, deliveryFee) {
+  if (!_currentPersonalGift || _currentPersonalGift.used) return { disc: 0, freeDelivery: false };
+  var g = _currentPersonalGift;
+  var disc = 0; var freeDelivery = false;
+  if (g.type === 'discount_amount') disc = Math.min(Number(g.value) || 0, subtotal);
+  else if (g.type === 'discount_percent') disc = Math.round(subtotal * (Number(g.value) || 0) / 100);
+  else if (g.type === 'free_delivery') freeDelivery = true;
+  /* free_product: خصم 0 (المنتج يُضاف يدوياً من الأدمن في الأوردر) */
+  return { disc: disc, freeDelivery: freeDelivery };
+}
+
+/* --- حرق الهدية بعد تأكيد الطلب --- */
+function _pgBurnGift(phone) {
+  if (!_currentPersonalGift || _currentPersonalGift.used) return;
+  var ph = (phone || '').replace(/\D/g,'');
+  if (!ph) return;
+  _currentPersonalGift.used = true;
+  _currentPersonalGift.usedAt = new Date().toISOString();
+  _pgAppliedThisOrder = false;
+  if (db) db.ref('personal_gifts/' + ph).update({ used: true, usedAt: _currentPersonalGift.usedAt }).catch(function(){});
+  if (document.getElementById('_pgCustomerCard')) document.getElementById('_pgCustomerCard').remove();
+  _currentPersonalGift = null;
+}
+
+/* ══ ADMIN — إنشاء هدية شخصية ══ */
+function _pgOpenCreate() {
+  var ex = document.getElementById('_pgCreateModal');
+  if (ex) { ex.style.display = 'flex'; _pgResetCreateForm(); return; }
+  var modal = document.createElement('div');
+  modal.id = '_pgCreateModal';
+  modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:9999;display:flex;align-items:flex-start;justify-content:center;overflow-y:auto;padding:20px';
+  modal.innerHTML =
+    '<div style="background:var(--bg);border-radius:18px;max-width:460px;width:100%;padding:20px;margin:auto">' +
+    '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">' +
+    '<div style="font-size:16px;font-weight:900;color:var(--text)">🎀 هدية مخصصة لعميل</div>' +
+    '<button onclick="document.getElementById(\'_pgCreateModal\').style.display=\'none\'" style="background:none;border:none;font-size:20px;cursor:pointer;color:var(--text-muted)">✕</button>' +
+    '</div>' +
+    '<div style="display:flex;flex-direction:column;gap:10px">' +
+    '<div>' +
+    '<div style="font-size:12px;font-weight:700;color:var(--text-muted);margin-bottom:4px">📞 رقم تليفون العميل</div>' +
+    '<input id="_pgPhone" placeholder="01xxxxxxxxx" style="width:100%;padding:10px;border:1.5px solid var(--border);border-radius:10px;font-size:14px;font-family:inherit;background:var(--bg);color:var(--text);box-sizing:border-box" oninput="_pgLookupCustomer(this.value)">' +
+    '<div id="_pgCustomerPreview" style="margin-top:6px;font-size:12px;color:var(--olive);font-weight:700"></div>' +
+    '</div>' +
+    '<div>' +
+    '<div style="font-size:12px;font-weight:700;color:var(--text-muted);margin-bottom:4px">🎁 نوع الهدية</div>' +
+    '<select id="_pgType" onchange="_pgTypeChange()" style="width:100%;padding:9px;border:1.5px solid var(--border);border-radius:10px;font-size:13px;font-family:inherit;background:var(--bg);color:var(--text)">' +
+    '<option value="discount_amount">💰 خصم مبلغ محدد (ج.م)</option>' +
+    '<option value="discount_percent">🏷️ خصم نسبة (%)</option>' +
+    '<option value="free_product">🍽️ منتج مجاني</option>' +
+    '<option value="free_delivery">🛵 توصيل مجاني</option>' +
+    '</select>' +
+    '</div>' +
+    '<div id="_pgValueWrap">' +
+    '<div style="font-size:12px;font-weight:700;color:var(--text-muted);margin-bottom:4px">💵 المبلغ (ج.م)</div>' +
+    '<input id="_pgValue" type="number" min="1" placeholder="مثال: 50" style="width:100%;padding:10px;border:1.5px solid var(--border);border-radius:10px;font-size:14px;font-family:inherit;background:var(--bg);color:var(--text);box-sizing:border-box">' +
+    '</div>' +
+    '<div>' +
+    '<div style="font-size:12px;font-weight:700;color:var(--text-muted);margin-bottom:4px">💬 رسالة للعميل (اختياري)</div>' +
+    '<textarea id="_pgMsg" placeholder="مثال: هدية منا بمناسبة عيد ميلادك! 🎂" rows="2" style="width:100%;padding:10px;border:1.5px solid var(--border);border-radius:10px;font-size:13px;font-family:inherit;background:var(--bg);color:var(--text);resize:none;box-sizing:border-box"></textarea>' +
+    '</div>' +
+    '<label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer;background:var(--bg-2,#f5f5f5);padding:10px;border-radius:10px">' +
+    '<input type="checkbox" id="_pgSendWa" checked style="width:16px;height:16px;accent-color:var(--olive)"> فتح رسالة واتساب للعميل تلقائياً' +
+    '</label>' +
+    '<button onclick="_pgSaveGift()" style="padding:12px;background:var(--olive);color:#fff;border:none;border-radius:12px;font-size:15px;font-weight:900;cursor:pointer;font-family:inherit">✅ إرسال الهدية</button>' +
+    '</div></div>';
+  document.body.appendChild(modal);
+}
+
+function _pgResetCreateForm() {
+  var ids = ['_pgPhone','_pgValue','_pgMsg'];
+  ids.forEach(function(id){ var el=document.getElementById(id); if(el) el.value=''; });
+  var prev = document.getElementById('_pgCustomerPreview'); if(prev) prev.textContent='';
+  var chk = document.getElementById('_pgSendWa'); if(chk) chk.checked = true;
+  var sel = document.getElementById('_pgType'); if(sel) sel.value = 'discount_amount';
+  _pgTypeChange();
+}
+
+function _pgTypeChange() {
+  var t = (document.getElementById('_pgType')||{}).value;
+  var wrap = document.getElementById('_pgValueWrap');
+  if (!wrap) return;
+  if (t === 'discount_amount') {
+    wrap.innerHTML = '<div style="font-size:12px;font-weight:700;color:var(--text-muted);margin-bottom:4px">💵 المبلغ (ج.م)</div><input id="_pgValue" type="number" min="1" placeholder="مثال: 50" style="width:100%;padding:10px;border:1.5px solid var(--border);border-radius:10px;font-size:14px;font-family:inherit;background:var(--bg);color:var(--text);box-sizing:border-box">';
+  } else if (t === 'discount_percent') {
+    wrap.innerHTML = '<div style="font-size:12px;font-weight:700;color:var(--text-muted);margin-bottom:4px">📊 نسبة الخصم (%)</div><input id="_pgValue" type="number" min="1" max="100" placeholder="مثال: 20" style="width:100%;padding:10px;border:1.5px solid var(--border);border-radius:10px;font-size:14px;font-family:inherit;background:var(--bg);color:var(--text);box-sizing:border-box">';
+  } else if (t === 'free_product') {
+    wrap.innerHTML = '<div style="font-size:12px;font-weight:700;color:var(--text-muted);margin-bottom:4px">🍽️ اسم المنتج الهدية</div><input id="_pgValue" placeholder="مثال: كوباية قهوة" style="width:100%;padding:10px;border:1.5px solid var(--border);border-radius:10px;font-size:14px;font-family:inherit;background:var(--bg);color:var(--text);box-sizing:border-box">';
+  } else {
+    wrap.innerHTML = '<div style="font-size:12px;color:var(--text-muted);padding:8px;background:var(--bg-2,#f9f9f9);border-radius:8px">🛵 التوصيل المجاني سيُطبَّق تلقائياً على الطلب القادم</div>';
+  }
+}
+
+function _pgLookupCustomer(phone) {
+  var prev = document.getElementById('_pgCustomerPreview'); if (!prev) return;
+  var ph = phone.replace(/\D/g,'');
+  if (ph.length < 8) { prev.textContent = ''; return; }
+  /* ابحث في ordersData */
+  var allOrders = (typeof _getAllOrders === 'function') ? _getAllOrders() : (window.ordersData || []);
+  var order = allOrders.find(function(o){ return (o.phone||'').replace(/\D/g,'') === ph; });
+  if (order) {
+    prev.textContent = '✅ ' + order.name + ' — عدد طلباته: ' + allOrders.filter(function(o){ return (o.phone||'').replace(/\D/g,'') === ph; }).length;
+  } else {
+    prev.textContent = '⚠️ لم يُعثر على عميل بهذا الرقم في الطلبات';
+    prev.style.color = '#e67e22';
+  }
+}
+
+function _pgSaveGift() {
+  var phone = ((document.getElementById('_pgPhone')||{}).value||'').trim();
+  var type  = ((document.getElementById('_pgType')||{}).value||'discount_amount');
+  var value = ((document.getElementById('_pgValue')||{}).value||'').trim();
+  var msg   = ((document.getElementById('_pgMsg')||{}).value||'').trim();
+  var sendWa = document.getElementById('_pgSendWa')?.checked;
+
+  var ph = phone.replace(/\D/g,'');
+  if (!ph || ph.length < 8) { showNotif('❌ ادخل رقم تليفون صحيح'); return; }
+  if (type !== 'free_delivery' && !value) { showNotif('❌ ادخل قيمة الهدية'); return; }
+
+  var typeLabels = { discount_amount: 'خصم '+value+' ج.م', discount_percent: 'خصم '+value+'%', free_product: 'منتج مجاني: '+value, free_delivery: 'توصيل مجاني' };
+  var gift = { id: 'pg_'+Date.now(), phone: ph, type: type, value: value, msg: msg, createdAt: new Date().toISOString(), used: false, usedAt: null };
+
+  /* نحضّر اسم العميل من الطلبات */
+  var allOrders = (typeof _getAllOrders === 'function') ? _getAllOrders() : (window.ordersData || []);
+  var custOrder = allOrders.find(function(o){ return (o.phone||'').replace(/\D/g,'') === ph; });
+  var custName = custOrder ? custOrder.name : ph;
+  gift.customerName = custName;
+
+  if (!db) { showNotif('❌ لا يوجد اتصال بقاعدة البيانات'); return; }
+  db.ref('personal_gifts/' + ph).set(gift).then(function() {
+    showNotif('✅ تم إرسال الهدية لـ ' + custName);
+    document.getElementById('_pgCreateModal').style.display = 'none';
+    _pgLoadAdmin();
+    /* واتساب */
+    if (sendWa) {
+      var waPhone = phone.startsWith('0') ? '2' + phone : phone;
+      var waMsg = '🎀 *هدية خاصة لك من ' + (window.RESTAURANT && RESTAURANT.name ? RESTAURANT.name : 'زمزم') + '!*\n\n' +
+        'يا ' + custName + '، عندنا مفاجأة حلوة ليك 🎉\n\n' +
+        '🎁 *هديتك:* ' + typeLabels[type] + '\n' +
+        (msg ? '💬 ' + msg + '\n\n' : '\n') +
+        '✨ ستُطبَّق الهدية تلقائياً على طلبك القادم — مرة واحدة فقط.\n\n' +
+        'افتح التطبيق وأمتّع نفسك! 😍';
+      window.open('https://wa.me/' + waPhone.replace(/\D/g,'') + '?text=' + encodeURIComponent(waMsg), '_blank');
+    }
+  }).catch(function(){ showNotif('❌ خطأ في الحفظ'); });
+}
+
+/* ══ ADMIN — تحميل وعرض الهدايا المخصصة ══ */
+function _pgLoadAdmin() {
+  if (!db) return;
+  var el = document.getElementById('pgAdminList');
+  if (el) el.innerHTML = '<div style="text-align:center;padding:16px;color:var(--text-muted)">⏳ جاري التحميل...</div>';
+  db.ref('personal_gifts').once('value').then(function(snap) {
+    var gifts = [];
+    snap.forEach(function(child){ var g = child.val(); if(g) gifts.push(g); });
+    gifts.sort(function(a,b){ return (b.createdAt||'') > (a.createdAt||'') ? 1 : -1; });
+    if (!el) return;
+    if (!gifts.length) { el.innerHTML = '<div style="text-align:center;padding:30px;color:var(--text-muted);font-weight:700">لا توجد هدايا مخصصة حتى الآن</div>'; return; }
+    var html = '';
+    gifts.forEach(function(g) {
+      var typeIcon = { discount_amount:'💰', discount_percent:'🏷️', free_product:'🍽️', free_delivery:'🛵' }[g.type] || '🎁';
+      var typeText = { discount_amount:'خصم '+g.value+' ج.م', discount_percent:'خصم '+g.value+'%', free_product:'منتج: '+g.value, free_delivery:'توصيل مجاني' }[g.type] || g.type;
+      var statusBg = g.used ? '#f0fdf4' : '#fffbeb';
+      var statusColor = g.used ? '#16a34a' : '#d97706';
+      var statusText = g.used ? '✅ استُخدمت' : '⏳ لم تُستخدم';
+      html += '<div style="background:var(--white);border-radius:14px;border:1px solid var(--border);padding:14px;margin-bottom:10px">' +
+        '<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px">' +
+        '<div style="flex:1">' +
+        '<div style="font-size:13px;font-weight:900;color:var(--text);margin-bottom:4px">' + typeIcon + ' ' + typeText + '</div>' +
+        '<div style="font-size:12px;color:var(--text-muted);margin-bottom:2px">👤 ' + (g.customerName||g.phone) + ' — 📞 ' + g.phone + '</div>' +
+        (g.msg ? '<div style="font-size:11px;color:var(--text-muted);font-style:italic">💬 ' + g.msg + '</div>' : '') +
+        '<div style="font-size:10px;color:var(--text-muted);margin-top:4px">📅 ' + (g.createdAt ? new Date(g.createdAt).toLocaleString('ar-EG') : '') + '</div>' +
+        (g.usedAt ? '<div style="font-size:10px;color:#16a34a;margin-top:2px">✅ استُخدمت في: ' + new Date(g.usedAt).toLocaleString('ar-EG') + '</div>' : '') +
+        '</div>' +
+        '<div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px">' +
+        '<div style="background:'+statusBg+';color:'+statusColor+';font-size:11px;font-weight:800;padding:4px 10px;border-radius:20px;white-space:nowrap">' + statusText + '</div>' +
+        (!g.used ? '<button onclick="_pgDeleteGift(\''+g.phone+'\')" style="background:#fee2e2;color:#dc2626;border:none;border-radius:8px;font-size:11px;font-weight:800;padding:4px 10px;cursor:pointer;font-family:inherit">🗑️ حذف</button>' : '') +
+        '</div></div></div>';
+    });
+    el.innerHTML = html;
+  }).catch(function(){ if(el) el.innerHTML = '<div style="text-align:center;padding:16px;color:#dc2626">❌ خطأ في التحميل</div>'; });
+}
+
+function _pgDeleteGift(phone) {
+  if (!confirm('حذف الهدية المخصصة لـ ' + phone + '؟')) return;
+  if (db) db.ref('personal_gifts/' + phone).remove().then(function(){ showNotif('✅ تم حذف الهدية'); _pgLoadAdmin(); }).catch(function(){ showNotif('❌ خطأ في الحذف'); });
+}
+
+/* ══════════════════════════════════════════════════════════════
+   🏅 ENGAGEMENT COMPETITIONS — مسابقات التفاعل
+   Firebase: engagement_comps/{id} = { id, name, type, prize{type,value}, startAt, endAt, likesEnabled, status, productTarget? }
+   Firebase: engagement_scores/{compId}/{phone} = { phone, name, score, likes, likedBy{phone:true} }
+   أنواع: most_orders | top_amount | most_product | most_likes
+   ══════════════════════════════════════════════════════════════ */
+
+var _ENG_COMPS = {}; /* cache المسابقات */
+var _engLiveFeedOff = null; /* إيقاف live listener */
+
+function _engRef(path) {
+  if (typeof db !== 'undefined' && db) return db.ref(path ? 'engagement_comps/' + path : 'engagement_comps');
+  return null;
+}
+function _engScoreRef(compId, phone) {
+  if (typeof db !== 'undefined' && db) return db.ref('engagement_scores/' + compId + (phone ? '/' + phone.replace(/\D/g,'') : ''));
+  return null;
+}
+
+/* ══ ADMIN — إنشاء مسابقة التفاعل ══ */
+function _engOpenCreate() {
+  var ex = document.getElementById('_engCreateModal');
+  if (ex) { ex.style.display = 'flex'; return; }
+  var modal = document.createElement('div');
+  modal.id = '_engCreateModal';
+  modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:9999;display:flex;align-items:flex-start;justify-content:center;overflow-y:auto;padding:20px';
+  modal.innerHTML =
+    '<div style="background:var(--bg);border-radius:18px;max-width:460px;width:100%;padding:20px;margin:auto">' +
+    '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">' +
+    '<div style="font-size:16px;font-weight:900;color:var(--text)">🏅 مسابقة تفاعل جديدة</div>' +
+    '<button onclick="document.getElementById(\'_engCreateModal\').style.display=\'none\'" style="background:none;border:none;font-size:20px;cursor:pointer;color:var(--text-muted)">✕</button>' +
+    '</div>' +
+    '<div style="display:flex;flex-direction:column;gap:10px">' +
+    '<input id="_engName" placeholder="اسم المسابقة — مثال: بطل يوليو 🏆" style="padding:10px;border:1.5px solid var(--border);border-radius:10px;font-size:14px;font-family:inherit;background:var(--bg);color:var(--text)">' +
+    '<div>' +
+    '<div style="font-size:12px;font-weight:700;color:var(--text-muted);margin-bottom:4px">🏆 نوع المنافسة</div>' +
+    '<select id="_engType" onchange="_engTypeChange()" style="width:100%;padding:9px;border:1.5px solid var(--border);border-radius:10px;font-size:13px;font-family:inherit;background:var(--bg);color:var(--text)">' +
+    '<option value="most_orders">📦 أكتر طلبات</option>' +
+    '<option value="top_amount">💰 أعلى مبلغ مصروف</option>' +
+    '<option value="most_product">🍽️ أكتر شراء لمنتج معين</option>' +
+    '<option value="most_likes">❤️ أكتر لايكات (تصويت)</option>' +
+    '</select>' +
+    '</div>' +
+    '<div id="_engProductWrap" style="display:none">' +
+    '<div style="font-size:12px;font-weight:700;color:var(--text-muted);margin-bottom:4px">🍽️ اسم المنتج المستهدف</div>' +
+    '<input id="_engProduct" placeholder="مثال: كوباية قهوة" style="width:100%;padding:10px;border:1.5px solid var(--border);border-radius:10px;font-size:14px;font-family:inherit;background:var(--bg);color:var(--text);box-sizing:border-box">' +
+    '</div>' +
+    '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">' +
+    '<div><div style="font-size:12px;font-weight:700;color:var(--text-muted);margin-bottom:4px">📅 من</div>' +
+    '<input type="datetime-local" id="_engStart" style="width:100%;padding:9px;border:1.5px solid var(--border);border-radius:10px;font-size:12px;font-family:inherit;background:var(--bg);color:var(--text);box-sizing:border-box"></div>' +
+    '<div><div style="font-size:12px;font-weight:700;color:var(--text-muted);margin-bottom:4px">📅 إلى</div>' +
+    '<input type="datetime-local" id="_engEnd" style="width:100%;padding:9px;border:1.5px solid var(--border);border-radius:10px;font-size:12px;font-family:inherit;background:var(--bg);color:var(--text);box-sizing:border-box"></div>' +
+    '</div>' +
+    '<div style="border:1.5px solid var(--border);border-radius:12px;padding:12px">' +
+    '<div style="font-size:13px;font-weight:800;color:var(--text);margin-bottom:8px">🎁 الجائزة</div>' +
+    '<select id="_engPrizeType" onchange="_engPrizeChange()" style="width:100%;padding:9px;border:1.5px solid var(--border);border-radius:10px;font-size:13px;font-family:inherit;background:var(--bg);color:var(--text);margin-bottom:8px">' +
+    '<option value="discount_amount">💰 خصم مبلغ (ج.م)</option>' +
+    '<option value="discount_percent">🏷️ خصم نسبة (%)</option>' +
+    '<option value="free_product">🍽️ منتج مجاني</option>' +
+    '<option value="free_delivery">🛵 توصيل مجاني</option>' +
+    '</select>' +
+    '<div id="_engPrizeExtra"><input type="number" id="_engPrizeVal" placeholder="القيمة" min="1" style="width:100%;padding:9px;border:1.5px solid var(--border);border-radius:10px;font-size:13px;font-family:inherit;background:var(--bg);color:var(--text);box-sizing:border-box"></div>' +
+    '</div>' +
+    '<label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer;background:var(--bg-2,#f5f5f5);padding:10px;border-radius:10px">' +
+    '<input type="checkbox" id="_engLikes" style="width:16px;height:16px;accent-color:var(--olive)"> ❤️ تفعيل نظام اللايكات (كل عميل يصوّت مرة واحدة لكل مشترك)' +
+    '</label>' +
+    '<button onclick="_engSaveNew()" style="padding:12px;background:var(--olive);color:#fff;border:none;border-radius:12px;font-size:15px;font-weight:900;cursor:pointer;font-family:inherit">✅ إطلاق المسابقة</button>' +
+    '</div></div>';
+  document.body.appendChild(modal);
+  /* تحديد تاريخ افتراضي */
+  var now = new Date(); now.setMinutes(0,0,0);
+  var end = new Date(now); end.setDate(end.getDate()+7);
+  var fmt = function(d){ return d.toISOString().slice(0,16); };
+  var sEl = document.getElementById('_engStart'); if(sEl) sEl.value = fmt(now);
+  var eEl = document.getElementById('_engEnd'); if(eEl) eEl.value = fmt(end);
+}
+
+function _engTypeChange() {
+  var t = (document.getElementById('_engType')||{}).value;
+  var pw = document.getElementById('_engProductWrap');
+  if (pw) pw.style.display = (t === 'most_product') ? 'block' : 'none';
+}
+
+function _engPrizeChange() {
+  var t = (document.getElementById('_engPrizeType')||{}).value;
+  var ex = document.getElementById('_engPrizeExtra');
+  if (!ex) return;
+  if (t === 'free_delivery') ex.innerHTML = '<div style="font-size:12px;color:var(--text-muted);padding:6px">التوصيل المجاني سيُطبَّق تلقائياً</div>';
+  else if (t === 'free_product') ex.innerHTML = '<input id="_engPrizeVal" placeholder="اسم المنتج الهدية" style="width:100%;padding:9px;border:1.5px solid var(--border);border-radius:10px;font-size:13px;font-family:inherit;background:var(--bg);color:var(--text);box-sizing:border-box">';
+  else ex.innerHTML = '<input type="number" id="_engPrizeVal" placeholder="القيمة" min="1" style="width:100%;padding:9px;border:1.5px solid var(--border);border-radius:10px;font-size:13px;font-family:inherit;background:var(--bg);color:var(--text);box-sizing:border-box">';
+}
+
+function _engSaveNew() {
+  var name = ((document.getElementById('_engName')||{}).value||'').trim();
+  var type = (document.getElementById('_engType')||{}).value || 'most_orders';
+  var product = ((document.getElementById('_engProduct')||{}).value||'').trim();
+  var startAt = (document.getElementById('_engStart')||{}).value;
+  var endAt = (document.getElementById('_engEnd')||{}).value;
+  var prizeType = (document.getElementById('_engPrizeType')||{}).value || 'discount_amount';
+  var prizeVal = ((document.getElementById('_engPrizeVal')||{}).value||'').trim();
+  var likesEnabled = document.getElementById('_engLikes')?.checked || false;
+  if (!name) { showNotif('❌ اكتب اسم المسابقة'); return; }
+  if (!startAt || !endAt) { showNotif('❌ حدد تاريخ البداية والنهاية'); return; }
+  if (new Date(endAt) <= new Date(startAt)) { showNotif('❌ تاريخ النهاية لازم يكون بعد البداية'); return; }
+  if (type === 'most_product' && !product) { showNotif('❌ حدد اسم المنتج'); return; }
+  if (prizeType !== 'free_delivery' && !prizeVal) { showNotif('❌ حدد قيمة الجائزة'); return; }
+  var id = 'eng_' + Date.now();
+  var comp = {
+    id: id, name: name, type: type, productTarget: product || null,
+    startAt: new Date(startAt).toISOString(), endAt: new Date(endAt).toISOString(),
+    prize: { type: prizeType, value: prizeVal },
+    likesEnabled: !!likesEnabled, status: 'active', createdAt: new Date().toISOString()
+  };
+  var ref = _engRef(id);
+  if (ref) {
+    ref.set(comp).then(function() {
+      showNotif('✅ تم إطلاق المسابقة');
+      document.getElementById('_engCreateModal').style.display = 'none';
+      _engLoadAdmin();
+      _engCalcScores(comp); /* احسب النتائج الأولية فوراً */
+    }).catch(function(){ showNotif('❌ خطأ في الحفظ'); });
+  } else { showNotif('❌ لا يوجد اتصال بقاعدة البيانات'); }
+}
+
+/* ══ احتساب النتائج من بيانات الطلبات ══ */
+function _engCalcScores(comp) {
+  if (!comp || !comp.id) return;
+  var allOrders = (typeof _getAllOrders === 'function') ? _getAllOrders() : (window.ordersData || []);
+  var start = new Date(comp.startAt).getTime();
+  var end = new Date(comp.endAt).getTime();
+  var filtered = allOrders.filter(function(o){
+    if (o.status === 'cancelled') return false;
+    var t = o.timestamp || 0;
+    return t >= start && t <= end;
+  });
+  var scores = {}; /* phone → { phone, name, score } */
+  filtered.forEach(function(o) {
+    var ph = (o.phone||'').replace(/\D/g,'');
+    if (!ph) return;
+    if (!scores[ph]) scores[ph] = { phone: ph, name: o.name || ph, score: 0, likes: 0, likedBy: {} };
+    if (comp.type === 'most_orders') scores[ph].score += 1;
+    else if (comp.type === 'top_amount') scores[ph].score += Number(o.total) || 0;
+    else if (comp.type === 'most_product') {
+      var target = (comp.productTarget||'').trim().toLowerCase();
+      (o.items||[]).forEach(function(it){ if ((it.name||'').toLowerCase().indexOf(target)>=0) scores[ph].score += it.qty||1; });
+    }
+    /* most_likes: الـ score بيعتمد على اللايكات — مش الطلبات */
+  });
+  /* حفظ النتائج في Firebase */
+  if (!db) return;
+  var updates = {};
+  Object.values(scores).forEach(function(s){ updates['engagement_scores/'+comp.id+'/'+s.phone] = s; });
+  if (Object.keys(updates).length) db.ref().update(updates).catch(function(){});
+}
+
+/* ══ ADMIN — تحميل وعرض مسابقات التفاعل ══ */
+function _engLoadAdmin() {
+  if (!db) return;
+  var el = document.getElementById('engAdminList');
+  if (el) el.innerHTML = '<div style="text-align:center;padding:16px;color:var(--text-muted)">⏳ جاري التحميل...</div>';
+  var ref = _engRef();
+  if (!ref) { if(el) el.innerHTML='<div style="padding:16px;color:#dc2626">❌ لا يوجد اتصال</div>'; return; }
+  ref.once('value').then(function(snap) {
+    var comps = [];
+    snap.forEach(function(child){ var c=child.val(); if(c) comps.push(c); });
+    _ENG_COMPS = {};
+    comps.forEach(function(c){ _ENG_COMPS[c.id] = c; });
+    comps.sort(function(a,b){ return (b.createdAt||'')>(a.createdAt||'')?1:-1; });
+    if (!el) return;
+    if (!comps.length) { el.innerHTML='<div style="text-align:center;padding:30px;color:var(--text-muted);font-weight:700">لا توجد مسابقات تفاعل حتى الآن</div>'; return; }
+    var html = '';
+    comps.forEach(function(c) {
+      var now = Date.now();
+      var isActive = c.status==='active' && new Date(c.endAt).getTime()>now;
+      var ended = new Date(c.endAt).getTime() <= now;
+      var typeLabel = { most_orders:'📦 أكتر طلبات', top_amount:'💰 أعلى مبلغ', most_product:'🍽️ أكتر شراء: '+(c.productTarget||''), most_likes:'❤️ أكتر لايكات' }[c.type]||c.type;
+      var prizeLabel = { discount_amount:'خصم '+c.prize.value+' ج.م', discount_percent:'خصم '+c.prize.value+'%', free_product:'منتج: '+c.prize.value, free_delivery:'توصيل مجاني' }[(c.prize||{}).type]||'';
+      var statusColor = isActive ? '#16a34a' : (ended ? '#64748b' : '#d97706');
+      var statusText = isActive ? '🟢 نشطة' : (ended ? '🏁 انتهت' : '⏸️ موقوفة');
+      html += '<div style="background:var(--white);border-radius:14px;border:1px solid var(--border);padding:14px;margin-bottom:12px">' +
+        '<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px">' +
+        '<div><div style="font-size:14px;font-weight:900;color:var(--text)">' + c.name + '</div>' +
+        '<div style="font-size:12px;color:var(--text-muted);margin-top:2px">' + typeLabel + (c.likesEnabled?' — ❤️ لايكات مفعّلة':'') + '</div>' +
+        '<div style="font-size:12px;color:var(--olive);font-weight:700;margin-top:2px">🎁 الجائزة: ' + prizeLabel + '</div>' +
+        '<div style="font-size:11px;color:var(--text-muted);margin-top:4px">من: ' + new Date(c.startAt).toLocaleDateString('ar-EG') + ' — إلى: ' + new Date(c.endAt).toLocaleDateString('ar-EG') + '</div>' +
+        '</div>' +
+        '<div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px">' +
+        '<div style="background:'+(isActive?'#f0fdf4':ended?'#f1f5f9':'#fffbeb')+';color:'+statusColor+';font-size:11px;font-weight:800;padding:4px 10px;border-radius:20px">' + statusText + '</div>' +
+        '</div></div>' +
+        '<div style="display:flex;gap:6px;flex-wrap:wrap">' +
+        '<button onclick="_engShowLeaderboard(\''+c.id+'\')" style="flex:1;padding:8px;background:#e0f2fe;color:#0284c7;border:none;border-radius:8px;font-size:12px;font-weight:800;cursor:pointer;font-family:inherit">🏆 الترتيب</button>' +
+        (isActive ? '<button onclick="_engRecalc(\''+c.id+'\')" style="flex:1;padding:8px;background:#f0fdf4;color:#16a34a;border:none;border-radius:8px;font-size:12px;font-weight:800;cursor:pointer;font-family:inherit">🔄 تحديث النتائج</button>' : '') +
+        (ended && c.status!=='done' ? '<button onclick="_engFinalize(\''+c.id+'\')" style="flex:1;padding:8px;background:linear-gradient(135deg,#d97706,#f59e0b);color:#fff;border:none;border-radius:8px;font-size:12px;font-weight:800;cursor:pointer;font-family:inherit">🏅 إعلان الفائز</button>' : '') +
+        '<button onclick="_engDelete(\''+c.id+'\')" style="padding:8px 12px;background:#fee2e2;color:#dc2626;border:none;border-radius:8px;font-size:12px;font-weight:800;cursor:pointer;font-family:inherit">🗑️</button>' +
+        '</div></div>';
+    });
+    el.innerHTML = html;
+  }).catch(function(){ if(el) el.innerHTML='<div style="padding:16px;color:#dc2626;text-align:center">❌ خطأ في التحميل</div>'; });
+}
+
+/* إعادة احتساب النتائج لمسابقة بعينها */
+function _engRecalc(compId) {
+  var comp = _ENG_COMPS[compId];
+  if (!comp) { showNotif('❌ لم يُعثر على المسابقة'); return; }
+  showNotif('🔄 جاري تحديث النتائج...');
+  _engCalcScores(comp);
+  setTimeout(function(){ showNotif('✅ تم تحديث النتائج'); }, 1500);
+}
+
+/* عرض الليدربورد للأدمن */
+function _engShowLeaderboard(compId) {
+  if (!db) return;
+  var comp = _ENG_COMPS[compId];
+  var compName = comp ? comp.name : compId;
+  var ref = _engScoreRef(compId);
+  if (!ref) return;
+  ref.once('value').then(function(snap) {
+    var players = [];
+    snap.forEach(function(child){ var v=child.val(); if(v) players.push(v); });
+    players.sort(function(a,b){ return (b.score||0)-(a.score||0); });
+    var modal = document.getElementById('_engLeaderModal') || (function(){
+      var m = document.createElement('div');
+      m.id = '_engLeaderModal';
+      m.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:9999;display:flex;align-items:flex-start;justify-content:center;overflow-y:auto;padding:20px';
+      document.body.appendChild(m);
+      return m;
+    })();
+    var medals = ['🥇','🥈','🥉'];
+    var rows = players.slice(0,20).map(function(p,i){
+      return '<div style="display:flex;align-items:center;gap:10px;padding:10px;background:var(--white);border-radius:10px;margin-bottom:6px">' +
+        '<div style="font-size:20px;width:28px;text-align:center">' + (medals[i]||'#'+(i+1)) + '</div>' +
+        '<div style="flex:1"><div style="font-size:13px;font-weight:800;color:var(--text)">' + (p.name||p.phone) + '</div>' +
+        '<div style="font-size:11px;color:var(--text-muted)">📞 ' + p.phone + '</div></div>' +
+        '<div style="font-size:14px;font-weight:900;color:var(--olive)">' + (Math.round((p.score||0)*10)/10) + (comp&&comp.type==='top_amount'?' ج.م':comp&&comp.type==='most_likes'?' ❤️':comp&&comp.type==='most_orders'?' طلب':' مرة') + '</div>' +
+        '</div>';
+    }).join('');
+    modal.style.display = 'flex';
+    modal.innerHTML = '<div style="background:var(--bg);border-radius:18px;max-width:460px;width:100%;padding:20px;margin:auto">' +
+      '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">' +
+      '<div style="font-size:15px;font-weight:900;color:var(--text)">🏆 ترتيب: ' + compName + '</div>' +
+      '<button onclick="document.getElementById(\'_engLeaderModal\').style.display=\'none\'" style="background:none;border:none;font-size:20px;cursor:pointer;color:var(--text-muted)">✕</button>' +
+      '</div>' +
+      (players.length ? rows : '<div style="text-align:center;padding:24px;color:var(--text-muted);font-weight:700">لا يوجد مشتركون بعد</div>') +
+      '</div>';
+  }).catch(function(){ showNotif('❌ خطأ في تحميل الترتيب'); });
+}
+
+/* إعلان الفائز وإرسال الجائزة كهدية شخصية */
+function _engFinalize(compId) {
+  var comp = _ENG_COMPS[compId];
+  if (!comp) { showNotif('❌ لم يُعثر على المسابقة'); return; }
+  if (!db) return;
+  _engScoreRef(compId).once('value').then(function(snap) {
+    var players = [];
+    snap.forEach(function(child){ var v=child.val(); if(v) players.push(v); });
+    players.sort(function(a,b){ return (b.score||0)-(a.score||0); });
+    if (!players.length) { showNotif('❌ لا يوجد مشتركون'); return; }
+    var winner = players[0];
+    if (!confirm('الفائز هو: ' + (winner.name||winner.phone) + ' — برصيد ' + Math.round(winner.score||0) + '\nهل تريد إرسال الجائزة له كهدية شخصية؟')) return;
+    var prize = comp.prize || {};
+    var giftData = {
+      id: 'eng_prize_' + compId, phone: winner.phone, customerName: winner.name || winner.phone,
+      type: prize.type || 'discount_amount', value: prize.value || '',
+      msg: '🏅 مبروك فوزك في مسابقة "' + comp.name + '"! 🎉',
+      createdAt: new Date().toISOString(), used: false, usedAt: null
+    };
+    db.ref('personal_gifts/' + winner.phone).set(giftData).then(function() {
+      db.ref('engagement_comps/' + compId).update({ status: 'done', winnerId: winner.phone, winnerName: winner.name||winner.phone }).catch(function(){});
+      showNotif('✅ تم إرسال الجائزة للفائز: ' + (winner.name||winner.phone));
+      _engLoadAdmin();
+      /* فتح واتساب للفائز */
+      var prizeLabel = { discount_amount:'خصم '+prize.value+' ج.م', discount_percent:'خصم '+prize.value+'%', free_product:'منتج مجاني: '+prize.value, free_delivery:'توصيل مجاني' }[prize.type]||'';
+      var waMsg = '🏅 *مبروك عليك الفوز في مسابقة "' + comp.name + '"!* 🎉\n\n' +
+        'يا ' + (winner.name||winner.phone) + '، أنت البطل! 🥇\n\n' +
+        '🎁 *جائزتك:* ' + prizeLabel + '\n\n' +
+        '✨ ستُطبَّق الجائزة تلقائياً على طلبك القادم. افتح التطبيق واطلب! 😍';
+      var waPhone = winner.phone.startsWith('0') ? '2'+winner.phone : winner.phone;
+      window.open('https://wa.me/' + waPhone.replace(/\D/g,'') + '?text=' + encodeURIComponent(waMsg), '_blank');
+    }).catch(function(){ showNotif('❌ خطأ في إرسال الجائزة'); });
+  }).catch(function(){ showNotif('❌ خطأ في تحميل النتائج'); });
+}
+
+function _engDelete(compId) {
+  if (!confirm('حذف المسابقة؟ سيتم حذف النتائج أيضاً')) return;
+  if (!db) return;
+  db.ref('engagement_comps/' + compId).remove();
+  db.ref('engagement_scores/' + compId).remove();
+  setTimeout(_engLoadAdmin, 500);
+  showNotif('✅ تم حذف المسابقة');
+}
+
+/* ══ العميل — تحميل المسابقات النشطة وعرضها ══ */
+function _engLoadForCustomer() {
+  if (!db) return;
+  var ref = _engRef();
+  if (!ref) return;
+  ref.once('value').then(function(snap) {
+    var comps = [];
+    snap.forEach(function(child){ var c=child.val(); if(c && c.status==='active' && new Date(c.endAt).getTime()>Date.now()) comps.push(c); });
+    _ENG_COMPS = {};
+    comps.forEach(function(c){ _ENG_COMPS[c.id] = c; });
+    _engRenderCustomerSection(comps);
+  }).catch(function(){});
+}
+
+/* عرض قسم المسابقات في الصفحة الرئيسية للعميل */
+function _engRenderCustomerSection(comps) {
+  var container = document.getElementById('_engCustomerSection');
+  if (!container) return;
+  if (!comps || !comps.length) { container.style.display='none'; return; }
+  container.style.display = 'block';
+  var html = '<div style="padding:12px 16px 4px;font-size:14px;font-weight:900;color:var(--text)">🏅 مسابقات التفاعل</div>';
+  comps.forEach(function(c) {
+    var endTs = new Date(c.endAt).getTime();
+    var diffMs = endTs - Date.now();
+    var diffH = Math.floor(diffMs/3600000);
+    var diffD = Math.floor(diffH/24);
+    var countdown = diffD>0 ? 'باقي '+diffD+' يوم' : diffH>0 ? 'باقي '+diffH+' ساعة' : 'ينتهي قريباً';
+    var typeLabel = { most_orders:'📦 أكتر طلبات', top_amount:'💰 أعلى مبلغ', most_product:'🍽️ أكتر شراء: '+(c.productTarget||''), most_likes:'❤️ أكتر لايكات' }[c.type]||c.type;
+    var prizeLabel = { discount_amount:'خصم '+c.prize.value+' ج.م', discount_percent:'خصم '+c.prize.value+'%', free_product:'منتج مجاني: '+c.prize.value, free_delivery:'توصيل مجاني' }[(c.prize||{}).type]||'';
+    html += '<div style="background:var(--white);border-radius:14px;border:1.5px solid var(--border);margin:0 16px 12px;overflow:hidden">' +
+      '<div style="background:linear-gradient(135deg,#1e40af,#3b82f6);padding:12px 14px;color:#fff">' +
+      '<div style="display:flex;justify-content:space-between;align-items:center">' +
+      '<div style="font-size:14px;font-weight:900">' + c.name + '</div>' +
+      '<div style="font-size:11px;background:rgba(255,255,255,.25);padding:3px 10px;border-radius:20px;font-weight:700">⏱️ ' + countdown + '</div>' +
+      '</div>' +
+      '<div style="font-size:12px;opacity:.9;margin-top:4px">' + typeLabel + '</div>' +
+      '<div style="font-size:12px;font-weight:700;margin-top:2px;opacity:.95">🎁 الجائزة: ' + prizeLabel + '</div>' +
+      '</div>' +
+      '<div style="padding:10px 14px">' +
+      '<button onclick="_engOpenLeaderboardCustomer(\''+c.id+'\')" style="width:100%;padding:10px;background:#f0f9ff;color:#0284c7;border:1.5px solid #bae6fd;border-radius:10px;font-size:13px;font-weight:800;cursor:pointer;font-family:inherit">🏆 شوف الترتيب الحالي</button>' +
+      '</div></div>';
+  });
+  container.innerHTML = html;
+}
+
+/* ليدربورد العميل */
+function _engOpenLeaderboardCustomer(compId) {
+  if (!db) return;
+  var comp = _ENG_COMPS[compId];
+  var myPh = currentUser ? (currentUser.phone||'').replace(/\D/g,'') : '';
+  _engScoreRef(compId).once('value').then(function(snap) {
+    var players = [];
+    snap.forEach(function(child){ var v=child.val(); if(v) players.push(v); });
+    players.sort(function(a,b){ return (b.score||0)-(a.score||0); });
+    var top10 = players.slice(0,10);
+    var myRank = myPh ? players.findIndex(function(p){ return p.phone===myPh; }) : -1;
+    var myPlayer = myRank>=0 ? players[myRank] : null;
+    var medals = ['🥇','🥈','🥉'];
+    var modal = document.getElementById('_engCustLeaderModal') || (function(){
+      var m=document.createElement('div'); m.id='_engCustLeaderModal';
+      m.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:9998;display:flex;align-items:flex-start;justify-content:center;overflow-y:auto;padding:20px';
+      document.body.appendChild(m); return m;
+    })();
+    var rows = top10.map(function(p,i){
+      var isMe = p.phone === myPh;
+      /* للعميل: نخفي المبلغ/العدد للمسابقات الحساسة — نعرض المركز بس */
+      var showScore = comp && (comp.type==='most_likes'); /* اللايكات بس تظهر */
+      var scoreDisplay = showScore ? ((Math.round((p.score||0)*10)/10) + ' ❤️') : '';
+      return '<div style="display:flex;align-items:center;gap:10px;padding:10px;background:'+(isMe?'#f0fdf4':'var(--white)')+';border-radius:10px;margin-bottom:6px;'+(isMe?'border:1.5px solid #22c55e':'')+'">' +
+        '<div style="font-size:20px;width:28px;text-align:center">' + (medals[i]||'#'+(i+1)) + '</div>' +
+        '<div style="flex:1"><div style="font-size:13px;font-weight:800;color:var(--text)">' + (p.name||p.phone) + (isMe?' (أنت)':'') + '</div></div>' +
+        (scoreDisplay ? '<div style="font-size:14px;font-weight:900;color:var(--olive)">' + scoreDisplay + '</div>' : '') +
+        (comp&&comp.likesEnabled ? (
+  !isMe && myPh
+    ? '<button id="likebtn_'+compId+'_'+p.phone+'" onclick="_engLike(\''+compId+'\',\''+p.phone+'\',this)" style="position:relative;background:linear-gradient(135deg,#fff0f0,#ffe4e4);color:#dc2626;border:1.5px solid #fca5a5;border-radius:20px;font-size:12px;font-weight:900;padding:5px 12px;cursor:pointer;font-family:inherit;display:flex;align-items:center;gap:4px;transition:all .2s;box-shadow:0 2px 8px rgba(220,38,38,.15)"><span style="font-size:16px">❤️</span><span class="_lk_cnt_'+p.phone+'">' + (p.likes||0) + '</span></button>'
+    : '<div style="display:flex;align-items:center;gap:4px;background:linear-gradient(135deg,#fff0f0,#ffe4e4);border:1.5px solid #fca5a5;border-radius:20px;padding:5px 12px"><span style="font-size:14px">' + (isMe?'💖':'❤️') + '</span><span style="font-size:12px;font-weight:900;color:#dc2626;min-width:12px">' + (p.likes||0) + '</span></div>'
+) : '') +
+        '</div>';
+    }).join('');
+    /* مركز العميل — بدون عرض رقم المبلغ أو عدد الطلبات */ 
+    var myRankHtml = (myPlayer && myRank>=10) ? '<div style="padding:10px;background:#fffbeb;border-radius:10px;margin-top:8px;font-size:13px;font-weight:800;color:#d97706">مركزك الحالي: #'+(myRank+1)+'</div>' : '';
+    modal.style.display = 'flex';
+    modal.innerHTML = '<div style="background:var(--bg);border-radius:18px;max-width:460px;width:100%;padding:20px;margin:auto">' +
+      '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">' +
+      '<div style="font-size:15px;font-weight:900;color:var(--text)">🏆 ' + (comp?comp.name:compId) + '</div>' +
+      '<button onclick="document.getElementById(\'_engCustLeaderModal\').style.display=\'none\'" style="background:none;border:none;font-size:20px;cursor:pointer;color:var(--text-muted)">✕</button>' +
+      '</div>' +
+      (top10.length ? rows + myRankHtml : '<div style="text-align:center;padding:24px;color:var(--text-muted);font-weight:700">لا يوجد مشتركون بعد — طلّب وكن الأول!</div>') +
+      '</div>';
+  }).catch(function(){ showNotif('❌ خطأ في تحميل الترتيب'); });
+}
+
+/* نظام اللايكات */
+function _engLike(compId, targetPhone, btn) {
+  if (!db || !currentUser) { showNotif('📱 سجّل بياناتك الأول'); return; }
+  var myPh = (currentUser.phone||'').replace(/\D/g,'');
+  if (!myPh) { showNotif('📱 سجّل بياناتك الأول'); return; }
+  if (myPh === targetPhone) { showNotif('😄 ما تقدرش تعمل لايك لنفسك'); return; }
+  if (!btn || btn.disabled) { showNotif('👍 عملت لايك قبل كده'); return; }
+  var likeRef = db.ref('engagement_scores/'+compId+'/'+targetPhone+'/likedBy/'+myPh);
+  likeRef.once('value').then(function(snap) {
+    if (snap.val()) {
+      /* سبق عمل لايك — أظهر أنيميشن رفض خفيف */
+      if (btn) { btn.style.animation='none'; setTimeout(function(){ btn.style.animation='_likePop .3s ease'; },10); }
+      showNotif('👍 عملت لايك قبل كده');
+      return;
+    }
+    /* === أنيميشن فوري قبل Firebase === */
+    if (btn) {
+      btn.disabled = true;
+      /* 1) pop animation على الزرار */
+      btn.style.animation = '_likePop .5s cubic-bezier(.36,.07,.19,.97)';
+      btn.classList.add('_like-done');
+      /* 2) قلب طايرة */
+      var heart = document.createElement('span');
+      heart.textContent = '❤️';
+      heart.style.cssText = 'position:absolute;top:-4px;left:50%;transform:translateX(-50%);font-size:22px;pointer-events:none;animation:_floatHeart .8s ease forwards;z-index:99;';
+      btn.style.position = 'relative';
+      btn.appendChild(heart);
+      setTimeout(function(){ if(heart.parentNode) heart.parentNode.removeChild(heart); }, 800);
+      /* 3) ripple */
+      var ripple = document.createElement('span');
+      ripple.style.cssText = 'position:absolute;inset:0;border-radius:20px;background:rgba(220,38,38,.3);pointer-events:none;animation:_likeRipple .6s ease forwards;';
+      btn.appendChild(ripple);
+      setTimeout(function(){ if(ripple.parentNode) ripple.parentNode.removeChild(ripple); }, 600);
+      /* 4) تحديث العداد فوراً */
+      var cntEl = btn.querySelector('._lk_cnt_'+targetPhone);
+      if (cntEl) {
+        var v = parseInt(cntEl.textContent)||0;
+        cntEl.textContent = v+1;
+        cntEl.style.animation = 'none';
+        setTimeout(function(){ cntEl.style.animation = '_likeHeart .4s ease'; }, 10);
+      }
+    }
+    /* === Firebase في الخلفية === */
+    likeRef.set(true).then(function() {
+      db.ref('engagement_scores/'+compId+'/'+targetPhone).transaction(function(curr) {
+        if (!curr) return curr;
+        curr.likes = (curr.likes||0) + 1;
+        if (curr.score !== undefined) curr.score = (curr.score||0) + 1;
+        return curr;
+      }).catch(function(){});
+    }).catch(function(){ showNotif('❌ خطأ في التصويت'); });
+  }).catch(function(){});
+}
+
+/* تحديث scores لما يجي أوردر جديد (يُستدعى من confirmFinalOrder) */
+function _engUpdateScoreOnOrder(order) {
+  if (!db || !order) return;
+  var ph = (order.phone||'').replace(/\D/g,'');
+  if (!ph) return;
+  /* لو _ENG_COMPS فارغة (أول فتح) — حمّل من Firebase ثم حدّث */
+  if (!Object.keys(_ENG_COMPS).length) {
+    var ref = _engRef(); if (!ref) return;
+    ref.once('value').then(function(snap) {
+      snap.forEach(function(child){ var c=child.val(); if(c) _ENG_COMPS[c.id]=c; });
+      _engUpdateScoreOnOrder(order); /* retry بعد التحميل */
+    }).catch(function(){});
+    return;
+  }
+  var now = Date.now();
+  Object.values(_ENG_COMPS).forEach(function(comp) {
+    if (comp.status!=='active') return;
+    if (new Date(comp.startAt).getTime()>now || new Date(comp.endAt).getTime()<now) return;
+    var ref = _engScoreRef(comp.id, ph);
+    if (!ref) return;
+    ref.transaction(function(curr) {
+      if (!curr) curr = { phone: ph, name: order.name||ph, score: 0, likes: 0, likedBy: {} };
+      if (comp.type==='most_orders') curr.score = (curr.score||0)+1;
+      else if (comp.type==='top_amount') curr.score = (curr.score||0)+(Number(order.total)||0);
+      else if (comp.type==='most_product') {
+        var target = (comp.productTarget||'').trim().toLowerCase();
+        (order.items||[]).forEach(function(it){ if((it.name||'').toLowerCase().indexOf(target)>=0) curr.score=(curr.score||0)+(it.qty||1); });
+      }
+      curr.name = order.name || curr.name || ph;
+      return curr;
+    }).catch(function(){});
+  });
+}
+
 function cancelOrderFromReview() {
   if (!_pendingOrderForReview) { closeOrderReview(); return; }
   const orderId = _pendingOrderForReview.id;
@@ -14053,8 +14876,18 @@ function redeemLoyaltyPoints(phone, cartTotal) {
 
   if (discount <= 0) return 0;
 
-  // خصم النقاط
-  const usedPoints = Math.ceil(discount / (LOYALTY_SETTINGS.redeemValue / LOYALTY_SETTINGS.redeemThreshold));
+  // 🔧 إصلاح: usedPoints = عدد الوحدات المستخدمة × threshold
+  // (كل وحدة = threshold نقطة = redeemValue جنيه)
+  // الطريقة القديمة كانت: Math.ceil(discount / ratio) — بتخصم نقاط أكثر من اللازم
+  // لما يكون discount مقيّد بـ 50% من الفاتورة وأقل من redeemValue الكاملة
+  const _redeemVal = LOYALTY_SETTINGS.redeemValue || 50;
+  const _redeemThr = LOYALTY_SETTINGS.redeemThreshold || 1000;
+  const units = Math.floor(discount / _redeemVal);           // عدد الوحدات الكاملة
+  const usedPoints = units * _redeemThr;                      // النقاط المخصومة (مضاعف صحيح)
+  const actualDiscount = units * _redeemVal;                  // الخصم الفعلي (مضاعف صحيح)
+
+  if (usedPoints <= 0) return 0;
+
   const data = getLoyaltyData(phone);
   data.points = Math.max(0, (data.points || 0) - usedPoints);
   data.redeemed = (data.redeemed || 0) + usedPoints;
@@ -14067,11 +14900,11 @@ function redeemLoyaltyPoints(phone, cartTotal) {
       phone: (phone||'').replace(/\D/g,''),
       name: (typeof currentUser !== 'undefined' && currentUser?.name) || '',
       points: usedPoints,
-      discount: discount,
+      discount: actualDiscount,
       date: new Date().toISOString()
     }).catch(function(){});
   }
-  return discount;
+  return actualDiscount;
 }
 
 // واجهة العميل — بطاقة النقاط
@@ -15409,7 +16242,7 @@ let _compModalOpen = false;
     if (tab === 'competitions') {
       document.querySelectorAll('.admin-tabs button').forEach(b => b.classList.remove('active'));
       el.classList.add('active');
-      ['orders','cashier','bookings','menu','addons','offers','settings','notify','ads','agents','block','stats','loyalty'].forEach(t => {
+      ['orders','cashier','bookings','menu','addons','offers','settings','notify','ads','agents','block','stats','loyalty','vip-gifts','personal-gifts','engagement','mgmt-reports'].forEach(t => {
         const e = document.getElementById('tab-' + t); if (e) e.style.display = 'none';
       });
       if (compTab) { compTab.style.display = 'block'; _compRenderAdmin(); }
@@ -17120,6 +17953,10 @@ function renderLoyaltyAdmin() {
         '<input type="number" id="addPts_' + e.phone + '" placeholder="عدد النقاط" min="1" style="flex:1;padding:7px 10px;border:1.5px solid var(--border);border-radius:8px;font-size:12px;font-family:inherit;text-align:center"/>' +
         '<button onclick="_adminAddPoints(\'' + e.phone + '\',\'' + e.name.replace(/'/g,"\\'") + '\')" style="padding:7px 14px;background:var(--olive);color:#fff;border:none;border-radius:8px;font-size:11px;font-weight:800;cursor:pointer;font-family:inherit;white-space:nowrap">🎁 أضف نقاط</button>' +
       '</div>' +
+      '<div style="display:flex;gap:6px;margin-top:6px;align-items:center">' +
+        '<input type="number" id="fixRedeem_' + e.phone + '" placeholder="القيمة الصحيحة للمستبدل" min="0" style="flex:1;padding:7px 10px;border:1.5px solid #fde68a;border-radius:8px;font-size:12px;font-family:inherit;text-align:center;background:#fffbeb"/>' +
+        '<button onclick="_adminFixRedeemed(\'' + e.phone + '\',\'' + e.name.replace(/'/g,"\\'") + '\')" style="padding:7px 12px;background:#d97706;color:#fff;border:none;border-radius:8px;font-size:11px;font-weight:800;cursor:pointer;font-family:inherit;white-space:nowrap" title="اكتب الرقم الصحيح للمستبدل — الفرق هيتضاف للرصيد تلقائياً">✏️ صحّح المستبدل</button>' +
+      '</div>' +
     '</div>';
   }).join('');
 }
@@ -17166,6 +18003,59 @@ function _adminAddPoints(phone, name) {
       '*' + restName + '* 🍽️';
     window.open('https://wa.me/' + wa + '?text=' + encodeURIComponent(msg), '_blank');
   }
+}
+
+/* === الأدمن يصحح النقاط المستبدلة ===
+   المنطق: الأدمن بيكتب القيمة الصحيحة للمستبدل (مش الفرق)
+   الفرق = (redeemed الحالي) - (القيمة الصحيحة)
+   لو الفرق موجب → في نقاط اتخصمت زيادة → نرجّعها للرصيد
+   لو الفرق سالب → في نقاط ناقصة من المستبدل → نخصمها من الرصيد
+*/
+function _adminFixRedeemed(phone, name) {
+  if (adminRoleType !== 'admin') { showNotif('⚠️ للأدمن فقط'); return; }
+  var input = document.getElementById('fixRedeem_' + phone);
+  if (!input) return;
+  var correctRedeemed = parseInt(input.value);
+  if (isNaN(correctRedeemed) || correctRedeemed < 0) { showNotif('⚠️ اكتب القيمة الصحيحة للمستبدل (0 أو أكثر)'); return; }
+
+  var p = phone.replace(/\D/g,'');
+  var data = getLoyaltyData(p);
+  var currentRedeemed = data.redeemed || 0;
+  var currentPoints   = data.points   || 0;
+
+  // الفرق: كام نقطة اتخصمت زيادة (أو ناقص)
+  var diff = currentRedeemed - correctRedeemed; // موجب = اتخصم زيادة → نرجّع للرصيد
+
+  if (diff === 0) { showNotif('✅ المستبدل صح بالفعل — لا يوجد تغيير'); input.value = ''; return; }
+
+  var newPoints   = Math.max(0, currentPoints + diff);
+  var newRedeemed = correctRedeemed;
+
+  if (!confirm(
+    'تصحيح نقاط: ' + name + '\n\n' +
+    'المستبدل الحالي:  ' + currentRedeemed + ' نقطة\n' +
+    'المستبدل الصحيح: ' + correctRedeemed + ' نقطة\n' +
+    'الفرق: ' + (diff > 0 ? '+' : '') + diff + ' نقطة\n\n' +
+    'الرصيد الحالي:  ' + currentPoints + ' نقطة\n' +
+    'الرصيد الجديد: ' + newPoints + ' نقطة\n\n' +
+    (diff > 0 ? '✅ هيترجع ' + diff + ' نقطة للعميل' : '⚠️ هيتخصم ' + Math.abs(diff) + ' نقطة من العميل')
+  )) return;
+
+  data.redeemed = newRedeemed;
+  data.points   = newPoints;
+  data.lastFixedAt = new Date().toISOString();
+  data.lastFixedBy = 'admin';
+  saveLoyaltyData(p, data);
+
+  input.value = '';
+  showNotif('✅ تم التصحيح: رصيد ' + name + ' = ' + newPoints + ' نقطة');
+
+  // تحديث الكاش المحلي
+  if (_loyaltyAdminData[p]) {
+    _loyaltyAdminData[p].points   = newPoints;
+    _loyaltyAdminData[p].redeemed = newRedeemed;
+  }
+  renderLoyaltyAdmin();
 }
 
 function exportLoyaltyExcel() {
