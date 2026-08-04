@@ -10884,12 +10884,19 @@ function _engOpenCreate() {
     '<button onclick="_engSaveNew()" style="padding:12px;background:var(--olive);color:#fff;border:none;border-radius:12px;font-size:15px;font-weight:900;cursor:pointer;font-family:inherit">✅ إطلاق المسابقة</button>' +
     '</div></div>';
   document.body.appendChild(modal);
-  /* تحديد تاريخ افتراضي */
+  /* تحديد تاريخ افتراضي — توقيت محلي */
+  var _fmtLocal = function(d) {
+    var Y = d.getFullYear();
+    var M = String(d.getMonth()+1).padStart(2,'0');
+    var D = String(d.getDate()).padStart(2,'0');
+    var h = String(d.getHours()).padStart(2,'0');
+    var m = String(d.getMinutes()).padStart(2,'0');
+    return Y+'-'+M+'-'+D+'T'+h+':'+m;
+  };
   var now = new Date(); now.setMinutes(0,0,0);
   var end = new Date(now); end.setDate(end.getDate()+7);
-  var fmt = function(d){ return d.toISOString().slice(0,16); };
-  var sEl = document.getElementById('_engStart'); if(sEl) sEl.value = fmt(now);
-  var eEl = document.getElementById('_engEnd'); if(eEl) eEl.value = fmt(end);
+  var sEl = document.getElementById('_engStart'); if(sEl) sEl.value = _fmtLocal(now);
+  var eEl = document.getElementById('_engEnd'); if(eEl) eEl.value = _fmtLocal(end);
 }
 
 function _engTypeChange() {
@@ -11110,8 +11117,18 @@ function _engEditModal(compId) {
   modal.id = '_engEditModalEl';
   modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:9999;display:flex;align-items:flex-start;justify-content:center;overflow-y:auto;padding:20px';
 
-  var startLocal = comp.startAt ? new Date(comp.startAt).toISOString().slice(0,16) : '';
-  var endLocal   = comp.endAt   ? new Date(comp.endAt).toISOString().slice(0,16)   : '';
+  var _fmtLocalEng = function(iso) {
+    if (!iso) return '';
+    var d = new Date(iso);
+    var Y = d.getFullYear();
+    var Mo = String(d.getMonth()+1).padStart(2,'0');
+    var D = String(d.getDate()).padStart(2,'0');
+    var h = String(d.getHours()).padStart(2,'0');
+    var mi = String(d.getMinutes()).padStart(2,'0');
+    return Y+'-'+Mo+'-'+D+'T'+h+':'+mi;
+  };
+  var startLocal = _fmtLocalEng(comp.startAt);
+  var endLocal   = _fmtLocalEng(comp.endAt);
   var prizeType  = (comp.prize||{}).type  || 'discount_amount';
   var prizeVal   = (comp.prize||{}).value || '';
 
