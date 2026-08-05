@@ -202,6 +202,7 @@ input,select,textarea{font-family:inherit;}
 .food-add:active{transform:scale(.9);background:var(--olive-dark);}
 .fav-btn{position:absolute;top:8px;right:8px;width:28px;height:28px;border-radius:50%;background:rgba(255,255,255,.9);display:flex;align-items:center;justify-content:center;font-size:15px;}
 .badge-new{position:absolute;top:8px;left:8px;background:var(--gold);color:#fff;font-size:10px;font-weight:800;padding:3px 7px;border-radius:100px;}
+.badge-saving{position:absolute;left:8px;background:linear-gradient(135deg,#dc2626,#ef4444);color:#fff;font-size:10px;font-weight:900;padding:3px 8px;border-radius:100px;z-index:4;box-shadow:0 2px 8px rgba(220,38,38,.4);white-space:nowrap;}
 /* السعر القديم المشطوب */
 .old-price{font-size:13px;color:#dc2626;text-decoration:line-through;margin-right:4px;font-weight:700;}
 .price-with-old{display:flex;align-items:center;flex-wrap:wrap;gap:2px;}
@@ -4927,8 +4928,8 @@ function renderMenu() {
         const isFav = favs.has(item.id);
         html += `<div class="food-card" onclick="openProduct('${cat}','${item.id}')">
           ${item.image ? `<div class="food-img-wrap"><img src="${item.image}" class="food-img-actual" alt="${item.name}" loading="lazy"/></div>` : `<div class="food-img">${item.emoji}</div>`}
-          ${_getSaving(item,price)>0 ? `<div class="badge-new" style="background:linear-gradient(135deg,#dc2626,#ef4444)">وفر ${_getSaving(item,price)} ج.م</div>` : ''}
-          ${_resolvedVIP ? `<div class="vip-disc-tag">👑 -${_resolvedVIP.discount||0}%</div>` : ''}
+          ${_getSaving(item,price)>0 ? `<div class="badge-saving" style="top:8px">وفر ${_getSaving(item,price)} ج.م 🔥</div>` : ''}
+          ${_resolvedVIP ? `<div class="vip-disc-tag" style="top:${_getSaving(item,price)>0?'34px':'8px'}">👑 -${_resolvedVIP.discount||0}%</div>` : ''}
           <button class="fav-btn" onclick="toggleFav(event,'${item.id}')">
             <span>${isFav ? '❤️' : '🤍'}</span>
             ${getFavCount(item.id) > 0 ? `<span class="fav-count">${getFavCount(item.id)}</span>` : ''}
@@ -4977,8 +4978,8 @@ function renderMenu() {
         html += `<div class="food-card" onclick="openProduct('${cat}','${item.id}')">
           ${item.image ? `<div class="food-img-wrap"><img src="${item.image}" class="food-img-actual" alt="${item.name}" loading="lazy"/></div>` : `<div class="food-img">${item.emoji}</div>`}
           <div class="badge-new">جديد</div>
-          ${_isOfferValid(item) ? `<div class="badge-new" style="background:linear-gradient(135deg,#dc2626,#ef4444);top:30px">وفر ${_getSaving(item,price)} ج.م</div>` : ''}
-          ${_resolvedVIP && !item.notAvail ? `<div class="vip-disc-tag">👑 -${_resolvedVIP.discount||0}%</div>` : ''}
+          ${_isOfferValid(item) ? `<div class="badge-saving" style="top:30px">وفر ${_getSaving(item,price)} ج.م 🔥</div>` : ''}
+          ${_resolvedVIP && !item.notAvail ? `<div class="vip-disc-tag" style="top:${_isOfferValid(item)?'56px':'8px'}">👑 -${_resolvedVIP.discount||0}%</div>` : ''}
           <button class="fav-btn" onclick="toggleFav(event,'${item.id}')">
             <span>${isFav ? '❤️' : '🤍'}</span>
             ${getFavCount(item.id) > 0 ? `<span class="fav-count">${getFavCount(item.id)}</span>` : ''}
@@ -5022,8 +5023,8 @@ function renderMenu() {
         ${item.image ? `<div class="food-img-wrap"><img src="${item.image}" class="food-img-actual" alt="${item.name}" loading="lazy"/></div>` : `<div class="food-img">${item.emoji}</div>`}
         ${notAvail ? '<div class="unavail-overlay">غير متاح</div>' : ''}
         ${item.new && !notAvail ? '<div class="badge-new">جديد</div>' : ''}
-        ${_isOfferValid(item) && !notAvail ? `<div class="badge-new" style="background:linear-gradient(135deg,#dc2626,#ef4444);top:${item.new ? '30px' : '8px'}">وفر ${_getSaving(item,price)} ج.م</div>` : ''}
-        ${_resolvedVIP && !notAvail ? `<div class="vip-disc-tag">👑 -${_resolvedVIP.discount||0}%</div>` : ''}
+        ${_isOfferValid(item) && !notAvail ? `<div class="badge-saving" style="top:${item.new ? '30px' : '8px'}">وفر ${_getSaving(item,price)} ج.م 🔥</div>` : ''}
+        ${_resolvedVIP && !notAvail ? `<div class="vip-disc-tag" style="top:${(item.new && _isOfferValid(item)) ? '56px' : _isOfferValid(item) ? '34px' : item.new ? '34px' : '8px'}">👑 -${_resolvedVIP.discount||0}%</div>` : ''}
         <button class="fav-btn" onclick="toggleFav(event,'${item.id}')">
           <span>${isFav ? '❤️' : '🤍'}</span>
           ${getFavCount(item.id) > 0 ? `<span class="fav-count">${getFavCount(item.id)}</span>` : ''}
