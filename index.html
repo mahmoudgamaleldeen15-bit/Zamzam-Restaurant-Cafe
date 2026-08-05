@@ -203,7 +203,7 @@ input,select,textarea{font-family:inherit;}
 .fav-btn{position:absolute;top:8px;right:8px;width:28px;height:28px;border-radius:50%;background:rgba(255,255,255,.9);display:flex;align-items:center;justify-content:center;font-size:15px;}
 .badge-new{position:absolute;top:8px;left:8px;background:var(--gold);color:#fff;font-size:10px;font-weight:800;padding:3px 7px;border-radius:100px;}
 /* السعر القديم المشطوب */
-.old-price{font-size:11px;color:var(--text-muted);text-decoration:line-through;margin-left:4px;font-weight:600;}
+.old-price{font-size:13px;color:#dc2626;text-decoration:line-through;margin-right:4px;font-weight:700;}
 .price-with-old{display:flex;align-items:center;flex-wrap:wrap;gap:2px;}
 ._new-chip{background:linear-gradient(135deg,#f59e0b,#fbbf24)!important;color:#fff!important;font-weight:900!important;position:relative;overflow:hidden;}
 ._new-chip::before{content:'✨';position:absolute;top:-4px;right:-4px;font-size:10px;animation:_starFloat1 2.5s ease-in-out infinite;}
@@ -1387,7 +1387,7 @@ input,select,textarea{font-family:inherit;}
         <button class="qty-btn" onclick="pmQtyChange(1)">+</button>
       </div>
       <div class="pm-total" id="pmTotalDisplay">0 ج.م</div>
-      <div id="pmOldPriceDisplay" style="display:none;font-size:11px;color:var(--text-muted);text-decoration:line-through;text-align:center;margin-top:2px"></div>
+      <div id="pmOldPriceDisplay" style="display:none;font-size:13px;color:#dc2626;text-decoration:line-through;font-weight:700;text-align:center;margin-top:2px"></div>
       <button class="btn-primary" style="flex:1;margin-top:0" onclick="addToCartFromPM()">أضف للسلة</button>
     </div>
   </div>
@@ -2206,6 +2206,14 @@ input,select,textarea{font-family:inherit;}
         <button onclick="openAddCatModal()" style="padding:10px 14px;background:var(--olive-dark);color:#fff;border-radius:10px;font-size:13px;font-weight:800">+ قسم</button>
         <button onclick="openMainGroupsManager()" style="padding:10px 14px;background:linear-gradient(135deg,#7c4dff,#5e35b1);color:#fff;border-radius:10px;font-size:13px;font-weight:800" title="إدارة الأقسام الرئيسية">🗂️</button>
       </div>
+      <!-- عروض منتهية — تنبيه للأدمن -->
+      <div id="expiredOffersSection" style="display:none;margin:0 16px 14px;background:linear-gradient(135deg,#fff7ed,#ffedd5);border:1.5px solid #fb923c;border-radius:14px;padding:14px">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+          <div style="font-size:14px;font-weight:900;color:#c2410c">⚠️ عروض منتهية — تحتاج مراجعة</div>
+          <div id="expiredOffersCount" style="background:#dc2626;color:#fff;font-size:11px;font-weight:900;padding:3px 10px;border-radius:20px"></div>
+        </div>
+        <div id="expiredOffersList"></div>
+      </div>
       <div class="menu-manage-section" id="menuManageList"></div>
     </div>
 
@@ -2997,10 +3005,17 @@ input,select,textarea{font-family:inherit;}
     <!-- حقل السعر القديم — للعرض البصري فقط (مشطوب) -->
     <div class="field" id="oldPriceRow" style="margin-bottom:12px">
       <label style="display:flex;align-items:center;gap:6px">
-        <span>🏷️ السعر القديم قبل الخصم</span>
-        <span style="font-size:11px;color:var(--text-muted);font-weight:400">(اختياري — بيظهر مشطوب للعميل)</span>
+        <span>🏷️ السعر قبل العرض</span>
+        <span style="font-size:11px;color:var(--text-muted);font-weight:400">(اختياري — بيظهر مشطوب + الفرق للعميل)</span>
       </label>
       <input type="number" id="itemOldPrice" placeholder="مثال: 150 — اتركه فارغاً لو مفيش خصم" inputmode="decimal" min="0" style="border-color:#f59e0b"/>
+    </div>
+    <div class="field" id="offerExpiryRow" style="margin-bottom:12px">
+      <label style="display:flex;align-items:center;gap:6px">
+        <span>📅 تاريخ انتهاء العرض</span>
+        <span style="font-size:11px;color:var(--text-muted);font-weight:400">(اختياري — بعد التاريخ ده العرض بيختفي تلقائياً)</span>
+      </label>
+      <input type="date" id="itemOfferExpiry" style="border-color:#f59e0b;width:100%;padding:9px;border-radius:10px;font-family:inherit;background:var(--bg);color:var(--text)"/>
     </div>
     <div class="remember-row" style="margin-bottom:16px">
       <div class="toggle-sw on" id="itemDeliveryToggle" onclick="this.classList.toggle('on')"></div>
@@ -4859,6 +4874,18 @@ function doClientLogout() {
 // ============================================================
 // MENU RENDER
 // ============================================================
+
+/* ══ مساعد عروض الأسعار ══ */
+function _isOfferValid(item) {
+  if (!item.oldPrice) return false;
+  if (!item.offerExpiry) return true; /* مفيش تاريخ = دايم */
+  return new Date(item.offerExpiry) >= new Date(new Date().toDateString());
+}
+function _getSaving(item, price) {
+  if (!_isOfferValid(item)) return 0;
+  return Math.max(0, Number(item.oldPrice) - Number(price));
+}
+
 function renderMenu() {
   if (currentUser) {
     const _INVALID = ['عميل','مجهول','زائر','guest','unknown',''];
@@ -4884,22 +4911,23 @@ function renderMenu() {
   /* ═══ تاب العروض ═══ */
   if (currentFilter === 'sale') {
     let saleItems = [];
-    availableCats.forEach(cat => {
+    /* كل المنيو بغض النظر عن الفلترة الحالية */
+    Object.keys(MENU).forEach(cat => {
       const sec = MENU[cat]; if (!sec) return;
       (sec.items||[]).forEach(item => {
-        if (item.oldPrice && item.available !== false) saleItems.push({ ...item, _cat: cat });
+        if (_isOfferValid(item) && item.available !== false) saleItems.push({ ...item, _cat: cat });
       });
     });
     if (q) saleItems = saleItems.filter(i => i.name.includes(q) || (i.desc||'').includes(q));
     if (saleItems.length) {
-      html += `<div class="menu-section"><h3 style="color:#dc2626">🔥 المنتجات المخفّضة <span class="count-tag">${saleItems.length} صنف</span></h3><div class="food-grid">`;
+      html += `<div class="menu-section"><h3 style="color:#dc2626">وفر مع زمزم 🔥 <span class="count-tag">${saleItems.length} صنف</span></h3><div class="food-grid">`;
       saleItems.forEach(item => {
         const cat = item._cat;
         const price = item.prices ? (item.prices.S || item.prices.M || item.prices.L || 0) : item.price;
         const isFav = favs.has(item.id);
         html += `<div class="food-card" onclick="openProduct('${cat}','${item.id}')">
           ${item.image ? `<div class="food-img-wrap"><img src="${item.image}" class="food-img-actual" alt="${item.name}" loading="lazy"/></div>` : `<div class="food-img">${item.emoji}</div>`}
-          <div class="badge-new" style="background:linear-gradient(135deg,#dc2626,#ef4444)">خصم</div>
+          ${_getSaving(item,price)>0 ? `<div class="badge-new" style="background:linear-gradient(135deg,#dc2626,#ef4444)">وفر ${_getSaving(item,price)} ج.م</div>` : ''}
           ${_resolvedVIP ? `<div class="vip-disc-tag">👑 -${_resolvedVIP.discount||0}%</div>` : ''}
           <button class="fav-btn" onclick="toggleFav(event,'${item.id}')">
             <span>${isFav ? '❤️' : '🤍'}</span>
@@ -4913,7 +4941,7 @@ function renderMenu() {
             <div style="display:flex;align-items:center;justify-content:space-between">
               <div class="price-with-old">
                 <div class="food-price">${price} <span style="font-size:11px;color:var(--text-muted)">ج.م</span></div>
-                <span class="old-price">${item.oldPrice} ج.م</span>
+                <span class="old-price" style="font-size:13px;color:#dc2626;text-decoration:line-through;font-weight:700;margin-right:4px">السعر قبل العرض: ${item.oldPrice} ج.م</span>
               </div>
               <div class="food-add" onclick="quickAdd(event,'${cat}','${item.id}')">+</div>
             </div>
@@ -4949,6 +4977,7 @@ function renderMenu() {
         html += `<div class="food-card" onclick="openProduct('${cat}','${item.id}')">
           ${item.image ? `<div class="food-img-wrap"><img src="${item.image}" class="food-img-actual" alt="${item.name}" loading="lazy"/></div>` : `<div class="food-img">${item.emoji}</div>`}
           <div class="badge-new">جديد</div>
+          ${_isOfferValid(item) ? `<div class="badge-new" style="background:linear-gradient(135deg,#dc2626,#ef4444);top:30px">وفر ${_getSaving(item,price)} ج.م</div>` : ''}
           ${_resolvedVIP && !item.notAvail ? `<div class="vip-disc-tag">👑 -${_resolvedVIP.discount||0}%</div>` : ''}
           <button class="fav-btn" onclick="toggleFav(event,'${item.id}')">
             <span>${isFav ? '❤️' : '🤍'}</span>
@@ -4962,7 +4991,7 @@ function renderMenu() {
             <div style="display:flex;align-items:center;justify-content:space-between">
               <div class="price-with-old">
                 <div class="food-price">${price} <span style="font-size:11px;color:var(--text-muted)">ج.م</span></div>
-                ${item.oldPrice ? `<span class="old-price">${item.oldPrice} ج.م</span>` : ''}
+                ${_isOfferValid(item) ? `<span class="old-price">السعر قبل العرض: ${item.oldPrice} ج.م</span>` : ''}
               </div>
               <div class="food-add" onclick="quickAdd(event,'${cat}','${item.id}')">+</div>
             </div>
@@ -4993,6 +5022,7 @@ function renderMenu() {
         ${item.image ? `<div class="food-img-wrap"><img src="${item.image}" class="food-img-actual" alt="${item.name}" loading="lazy"/></div>` : `<div class="food-img">${item.emoji}</div>`}
         ${notAvail ? '<div class="unavail-overlay">غير متاح</div>' : ''}
         ${item.new && !notAvail ? '<div class="badge-new">جديد</div>' : ''}
+        ${_isOfferValid(item) && !notAvail ? `<div class="badge-new" style="background:linear-gradient(135deg,#dc2626,#ef4444);top:${item.new ? '30px' : '8px'}">وفر ${_getSaving(item,price)} ج.م</div>` : ''}
         ${_resolvedVIP && !notAvail ? `<div class="vip-disc-tag">👑 -${_resolvedVIP.discount||0}%</div>` : ''}
         <button class="fav-btn" onclick="toggleFav(event,'${item.id}')">
           <span>${isFav ? '❤️' : '🤍'}</span>
@@ -5006,7 +5036,7 @@ function renderMenu() {
           <div style="display:flex;align-items:center;justify-content:space-between">
             <div class="price-with-old">
               <div class="food-price">${price} <span style="font-size:11px;color:var(--text-muted)">ج.م</span></div>
-              ${item.oldPrice ? `<span class="old-price">${item.oldPrice} ج.م</span>` : ''}
+              ${_isOfferValid(item) ? `<span class="old-price">السعر قبل العرض: ${item.oldPrice} ج.م</span>` : ''}
             </div>
             ${!notAvail ? `<div class="food-add" onclick="quickAdd(event,'${cat}','${item.id}')">+</div>` : ''}
           </div>
@@ -5027,7 +5057,7 @@ function renderCategories() {
   /* فحص كل المنيو للعروض والجديد — مش بس الأقسام المفلترة */
   const allCats = Object.keys(MENU);
   const hasNewItems  = allCats.some(k => MENU[k] && (MENU[k].items||[]).some(i => i.new     && i.available !== false));
-  const hasSaleItems = allCats.some(k => MENU[k] && (MENU[k].items||[]).some(i => i.oldPrice && i.available !== false));
+  const hasSaleItems = allCats.some(k => MENU[k] && (MENU[k].items||[]).some(i => _isOfferValid(i) && i.available !== false));
   document.getElementById('cats').innerHTML =
     (hasSaleItems ? `<div class="cat-chip _sale-chip ${currentFilter === 'sale' ? 'active' : ''}" onclick="filterCat('sale',this)">🔥 عروض</div>` : '') +
     (hasNewItems  ? `<div class="cat-chip _new-chip  ${currentFilter === 'new'  ? 'active' : ''}" onclick="filterCat('new',this)">🆕 الجديد</div>` : '') +
@@ -5048,7 +5078,7 @@ function _syncNewFilter() {
     const hasNew = availableCats.some(k => MENU[k] && (MENU[k].items||[]).some(i => i.new && i.available !== false));
     if (!hasNew) currentFilter = 'all';
   } else if (currentFilter === 'sale') {
-    const hasSale = availableCats.some(k => MENU[k] && (MENU[k].items||[]).some(i => i.oldPrice && i.available !== false));
+    const hasSale = availableCats.some(k => MENU[k] && (MENU[k].items||[]).some(i => _isOfferValid(i) && i.available !== false));
     if (!hasSale) currentFilter = 'all';
   }
   renderMenu();
@@ -5158,8 +5188,13 @@ function openProduct(cat, id) {
   /* السعر القديم المشطوب في modal */
   const pmOldEl = document.getElementById('pmOldPriceDisplay');
   if (pmOldEl) {
-    if (item.oldPrice) { pmOldEl.textContent = 'السعر القديم: ' + item.oldPrice + ' ج.م'; pmOldEl.style.display = 'block'; }
-    else { pmOldEl.style.display = 'none'; }
+    if (_isOfferValid(item)) {
+      const saving = _getSaving(item, item.prices ? (item.prices.S || item.prices.M || item.prices.L || 0) : item.price);
+      pmOldEl.innerHTML = `السعر قبل العرض: <span>${item.oldPrice} ج.م</span>${saving > 0 ? ` &nbsp;|&nbsp; <span style="color:#dc2626;font-weight:900">وفر ${saving} ج.م</span>` : ''}`;
+      pmOldEl.style.display = 'block';
+    } else {
+      pmOldEl.style.display = 'none';
+    }
   }
   document.getElementById('productModal').classList.add('open');
 }
@@ -6657,7 +6692,7 @@ function switchAdminTab(tab, el) {
     }
   }
   if (tab === 'bookings') renderAdminBookings();
-  if (tab === 'menu') { renderMenuManage(); renderCatSelects(); }
+  if (tab === 'menu') { renderMenuManage(); renderCatSelects(); _renderExpiredOffers(); }
   if (tab === 'addons') { renderAddonsAdmin(); renderSpicyCatToggles(); }
   if (tab === 'offers') renderOffersAdmin();
   if (tab === 'settings') { loadSettingsUI(); _updatePushStatusUI(); _updateAutoBackupUI(); _initUpsellToggle(); loadLoyaltySettingsUI(); renderDeliveryCtrlSettings(); }
@@ -7953,6 +7988,50 @@ function renderCatSelects() {
   if (sel1) sel1.innerHTML = '<option value="">كل الأقسام</option>' + html;
   if (sel2) sel2.innerHTML = html;
 }
+
+/* ══ عروض منتهية — تنبيه الأدمن ══ */
+function _renderExpiredOffers() {
+  var section = document.getElementById('expiredOffersSection');
+  var listEl  = document.getElementById('expiredOffersList');
+  var countEl = document.getElementById('expiredOffersCount');
+  if (!section || !listEl) return;
+
+  var today = new Date(new Date().toDateString());
+  var expired = [];
+  Object.keys(MENU).forEach(function(cat) {
+    var sec = MENU[cat]; if (!sec) return;
+    (sec.items||[]).forEach(function(item) {
+      if (item.oldPrice && item.offerExpiry && new Date(item.offerExpiry) < today) {
+        expired.push({ item: item, cat: cat, catLabel: sec.label || cat });
+      }
+    });
+  });
+
+  if (!expired.length) { section.style.display = 'none'; return; }
+  section.style.display = 'block';
+  if (countEl) countEl.textContent = expired.length + ' منتج';
+
+  listEl.innerHTML = expired.map(function(e) {
+    var i = e.item;
+    var curPrice = i.prices ? (i.prices.S || i.prices.M || i.prices.L || 0) : (i.price || 0);
+    var diffDays = Math.floor((today - new Date(i.offerExpiry)) / 86400000);
+    return '<div style="background:#fff;border-radius:10px;padding:10px 12px;margin-bottom:8px;display:flex;align-items:center;gap:10px;border:1px solid #fed7aa">' +
+      '<div style="font-size:22px">' + (i.emoji || '🍽️') + '</div>' +
+      '<div style="flex:1">' +
+        '<div style="font-size:13px;font-weight:800;color:var(--text)">' + i.name + '</div>' +
+        '<div style="font-size:11px;color:var(--text-muted);margin-top:2px">' + e.catLabel + '</div>' +
+        '<div style="font-size:11px;margin-top:3px">' +
+          '<span style="color:#dc2626;font-weight:700">السعر الحالي: ' + curPrice + ' ج.م</span>' +
+          '<span style="color:var(--text-muted);margin:0 6px">|</span>' +
+          '<span style="text-decoration:line-through;color:var(--text-muted)">كان: ' + i.oldPrice + ' ج.م</span>' +
+        '</div>' +
+        '<div style="font-size:10px;color:#c2410c;margin-top:2px">⏰ انتهى منذ ' + diffDays + ' يوم — ' + i.offerExpiry + '</div>' +
+      '</div>' +
+      '<button onclick="openEditItem(\'' + e.cat + '\',\'' + i.id + '\')" style="padding:7px 12px;background:var(--olive);color:#fff;border:none;border-radius:8px;font-size:12px;font-weight:800;cursor:pointer;font-family:inherit;white-space:nowrap">✏️ تعديل</button>' +
+    '</div>';
+  }).join('');
+}
+
 function renderMenuManage() {
   const filter = document.getElementById('menuCatSelect').value;
   const cats = filter ? [filter] : Object.keys(MENU);
@@ -8121,6 +8200,9 @@ function openEditItem(cat, id) {
   /* السعر القديم */
   const oldPriceEl = document.getElementById('itemOldPrice');
   if (oldPriceEl) oldPriceEl.value = item.oldPrice || '';
+  /* تاريخ انتهاء العرض */
+  const expiryEl = document.getElementById('itemOfferExpiry');
+  if (expiryEl) expiryEl.value = item.offerExpiry || '';
   openModal('addItemModal');
 }
 function setPriceType(type) {
@@ -8141,6 +8223,10 @@ async function saveItem() {
   const isNew = document.getElementById('itemNewToggle').classList.contains('on');
   const isDelivery = document.getElementById('itemDeliveryToggle').classList.contains('on');
   const oldPrice = Number(document.getElementById('itemOldPrice')?.value) || 0;
+  const offerExpiry = (document.getElementById('itemOfferExpiry')?.value) || '';
+  /* لو تاريخ الانتهاء عدى — نتجاهل السعر القديم */
+  const _offerActive = oldPrice > 0 && (!offerExpiry || new Date(offerExpiry) >= new Date(new Date().toDateString()));
+  const _effectiveOldPrice = _offerActive ? oldPrice : 0;
   if (!name || !cat) { showNotif('أدخل اسم الصنف والقسم'); return; }
   if (!MENU[cat]) { showNotif('❌ القسم غير موجود — اختر قسماً صحيحاً'); return; }
   let priceData = {};
@@ -8169,6 +8255,9 @@ async function saveItem() {
       const effDeliv2 = catDeliv2 === 'pickup_only' ? false : catDeliv2 === 'delivery' ? true : isDelivery;
       const updated = { ...MENU[oldCat].items[idx], name, desc, emoji, new: isNew, availableDelivery: effDeliv2, deliveryAvailable: effDeliv2, ...priceData };
       if (oldPrice > 0) updated.oldPrice = oldPrice; else delete updated.oldPrice;
+      if (offerExpiry) updated.offerExpiry = offerExpiry; else delete updated.offerExpiry;
+      /* لو العرض انتهى — امسح السعر القديم */
+      if (!_offerActive) { delete updated.oldPrice; delete updated.offerExpiry; }
       // ✅ لو مفيش imageData → امسح الصورة نهائياً لتفعيل الـ emoji
       if (imageData) updated.image = imageData; else delete updated.image;
       if (oldCat !== cat) { MENU[cat].items.push(updated); MENU[oldCat].items.splice(idx, 1); }
@@ -8179,6 +8268,7 @@ async function saveItem() {
     const effectiveDelivery = catDeliv === 'pickup_only' ? false : catDeliv === 'delivery' ? true : isDelivery;
     const newItem = { id: cat + '_' + Date.now(), name, desc, emoji, image: imageData||undefined, new: isNew, available: true, availableDelivery: effectiveDelivery, deliveryAvailable: effectiveDelivery, ...priceData };
     if (oldPrice > 0) newItem.oldPrice = oldPrice;
+    if (offerExpiry) newItem.offerExpiry = offerExpiry;
     if (!MENU[cat].items) MENU[cat].items = [];
     MENU[cat].items.push(newItem);
   }
