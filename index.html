@@ -4867,7 +4867,7 @@ function renderMenu() {
     if (!items.length) return;
     html += `<div class="menu-section"><h3>${sec.label} <span class="count-tag">${items.filter(i=>i.available!==false).length} صنف</span></h3><div class="food-grid">`;
     items.forEach(item => {
-      const price = item.prices ? item.prices.S : item.price;
+      const price = item.prices ? (item.prices.S || item.prices.M || item.prices.L || 0) : item.price;
       const isFav = favs.has(item.id);
       const notAvail = item.available === false;
       html += `<div class="food-card" onclick="${notAvail ? '' : `openProduct('${cat}','${item.id}')`}">
@@ -4961,7 +4961,7 @@ function openProduct(cat, id) {
   const item = MENU[cat].items.find(i => i.id === id);
   if (!item) return;
   currentPM = { cat, item }; pmQtyVal = 1; pmSpicy = 'normal';
-  pmSelectedSize = item.prices ? 'S' : null; pmSelectedExtras = new Set();
+  pmSelectedSize = item.prices ? (Object.keys(item.prices)[0] || 'S') : null; pmSelectedExtras = new Set();
   document.getElementById('pmImg').textContent = item.emoji;
   document.getElementById('pmName').textContent = item.name;
   document.getElementById('pmDesc').textContent = item.desc || '';
@@ -4975,7 +4975,7 @@ function openProduct(cat, id) {
   if (item.prices) {
     ss.style.display = 'block';
     document.getElementById('pmSizes').innerHTML = Object.keys(item.prices).map(s =>
-      `<span class="size-pill ${s === 'S' ? 'active' : ''}" onclick="selectPMSize('${s}',this)">${item.prices[s]} جـ — ${s}</span>`
+      `<span class="size-pill ${s === pmSelectedSize ? 'active' : ''}" onclick="selectPMSize('${s}',this)">${item.prices[s]} جـ — ${s}</span>`
     ).join('');
   } else ss.style.display = 'none';
   // Spicy selector
@@ -5073,7 +5073,7 @@ function quickAdd(e, cat, id) {
     return;
   }
   const item = MENU[cat].items.find(i => i.id === id);
-  const price = item.prices ? item.prices.S : item.price;
+  const price = item.prices ? (item.prices.S || item.prices.M || item.prices.L || 0) : item.price;
   addToCart({ id: item.id + '_quick', name: item.name, size: item.prices ? 'S' : null, emoji: item.emoji, price, basePrice: price, extras: [], qty: 1, _catKey: cat });
 }
 function addToCart(ci) {
@@ -5137,7 +5137,7 @@ function _getUpsellSuggestions(addedItem) {
       score += Math.min(favCount, 3);
 
       if (score > 0 && item.available !== false) {
-        const price = item.prices ? item.prices.S : item.price;
+        const price = item.prices ? (item.prices.S || item.prices.M || item.prices.L || 0) : item.price;
         suggestions.push({ item, catKey, price, score });
       }
     });
@@ -5189,7 +5189,7 @@ function showUpsell(addedItem) {
 function quickAddUpsell(catKey, itemId) {
   const item = MENU[catKey]?.items?.find(i => i.id === itemId);
   if (!item) return;
-  const price = item.prices ? item.prices.S : item.price;
+  const price = item.prices ? (item.prices.S || item.prices.M || item.prices.L || 0) : item.price;
   addToCart({ id: item.id + '_upsell_' + Date.now(), name: item.name, emoji: item.emoji, price, basePrice: price, extras: [], qty: 1, _catKey: catKey });
   closeUpsell();
 }
@@ -7995,12 +7995,14 @@ async function saveItem() {
   if (!MENU[cat]) { showNotif('❌ القسم غير موجود — اختر قسماً صحيحاً'); return; }
   let priceData = {};
   if (priceTypeMode === 'sizes') {
-    const S = Number(document.getElementById('itemPriceS').value);
-    if (!S) { showNotif('أدخل سعر S على الأقل'); return; }
+    const S = Number(document.getElementById('itemPriceS').value) || 0;
+    const M = Number(document.getElementById('itemPriceM').value) || 0;
+    const L = Number(document.getElementById('itemPriceL').value) || 0;
+    if (!S && !M && !L) { showNotif('أدخل سعر حجم واحد على الأقل'); return; }
     priceData.prices = {};
     if (S) priceData.prices.S = S;
-    const M = Number(document.getElementById('itemPriceM').value); if (M) priceData.prices.M = M;
-    const L = Number(document.getElementById('itemPriceL').value); if (L) priceData.prices.L = L;
+    if (M) priceData.prices.M = M;
+    if (L) priceData.prices.L = L;
   } else {
     const price = Number(document.getElementById('itemPriceInput').value);
     if (!price) { showNotif('أدخل السعر'); return; }
@@ -9687,7 +9689,7 @@ function renderFavScreen() {
   Object.keys(MENU).forEach(cat => {
     (MENU[cat].items || []).forEach(item => {
       if (!favs.has(item.id)) return;
-      const price = item.prices ? item.prices.S : item.price;
+      const price = item.prices ? (item.prices.S || item.prices.M || item.prices.L || 0) : item.price;
       const avail = item.available !== false;
       html += `<div class="fav-card">
         <div class="fav-card-img">${item.emoji}</div>
@@ -10863,10 +10865,18 @@ function _engOpenCreate() {
     '<input id="_engProduct" placeholder="مثال: كوباية قهوة" style="width:100%;padding:10px;border:1.5px solid var(--border);border-radius:10px;font-size:14px;font-family:inherit;background:var(--bg);color:var(--text);box-sizing:border-box">' +
     '</div>' +
     '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">' +
-    '<div><div style="font-size:12px;font-weight:700;color:var(--text-muted);margin-bottom:4px">📅 من</div>' +
-    '<input type="datetime-local" id="_engStart" style="width:100%;padding:9px;border:1.5px solid var(--border);border-radius:10px;font-size:12px;font-family:inherit;background:var(--bg);color:var(--text);box-sizing:border-box"></div>' +
-    '<div><div style="font-size:12px;font-weight:700;color:var(--text-muted);margin-bottom:4px">📅 إلى</div>' +
-    '<input type="datetime-local" id="_engEnd" style="width:100%;padding:9px;border:1.5px solid var(--border);border-radius:10px;font-size:12px;font-family:inherit;background:var(--bg);color:var(--text);box-sizing:border-box"></div>' +
+    '<div>' +
+    '<div style="font-size:12px;font-weight:700;color:var(--text-muted);margin-bottom:4px">📅 من</div>' +
+    '<input type="date" id="_engStartDate" style="width:100%;padding:9px;border:1.5px solid var(--border);border-radius:10px;font-size:12px;font-family:inherit;background:var(--bg);color:var(--text);box-sizing:border-box">' +
+    '<div style="font-size:12px;font-weight:700;color:var(--text-muted);margin:6px 0 4px">⏰ الساعة</div>' +
+    '<input type="time" id="_engStartTime" value="00:00" style="width:100%;padding:9px;border:1.5px solid var(--border);border-radius:10px;font-size:12px;font-family:inherit;background:var(--bg);color:var(--text);box-sizing:border-box">' +
+    '</div>' +
+    '<div>' +
+    '<div style="font-size:12px;font-weight:700;color:var(--text-muted);margin-bottom:4px">📅 إلى</div>' +
+    '<input type="date" id="_engEndDate" style="width:100%;padding:9px;border:1.5px solid var(--border);border-radius:10px;font-size:12px;font-family:inherit;background:var(--bg);color:var(--text);box-sizing:border-box">' +
+    '<div style="font-size:12px;font-weight:700;color:var(--text-muted);margin:6px 0 4px">⏰ الساعة</div>' +
+    '<input type="time" id="_engEndTime" value="23:59" style="width:100%;padding:9px;border:1.5px solid var(--border);border-radius:10px;font-size:12px;font-family:inherit;background:var(--bg);color:var(--text);box-sizing:border-box">' +
+    '</div>' +
     '</div>' +
     '<div style="border:1.5px solid var(--border);border-radius:12px;padding:12px">' +
     '<div style="font-size:13px;font-weight:800;color:var(--text);margin-bottom:8px">🎁 الجائزة</div>' +
@@ -10877,6 +10887,10 @@ function _engOpenCreate() {
     '<option value="free_delivery">🛵 توصيل مجاني</option>' +
     '</select>' +
     '<div id="_engPrizeExtra"><input type="number" id="_engPrizeVal" placeholder="القيمة" min="1" style="width:100%;padding:9px;border:1.5px solid var(--border);border-radius:10px;font-size:13px;font-family:inherit;background:var(--bg);color:var(--text);box-sizing:border-box"></div>' +
+    '</div>' +
+    '<div>' +
+    '<div style="font-size:12px;font-weight:700;color:var(--text-muted);margin-bottom:4px">🛒 الحد الأدنى للطلب (اختياري)</div>' +
+    '<input type="number" id="_engMinOrder" placeholder="مثال: 100 — اتركه فارغاً لو مفيش حد أدنى" min="0" style="width:100%;padding:9px;border:1.5px solid var(--border);border-radius:10px;font-size:13px;font-family:inherit;background:var(--bg);color:var(--text);box-sizing:border-box">' +
     '</div>' +
     '<label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer;background:var(--bg-2,#f5f5f5);padding:10px;border-radius:10px">' +
     '<input type="checkbox" id="_engLikes" style="width:16px;height:16px;accent-color:var(--olive)"> ❤️ تفعيل نظام اللايكات (كل عميل يصوّت مرة واحدة لكل مشترك)' +
@@ -10895,8 +10909,12 @@ function _engOpenCreate() {
   };
   var now = new Date(); now.setMinutes(0,0,0);
   var end = new Date(now); end.setDate(end.getDate()+7);
-  var sEl = document.getElementById('_engStart'); if(sEl) sEl.value = _fmtLocal(now);
-  var eEl = document.getElementById('_engEnd'); if(eEl) eEl.value = _fmtLocal(end);
+  var _fmtD = function(d){ return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); };
+  var _fmtT = function(d){ return String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0'); };
+  var sDEl = document.getElementById('_engStartDate'); if(sDEl) sDEl.value = _fmtD(now);
+  var sTEl = document.getElementById('_engStartTime'); if(sTEl) sTEl.value = _fmtT(now);
+  var eDEl = document.getElementById('_engEndDate');   if(eDEl) eDEl.value = _fmtD(end);
+  var eTEl = document.getElementById('_engEndTime');   if(eTEl) eTEl.value = '23:59';
 }
 
 function _engTypeChange() {
@@ -10918,10 +10936,15 @@ function _engSaveNew() {
   var name = ((document.getElementById('_engName')||{}).value||'').trim();
   var type = (document.getElementById('_engType')||{}).value || 'most_orders';
   var product = ((document.getElementById('_engProduct')||{}).value||'').trim();
-  var startAt = (document.getElementById('_engStart')||{}).value;
-  var endAt = (document.getElementById('_engEnd')||{}).value;
+  var _sDate = (document.getElementById('_engStartDate')||{}).value || '';
+  var _sTime = (document.getElementById('_engStartTime')||{}).value || '00:00';
+  var _eDate = (document.getElementById('_engEndDate')||{}).value || '';
+  var _eTime = (document.getElementById('_engEndTime')||{}).value || '23:59';
+  var startAt = _sDate ? _sDate + 'T' + _sTime : '';
+  var endAt   = _eDate ? _eDate + 'T' + _eTime : '';
   var prizeType = (document.getElementById('_engPrizeType')||{}).value || 'discount_amount';
   var prizeVal = ((document.getElementById('_engPrizeVal')||{}).value||'').trim();
+  var minOrder = parseInt((document.getElementById('_engMinOrder')||{}).value||'0') || 0;
   var likesEnabled = document.getElementById('_engLikes')?.checked || false;
   if (!name) { showNotif('❌ اكتب اسم المسابقة'); return; }
   if (!startAt || !endAt) { showNotif('❌ حدد تاريخ البداية والنهاية'); return; }
@@ -10933,7 +10956,7 @@ function _engSaveNew() {
     id: id, name: name, type: type, productTarget: product || null,
     startAt: new Date(startAt).toISOString(), endAt: new Date(endAt).toISOString(),
     prize: { type: prizeType, value: prizeVal },
-    likesEnabled: !!likesEnabled, status: 'active', createdAt: new Date().toISOString()
+    minOrder: minOrder || 0, likesEnabled: !!likesEnabled, status: 'active', createdAt: new Date().toISOString()
   };
   var ref = _engRef(id);
   if (ref) {
@@ -11006,6 +11029,7 @@ function _engLoadAdmin() {
         '<div><div style="font-size:14px;font-weight:900;color:var(--text)">' + c.name + '</div>' +
         '<div style="font-size:12px;color:var(--text-muted);margin-top:2px">' + typeLabel + (c.likesEnabled?' — ❤️ لايكات مفعّلة':'') + '</div>' +
         '<div style="font-size:12px;color:var(--olive);font-weight:700;margin-top:2px">🎁 الجائزة: ' + prizeLabel + '</div>' +
+        (c.minOrder ? '<div style="font-size:11px;color:var(--text-muted);margin-top:2px">🛒 حد أدنى: ' + c.minOrder + ' ج.م</div>' : '') +
         '<div style="font-size:11px;color:var(--text-muted);margin-top:4px">من: ' + new Date(c.startAt).toLocaleDateString('ar-EG') + ' — إلى: ' + new Date(c.endAt).toLocaleDateString('ar-EG') + '</div>' +
         '</div>' +
         '<div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px">' +
@@ -11117,18 +11141,20 @@ function _engEditModal(compId) {
   modal.id = '_engEditModalEl';
   modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:9999;display:flex;align-items:flex-start;justify-content:center;overflow-y:auto;padding:20px';
 
-  var _fmtLocalEng = function(iso) {
+  var _fmtDE = function(iso) {
     if (!iso) return '';
     var d = new Date(iso);
-    var Y = d.getFullYear();
-    var Mo = String(d.getMonth()+1).padStart(2,'0');
-    var D = String(d.getDate()).padStart(2,'0');
-    var h = String(d.getHours()).padStart(2,'0');
-    var mi = String(d.getMinutes()).padStart(2,'0');
-    return Y+'-'+Mo+'-'+D+'T'+h+':'+mi;
+    return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
   };
-  var startLocal = _fmtLocalEng(comp.startAt);
-  var endLocal   = _fmtLocalEng(comp.endAt);
+  var _fmtTE = function(iso) {
+    if (!iso) return '00:00';
+    var d = new Date(iso);
+    return String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0');
+  };
+  var startDateLocal = _fmtDE(comp.startAt);
+  var startTimeLocal = _fmtTE(comp.startAt);
+  var endDateLocal   = _fmtDE(comp.endAt);
+  var endTimeLocal   = _fmtTE(comp.endAt);
   var prizeType  = (comp.prize||{}).type  || 'discount_amount';
   var prizeVal   = (comp.prize||{}).value || '';
 
@@ -11154,10 +11180,18 @@ function _engEditModal(compId) {
     '</div>' +
     (comp.type==='most_product' ? '<div><div style="font-size:12px;font-weight:700;color:var(--text-muted);margin-bottom:4px">المنتج المستهدف</div><input id="_engEditProduct" value="'+(comp.productTarget||'')+'" style="width:100%;padding:10px;border:1.5px solid var(--border);border-radius:10px;font-size:14px;font-family:inherit;background:var(--bg);color:var(--text);box-sizing:border-box"></div>' : '') +
     '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">' +
-    '<div><div style="font-size:12px;font-weight:700;color:var(--text-muted);margin-bottom:4px">📅 من</div>' +
-    '<input type="datetime-local" id="_engEditStart" value="'+startLocal+'" style="width:100%;padding:9px;border:1.5px solid var(--border);border-radius:10px;font-size:12px;font-family:inherit;background:var(--bg);color:var(--text);box-sizing:border-box"></div>' +
-    '<div><div style="font-size:12px;font-weight:700;color:var(--text-muted);margin-bottom:4px">📅 إلى</div>' +
-    '<input type="datetime-local" id="_engEditEnd" value="'+endLocal+'" style="width:100%;padding:9px;border:1.5px solid var(--border);border-radius:10px;font-size:12px;font-family:inherit;background:var(--bg);color:var(--text);box-sizing:border-box"></div>' +
+    '<div>' +
+    '<div style="font-size:12px;font-weight:700;color:var(--text-muted);margin-bottom:4px">📅 من</div>' +
+    '<input type="date" id="_engEditStartDate" value="'+startDateLocal+'" style="width:100%;padding:9px;border:1.5px solid var(--border);border-radius:10px;font-size:12px;font-family:inherit;background:var(--bg);color:var(--text);box-sizing:border-box">' +
+    '<div style="font-size:12px;font-weight:700;color:var(--text-muted);margin:6px 0 4px">⏰ الساعة</div>' +
+    '<input type="time" id="_engEditStartTime" value="'+startTimeLocal+'" style="width:100%;padding:9px;border:1.5px solid var(--border);border-radius:10px;font-size:12px;font-family:inherit;background:var(--bg);color:var(--text);box-sizing:border-box">' +
+    '</div>' +
+    '<div>' +
+    '<div style="font-size:12px;font-weight:700;color:var(--text-muted);margin-bottom:4px">📅 إلى</div>' +
+    '<input type="date" id="_engEditEndDate" value="'+endDateLocal+'" style="width:100%;padding:9px;border:1.5px solid var(--border);border-radius:10px;font-size:12px;font-family:inherit;background:var(--bg);color:var(--text);box-sizing:border-box">' +
+    '<div style="font-size:12px;font-weight:700;color:var(--text-muted);margin:6px 0 4px">⏰ الساعة</div>' +
+    '<input type="time" id="_engEditEndTime" value="'+endTimeLocal+'" style="width:100%;padding:9px;border:1.5px solid var(--border);border-radius:10px;font-size:12px;font-family:inherit;background:var(--bg);color:var(--text);box-sizing:border-box">' +
+    '</div>' +
     '</div>' +
     '<div style="border:1.5px solid var(--border);border-radius:12px;padding:12px">' +
     '<div style="font-size:13px;font-weight:800;color:var(--text);margin-bottom:8px">🎁 الجائزة</div>' +
@@ -11168,6 +11202,10 @@ function _engEditModal(compId) {
     '<option value="free_delivery"'+(prizeType==='free_delivery'?' selected':'')+'>🛵 توصيل مجاني</option>' +
     '</select>' +
     '<div id="_engEditPrizeExtra">'+prizeExtra+'</div>' +
+    '</div>' +
+    '<div>' +
+    '<div style="font-size:12px;font-weight:700;color:var(--text-muted);margin-bottom:4px">🛒 الحد الأدنى للطلب</div>' +
+    '<input type="number" id="_engEditMinOrder" value="'+(comp.minOrder||0)+'" min="0" placeholder="0 = بدون حد أدنى" style="width:100%;padding:9px;border:1.5px solid var(--border);border-radius:10px;font-size:13px;font-family:inherit;background:var(--bg);color:var(--text);box-sizing:border-box">' +
     '</div>' +
     '<label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer;background:var(--bg-2,#f5f5f5);padding:10px;border-radius:10px">' +
     '<input type="checkbox" id="_engEditLikes"'+(comp.likesEnabled?' checked':'')+' style="width:16px;height:16px;accent-color:var(--olive)"> ❤️ تفعيل نظام اللايكات' +
@@ -11191,10 +11229,15 @@ function _engEditPrizeChange() {
 
 function _engSaveEdit(compId) {
   var name      = ((document.getElementById('_engEditName')||{}).value||'').trim();
-  var startAt   = (document.getElementById('_engEditStart')||{}).value;
-  var endAt     = (document.getElementById('_engEditEnd')||{}).value;
+  var _esDate = (document.getElementById('_engEditStartDate')||{}).value || '';
+  var _esTime = (document.getElementById('_engEditStartTime')||{}).value || '00:00';
+  var _eeDate = (document.getElementById('_engEditEndDate')||{}).value || '';
+  var _eeTime = (document.getElementById('_engEditEndTime')||{}).value || '23:59';
+  var startAt = _esDate ? _esDate + 'T' + _esTime : '';
+  var endAt   = _eeDate ? _eeDate + 'T' + _eeTime : '';
   var prizeType = (document.getElementById('_engEditPrizeType')||{}).value || 'discount_amount';
   var prizeVal  = ((document.getElementById('_engEditPrizeVal')||{}).value||'').trim();
+  var minOrder  = parseInt((document.getElementById('_engEditMinOrder')||{}).value||'0') || 0;
   var likes     = document.getElementById('_engEditLikes')?.checked || false;
   var product   = ((document.getElementById('_engEditProduct')||{}).value||'').trim();
 
@@ -11208,6 +11251,7 @@ function _engSaveEdit(compId) {
     startAt: new Date(startAt).toISOString(),
     endAt:   new Date(endAt).toISOString(),
     prize:   { type: prizeType, value: prizeVal },
+    minOrder: minOrder || 0,
     likesEnabled: !!likes,
   };
   if (product) updates.productTarget = product;
@@ -11235,17 +11279,30 @@ function _engDelete(compId) {
 }
 
 /* ══ العميل — تحميل المسابقات النشطة وعرضها ══ */
+var _engCustomerListenerOff = null; /* مرجع لإيقاف الـ listener */
+
 function _engLoadForCustomer() {
   if (!db) return;
   var ref = _engRef();
   if (!ref) return;
-  ref.once('value').then(function(snap) {
+  /* إيقاف الـ listener القديم لو موجود */
+  if (_engCustomerListenerOff) {
+    try { _engCustomerListenerOff(); } catch(e) {}
+    _engCustomerListenerOff = null;
+  }
+  /* live listener — بيتحدث فوراً لما الأدمن يضيف أو يحذف مسابقة */
+  var handler = ref.on('value', function(snap) {
     var comps = [];
-    snap.forEach(function(child){ var c=child.val(); if(c && c.status==='active' && new Date(c.endAt).getTime()>Date.now()) comps.push(c); });
+    snap.forEach(function(child){
+      var c = child.val();
+      if (c && c.status==='active' && new Date(c.endAt).getTime()>Date.now()) comps.push(c);
+    });
     _ENG_COMPS = {};
     comps.forEach(function(c){ _ENG_COMPS[c.id] = c; });
     _engRenderCustomerSection(comps);
-  }).catch(function(){});
+  }, function(){ /* error — fallback صامت */ });
+  /* نحفظ طريقة الإيقاف */
+  _engCustomerListenerOff = function() { ref.off('value', handler); };
 }
 
 /* عرض قسم المسابقات في الصفحة الرئيسية للعميل */
@@ -11271,6 +11328,7 @@ function _engRenderCustomerSection(comps) {
       '</div>' +
       '<div style="font-size:12px;opacity:.9;margin-top:4px">' + typeLabel + '</div>' +
       '<div style="font-size:12px;font-weight:700;margin-top:2px;opacity:.95">🎁 الجائزة: ' + prizeLabel + '</div>' +
+      (c.minOrder ? '<div style="font-size:11px;opacity:.85;margin-top:2px">🛒 الحد الأدنى للمشاركة: ' + c.minOrder + ' ج.م</div>' : '') +
       '</div>' +
       '<div style="padding:10px 14px">' +
       '<button onclick="_engOpenLeaderboardCustomer(\''+c.id+'\')" style="width:100%;padding:10px;background:#f0f9ff;color:#0284c7;border:1.5px solid #bae6fd;border-radius:10px;font-size:13px;font-weight:800;cursor:pointer;font-family:inherit">🏆 شوف الترتيب الحالي</button>' +
@@ -11282,8 +11340,20 @@ function _engRenderCustomerSection(comps) {
 /* ليدربورد العميل */
 function _engOpenLeaderboardCustomer(compId) {
   if (!db) return;
-  var comp = _ENG_COMPS[compId];
   var myPh = currentUser ? (currentUser.phone||'').replace(/\D/g,'') : '';
+  /* لو _ENG_COMPS فاضي أو مش فيه المسابقة دي — نحمّلها أولاً */
+  var comp = _ENG_COMPS[compId];
+  if (!comp) {
+    var ref = _engRef(compId);
+    if (ref) {
+      ref.once('value').then(function(snap) {
+        var c = snap.val();
+        if (c) { _ENG_COMPS[c.id] = c; }
+        _engOpenLeaderboardCustomer(compId); /* retry */
+      }).catch(function(){});
+    }
+    return;
+  }
   _engScoreRef(compId).once('value').then(function(snap) {
     var players = [];
     snap.forEach(function(child){ var v=child.val(); if(v) players.push(v); });
@@ -11415,6 +11485,7 @@ function _engUpdateScoreOnOrder(order) {
   if (!db || !order) return;
   var ph = (order.phone||'').replace(/\D/g,'');
   if (!ph) return;
+  var orderTotal = Number(order.total) || 0;
   /* لو _ENG_COMPS فارغة (أول فتح) — حمّل من Firebase ثم حدّث */
   if (!Object.keys(_ENG_COMPS).length) {
     var ref = _engRef(); if (!ref) return;
@@ -11428,6 +11499,8 @@ function _engUpdateScoreOnOrder(order) {
   Object.values(_ENG_COMPS).forEach(function(comp) {
     if (comp.status!=='active') return;
     if (new Date(comp.startAt).getTime()>now || new Date(comp.endAt).getTime()<now) return;
+    /* فحص الحد الأدنى للطلب */
+    if (comp.minOrder && orderTotal < comp.minOrder) return;
     var ref = _engScoreRef(comp.id, ph);
     if (!ref) return;
     ref.transaction(function(curr) {
