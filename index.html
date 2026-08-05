@@ -204,7 +204,7 @@ input,select,textarea{font-family:inherit;}
 .badge-new{position:absolute;top:8px;left:8px;background:var(--gold);color:#fff;font-size:10px;font-weight:800;padding:3px 7px;border-radius:100px;}
 .badge-saving{position:absolute;left:8px;background:linear-gradient(135deg,#dc2626,#ef4444);color:#fff;font-size:10px;font-weight:900;padding:3px 8px;border-radius:100px;z-index:4;box-shadow:0 2px 8px rgba(220,38,38,.4);white-space:nowrap;}
 /* السعر القديم المشطوب */
-.old-price{font-size:13px;color:#dc2626;text-decoration:line-through;margin-right:4px;font-weight:700;}
+.old-price{font-size:12px;color:var(--text-muted);font-weight:600;}
 .price-with-old{display:flex;align-items:center;flex-wrap:wrap;gap:2px;}
 ._new-chip{background:linear-gradient(135deg,#f59e0b,#fbbf24)!important;color:#fff!important;font-weight:900!important;position:relative;overflow:hidden;}
 ._new-chip::before{content:'✨';position:absolute;top:-4px;right:-4px;font-size:10px;animation:_starFloat1 2.5s ease-in-out infinite;}
@@ -4942,7 +4942,7 @@ function renderMenu() {
             <div style="display:flex;align-items:center;justify-content:space-between">
               <div class="price-with-old">
                 <div class="food-price">${price} <span style="font-size:11px;color:var(--text-muted)">ج.م</span></div>
-                <span class="old-price" style="font-size:13px;color:#dc2626;text-decoration:line-through;font-weight:700;margin-right:4px">السعر قبل العرض: ${item.oldPrice} ج.م</span>
+                <span style="font-size:12px;color:var(--text-muted);font-weight:600">السعر قبل العرض: <span style="text-decoration:line-through;color:#dc2626;font-weight:800">${item.oldPrice} ج.م</span></span>
               </div>
               <div class="food-add" onclick="quickAdd(event,'${cat}','${item.id}')">+</div>
             </div>
@@ -4992,7 +4992,7 @@ function renderMenu() {
             <div style="display:flex;align-items:center;justify-content:space-between">
               <div class="price-with-old">
                 <div class="food-price">${price} <span style="font-size:11px;color:var(--text-muted)">ج.م</span></div>
-                ${_isOfferValid(item) ? `<span class="old-price">السعر قبل العرض: ${item.oldPrice} ج.م</span>` : ''}
+                ${_isOfferValid(item) ? `<span style="font-size:12px;color:var(--text-muted);font-weight:600">السعر قبل العرض: <span style="text-decoration:line-through;color:#dc2626;font-weight:800">${item.oldPrice} ج.م</span></span>` : ''}
               </div>
               <div class="food-add" onclick="quickAdd(event,'${cat}','${item.id}')">+</div>
             </div>
@@ -5037,7 +5037,7 @@ function renderMenu() {
           <div style="display:flex;align-items:center;justify-content:space-between">
             <div class="price-with-old">
               <div class="food-price">${price} <span style="font-size:11px;color:var(--text-muted)">ج.م</span></div>
-              ${_isOfferValid(item) ? `<span class="old-price">السعر قبل العرض: ${item.oldPrice} ج.م</span>` : ''}
+              ${_isOfferValid(item) ? `<span style="font-size:12px;color:var(--text-muted);font-weight:600">السعر قبل العرض: <span style="text-decoration:line-through;color:#dc2626;font-weight:800">${item.oldPrice} ج.م</span></span>` : ''}
             </div>
             ${!notAvail ? `<div class="food-add" onclick="quickAdd(event,'${cat}','${item.id}')">+</div>` : ''}
           </div>
@@ -5191,7 +5191,7 @@ function openProduct(cat, id) {
   if (pmOldEl) {
     if (_isOfferValid(item)) {
       const saving = _getSaving(item, item.prices ? (item.prices.S || item.prices.M || item.prices.L || 0) : item.price);
-      pmOldEl.innerHTML = `السعر قبل العرض: <span>${item.oldPrice} ج.م</span>${saving > 0 ? ` &nbsp;|&nbsp; <span style="color:#dc2626;font-weight:900">وفر ${saving} ج.م</span>` : ''}`;
+      pmOldEl.innerHTML = `<span style="color:var(--text-muted);font-size:12px">السعر قبل العرض: <span style="text-decoration:line-through;color:#dc2626;font-weight:800">${item.oldPrice} ج.م</span></span>${saving > 0 ? ` &nbsp;|&nbsp; <span style="color:#dc2626;font-weight:900">وفر ${saving} ج.م</span>` : ''}`;
       pmOldEl.style.display = 'block';
     } else {
       pmOldEl.style.display = 'none';
