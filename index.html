@@ -205,8 +205,12 @@ input,select,textarea{font-family:inherit;}
 /* السعر القديم المشطوب */
 .old-price{font-size:11px;color:var(--text-muted);text-decoration:line-through;margin-left:4px;font-weight:600;}
 .price-with-old{display:flex;align-items:center;flex-wrap:wrap;gap:2px;}
-._new-chip{background:linear-gradient(135deg,#f59e0b,#fbbf24)!important;color:#fff!important;font-weight:900!important;}
+._new-chip{background:linear-gradient(135deg,#f59e0b,#fbbf24)!important;color:#fff!important;font-weight:900!important;position:relative;overflow:hidden;}
+._new-chip::before{content:'✨';position:absolute;top:-4px;right:-4px;font-size:10px;animation:_starFloat1 2.5s ease-in-out infinite;}
+._new-chip::after{content:'⭐';position:absolute;bottom:-4px;left:2px;font-size:8px;animation:_starFloat2 3s ease-in-out infinite 0.8s;}
 ._new-chip.active{background:linear-gradient(135deg,#d97706,#f59e0b)!important;box-shadow:0 2px 10px rgba(245,158,11,.4)!important;}
+@keyframes _starFloat1{0%,100%{transform:translateY(0) rotate(0deg);opacity:.8;}50%{transform:translateY(-4px) rotate(20deg);opacity:1;}}
+@keyframes _starFloat2{0%,100%{transform:translateY(0) rotate(0deg);opacity:.6;}50%{transform:translateY(-3px) rotate(-15deg);opacity:1;}}
 ._sale-chip{background:linear-gradient(135deg,#dc2626,#ef4444)!important;color:#fff!important;font-weight:900!important;animation:_salePulse 2s ease-in-out infinite;}
 ._sale-chip.active{background:linear-gradient(135deg,#b91c1c,#dc2626)!important;box-shadow:0 2px 14px rgba(220,38,38,.5)!important;animation:none;}
 @keyframes _salePulse{0%,100%{box-shadow:0 0 0 0 rgba(220,38,38,.4);}50%{box-shadow:0 0 0 6px rgba(220,38,38,0);}}
@@ -5020,12 +5024,13 @@ function renderMenu() {
 
 function renderCategories() {
   const availableCats = currentMainGroup ? getFilteredCatsByGroup() : Object.keys(MENU);
-  /* فحص هل في منتجات جديدة فعلاً */
-  const hasNewItems = availableCats.some(k => MENU[k] && (MENU[k].items||[]).some(i => i.new && i.available !== false));
-  const hasSaleItems = availableCats.some(k => MENU[k] && (MENU[k].items||[]).some(i => i.oldPrice && i.available !== false));
+  /* فحص كل المنيو للعروض والجديد — مش بس الأقسام المفلترة */
+  const allCats = Object.keys(MENU);
+  const hasNewItems  = allCats.some(k => MENU[k] && (MENU[k].items||[]).some(i => i.new     && i.available !== false));
+  const hasSaleItems = allCats.some(k => MENU[k] && (MENU[k].items||[]).some(i => i.oldPrice && i.available !== false));
   document.getElementById('cats').innerHTML =
     (hasSaleItems ? `<div class="cat-chip _sale-chip ${currentFilter === 'sale' ? 'active' : ''}" onclick="filterCat('sale',this)">🔥 عروض</div>` : '') +
-    (hasNewItems ? `<div class="cat-chip _new-chip ${currentFilter === 'new' ? 'active' : ''}" onclick="filterCat('new',this)">🆕 الجديد</div>` : '') +
+    (hasNewItems  ? `<div class="cat-chip _new-chip  ${currentFilter === 'new'  ? 'active' : ''}" onclick="filterCat('new',this)">🆕 الجديد</div>` : '') +
     `<div class="cat-chip ${currentFilter === 'all' ? 'active' : ''}" onclick="filterCat('all',this)">الكل</div>` +
     availableCats.filter(k => MENU[k]).map(k => `<div class="cat-chip ${currentFilter === k ? 'active' : ''}" onclick="filterCat('${k}',this)">${MENU[k].emoji} ${MENU[k].label.replace(/^[^ ]+ /,'')}</div>`).join('');
 }
