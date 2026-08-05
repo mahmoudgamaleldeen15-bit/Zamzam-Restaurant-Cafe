@@ -202,6 +202,14 @@ input,select,textarea{font-family:inherit;}
 .food-add:active{transform:scale(.9);background:var(--olive-dark);}
 .fav-btn{position:absolute;top:8px;right:8px;width:28px;height:28px;border-radius:50%;background:rgba(255,255,255,.9);display:flex;align-items:center;justify-content:center;font-size:15px;}
 .badge-new{position:absolute;top:8px;left:8px;background:var(--gold);color:#fff;font-size:10px;font-weight:800;padding:3px 7px;border-radius:100px;}
+/* السعر القديم المشطوب */
+.old-price{font-size:11px;color:var(--text-muted);text-decoration:line-through;margin-left:4px;font-weight:600;}
+.price-with-old{display:flex;align-items:center;flex-wrap:wrap;gap:2px;}
+._new-chip{background:linear-gradient(135deg,#f59e0b,#fbbf24)!important;color:#fff!important;font-weight:900!important;}
+._new-chip.active{background:linear-gradient(135deg,#d97706,#f59e0b)!important;box-shadow:0 2px 10px rgba(245,158,11,.4)!important;}
+._sale-chip{background:linear-gradient(135deg,#dc2626,#ef4444)!important;color:#fff!important;font-weight:900!important;animation:_salePulse 2s ease-in-out infinite;}
+._sale-chip.active{background:linear-gradient(135deg,#b91c1c,#dc2626)!important;box-shadow:0 2px 14px rgba(220,38,38,.5)!important;animation:none;}
+@keyframes _salePulse{0%,100%{box-shadow:0 0 0 0 rgba(220,38,38,.4);}50%{box-shadow:0 0 0 6px rgba(220,38,38,0);}}
 .size-pills{display:flex;gap:4px;margin-bottom:6px;}
 .size-pill{font-size:10px;padding:2px 7px;border-radius:100px;border:1px solid var(--border);font-weight:700;color:var(--text-muted);cursor:pointer;}
 .size-pill.active{background:var(--olive);border-color:var(--olive);color:#fff;}
@@ -1375,6 +1383,7 @@ input,select,textarea{font-family:inherit;}
         <button class="qty-btn" onclick="pmQtyChange(1)">+</button>
       </div>
       <div class="pm-total" id="pmTotalDisplay">0 ج.م</div>
+      <div id="pmOldPriceDisplay" style="display:none;font-size:11px;color:var(--text-muted);text-decoration:line-through;text-align:center;margin-top:2px"></div>
       <button class="btn-primary" style="flex:1;margin-top:0" onclick="addToCartFromPM()">أضف للسلة</button>
     </div>
   </div>
@@ -2980,6 +2989,14 @@ input,select,textarea{font-family:inherit;}
     <div class="remember-row" style="margin-bottom:16px">
       <div class="toggle-sw on" id="itemNewToggle" onclick="this.classList.toggle('on')"></div>
       <span style="font-size:14px;font-weight:600">وضع شارة "جديد"</span>
+    </div>
+    <!-- حقل السعر القديم — للعرض البصري فقط (مشطوب) -->
+    <div class="field" id="oldPriceRow" style="margin-bottom:12px">
+      <label style="display:flex;align-items:center;gap:6px">
+        <span>🏷️ السعر القديم قبل الخصم</span>
+        <span style="font-size:11px;color:var(--text-muted);font-weight:400">(اختياري — بيظهر مشطوب للعميل)</span>
+      </label>
+      <input type="number" id="itemOldPrice" placeholder="مثال: 150 — اتركه فارغاً لو مفيش خصم" inputmode="decimal" min="0" style="border-color:#f59e0b"/>
     </div>
     <div class="remember-row" style="margin-bottom:16px">
       <div class="toggle-sw on" id="itemDeliveryToggle" onclick="this.classList.toggle('on')"></div>
@@ -4857,8 +4874,106 @@ function renderMenu() {
   const wrap = document.getElementById('menuContent');
   let html = '';
   let availableCats = currentMainGroup ? getFilteredCatsByGroup() : Object.keys(MENU);
-  const cats = currentFilter === 'all' ? availableCats : [currentFilter];
+  const cats = currentFilter === 'all' ? availableCats : currentFilter === 'new' ? availableCats : currentFilter === 'sale' ? availableCats : [currentFilter];
   const q = searchQuery.toLowerCase();
+
+  /* ═══ تاب العروض ═══ */
+  if (currentFilter === 'sale') {
+    let saleItems = [];
+    availableCats.forEach(cat => {
+      const sec = MENU[cat]; if (!sec) return;
+      (sec.items||[]).forEach(item => {
+        if (item.oldPrice && item.available !== false) saleItems.push({ ...item, _cat: cat });
+      });
+    });
+    if (q) saleItems = saleItems.filter(i => i.name.includes(q) || (i.desc||'').includes(q));
+    if (saleItems.length) {
+      html += `<div class="menu-section"><h3 style="color:#dc2626">🔥 المنتجات المخفّضة <span class="count-tag">${saleItems.length} صنف</span></h3><div class="food-grid">`;
+      saleItems.forEach(item => {
+        const cat = item._cat;
+        const price = item.prices ? (item.prices.S || item.prices.M || item.prices.L || 0) : item.price;
+        const isFav = favs.has(item.id);
+        html += `<div class="food-card" onclick="openProduct('${cat}','${item.id}')">
+          ${item.image ? `<div class="food-img-wrap"><img src="${item.image}" class="food-img-actual" alt="${item.name}" loading="lazy"/></div>` : `<div class="food-img">${item.emoji}</div>`}
+          <div class="badge-new" style="background:linear-gradient(135deg,#dc2626,#ef4444)">خصم</div>
+          ${_resolvedVIP ? `<div class="vip-disc-tag">👑 -${_resolvedVIP.discount||0}%</div>` : ''}
+          <button class="fav-btn" onclick="toggleFav(event,'${item.id}')">
+            <span>${isFav ? '❤️' : '🤍'}</span>
+            ${getFavCount(item.id) > 0 ? `<span class="fav-count">${getFavCount(item.id)}</span>` : ''}
+          </button>
+          <div class="food-info">
+            ${item.prices ? `<div class="size-pills">${Object.entries(item.prices).map(([s,p]) => `<span class="size-pill${s===Object.keys(item.prices)[0]?' active':''}">${p} جـ — ${s}</span>`).join('')}</div>` : ''}
+            <div class="food-name">${item.name}</div>
+            <div class="food-desc">${item.desc||''}</div>
+            ${deliveryType==='delivery' ? `<div class="delivery-badge ${getItemDeliveryMode(cat, item) ? 'avail' : 'unavail'}"><span class="badge-dot"></span>${getItemDeliveryMode(cat, item) ? '🚚 متاح للدليفري' : '📦 استلام فقط'}</div>` : ''}
+            <div style="display:flex;align-items:center;justify-content:space-between">
+              <div class="price-with-old">
+                <div class="food-price">${price} <span style="font-size:11px;color:var(--text-muted)">ج.م</span></div>
+                <span class="old-price">${item.oldPrice} ج.م</span>
+              </div>
+              <div class="food-add" onclick="quickAdd(event,'${cat}','${item.id}')">+</div>
+            </div>
+          </div>
+        </div>`;
+      });
+      html += '</div></div>';
+    } else {
+      html = `<div style="text-align:center;padding:60px 20px;color:var(--text-muted)"><div style="font-size:48px;margin-bottom:12px">🔥</div><div style="font-weight:700">لا توجد عروض حالياً</div></div>`;
+    }
+    wrap.innerHTML = html;
+    renderActiveOfferStrip();
+    checkCurrentCatWorkHours();
+    return;
+  }
+
+  /* ═══ تاب الجديد ═══ */
+  if (currentFilter === 'new') {
+    let newItems = [];
+    availableCats.forEach(cat => {
+      const sec = MENU[cat]; if (!sec) return;
+      (sec.items||[]).forEach(item => {
+        if (item.new && item.available !== false) newItems.push({ ...item, _cat: cat });
+      });
+    });
+    if (q) newItems = newItems.filter(i => i.name.includes(q) || (i.desc||'').includes(q));
+    if (newItems.length) {
+      html += `<div class="menu-section"><h3>🆕 المنتجات الجديدة <span class="count-tag">${newItems.length} صنف</span></h3><div class="food-grid">`;
+      newItems.forEach(item => {
+        const cat = item._cat;
+        const price = item.prices ? (item.prices.S || item.prices.M || item.prices.L || 0) : item.price;
+        const isFav = favs.has(item.id);
+        html += `<div class="food-card" onclick="openProduct('${cat}','${item.id}')">
+          ${item.image ? `<div class="food-img-wrap"><img src="${item.image}" class="food-img-actual" alt="${item.name}" loading="lazy"/></div>` : `<div class="food-img">${item.emoji}</div>`}
+          <div class="badge-new">جديد</div>
+          ${_resolvedVIP && !item.notAvail ? `<div class="vip-disc-tag">👑 -${_resolvedVIP.discount||0}%</div>` : ''}
+          <button class="fav-btn" onclick="toggleFav(event,'${item.id}')">
+            <span>${isFav ? '❤️' : '🤍'}</span>
+            ${getFavCount(item.id) > 0 ? `<span class="fav-count">${getFavCount(item.id)}</span>` : ''}
+          </button>
+          <div class="food-info">
+            ${item.prices ? `<div class="size-pills">${Object.entries(item.prices).map(([s,p]) => `<span class="size-pill${s===Object.keys(item.prices)[0]?' active':''}">${p} جـ — ${s}</span>`).join('')}</div>` : ''}
+            <div class="food-name">${item.name}</div>
+            <div class="food-desc">${item.desc||''}</div>
+            ${deliveryType==='delivery' ? `<div class="delivery-badge ${getItemDeliveryMode(cat, item) ? 'avail' : 'unavail'}"><span class="badge-dot"></span>${getItemDeliveryMode(cat, item) ? '🚚 متاح للدليفري' : '📦 استلام فقط'}</div>` : ''}
+            <div style="display:flex;align-items:center;justify-content:space-between">
+              <div class="price-with-old">
+                <div class="food-price">${price} <span style="font-size:11px;color:var(--text-muted)">ج.م</span></div>
+                ${item.oldPrice ? `<span class="old-price">${item.oldPrice} ج.م</span>` : ''}
+              </div>
+              <div class="food-add" onclick="quickAdd(event,'${cat}','${item.id}')">+</div>
+            </div>
+          </div>
+        </div>`;
+      });
+      html += '</div></div>';
+    } else {
+      html = `<div style="text-align:center;padding:60px 20px;color:var(--text-muted)"><div style="font-size:48px;margin-bottom:12px">🆕</div><div style="font-weight:700">لا توجد منتجات جديدة حالياً</div></div>`;
+    }
+    wrap.innerHTML = html;
+    renderActiveOfferStrip();
+    checkCurrentCatWorkHours();
+    return;
+  }
   cats.forEach(cat => {
     const sec = MENU[cat];
     if (!sec) return;
@@ -4885,7 +5000,10 @@ function renderMenu() {
           <div class="food-desc">${item.desc||''}</div>
           ${deliveryType==='delivery' ? `<div class="delivery-badge ${getItemDeliveryMode(cat, item) ? 'avail' : 'unavail'}"><span class="badge-dot"></span>${getItemDeliveryMode(cat, item) ? '🚚 متاح للدليفري' : '📦 استلام فقط'}</div>` : ''}
           <div style="display:flex;align-items:center;justify-content:space-between">
-            <div class="food-price">${price} <span style="font-size:11px;color:var(--text-muted)">ج.م</span></div>
+            <div class="price-with-old">
+              <div class="food-price">${price} <span style="font-size:11px;color:var(--text-muted)">ج.م</span></div>
+              ${item.oldPrice ? `<span class="old-price">${item.oldPrice} ج.م</span>` : ''}
+            </div>
             ${!notAvail ? `<div class="food-add" onclick="quickAdd(event,'${cat}','${item.id}')">+</div>` : ''}
           </div>
         </div>
@@ -4902,7 +5020,12 @@ function renderMenu() {
 
 function renderCategories() {
   const availableCats = currentMainGroup ? getFilteredCatsByGroup() : Object.keys(MENU);
+  /* فحص هل في منتجات جديدة فعلاً */
+  const hasNewItems = availableCats.some(k => MENU[k] && (MENU[k].items||[]).some(i => i.new && i.available !== false));
+  const hasSaleItems = availableCats.some(k => MENU[k] && (MENU[k].items||[]).some(i => i.oldPrice && i.available !== false));
   document.getElementById('cats').innerHTML =
+    (hasSaleItems ? `<div class="cat-chip _sale-chip ${currentFilter === 'sale' ? 'active' : ''}" onclick="filterCat('sale',this)">🔥 عروض</div>` : '') +
+    (hasNewItems ? `<div class="cat-chip _new-chip ${currentFilter === 'new' ? 'active' : ''}" onclick="filterCat('new',this)">🆕 الجديد</div>` : '') +
     `<div class="cat-chip ${currentFilter === 'all' ? 'active' : ''}" onclick="filterCat('all',this)">الكل</div>` +
     availableCats.filter(k => MENU[k]).map(k => `<div class="cat-chip ${currentFilter === k ? 'active' : ''}" onclick="filterCat('${k}',this)">${MENU[k].emoji} ${MENU[k].label.replace(/^[^ ]+ /,'')}</div>`).join('');
 }
@@ -4913,6 +5036,18 @@ function filterCat(cat, el) {
   renderMenu();
 }
 function doSearch(q) { searchQuery = q; renderMenu(); }
+/* لو الأدمن شال جديد من منتج وكان العميل في تاب الجديد — برجعه للكل تلقائياً */
+function _syncNewFilter() {
+  const availableCats = currentMainGroup ? getFilteredCatsByGroup() : Object.keys(MENU);
+  if (currentFilter === 'new') {
+    const hasNew = availableCats.some(k => MENU[k] && (MENU[k].items||[]).some(i => i.new && i.available !== false));
+    if (!hasNew) currentFilter = 'all';
+  } else if (currentFilter === 'sale') {
+    const hasSale = availableCats.some(k => MENU[k] && (MENU[k].items||[]).some(i => i.oldPrice && i.available !== false));
+    if (!hasSale) currentFilter = 'all';
+  }
+  renderMenu();
+}
 
 // ============================================================
 // OFFER STRIP
@@ -5015,6 +5150,12 @@ function openProduct(cat, id) {
     if (addonsSection) addonsSection.style.display = 'none';
   }
   updatePMTotal();
+  /* السعر القديم المشطوب في modal */
+  const pmOldEl = document.getElementById('pmOldPriceDisplay');
+  if (pmOldEl) {
+    if (item.oldPrice) { pmOldEl.textContent = 'السعر القديم: ' + item.oldPrice + ' ج.م'; pmOldEl.style.display = 'block'; }
+    else { pmOldEl.style.display = 'none'; }
+  }
   document.getElementById('productModal').classList.add('open');
 }
 function closePM(e) { if (e && e.target !== document.getElementById('productModal')) return; document.getElementById('productModal').classList.remove('open'); }
@@ -7972,6 +8113,9 @@ function openEditItem(cat, id) {
   else document.getElementById('itemNewToggle').classList.remove('on');
   if (item.availableDelivery !== false) document.getElementById('itemDeliveryToggle').classList.add('on');
   else document.getElementById('itemDeliveryToggle').classList.remove('on');
+  /* السعر القديم */
+  const oldPriceEl = document.getElementById('itemOldPrice');
+  if (oldPriceEl) oldPriceEl.value = item.oldPrice || '';
   openModal('addItemModal');
 }
 function setPriceType(type) {
@@ -7991,6 +8135,7 @@ async function saveItem() {
   const imageData = _itemImageMode === 'upload' ? (document.getElementById('itemImageData')?.value || '') : '';
   const isNew = document.getElementById('itemNewToggle').classList.contains('on');
   const isDelivery = document.getElementById('itemDeliveryToggle').classList.contains('on');
+  const oldPrice = Number(document.getElementById('itemOldPrice')?.value) || 0;
   if (!name || !cat) { showNotif('أدخل اسم الصنف والقسم'); return; }
   if (!MENU[cat]) { showNotif('❌ القسم غير موجود — اختر قسماً صحيحاً'); return; }
   let priceData = {};
@@ -8018,6 +8163,7 @@ async function saveItem() {
       const catDeliv2 = MENU[cat]?.deliveryMode;
       const effDeliv2 = catDeliv2 === 'pickup_only' ? false : catDeliv2 === 'delivery' ? true : isDelivery;
       const updated = { ...MENU[oldCat].items[idx], name, desc, emoji, new: isNew, availableDelivery: effDeliv2, deliveryAvailable: effDeliv2, ...priceData };
+      if (oldPrice > 0) updated.oldPrice = oldPrice; else delete updated.oldPrice;
       // ✅ لو مفيش imageData → امسح الصورة نهائياً لتفعيل الـ emoji
       if (imageData) updated.image = imageData; else delete updated.image;
       if (oldCat !== cat) { MENU[cat].items.push(updated); MENU[oldCat].items.splice(idx, 1); }
@@ -8027,6 +8173,7 @@ async function saveItem() {
     const catDeliv = MENU[cat]?.deliveryMode;
     const effectiveDelivery = catDeliv === 'pickup_only' ? false : catDeliv === 'delivery' ? true : isDelivery;
     const newItem = { id: cat + '_' + Date.now(), name, desc, emoji, image: imageData||undefined, new: isNew, available: true, availableDelivery: effectiveDelivery, deliveryAvailable: effectiveDelivery, ...priceData };
+    if (oldPrice > 0) newItem.oldPrice = oldPrice;
     if (!MENU[cat].items) MENU[cat].items = [];
     MENU[cat].items.push(newItem);
   }
@@ -8053,7 +8200,7 @@ async function saveItem() {
 function deleteItem(cat, id) {
   if (!confirm('حذف هذا الصنف؟')) return;
   MENU[cat].items = MENU[cat].items.filter(i => i.id !== id);
-  saveMenu(); renderMenuManage(); renderMenu(); showNotif('✓ تم الحذف');
+  saveMenu(); renderMenuManage(); renderMenu(); _syncNewFilter(); showNotif('✓ تم الحذف');
 }
 function openAddCatModal() {
   // ملء قائمة الأقسام الرئيسية ديناميكياً
@@ -8143,7 +8290,7 @@ function updateItemMainGroupHint() {
 }
 function deleteCat(cat) {
   if (!confirm('حذف هذا القسم وكل أصنافه؟')) return;
-  delete MENU[cat]; saveMenu(); renderMenuManage(); renderMenu(); showNotif('✓ تم حذف القسم');
+  delete MENU[cat]; saveMenu(); renderMenuManage(); renderMenu(); _syncNewFilter(); showNotif('✓ تم حذف القسم');
 }
 let _menuWriteLock = false;
 function saveMenu() {
@@ -18281,12 +18428,17 @@ function _adminFixRedeemed(phone, name) {
     (diff > 0 ? '✅ هيترجع ' + diff + ' نقطة للعميل' : '⚠️ هيتخصم ' + Math.abs(diff) + ' نقطة من العميل')
   )) return;
 
-  // احفظ في Firebase + localStorage
-  var data = getLoyaltyData(p);
-  data.redeemed    = newRedeemed;
-  data.points      = newPoints;
-  data.lastFixedAt = new Date().toISOString();
-  data.lastFixedBy = 'admin';
+  // احفظ في Firebase + localStorage — نبني data من adminEntry لنحافظ على كل البيانات
+  var data = {
+    points:      newPoints,
+    earned:      adminEntry.earned      || 0,
+    redeemed:    newRedeemed,
+    lastEarned:  adminEntry.lastEarned  || null,
+    lastRedeem:  adminEntry.lastRedeem  || null,
+    name:        adminEntry.name        || name || '',
+    lastFixedAt: new Date().toISOString(),
+    lastFixedBy: 'admin',
+  };
   saveLoyaltyData(p, data);
 
   input.value = '';
