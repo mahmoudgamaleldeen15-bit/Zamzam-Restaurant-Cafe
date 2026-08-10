@@ -8828,7 +8828,8 @@ function openSalesReport() {
 function filterOrdersByPeriod(period) {
   const now = Date.now();
   const day = 86400000;
-  return ordersData.filter(o => {
+  const allOrders = (typeof _getAllOrders === 'function') ? _getAllOrders() : ordersData;
+  return allOrders.filter(o => {
     if (period === 'today') return (now - (o.timestamp||0)) < day;
     if (period === 'week')  return (now - (o.timestamp||0)) < 7*day;
     if (period === 'month') return (now - (o.timestamp||0)) < 30*day;
@@ -14507,7 +14508,7 @@ function _trackAppOpen() {
 /* ══ الإحصائيات الموسعة ══ */
 function _renderExtendedStats() {
   const users = loadData('zz_users', []);
-  const ordersAll = loadData('zz_orders_history', ordersData && ordersData.length ? ordersData : []);
+  const ordersAll = (typeof _getAllOrders === 'function') ? _getAllOrders() : (ordersData && ordersData.length ? ordersData : loadData('zz_orders_history', []));
   const now = Date.now();
   const period30 = 30 * 24 * 3600 * 1000;
   const monthStart = new Date(); monthStart.setDate(1); monthStart.setHours(0,0,0,0);
@@ -19055,11 +19056,11 @@ function _loadOrdersArchive() {
     archivedOrdersData = [];
     snap.forEach(function(child) { var v = child.val(); if (v && v.id) archivedOrdersData.push(v); });
     archivedOrdersData.sort(function(a,b) { return (b.timestamp||0) - (a.timestamp||0); });
-    /* لو تاب التقارير مفتوح — أعد رسمه بعد تحميل الأرشيف */
-    var mgmtTab = document.getElementById('tab-mgmt-reports');
-    if (mgmtTab && mgmtTab.style.display === 'block') {
-      if (typeof renderMgmtReport === 'function') renderMgmtReport();
-    }
+    /* أعد رسم أي تاب مفتوح يعتمد على البيانات الكاملة */
+    var mgmtTab  = document.getElementById('tab-mgmt-reports');
+    var statsTab = document.getElementById('tab-stats');
+    if (mgmtTab  && mgmtTab.style.display  === 'block' && typeof renderMgmtReport     === 'function') renderMgmtReport();
+    if (statsTab && statsTab.style.display === 'block' && typeof renderStatsTab        === 'function') { renderStatsTab(); _renderExtendedStats(); }
   });
 }
 
