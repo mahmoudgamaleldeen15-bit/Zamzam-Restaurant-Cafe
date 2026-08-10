@@ -12744,7 +12744,7 @@ function setupFirebaseListeners() {
       if (arr.length > 0) {
         APP_RATINGS = arr.sort((a, b) => (b.ts || 0) - (a.ts || 0));
         saveData('zz_app_ratings', APP_RATINGS);
-        if (document.getElementById('tab-stats')?.style.display === 'block') renderStatsTab();
+        if (document.getElementById('tab-stats')?.style.display === 'block') { renderStatsTab(); _renderExtendedStats(); }
       }
     }
   });
@@ -12759,7 +12759,7 @@ function setupFirebaseListeners() {
       if ((fbStats.installed || 0) > (PWA_STATS.installed || 0)) PWA_STATS.installed = fbStats.installed;
       if ((fbStats.dismissed || 0) > (PWA_STATS.dismissed || 0)) PWA_STATS.dismissed = fbStats.dismissed;
       saveData('zz_pwa_stats', PWA_STATS);
-      if (document.getElementById('tab-stats')?.style.display === 'block') renderStatsTab();
+      if (document.getElementById('tab-stats')?.style.display === 'block') { renderStatsTab(); _renderExtendedStats(); }
     }
   });
 
@@ -13881,8 +13881,10 @@ function renderAgentReports() {
     return;
   }
 
+  const allOrders = (typeof _getAllOrders === 'function') ? _getAllOrders() : ordersData;
+
   el.innerHTML = AGENTS.map(ag => {
-    const agOrders = ordersData.filter(o => o.agent?.id === ag.id && o.status === 'delivered' && inRange(o.deliveredAt || o.clientConfirmedAt));
+    const agOrders = allOrders.filter(o => o.agent?.id === ag.id && o.status === 'delivered' && inRange(o.deliveredAt || o.clientConfirmedAt));
     const ratings = (ag.ratings || []).filter(r => inRange(r.ratedAt));
     const avgRating = ratings.length ? (ratings.reduce((s, r) => s + r.stars, 0) / ratings.length) : 0;
     const complaints = ratings.filter(r => r.stars <= 2 || r.comment);
@@ -14410,7 +14412,7 @@ async function loadRatingsFromFirebase() {
       if ((fbStats.dismissed || 0) > (PWA_STATS.dismissed || 0)) PWA_STATS.dismissed = fbStats.dismissed;
       saveData('zz_pwa_stats', PWA_STATS);
     }
-    renderStatsTab();
+    renderStatsTab(); _renderExtendedStats();
   } catch(e) { console.warn('loadRatingsFromFirebase failed:', e); }
 }
 
@@ -16252,7 +16254,7 @@ function _fullRebuildAfterImport() {
   loadSettingsUI();
   renderWorkHoursAdmin();
   if (document.getElementById('tab-cashier')?.style.display === 'block') renderCashierSheet();
-  if (document.getElementById('tab-stats')?.style.display === 'block') renderStatsTab();
+  if (document.getElementById('tab-stats')?.style.display === 'block') { renderStatsTab(); _renderExtendedStats(); }
 }
 
 </script>
@@ -19057,10 +19059,12 @@ function _loadOrdersArchive() {
     snap.forEach(function(child) { var v = child.val(); if (v && v.id) archivedOrdersData.push(v); });
     archivedOrdersData.sort(function(a,b) { return (b.timestamp||0) - (a.timestamp||0); });
     /* أعد رسم أي تاب مفتوح يعتمد على البيانات الكاملة */
-    var mgmtTab  = document.getElementById('tab-mgmt-reports');
-    var statsTab = document.getElementById('tab-stats');
-    if (mgmtTab  && mgmtTab.style.display  === 'block' && typeof renderMgmtReport     === 'function') renderMgmtReport();
-    if (statsTab && statsTab.style.display === 'block' && typeof renderStatsTab        === 'function') { renderStatsTab(); _renderExtendedStats(); }
+    var mgmtTab   = document.getElementById('tab-mgmt-reports');
+    var statsTab  = document.getElementById('tab-stats');
+    var agentsTab = document.getElementById('tab-agents');
+    if (mgmtTab   && mgmtTab.style.display   === 'block' && typeof renderMgmtReport     === 'function') renderMgmtReport();
+    if (statsTab  && statsTab.style.display  === 'block' && typeof renderStatsTab        === 'function') { renderStatsTab(); _renderExtendedStats(); }
+    if (agentsTab && agentsTab.style.display === 'block' && typeof renderAgentsAdmin     === 'function') renderAgentsAdmin();
   });
 }
 
