@@ -6737,14 +6737,6 @@ function renderAdminOrders() {
   if (elRev) elRev.textContent = ordersData.filter(o => o.status === 'delivered').reduce((s, o) => s + (o.total || 0), 0).toLocaleString('ar-EG');
   if (elPend) elPend.textContent = ordersData.filter(o => o.status === 'new' || o.status === 'prep').length;
   if (elTrend) elTrend.textContent = '▲ ' + ordersData.filter(o => !['delivered','cancelled'].includes(o.status)).length + ' نشط';
-  /* ═══ إيرادات اليوم الحقيقية — بتشمل الأرشيف ═══ */
-  const _allOrdersForToday = (typeof _getAllOrders === 'function') ? _getAllOrders() : ordersData;
-  const _todayStart = new Date(); _todayStart.setHours(0,0,0,0);
-  const _todayTs = _todayStart.getTime();
-  const _todayDelivered = _allOrdersForToday.filter(o => o.status === 'delivered' && (o.timestamp||0) >= _todayTs);
-  const _todayAll = _allOrdersForToday.filter(o => (o.timestamp||0) >= _todayTs);
-  if (el) el.textContent = _todayAll.length;
-  if (elRev) elRev.textContent = _todayDelivered.reduce((s,o) => s+(o.total||0), 0).toLocaleString('ar-EG');
   // Update real rating avg
   const ratingAvgEl = document.getElementById('statRatingAvg');
   if (ratingAvgEl && APP_RATINGS.length) {
