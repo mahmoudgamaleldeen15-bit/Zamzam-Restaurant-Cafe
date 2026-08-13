@@ -6737,6 +6737,14 @@ function renderAdminOrders() {
   if (elRev) elRev.textContent = ordersData.filter(o => o.status === 'delivered').reduce((s, o) => s + (o.total || 0), 0).toLocaleString('ar-EG');
   if (elPend) elPend.textContent = ordersData.filter(o => o.status === 'new' || o.status === 'prep').length;
   if (elTrend) elTrend.textContent = '▲ ' + ordersData.filter(o => !['delivered','cancelled'].includes(o.status)).length + ' نشط';
+  /* ═══ إيرادات اليوم الحقيقية — بتشمل الأرشيف ═══ */
+  const _allOrdersForToday = (typeof _getAllOrders === 'function') ? _getAllOrders() : ordersData;
+  const _todayStart = new Date(); _todayStart.setHours(0,0,0,0);
+  const _todayTs = _todayStart.getTime();
+  const _todayDelivered = _allOrdersForToday.filter(o => o.status === 'delivered' && (o.timestamp||0) >= _todayTs);
+  const _todayAll = _allOrdersForToday.filter(o => (o.timestamp||0) >= _todayTs);
+  if (el) el.textContent = _todayAll.length;
+  if (elRev) elRev.textContent = _todayDelivered.reduce((s,o) => s+(o.total||0), 0).toLocaleString('ar-EG');
   // Update real rating avg
   const ratingAvgEl = document.getElementById('statRatingAvg');
   if (ratingAvgEl && APP_RATINGS.length) {
@@ -19087,15 +19095,15 @@ function openArchiveDialog() {
     if (o.status !== 'delivered' && o.status !== 'cancelled') return false;
     var ts = o.timestamp || (o.createdAt ? new Date(o.createdAt).getTime() : 0);
     if (!ts) return false;
-    return (now - ts) > 30*day;
+    return (now - ts) > 3*day;
   });
   if (archivable.length === 0) {
-    showNotif('✅ لا توجد طلبات قديمة للأرشفة (أقدم من 30 يوم)');
+    showNotif('✅ لا توجد طلبات قديمة للأرشفة (أقدم من 3 أيام)');
     return;
   }
   var msg = '📦 أرشفة الطلبات القديمة\n\n' +
     'إجمالي الطلبات الحالية: ' + totalOrders + '\n' +
-    'طلبات قابلة للأرشفة (مكتملة/ملغية أقدم من 30 يوم): ' + archivable.length + '\n' +
+    'طلبات قابلة للأرشفة (مكتملة/ملغية أقدم من 3 أيام): ' + archivable.length + '\n' +
     'طلبات ستبقى في النظام: ' + (totalOrders - archivable.length) + '\n\n' +
     '⚠️ الأرشفة بتنقل الطلبات لمكان تاني في Firebase.\n' +
     '✅ التقارير والـ VIP هيفضلوا يشوفوا كل حاجة.\n' +
