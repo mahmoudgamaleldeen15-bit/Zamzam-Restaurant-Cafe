@@ -7113,12 +7113,26 @@ function renderCashierSheet() {
   }
   const q = cashierSearchQuery;
   if (q) {
+    /* البحث يشمل الأرشيف أيضاً */
+    const allOrders = (typeof _getAllOrders === 'function') ? _getAllOrders() : ordersData;
+    const archiveResults = allOrders.filter(o =>
+      !sorted.find(s => s.id === o.id) && (
+        (o.name || '').toLowerCase().includes(q) ||
+        (o.phone || '').includes(q) ||
+        (o.whatsapp || '').includes(q) ||
+        (o.id || '').toLowerCase().includes(q)
+      )
+    );
     sorted = sorted.filter(o =>
       (o.name || '').toLowerCase().includes(q) ||
       (o.phone || '').includes(q) ||
       (o.whatsapp || '').includes(q) ||
       (o.id || '').toLowerCase().includes(q)
     );
+    /* نضيف نتائج الأرشيف بعد الحية */
+    if (archiveResults.length) {
+      sorted = [...sorted, ...archiveResults];
+    }
   }
   const canManage = (adminRoleType === 'admin' || adminRoleType === 'cashier');
   const tbody = document.getElementById('cashierTableBody');
