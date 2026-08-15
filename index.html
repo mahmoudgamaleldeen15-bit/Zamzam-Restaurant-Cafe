@@ -2830,13 +2830,10 @@ input,select,textarea{font-family:inherit;}
           <div class="toggle-sw on" id="vipAutoWithdraw" onclick="this.classList.toggle('on')"></div>
         </div>
 
-        <div class="vip-limit-row">
-          <label>❌ سحب VIP بالمشتريات بعد (شهر) بدون طلب</label>
-          <input type="number" class="vip-limit-input" id="vipAmountInactivityMonths" value="12" min="1" placeholder="12"/>
-        </div>
-        <div class="vip-limit-row">
-          <label>⚠️ تحذير عميل المشتريات بعد (شهر)</label>
-          <input type="number" class="vip-limit-input" id="vipAmountWarningMonths" value="6" min="1" placeholder="6"/>
+        <div style="background:#e8f5e9;border-radius:8px;padding:10px;margin:8px 0;font-size:12px;color:#2e7d32;line-height:1.8">
+          🤖 <strong>فترة السماح ديناميكية تلقائياً:</strong><br>
+          كل 1,000 ج مشتريات = شهر سماح<br>
+          مثال: اشترى 5,000 ج → 5 شهور سماح قبل سحب VIP
         </div>
 
         <div style="background:#fff8e1;border-radius:8px;padding:8px;margin:8px 0;font-size:11px;color:#92400e;line-height:1.7">
@@ -3495,25 +3492,33 @@ function _checkVIPRenewalAndWithdraw(currentStats) {
 
     if (isAmountBased) {
       // ===== عميل VIP بالمشتريات =====
-      // قاعدة: طلب واحد كل 6 شهور — وإلا تحذير
-      // سحب لو قعد 12 شهر بدون طلب
-      const lastOrder = ordersData
-        .filter(o => (o.whatsapp||o.phone||'').replace(/\D/g,'') === phone && o.status !== 'cancelled')
+      // فترة السماح ديناميكية: كل 1000 ج = شهر سماح (الحد الأدنى شهر)
+      const allOrders = (typeof _getAllOrders === 'function') ? _getAllOrders() : ordersData;
+      const clientAllOrders = allOrders.filter(o =>
+        (o.whatsapp||o.phone||'').replace(/\D/g,'') === phone && o.status !== 'cancelled'
+      );
+      // إجمالي كل مشتريات العميل (حية + مؤرشفة)
+      const clientTotalSpent = clientAllOrders.reduce((s, o) => s + (o.total || 0), 0);
+      // كل 1000 ج = شهر سماح — حد أدنى شهر واحد
+      const dynamicInactivityMonths = Math.max(1, Math.floor(clientTotalSpent / 1000));
+      const dynamicWarningMonths = Math.max(1, Math.floor(dynamicInactivityMonths / 2));
+
+      const lastOrder = clientAllOrders
         .sort((a,b) => new Date(b.timestamp||b.createdAt||0) - new Date(a.timestamp||a.createdAt||0))[0];
 
       const lastOrderDate = lastOrder ? new Date(lastOrder.timestamp || lastOrder.createdAt) : new Date(vip.sinceDate || now);
       const monthsInactive = (now - lastOrderDate) / (30 * 24 * 3600 * 1000);
 
-      if (monthsInactive >= amountInactivityMonths) {
-        // سحب VIP بعد 12 شهر بدون طلب
+      if (monthsInactive >= dynamicInactivityMonths) {
+        // سحب VIP بعد فترة السماح الديناميكية
         const name = vip.name || '';
         delete VIP_CUSTOMERS[phone];
         if (db) db.ref('vip_customers/' + phone).remove().catch(() => {});
         _sendVIPWithdrawMsg(phone, name, true);
-        showNotif(`⚠️ تم سحب VIP من ${name} — غياب أكثر من ${amountInactivityMonths} شهر`);
-      } else if (monthsInactive >= amountWarningMonths && !vip.amountWarningSent) {
-        // تحذير بعد 6 شهور
-        const monthsLeft = Math.ceil(amountInactivityMonths - monthsInactive);
+        showNotif(`⚠️ تم سحب VIP من ${name} — غياب أكثر من ${dynamicInactivityMonths} شهر`);
+      } else if (monthsInactive >= dynamicWarningMonths && !vip.amountWarningSent) {
+        // تحذير بعد نصف فترة السماح
+        const monthsLeft = Math.ceil(dynamicInactivityMonths - monthsInactive);
         _sendVIPAmountWarningMsg(phone, vip.name || '', monthsLeft);
         VIP_CUSTOMERS[phone].amountWarningSent = true;
         if (db) db.ref('vip_customers/' + phone).update({ amountWarningSent: true }).catch(() => {});
@@ -3521,10 +3526,20 @@ function _checkVIPRenewalAndWithdraw(currentStats) {
 
     } else {
       // ===== عميل VIP بالطلبات =====
+      // حساب فترة السماح ديناميكياً من إجمالي مشتريات العميل (حية + أرشيف)
+      const _allOrdForVip = (typeof _getAllOrders === 'function') ? _getAllOrders() : ordersData;
+      const _clientOrds = _allOrdForVip.filter(o =>
+        (o.whatsapp||o.phone||'').replace(/\D/g,'') === phone && o.status !== 'cancelled'
+      );
+      const _clientSpent = _clientOrds.reduce((s, o) => s + (o.total || 0), 0);
+      // كل 1000 ج = شهر سماح — حد أدنى renewalDays (الفترة الأصلية)
+      const _dynamicRenewalDays = Math.max(renewalDays, Math.floor(_clientSpent / 1000) * 30);
+      const _dynamicWarningDays = Math.max(warningDays, Math.floor(_dynamicRenewalDays / 2));
+
       const lastRenewed = new Date(vip.lastRenewed || vip.sinceDate || now);
       const daysSinceRenew = (now - lastRenewed) / (24 * 3600 * 1000);
 
-      if (daysSinceRenew >= renewalDays) {
+      if (daysSinceRenew >= _dynamicRenewalDays) {
         const meetsOrders = stats.count >= withdrawOrders;
         if (meetsOrders) {
           // تجديد
@@ -3542,8 +3557,8 @@ function _checkVIPRenewalAndWithdraw(currentStats) {
         }
       } else {
         // تحذير قبل انتهاء الفترة
-        const daysLeft = renewalDays - daysSinceRenew;
-        if (daysLeft <= warningDays && !vip.warningSent) {
+        const daysLeft = _dynamicRenewalDays - daysSinceRenew;
+        if (daysLeft <= _dynamicWarningDays && !vip.warningSent) {
           const neededOrders = Math.max(0, withdrawOrders - stats.count);
           if (neededOrders > 0) {
             _sendVIPWarningMsg(phone, vip.name || '', Math.ceil(daysLeft), neededOrders);
@@ -3641,10 +3656,7 @@ function saveVIPAutoSettings() {
   const withdrawOrders = Number(document.getElementById('vipWithdrawOrders')?.value) || 3;
   const autoWithdraw = document.getElementById('vipAutoWithdraw')?.classList.contains('on') || false;
 
-  const amountInactivityMonths = Number(document.getElementById('vipAmountInactivityMonths')?.value) || 12;
-  const amountWarningMonths = Number(document.getElementById('vipAmountWarningMonths')?.value) || 6;
-
-  VIP_AUTO_SETTINGS = { enabled, ordersLimit, minOrderAmount, amountLimit, defaultDiscount, periodDays, renewalDays, warningDays, withdrawOrders, autoWithdraw, amountInactivityMonths, amountWarningMonths };
+  VIP_AUTO_SETTINGS = { enabled, ordersLimit, minOrderAmount, amountLimit, defaultDiscount, periodDays, renewalDays, warningDays, withdrawOrders, autoWithdraw };
   saveData('zz_vip_auto_settings', VIP_AUTO_SETTINGS);
   if (db) fbUpdate('config', { vipAutoSettings: VIP_AUTO_SETTINGS }).catch(() => {});
 
@@ -3685,10 +3697,6 @@ function loadVIPAutoSettingsUI() {
   if (wo) wo.value = VIP_AUTO_SETTINGS.withdrawOrders || 3;
   const aw = document.getElementById('vipAutoWithdraw');
   if (aw) aw.classList.toggle('on', !!VIP_AUTO_SETTINGS.autoWithdraw);
-  const aim = document.getElementById('vipAmountInactivityMonths');
-  if (aim) aim.value = VIP_AUTO_SETTINGS.amountInactivityMonths || 12;
-  const awm = document.getElementById('vipAmountWarningMonths');
-  if (awm) awm.value = VIP_AUTO_SETTINGS.amountWarningMonths || 6;
   renderVIPBenefitsAdmin();
   renderVIPMsgTemplates();
 }
