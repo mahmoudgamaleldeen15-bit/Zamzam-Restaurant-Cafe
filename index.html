@@ -2822,6 +2822,10 @@ input,select,textarea{font-family:inherit;}
           <input type="number" class="vip-limit-input" id="vipWithdrawOrders" value="3" min="1" placeholder="3"/>
         </div>
         <div class="vip-limit-row">
+          <label>🔄 طلبات استعادة VIP بعد السحب</label>
+          <input type="number" class="vip-limit-input" id="vipRestoreOrders" value="3" min="1" placeholder="3" oninput="_updateVIPExample()"/>
+        </div>
+        <div class="vip-limit-row">
           <label>⚠️ تحذير قبل السحب بـ (يوم)</label>
           <input type="number" class="vip-limit-input" id="vipWarningDays" value="7" min="1" placeholder="7"/>
         </div>
@@ -3514,6 +3518,8 @@ function _checkVIPRenewalAndWithdraw(currentStats) {
         const name = vip.name || '';
         delete VIP_CUSTOMERS[phone];
         if (db) db.ref('vip_customers/' + phone).remove().catch(() => {});
+        /* حفظ تاريخ السحب لإمكانية الاستعادة */
+        saveData('zz_vip_withdraw_' + phone, new Date().toISOString());
         _sendVIPWithdrawMsg(phone, name, true);
         showNotif(`⚠️ تم سحب VIP من ${name} — غياب أكثر من ${dynamicInactivityMonths} شهر`);
       } else if (monthsInactive >= dynamicWarningMonths && !vip.amountWarningSent) {
@@ -3552,6 +3558,8 @@ function _checkVIPRenewalAndWithdraw(currentStats) {
           const name = vip.name || '';
           delete VIP_CUSTOMERS[phone];
           if (db) db.ref('vip_customers/' + phone).remove().catch(() => {});
+          /* حفظ تاريخ السحب لإمكانية الاستعادة لاحقاً */
+          saveData('zz_vip_withdraw_' + phone, new Date().toISOString());
           _sendVIPWithdrawMsg(phone, name, false);
           showNotif(`⚠️ تم سحب VIP من ${name} — لم يحقق شروط التجديد`);
         }
@@ -3614,9 +3622,10 @@ function _sendVIPWarningMsg(phone, name, daysLeft, neededOrders) {
 function _sendVIPWithdrawMsg(phone, name, isAmountBased) {
   const wa = normalizePhoneForWA(phone);
   if (!wa) return;
+  const restoreOrders = VIP_AUTO_SETTINGS.restoreOrders || 3;
   const msg = isAmountBased
-    ? `عزيزنا *${name}*\n\nانتهت عضويتك الـ VIP بسبب طول فترة الغياب 😔\n\nيمكنك استعادتها بإتمام ${VIP_AUTO_SETTINGS.ordersLimit || 5} طلبات في ${VIP_AUTO_SETTINGS.periodDays || 30} يوم.\n\n💪 نتطلع لعودتك!\n\n*${RESTAURANT.name}* 🍽️`
-    : `عزيزنا *${name}*\n\nانتهت عضويتك الـ VIP 😔\n\nيمكنك استعادتها بإتمام ${VIP_AUTO_SETTINGS.ordersLimit || 5} طلبات في ${VIP_AUTO_SETTINGS.periodDays || 30} يوم.\n\n💪 نتطلع لخدمتك!\n\n*${RESTAURANT.name}* 🍽️`;
+    ? `عزيزنا *${name}* 👋\n\nنفتقدك! عضويتك الـ VIP معنا انتهت مؤقتاً بسبب فترة الغياب 🌟\n\nأنت كنت من عملائنا المميزين — وبابنا دايماً مفتوح لعودتك 🤍\n\nكل اللي تحتاجه هو بعض الطلبات وهتعود لمكانك المستحق بيننا ✨\n\n*${RESTAURANT.name}* 🍽️`
+    : `عزيزنا *${name}* 👋\n\nنفتقدك! عضويتك الـ VIP معنا انتهت مؤقتاً 🌟\n\nأنت كنت من عملائنا المميزين — وبابنا دايماً مفتوح لعودتك 🤍\n\nكل اللي تحتاجه هو *${restoreOrders} طلبات* وهتعود لمكانك المميز بيننا ✨\n\n*${RESTAURANT.name}* 🍽️`;
   window.open('https://wa.me/' + wa + '?text=' + encodeURIComponent(msg), '_blank');
 }
 
@@ -3656,7 +3665,8 @@ function saveVIPAutoSettings() {
   const withdrawOrders = Number(document.getElementById('vipWithdrawOrders')?.value) || 3;
   const autoWithdraw = document.getElementById('vipAutoWithdraw')?.classList.contains('on') || false;
 
-  VIP_AUTO_SETTINGS = { enabled, ordersLimit, minOrderAmount, amountLimit, defaultDiscount, periodDays, renewalDays, warningDays, withdrawOrders, autoWithdraw };
+  const restoreOrders  = Number(document.getElementById('vipRestoreOrders')?.value)  || 3;
+  VIP_AUTO_SETTINGS = { enabled, ordersLimit, minOrderAmount, amountLimit, defaultDiscount, periodDays, renewalDays, warningDays, withdrawOrders, restoreOrders, autoWithdraw };
   saveData('zz_vip_auto_settings', VIP_AUTO_SETTINGS);
   if (db) fbUpdate('config', { vipAutoSettings: VIP_AUTO_SETTINGS }).catch(() => {});
 
@@ -3695,6 +3705,8 @@ function loadVIPAutoSettingsUI() {
   if (wd) wd.value = VIP_AUTO_SETTINGS.warningDays || 7;
   const wo = document.getElementById('vipWithdrawOrders');
   if (wo) wo.value = VIP_AUTO_SETTINGS.withdrawOrders || 3;
+  const ro = document.getElementById('vipRestoreOrders');
+  if (ro) ro.value = VIP_AUTO_SETTINGS.restoreOrders || 3;
   const aw = document.getElementById('vipAutoWithdraw');
   if (aw) aw.classList.toggle('on', !!VIP_AUTO_SETTINGS.autoWithdraw);
   renderVIPBenefitsAdmin();
@@ -7079,17 +7091,44 @@ function cleanCorruptedOrders() {
 }
 
 function deleteOrderAdmin(orderId) {
-  // Show confirm dialog
   const order = ordersData.find(o => o.id === orderId);
   if (!order) return;
-  const confirmed = confirm(`⚠️ تأكيد الحذف النهائي\n\nسيتم حذف الطلب #${orderId} بشكل نهائي من النظام.\n\nهل أنت متأكد؟`);
+
+  /* حساب النقاط المكتسبة من الطلب */
+  const loyaltyEnabled = (typeof LOYALTY_SETTINGS !== 'undefined') && LOYALTY_SETTINGS.enabled;
+  const earnRate = loyaltyEnabled ? (LOYALTY_SETTINGS.earnRate || 10) : 0;
+  const earnedPts = loyaltyEnabled && order.total ? Math.floor(order.total / earnRate) : 0;
+  const clientPhone = (order.whatsapp || order.phone || '').replace(/\D/g,'');
+
+  /* نص الـ confirm */
+  let confirmMsg = `⚠️ تأكيد الحذف النهائي\n\nسيتم حذف الطلب #${orderId} بشكل نهائي من النظام.\n`;
+  if (earnedPts > 0 && clientPhone) {
+    confirmMsg += `\n💡 هذا الطلب أكسب العميل ${earnedPts} نقطة.\nهل تريد خصم النقاط من رصيده؟\n\n(اضغط OK لحذف الطلب + خصم النقاط)\n(اضغط Cancel ثم استخدم زرار الحذف مرة أخرى للحذف بدون خصم نقاط)`;
+  } else {
+    confirmMsg += `\nهل أنت متأكد؟`;
+  }
+
+  const confirmed = confirm(confirmMsg);
   if (!confirmed) return;
+
+  /* خصم النقاط لو العميل عنده نقاط من الطلب ده */
+  if (earnedPts > 0 && clientPhone) {
+    const _loyData = getLoyaltyData(clientPhone);
+    const _newPoints = Math.max(0, (_loyData.points || 0) - earnedPts);
+    const _newEarned = Math.max(0, (_loyData.earned || 0) - earnedPts);
+    _loyData.points = _newPoints;
+    _loyData.earned = _newEarned;
+    saveLoyaltyData(clientPhone, _loyData);
+    showNotif(`✓ تم حذف الطلب وخصم ${earnedPts} نقطة من رصيد العميل`);
+  } else {
+    showNotif('✓ تم حذف الطلب نهائياً');
+  }
+
   ordersData = ordersData.filter(o => o.id !== orderId);
   saveData('zz_orders', ordersData);
   fbRemove('orders/' + orderId);
   renderAdminOrders();
   if (document.getElementById('tab-cashier').style.display === 'block') renderCashierSheet();
-  showNotif('✓ تم حذف الطلب نهائياً');
 }
 
 // ============================================================
@@ -10534,6 +10573,47 @@ function confirmFinalOrder() {
   // كسب نقاط الولاء — للكل أو VIP حسب الإعداد
   if (currentUser?.phone) {
     earnLoyaltyPoints(order.total || 0, currentUser.phone, currentUser.name || '');
+
+  /* ══ استعادة VIP تلقائياً لو العميل كان VIP وانسحب منه ══ */
+  if (VIP_AUTO_SETTINGS && VIP_AUTO_SETTINGS.enabled && currentUser?.phone) {
+    const _rPhone = (currentUser.phone||'').replace(/\D/g,'');
+    const _restoreNeeded = VIP_AUTO_SETTINGS.restoreOrders || 3;
+    /* لو مش VIP حالياً → نشوف لو كان VIP وانسحب منه */
+    if (!VIP_CUSTOMERS[_rPhone] && !VIP_CUSTOMERS['0'+_rPhone.slice(1)] && !VIP_CUSTOMERS['2'+_rPhone]) {
+      /* نشوف طلباته من تاريخ السحب */
+      const _withdrawDate = loadData('zz_vip_withdraw_' + _rPhone, null);
+      if (_withdrawDate) {
+        const _allOrdRestore = (typeof _getAllOrders === 'function') ? _getAllOrders() : ordersData;
+        const _sinceWithdraw = _allOrdRestore.filter(o =>
+          (o.whatsapp||o.phone||'').replace(/\D/g,'') === _rPhone &&
+          o.status !== 'cancelled' &&
+          (o.timestamp||0) >= new Date(_withdrawDate).getTime()
+        );
+        if (_sinceWithdraw.length >= _restoreNeeded) {
+          /* استعادة VIP */
+          const _restoreDiscount = VIP_AUTO_SETTINGS.defaultDiscount || 5;
+          VIP_CUSTOMERS[_rPhone] = {
+            name: currentUser.name || '',
+            phone: currentUser.phone,
+            discount: _restoreDiscount,
+            sinceDate: new Date().toISOString(),
+            lastRenewed: new Date().toISOString(),
+            restoredAuto: true,
+          };
+          if (db) db.ref('vip_customers/' + _rPhone).set(VIP_CUSTOMERS[_rPhone]).catch(()=>{});
+          /* امسح تاريخ السحب */
+          saveData('zz_vip_withdraw_' + _rPhone, null);
+          /* رسالة تهنئة بالاستعادة */
+          const _waR = normalizePhoneForWA(currentUser.phone);
+          if (_waR) {
+            const _restoreMsg = `مرحباً بعودتك *${currentUser.name||''}* 🎉\n\nسعداء جداً بعودتك لعائلتنا المميزة 👑\n\nعضويتك الـ VIP استُعيدت تلقائياً وأنت تستحق كل تميّز 🌟\n\n*${RESTAURANT.name}* 🍽️`;
+            setTimeout(()=>{ window.open('https://wa.me/'+_waR+'?text='+encodeURIComponent(_restoreMsg),'_blank'); }, 3000);
+          }
+          showNotif('🎉 تم استعادة VIP للعميل ' + (currentUser.name||''));
+        }
+      }
+    }
+  }
   }
   // 🎀 حرق الهدية الشخصية بعد التأكيد النهائي
   if (typeof _pgBurnGift === 'function' && currentUser?.phone) {
