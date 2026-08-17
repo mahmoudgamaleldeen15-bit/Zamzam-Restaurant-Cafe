@@ -7096,8 +7096,8 @@ function deleteOrderAdmin(orderId) {
 
   /* حساب النقاط المكتسبة من الطلب */
   const loyaltyEnabled = (typeof LOYALTY_SETTINGS !== 'undefined') && LOYALTY_SETTINGS.enabled;
-  const earnRate = loyaltyEnabled ? (LOYALTY_SETTINGS.earnRate || 10) : 0;
-  const earnedPts = loyaltyEnabled && order.total ? Math.floor(order.total / earnRate) : 0;
+  const pointsPerPound = loyaltyEnabled ? (LOYALTY_SETTINGS.pointsPerPound || 1) : 0;
+  const earnedPts = loyaltyEnabled && order.total ? Math.floor((order.total || 0) * pointsPerPound) : 0;
   const clientPhone = (order.whatsapp || order.phone || '').replace(/\D/g,'');
 
   /* نص الـ confirm */
