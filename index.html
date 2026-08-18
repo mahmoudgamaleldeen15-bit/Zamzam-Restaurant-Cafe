@@ -12057,6 +12057,9 @@ function dismissCashierPopup() {
   const overlay = document.getElementById('cashierPopupOverlay');
   overlay.classList.remove('show');
   _cashierPopupActive = false;
+  /* منع تكرار البوب لما بنتنقل للتاب */
+  window._suppressNextOrderPopup = true;
+  setTimeout(() => { window._suppressNextOrderPopup = false; }, 2000);
   // Navigate to cashier tab and highlight the order
   const adminPanel = document.getElementById('adminPanel');
   if (adminPanel && adminPanel.classList.contains('active')) {
@@ -12512,21 +12515,26 @@ function setupFirebaseListeners() {
       //    والتنبيه يشتغل بس للأوردر اللي يجي جديد فعلاً بعد كده — يمنع تكرار تنبيه الأوردرات القديمة عند كل دخول
       const _isInitialOrdersLoad = !window._ordersBaselineSet;
       window._ordersBaselineSet = true;
+      /* ══ key منفصل لكل رول عشان مش يشترك الأدمن والكاشير في نفس الـ prevIds ══ */
+      const _prevIdsKey = 'zz_orders_prev_ids_' + (adminRoleType || 'all');
       if (_isInitialOrdersLoad) {
-        localStorage.setItem('zz_orders_prev_ids', JSON.stringify(fbOrders.map(o => o.id)));
+        localStorage.setItem(_prevIdsKey, JSON.stringify(fbOrders.map(o => o.id)));
         const _seenCancel = new Set(JSON.parse(localStorage.getItem('zz_cancel_notified_ids') || '[]'));
         fbOrders.forEach(o => { if (o.status === 'cancelled' && o.cancelledByClient) _seenCancel.add(o.id); });
         localStorage.setItem('zz_cancel_notified_ids', JSON.stringify([..._seenCancel]));
+        /* تحميل الأرشيف للكاشير برضو عشان البحث يشتغل */
+        if (adminRoleType === 'cashier' && typeof _loadOrdersArchive === 'function') _loadOrdersArchive();
       }
       if (document.getElementById('adminPanel')?.classList.contains('active')) {
         const activeTab = document.querySelector('.admin-tabs button.active')?.textContent || '';
         if (activeTab.includes('الطلبات')) renderAdminOrders();
         if (activeTab.includes('الكاشير') || activeTab.includes('كاشير')) renderCashierSheet();
         if (!_isInitialOrdersLoad) {
-          const prevIds = new Set(JSON.parse(localStorage.getItem('zz_orders_prev_ids') || '[]'));
+          const prevIds = new Set(JSON.parse(localStorage.getItem(_prevIdsKey) || '[]'));
           let hasNewOrder = false;
           fbOrders.forEach(o => {
             if (!prevIds.has(o.id) && (adminRoleType === 'admin' || adminRoleType === 'cashier')) {
+              if (window._suppressNextOrderPopup) return;
               hasNewOrder = true;
               // Check if VIP customer
               if (_resolveVIP(o.phone)) {
@@ -12558,7 +12566,7 @@ function setupFirebaseListeners() {
           });
           if (hasNewOrder) { playSound(); showNotif('🔔 طلب جديد وصل!'); }
         }
-        localStorage.setItem('zz_orders_prev_ids', JSON.stringify(fbOrders.map(o => o.id)));
+        localStorage.setItem(_prevIdsKey, JSON.stringify(fbOrders.map(o => o.id)));
         // إشعار بطلب دفع إلكتروني جديد
         const newPending = _isInitialOrdersLoad ? [] : fbOrders.filter(o => o.status === 'payment_pending' && !oldPendingIds.includes(o.id));
         newPending.forEach(o => {
@@ -12581,7 +12589,7 @@ function setupFirebaseListeners() {
       }
       if (document.getElementById('pickupPanel')?.classList.contains('active')) {
         renderPickupOrders();
-        if (!_isInitialOrdersLoad) { const _pickPrev = new Set(JSON.parse(localStorage.getItem('zz_orders_prev_ids') || '[]')); if (fbOrders.some(o => !_pickPrev.has(o.id))) { playSound(); showNotif('🔔 طلب جديد للتجهيز!'); } }
+        if (!_isInitialOrdersLoad) { const _pickPrevKey = 'zz_orders_prev_ids_' + (adminRoleType || 'all'); const _pickPrev = new Set(JSON.parse(localStorage.getItem(_pickPrevKey) || '[]')); if (fbOrders.some(o => !_pickPrev.has(o.id))) { playSound(); showNotif('🔔 طلب جديد للتجهيز!'); } }
       }
       updateOffersBadge();
 
@@ -19621,7 +19629,7 @@ function _setupCashierOrdersListener() {
       /* === طلب جديد فعلاً (بعد التحميل الأولاني) === */
       ordersData.sort(function(a,b) { return (b.timestamp||0) - (a.timestamp||0); });
       saveData('zz_orders', ordersData);
-      localStorage.setItem('zz_orders_prev_ids', JSON.stringify(ordersData.map(function(x){ return x.id; })));
+      localStorage.setItem('zz_orders_prev_ids_' + (adminRoleType || 'all'), JSON.stringify(ordersData.map(function(x){ return x.id; })));
 
       if (adminRoleType === 'admin' || adminRoleType === 'cashier') {
         /* إشعارات VIP / عادي */
@@ -19726,7 +19734,7 @@ function _setupCashierOrdersListener() {
 
     /* تسجيل الطلبات الحالية كـ"متشافة" — بدون إشعارات */
     window._ordersBaselineSet = true;
-    localStorage.setItem('zz_orders_prev_ids', JSON.stringify(ordersData.map(function(x){ return x.id; })));
+    localStorage.setItem('zz_orders_prev_ids_' + (adminRoleType || 'all'), JSON.stringify(ordersData.map(function(x){ return x.id; })));
     var _seenCancel = new Set(JSON.parse(localStorage.getItem('zz_cancel_notified_ids') || '[]'));
     ordersData.forEach(function(o) { if (o.status === 'cancelled' && o.cancelledByClient) _seenCancel.add(o.id); });
     localStorage.setItem('zz_cancel_notified_ids', JSON.stringify([..._seenCancel]));
