@@ -8616,7 +8616,7 @@ function updateItemMainGroupHint() {
 }
 function deleteCat(cat) {
   /* ══ حماية الأقسام الافتراضية ══ */
-  const _PROTECTED_CATS = ['kanafa','ice','oriental','western','bakery','drinks'];
+  const _PROTECTED_CATS = ['kanafa','ice','oriental','western','bakery'];
   if (_PROTECTED_CATS.includes(cat)) {
     alert('⚠️ هذا القسم افتراضي محمي ولا يمكن حذفه.\nيمكنك تعديل أصنافه أو إخفاؤها فقط.');
     return;
@@ -16047,7 +16047,7 @@ function renderMainGroupsManagerList() {
       </div>
       <div style="display:flex;gap:6px;flex-shrink:0">
         <button onclick="openEditMainGroupForm('${k}')" style="padding:7px 12px;background:var(--olive-ultra);color:var(--olive-dark);border:1px solid var(--olive);border-radius:9px;font-size:12px;font-weight:700;cursor:pointer">✏️ تعديل</button>
-        ${['restaurant','eastern_sweets','western_sweets','ice_cream','bakery','drinks'].includes(k)
+        ${['eastern_sweets','western_sweets','ice_cream','bakery'].includes(k)
           ? `<span style="font-size:10px;font-weight:700;color:#b45309;background:#fef3c7;border:1px solid #fcd34d;padding:4px 9px;border-radius:9px;white-space:nowrap">🔒 محمي</span>`
           : `<button onclick="deleteMainGroup('${k}')" style="padding:7px 12px;background:#fff0f0;color:#c00;border:1px solid #fca5a5;border-radius:9px;font-size:12px;font-weight:700;cursor:pointer">🗑️</button>`
         }
@@ -16170,7 +16170,7 @@ function deleteMainGroup(key) {
   if (!g) return;
 
   /* ══ حماية الأقسام الرئيسية الافتراضية ══ */
-  const _PROTECTED_MAIN = ['restaurant','eastern_sweets','western_sweets','ice_cream','bakery','drinks'];
+  const _PROTECTED_MAIN = ['eastern_sweets','western_sweets','ice_cream','bakery'];
   if (_PROTECTED_MAIN.includes(key)) {
     alert('🔒 هذا القسم الرئيسي افتراضي محمي ولا يمكن حذفه.\nيمكنك تعديل اسمه أو أيقونته فقط.');
     return;
