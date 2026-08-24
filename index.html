@@ -2219,6 +2219,7 @@ input,select,textarea{font-family:inherit;}
         <button onclick="openAddItemModal()" style="padding:10px 14px;background:var(--olive);color:#fff;border-radius:10px;font-size:13px;font-weight:800">+ صنف</button>
         <button onclick="openAddCatModal()" style="padding:10px 14px;background:var(--olive-dark);color:#fff;border-radius:10px;font-size:13px;font-weight:800">+ قسم</button>
         <button onclick="openMainGroupsManager()" style="padding:10px 14px;background:linear-gradient(135deg,#7c4dff,#5e35b1);color:#fff;border-radius:10px;font-size:13px;font-weight:800" title="إدارة الأقسام الرئيسية">🗂️</button>
+        <button id="publishMenuBtn" onclick="_publishMenuVersion()" style="padding:10px 14px;background:linear-gradient(135deg,#0369a1,#0284c7);color:#fff;border-radius:10px;font-size:13px;font-weight:800">📢 نشر تحديث الأسعار</button>
       </div>
       <!-- عروض منتهية — تنبيه للأدمن -->
       <div id="expiredOffersSection" style="display:none;margin:0 16px 14px;background:linear-gradient(135deg,#fff7ed,#ffedd5);border:1.5px solid #fb923c;border-radius:14px;padding:14px">
@@ -4999,6 +5000,32 @@ function _menuVersionCheck() {
     });
   });
 }
+
+/* ══ نشر تحديث الأسعار للعملاء ══ */
+function _publishMenuVersion() {
+  if (!db || !fbConnected) { showNotif('⚠️ تأكد من الاتصال بالإنترنت أولاً'); return; }
+  const btn = document.getElementById('publishMenuBtn');
+  if (btn) { btn.disabled = true; btn.textContent = '⏳ جاري النشر...'; btn.style.opacity = '0.7'; }
+  const _newV = Date.now();
+  db.ref('config/menuVersion').set(_newV).then(() => {
+    window._localMenuVersion = _newV;
+    if (btn) {
+      btn.textContent = '✅ تم تحديث الأسعار';
+      btn.style.background = 'linear-gradient(135deg,#16a34a,#15803d)';
+      btn.style.opacity = '1';
+      btn.disabled = false;
+      setTimeout(() => {
+        btn.textContent = '📢 نشر تحديث الأسعار';
+        btn.style.background = 'linear-gradient(135deg,#0369a1,#0284c7)';
+      }, 5000);
+    }
+    showNotif('✅ تم إشعار العملاء بتحديث الأسعار!');
+  }).catch(() => {
+    if (btn) { btn.disabled = false; btn.textContent = '📢 نشر تحديث الأسعار'; btn.style.opacity = '1'; }
+    showNotif('❌ حدث خطأ — حاول مرة أخرى');
+  });
+}
+
 function _isOfferValid(item) {
   if (!item.oldPrice) return false;
   if (!item.offerExpiry) return true; /* مفيش تاريخ = دايم */
@@ -13254,20 +13281,14 @@ async function fbSaveMenu() {
   console.log('[fbSaveMenu] Saving...', Object.keys(cleanMenu).length, 'cats');
   try {
     await db.ref('menu').set(cleanMenu);
-    /* ══ تحديث menuVersion — عشان العملاء يعرفوا إن المنيو اتغيّر ══ */
-    const _newV = Date.now();
-    await db.ref('config/menuVersion').set(_newV);
-    window._localMenuVersion = _newV;
-    console.log('[fbSaveMenu] ✅ Saved successfully, version:', _newV);
+    /* ✅ تم الحفظ — menuVersion بيتحدث فقط لما الأدمن يضغط "نشر تحديث الأسعار" */
+    console.log('[fbSaveMenu] ✅ Saved successfully');
   } catch(e) {
     console.error('[fbSaveMenu] Failed:', e);
     await new Promise(r => setTimeout(r, 1000));
     try {
       await db.ref('menu').set(cleanMenu);
-      const _newV2 = Date.now();
-      await db.ref('config/menuVersion').set(_newV2);
-      window._localMenuVersion = _newV2;
-      console.log('[fbSaveMenu] ✅ Saved on retry, version:', _newV2);
+      console.log('[fbSaveMenu] ✅ Saved on retry');
     } catch(e2) {
       console.error('[fbSaveMenu] Retry failed:', e2);
     }
