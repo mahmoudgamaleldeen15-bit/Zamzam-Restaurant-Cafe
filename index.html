@@ -203,6 +203,11 @@ input,select,textarea{font-family:inherit;}
 .fav-btn{position:absolute;top:8px;right:8px;width:28px;height:28px;border-radius:50%;background:rgba(255,255,255,.9);display:flex;align-items:center;justify-content:center;font-size:15px;}
 .badge-new{position:absolute;top:8px;left:8px;background:var(--gold);color:#fff;font-size:10px;font-weight:800;padding:3px 7px;border-radius:100px;}
 .badge-saving{position:absolute;left:8px;background:linear-gradient(135deg,#dc2626,#ef4444);color:#fff;font-size:10px;font-weight:900;padding:3px 8px;border-radius:100px;z-index:4;box-shadow:0 2px 8px rgba(220,38,38,.4);white-space:nowrap;}
+#menuUpdateBanner{position:fixed;top:0;left:0;right:0;z-index:9999;background:linear-gradient(135deg,#1a3a28,#2d6a4f);color:#fff;padding:12px 16px;display:flex;align-items:center;justify-content:space-between;gap:12px;transform:translateY(-100%);transition:transform .4s cubic-bezier(.34,1.56,.64,1);box-shadow:0 4px 20px rgba(0,0,0,.3)}
+#menuUpdateBanner.show{transform:translateY(0)}
+#menuUpdateBanner .banner-text{font-size:13px;font-weight:700;flex:1}
+#menuUpdateBanner .banner-btn{background:#d4a843;color:#1a3a28;border:none;border-radius:50px;padding:8px 18px;font-size:13px;font-weight:900;cursor:pointer;font-family:inherit;animation:_bannerPulse 1.5s ease-in-out infinite}
+@keyframes _bannerPulse{0%,100%{transform:scale(1)}50%{transform:scale(1.06)}}
 /* السعر القديم المشطوب */
 .old-price{font-size:12px;color:var(--text-muted);font-weight:600;}
 .price-with-old{display:flex;align-items:center;flex-wrap:wrap;gap:2px;}
@@ -1144,6 +1149,12 @@ input,select,textarea{font-family:inherit;}
 </div>
 
 <!-- ===== MAIN APP ===== -->
+<!-- Menu Update Banner -->
+<div id="menuUpdateBanner">
+  <div class="banner-text">🔄 تم تحديث المنيو والأسعار! اضغط لتحميل التحديث</div>
+  <button class="banner-btn" onclick="_applyMenuUpdate()">تحديث الآن</button>
+</div>
+
 <div id="app" class="screen">
   <div class="notif" id="notif"></div>
   <!-- PWA Install Banner — Enhanced -->
@@ -1332,6 +1343,7 @@ input,select,textarea{font-family:inherit;}
       <textarea id="orderNotes" placeholder="مثال: بدون بصل — الكريب بدون مايونيز — تتبيلة خفيفة" maxlength="300" style="width:100%;min-height:54px;padding:10px 12px;border:1.5px solid var(--border);border-radius:10px;font-size:14px;background:var(--white);outline:none;box-sizing:border-box;font-family:inherit;resize:vertical;margin-bottom:6px"></textarea>
 
       <!-- ===== الملخص ===== -->
+      <div id="freeDeliveryBanner" style="display:none;margin-bottom:8px;border-radius:12px;padding:10px 14px;font-size:13px;font-weight:700;text-align:center"></div>
       <div class="cart-summary" id="cartSummary"></div>
     </div>
 
@@ -2674,9 +2686,40 @@ input,select,textarea{font-family:inherit;}
       <div style="padding:0 16px 8px;font-size:15px;font-weight:800;color:var(--dark)">🗺️ موقع المطعم</div>
       <div class="settings-section">
         <div style="padding:12px 16px">
-          <div style="font-size:12px;color:var(--text-muted);margin-bottom:8px">إحداثيات المطعم الثابتة: 30.79099, 31.17125</div>
-          <iframe src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d856.8537805989118!2d31.171252580371064!3d30.79099090047311!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x14f7c73448be077f%3A0xe2f6bcb8096212c3!2sZAMZAM%20RESTEURANT%20%26%20CAFA!5e0!3m2!1sar!2seg!4v1778695874640!5m2!1sar!2seg" width="100%" height="200" style="border:0;border-radius:10px;" allowfullscreen="" loading="lazy"></iframe>
-          <a href="https://maps.app.goo.gl/fC55jgZLQoTpqksz6" target="_blank" style="display:block;margin-top:8px;text-align:center;color:var(--olive);font-size:13px;font-weight:700">📍 فتح في خرائط جوجل</a>
+          <div style="font-size:12px;color:var(--text-muted);margin-bottom:10px">📍 الإحداثيات المستخدمة في تتبع الطلبات وحساب المسافة للعميل</div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px">
+            <div>
+              <label style="font-size:11px;font-weight:700;color:var(--text-muted);display:block;margin-bottom:4px">خط العرض (Latitude)</label>
+              <input type="number" id="settingRestLat" step="any" placeholder="مثال: 30.79099"
+                style="width:100%;padding:8px;border:1.5px solid var(--border);border-radius:8px;font-size:13px;font-family:inherit;background:var(--bg);color:var(--text)"/>
+            </div>
+            <div>
+              <label style="font-size:11px;font-weight:700;color:var(--text-muted);display:block;margin-bottom:4px">خط الطول (Longitude)</label>
+              <input type="number" id="settingRestLng" step="any" placeholder="مثال: 31.17125"
+                style="width:100%;padding:8px;border:1.5px solid var(--border);border-radius:8px;font-size:13px;font-family:inherit;background:var(--bg);color:var(--text)"/>
+            </div>
+          </div>
+          <div style="font-size:11px;color:var(--text-muted);margin-bottom:8px">💡 اترك الحقلين فارغين لاستخدام الموقع الافتراضي</div>
+        </div>
+      </div>
+
+      <div style="padding:0 16px 8px;font-size:15px;font-weight:800;color:var(--dark)">📍 موقع الكافيه للمسابقات</div>
+      <div class="settings-section">
+        <div style="padding:12px 16px">
+          <div style="font-size:12px;color:var(--text-muted);margin-bottom:10px">🏆 الإحداثيات المستخدمة للتحقق من حضور العميل في الكافيه أثناء المسابقات</div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px">
+            <div>
+              <label style="font-size:11px;font-weight:700;color:var(--text-muted);display:block;margin-bottom:4px">خط العرض (Latitude)</label>
+              <input type="number" id="settingCafeLat" step="any" placeholder="مثال: 30.79099"
+                style="width:100%;padding:8px;border:1.5px solid var(--border);border-radius:8px;font-size:13px;font-family:inherit;background:var(--bg);color:var(--text)"/>
+            </div>
+            <div>
+              <label style="font-size:11px;font-weight:700;color:var(--text-muted);display:block;margin-bottom:4px">خط الطول (Longitude)</label>
+              <input type="number" id="settingCafeLng" step="any" placeholder="مثال: 31.17125"
+                style="width:100%;padding:8px;border:1.5px solid var(--border);border-radius:8px;font-size:13px;font-family:inherit;background:var(--bg);color:var(--text)"/>
+            </div>
+          </div>
+          <div style="font-size:11px;color:var(--text-muted);margin-bottom:8px">💡 لو الكافيه في نفس موقع المطعم — أدخل نفس الإحداثيات</div>
         </div>
       </div>
       <div style="padding:0 16px 8px;font-size:15px;font-weight:800;color:var(--dark)" data-admin-only>🔐 الأمان وكلمات المرور</div>
@@ -4907,7 +4950,55 @@ function doClientLogout() {
 // MENU RENDER
 // ============================================================
 
-/* ══ مساعد عروض الأسعار ══ */
+/* ══ Menu Update Banner Functions ══ */
+window._menuUpdateAvailable = false;
+
+function _showMenuUpdateBanner() {
+  const banner = document.getElementById('menuUpdateBanner');
+  if (banner) banner.classList.add('show');
+  /* نستخدم flag عالمي بدل querySelectorAll — عشان يشمل الأزرار اللي هتتفتح بعدين */
+  window._menuUpdateAvailable = true;
+}
+
+function _applyMenuUpdate() {
+  if (!db) return;
+  showNotif('⏳ جاري تحميل التحديث...');
+  db.ref('menu').once('value', snap => {
+    if (snap.exists()) {
+      MENU = snap.val();
+      saveData('zz_menu', MENU);
+      db.ref('config/menuVersion').once('value', vs => {
+        window._localMenuVersion = vs.val();
+      });
+      window._menuUpdateAvailable = false;
+      const banner = document.getElementById('menuUpdateBanner');
+      if (banner) banner.classList.remove('show');
+      /* إغلاق product modal لو كان مفتوحاً */
+      const pmEl = document.getElementById('productModal');
+      if (pmEl) pmEl.classList.remove('open');
+      CART = [];
+      saveData('zz_cart', CART);
+      updateCartUI();
+      renderMenu();
+      _syncNewFilter();
+      showNotif('✅ تم تحديث المنيو والأسعار بنجاح!');
+    }
+  });
+}
+
+function _menuVersionCheck() {
+  return new Promise(resolve => {
+    if (!db || adminRoleType === 'admin') { resolve(true); return; }
+    db.ref('config/menuVersion').once('value', snap => {
+      const fbV = snap.val();
+      if (fbV && window._localMenuVersion && fbV !== window._localMenuVersion) {
+        resolve(false);
+      } else {
+        resolve(true);
+      }
+    });
+  });
+}
 function _isOfferValid(item) {
   if (!item.oldPrice) return false;
   if (!item.offerExpiry) return true; /* مفيش تاريخ = دايم */
@@ -5217,7 +5308,7 @@ function openProduct(cat, id) {
     if (addonsSection) addonsSection.style.display = 'none';
   }
   updatePMTotal();
-  /* السعر القديم المشطوب في modal */
+  /* ══ Menu Update Banner ══ */
   const pmOldEl = document.getElementById('pmOldPriceDisplay');
   if (pmOldEl) {
     if (_isOfferValid(item)) {
@@ -5290,6 +5381,12 @@ function quickAdd(e, cat, id) {
   addToCart({ id: item.id + '_quick', name: item.name, size: item.prices ? 'S' : null, emoji: item.emoji, price, basePrice: price, extras: [], qty: 1, _catKey: cat });
 }
 function addToCart(ci) {
+  /* فحص تحديث المنيو — لو في تحديث معلّق العميل لازم يحدّث أولاً */
+  if (window._menuUpdateAvailable) {
+    showNotif('🔄 الأسعار اتغيّرت! اضغط "تحديث الآن" أولاً');
+    _showMenuUpdateBanner();
+    return;
+  }
   /* فحص وضع الصيانة — العميل يقدر يتصفح بس مش يضيف للسلة */
   if (_maintenanceActive && !(typeof adminRoleType !== 'undefined' && adminRoleType)) {
     var overlay = document.getElementById('maintenanceOverlay');
@@ -5541,6 +5638,33 @@ function updateCartUI() {
   const finalTotal = Math.max(0, subtotal - totalDisc) + deliveryFee;
   document.getElementById('fcTotal').textContent = finalTotal + ' ج';
   document.getElementById('floatingCart').classList.toggle('hidden', count === 0);
+
+  /* ══ بانر التوصيل المجاني التشجيعي ══ */
+  const _banner = document.getElementById('freeDeliveryBanner');
+  if (_banner && deliveryType === 'delivery') {
+    const _minFree = Number(SETTINGS.freeDeliveryMin);
+    if (_minFree > 0) {
+      const _subAfterDisc = Math.max(0, subtotal - totalDisc);
+      const _diff = _minFree - _subAfterDisc;
+      if (_diff > 0) {
+        _banner.style.display = 'block';
+        _banner.style.background = 'linear-gradient(135deg,#fff7ed,#ffedd5)';
+        _banner.style.border = '1.5px solid #fed7aa';
+        _banner.style.color = '#c2410c';
+        _banner.innerHTML = `🛵 زوّد طلبك بـ <strong>${Math.ceil(_diff)} ج.م</strong> بس وهتاخد التوصيل مجاناً!`;
+      } else {
+        _banner.style.display = 'block';
+        _banner.style.background = 'linear-gradient(135deg,#f0fdf4,#dcfce7)';
+        _banner.style.border = '1.5px solid #86efac';
+        _banner.style.color = '#16a34a';
+        _banner.innerHTML = '🎉 تهانينا! التوصيل مجاناً على طلبك 🛵';
+      }
+    } else {
+      _banner.style.display = 'none';
+    }
+  } else if (_banner) {
+    _banner.style.display = 'none';
+  }
   // Persist cart
   saveData('zz_current_cart', cart);
   saveData('zz_delivery_type', deliveryType);
@@ -6239,10 +6363,13 @@ function calcDist(lat, lng) {
   // Haversine Formula — accurate great-circle distance
   const R = 6371;
   const toRad = d => d * Math.PI / 180;
-  const dLat = toRad(RESTAURANT.lat - lat);
-  const dLng = toRad(RESTAURANT.lng - lng);
+  /* استخدام موقع المطعم من الإعدادات لو موجود — وإلا الافتراضي */
+  const restLat = (SETTINGS && SETTINGS.restaurantLat) ? SETTINGS.restaurantLat : RESTAURANT.lat;
+  const restLng = (SETTINGS && SETTINGS.restaurantLng) ? SETTINGS.restaurantLng : RESTAURANT.lng;
+  const dLat = toRad(restLat - lat);
+  const dLng = toRad(restLng - lng);
   const a = Math.sin(dLat/2)**2 +
-            Math.cos(toRad(lat)) * Math.cos(toRad(RESTAURANT.lat)) *
+            Math.cos(toRad(lat)) * Math.cos(toRad(restLat)) *
             Math.sin(dLng/2)**2;
   const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
   return R * c;
@@ -8129,7 +8256,11 @@ function renderMenuManage() {
               <div class="toggle-sw ${catDelivOn ? 'on' : ''}" style="width:34px;height:20px" onclick="setCatDeliveryMode('${cat}', this.classList.contains('on') ? 'pickup_only' : 'delivery')"></div>
               <span style="font-size:11px;font-weight:800;color:${catDelivOn ? 'var(--olive-dark)' : 'var(--red)'}">${catDelivOn ? '🟢 دليفري' : '🔴 استلام فقط'}</span>
             </div>
-            ${adminRoleType === 'admin' ? `<button class="del-btn" onclick="deleteCat('${cat}')" style="width:auto;padding:4px 10px;font-size:11px;border-radius:6px">🗑️</button>` : ''}
+            ${adminRoleType === 'admin' ? (
+              ['kanafa','ice','oriental','western','bakery','drinks'].includes(cat)
+              ? `<span style="font-size:10px;font-weight:700;color:#b45309;background:#fef3c7;border:1px solid #fcd34d;padding:3px 8px;border-radius:6px">🔒 افتراضي — لا يُحذف</span>`
+              : `<button class="del-btn" onclick="deleteCat('${cat}')" style="width:auto;padding:4px 10px;font-size:11px;border-radius:6px">🗑️</button>`
+            ) : ''}
           </div>
         </div>
       </div>
@@ -8457,6 +8588,12 @@ function updateItemMainGroupHint() {
   }
 }
 function deleteCat(cat) {
+  /* ══ حماية الأقسام الافتراضية ══ */
+  const _PROTECTED_CATS = ['kanafa','ice','oriental','western','bakery','drinks'];
+  if (_PROTECTED_CATS.includes(cat)) {
+    alert('⚠️ هذا القسم افتراضي محمي ولا يمكن حذفه.\nيمكنك تعديل أصنافه أو إخفاؤها فقط.');
+    return;
+  }
   if (!confirm('حذف هذا القسم وكل أصنافه؟')) return;
   delete MENU[cat]; saveMenu(); renderMenuManage(); renderMenu(); _syncNewFilter(); showNotif('✓ تم حذف القسم');
 }
@@ -8646,6 +8783,12 @@ function loadSettingsUI() {
   if (el('tablesCount')) el('tablesCount').value = SETTINGS.tablesCount || 16;
   if (el('adminPhoneSetting')) el('adminPhoneSetting').value = SETTINGS.adminPhone || SETTINGS.waNum || '';
   if (el('complaintPhoneSetting')) el('complaintPhoneSetting').value = SETTINGS.complaintPhone || '';
+  /* إحداثيات موقع المطعم */
+  if (el('settingRestLat')) el('settingRestLat').value = SETTINGS.restaurantLat || '';
+  if (el('settingRestLng')) el('settingRestLng').value = SETTINGS.restaurantLng || '';
+  /* إحداثيات موقع الكافيه للمسابقات */
+  if (el('settingCafeLat')) el('settingCafeLat').value = SETTINGS.cafeLat || '';
+  if (el('settingCafeLng')) el('settingCafeLng').value = SETTINGS.cafeLng || '';
   // تحديث رقم OTP
   const otpEl = el('otpPhoneDisplay');
   if (otpEl) otpEl.textContent = '+' + getSecOtpPhone();
@@ -8672,6 +8815,16 @@ function saveSettings() {
   SETTINGS.tablesCount = Number(g('tablesCount')) || 16;
   SETTINGS.adminPhone = g('adminPhoneSetting') || SETTINGS.waNum;
   SETTINGS.complaintPhone = g('complaintPhoneSetting') || SETTINGS.waNum;
+  /* حفظ إحداثيات موقع المطعم */
+  const _rLat = parseFloat(g('settingRestLat'));
+  const _rLng = parseFloat(g('settingRestLng'));
+  if (!isNaN(_rLat) && _rLat !== 0) SETTINGS.restaurantLat = _rLat; else delete SETTINGS.restaurantLat;
+  if (!isNaN(_rLng) && _rLng !== 0) SETTINGS.restaurantLng = _rLng; else delete SETTINGS.restaurantLng;
+  /* حفظ إحداثيات موقع الكافيه للمسابقات */
+  const _cLat = parseFloat(g('settingCafeLat'));
+  const _cLng = parseFloat(g('settingCafeLng'));
+  if (!isNaN(_cLat) && _cLat !== 0) SETTINGS.cafeLat = _cLat; else delete SETTINGS.cafeLat;
+  if (!isNaN(_cLng) && _cLng !== 0) SETTINGS.cafeLng = _cLng; else delete SETTINGS.cafeLng;
   saveData('zz_settings', SETTINGS);
   fbSaveSettings(); // 🔥 Firebase
 }
@@ -10531,6 +10684,13 @@ function closeOrderReview() {
 }
 function confirmFinalOrder() {
   if (!_pendingOrderForReview) { closeOrderReview(); return; }
+  /* ══ فحص إصدار المنيو قبل تأكيد الطلب ══ */
+  if (window._menuUpdateAvailable) {
+    closeOrderReview();
+    showNotif('⚠️ الأسعار اتغيّرت! اضغط "تحديث الآن" أولاً ثم أعد طلبك');
+    _showMenuUpdateBanner();
+    return;
+  }
   clearInterval(_orderReviewTimer);
   const order = _pendingOrderForReview;
   const _isElec = !!order.isElectronicPayment;
@@ -12656,11 +12816,11 @@ function setupFirebaseListeners() {
   });
 
   // --------- MENU PRICES ---------
-  db.ref('menu').on('value', snap => {
+  /* ══ تحميل المنيو مرة واحدة فقط (once) — لتوفير الـ bandwidth ══ */
+  db.ref('menu').once('value', snap => {
     if (_menuWriteLock) return;
     if (snap.exists() && fbConnected) {
       const incoming = snap.val();
-      // Firebase دايماً هو المرجع الصح — بدون أي مقارنة
       MENU = incoming;
       saveData('zz_menu', MENU);
       saveData('zz_menu_from_firebase', true);
@@ -12669,6 +12829,27 @@ function setupFirebaseListeners() {
         renderMenuManage();
         renderCatSelects();
       }
+    }
+  });
+
+  /* ══ listener خفيف على menuVersion فقط (~10 bytes) ══
+     لما الأدمن يغيّر المنيو → رقم بيتغيّر → banner يظهر للعميل */
+  window._localMenuVersion = null;
+  db.ref('config/menuVersion').on('value', snap => {
+    if (!snap.exists()) return;
+    const fbVersion = snap.val();
+    if (window._localMenuVersion === null) {
+      window._localMenuVersion = fbVersion;
+      return;
+    }
+    /* لو الإصدار اتغيّر — بس مش الأدمن اللي غيّره */
+    if (fbVersion !== window._localMenuVersion && adminRoleType !== 'admin' && adminRoleType !== 'cashier') {
+      window._menuUpdateAvailable = true;
+      window._localMenuVersion = fbVersion;
+      _showMenuUpdateBanner();
+    } else {
+      /* الأدمن بيحدّث — نحدّث الإصدار المحلي بصمت */
+      window._localMenuVersion = fbVersion;
     }
   });
 
@@ -13063,9 +13244,7 @@ async function fbSaveBooking(booking) { await fbSet('bookings/' + booking.id, bo
 async function fbSaveMenu() {
   if (!db) { console.warn('[fbSaveMenu] db not ready'); return; }
   if (!fbConnected) { console.warn('[fbSaveMenu] not connected'); return; }
-  // تنظيف الـ undefined من MENU قبل الحفظ
   const cleanMenu = JSON.parse(JSON.stringify(MENU, (k, v) => v === undefined ? null : v));
-  // حذف الـ null من image
   Object.values(cleanMenu).forEach(cat => {
     (cat.items || []).forEach(item => {
       if (item.image === null || item.image === undefined || item.image === '') delete item.image;
@@ -13075,13 +13254,20 @@ async function fbSaveMenu() {
   console.log('[fbSaveMenu] Saving...', Object.keys(cleanMenu).length, 'cats');
   try {
     await db.ref('menu').set(cleanMenu);
-    console.log('[fbSaveMenu] ✅ Saved successfully');
+    /* ══ تحديث menuVersion — عشان العملاء يعرفوا إن المنيو اتغيّر ══ */
+    const _newV = Date.now();
+    await db.ref('config/menuVersion').set(_newV);
+    window._localMenuVersion = _newV;
+    console.log('[fbSaveMenu] ✅ Saved successfully, version:', _newV);
   } catch(e) {
     console.error('[fbSaveMenu] Failed:', e);
     await new Promise(r => setTimeout(r, 1000));
     try {
       await db.ref('menu').set(cleanMenu);
-      console.log('[fbSaveMenu] ✅ Saved on retry');
+      const _newV2 = Date.now();
+      await db.ref('config/menuVersion').set(_newV2);
+      window._localMenuVersion = _newV2;
+      console.log('[fbSaveMenu] ✅ Saved on retry, version:', _newV2);
     } catch(e2) {
       console.error('[fbSaveMenu] Retry failed:', e2);
     }
@@ -17642,7 +17828,9 @@ function _compOpenPredModal(compId) {
     if(typeof showNotif==='function') showNotif('⏳ جاري التحقق من موقعك...');
     navigator.geolocation.getCurrentPosition(
       function(pos) {
-        var dist = _compCalcDistance(pos.coords.latitude, pos.coords.longitude, RESTAURANT.lat, RESTAURANT.lng);
+        var cafeLat = (typeof SETTINGS !== 'undefined' && SETTINGS.cafeLat) ? SETTINGS.cafeLat : RESTAURANT.lat;
+        var cafeLng = (typeof SETTINGS !== 'undefined' && SETTINGS.cafeLng) ? SETTINGS.cafeLng : RESTAURANT.lng;
+        var dist = _compCalcDistance(pos.coords.latitude, pos.coords.longitude, cafeLat, cafeLng);
         var accuracy = Math.round(pos.coords.accuracy || 0);
         /* الحد = 150م — لكن بنحسب المسافة + دقة الـ GPS مع بعض
            لو dist=80م ودقة=±90م → 80+90=170 > 150 → مش مأكد إنك جوه → مرفوض
