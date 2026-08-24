@@ -5649,7 +5649,11 @@ function calcDeliveryFee() {
   const minFree = Number(SETTINGS.freeDeliveryMin);
   if (minFree > 0 && subtotal >= minFree) return 0;
   // Use zone fee if a zone is selected
-  if (selectedDeliveryZone) return Number(selectedDeliveryZone.fee) || 0;
+  if (selectedDeliveryZone) {
+    /* لو المنطقة عندها توصيل مجاني → 0 */
+    if (selectedDeliveryZone.freeDelivery) return 0;
+    return Number(selectedDeliveryZone.fee) || 0;
+  }
   return Number(SETTINGS.deliveryFee) || 0;
 }
 function updateCartUI() {
@@ -8773,12 +8777,26 @@ function renderZonesAdmin() {
   const zones = SETTINGS.deliveryZones || [];
   if (!zones.length) { el.innerHTML = '<div style="font-size:12px;color:var(--text-muted);padding:4px 0">لا توجد مناطق — أضف منطقة أدناه</div>'; return; }
   el.innerHTML = zones.map(z => `
-    <div class="zone-row">
+    <div class="zone-row" style="flex-wrap:wrap;gap:6px">
       <div class="zone-name">${z.name}</div>
       <div class="zone-fee">${z.fee} ج.م</div>
+      <label style="display:flex;align-items:center;gap:4px;font-size:11px;cursor:pointer;color:${z.freeDelivery?'#16a34a':'var(--text-muted)'}">
+        <input type="checkbox" ${z.freeDelivery?'checked':''} onchange="_toggleZoneFreeDelivery('${z.id}',this.checked)" style="cursor:pointer"/>
+        🛵 مجاني
+      </label>
       <button class="zone-del-btn" onclick="deleteDeliveryZone('${z.id}')">🗑️</button>
     </div>`).join('');
 }
+function _toggleZoneFreeDelivery(zid, val) {
+  const z = (SETTINGS.deliveryZones || []).find(x => x.id === zid);
+  if (!z) return;
+  z.freeDelivery = val;
+  saveData('zz_settings', SETTINGS);
+  fbSaveSettings();
+  renderZonesAdmin();
+  showNotif(val ? '✅ التوصيل مجاني لهذه المنطقة' : '✓ تم إلغاء التوصيل المجاني للمنطقة');
+}
+
 function addDeliveryZone() {
   const name = document.getElementById('newZoneName').value.trim();
   const fee = Number(document.getElementById('newZoneFee').value);
