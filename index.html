@@ -5650,8 +5650,8 @@ function calcDeliveryFee() {
   if (minFree > 0 && subtotal >= minFree) return 0;
   // Use zone fee if a zone is selected
   if (selectedDeliveryZone) {
-    /* لو المنطقة عندها توصيل مجاني → 0 */
-    if (selectedDeliveryZone.freeDelivery) return 0;
+    /* لو المنطقة عندها توصيل مجاني + العميل وصل للحد الأدنى → 0 */
+    if (selectedDeliveryZone.freeDelivery && (minFree <= 0 || subtotal >= minFree)) return 0;
     return Number(selectedDeliveryZone.fee) || 0;
   }
   return Number(SETTINGS.deliveryFee) || 0;
