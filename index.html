@@ -5673,7 +5673,9 @@ function updateCartUI() {
   const _banner = document.getElementById('freeDeliveryBanner');
   if (_banner && deliveryType === 'delivery') {
     const _minFree = Number(SETTINGS.freeDeliveryMin);
-    if (_minFree > 0) {
+    /* البانر يظهر فقط لو المنطقة المختارة عندها توصيل مجاني */
+    const _zoneIsFree = selectedDeliveryZone && selectedDeliveryZone.freeDelivery;
+    if (_minFree > 0 && _zoneIsFree) {
       const _subAfterDisc = Math.max(0, subtotal - totalDisc);
       const _diff = _minFree - _subAfterDisc;
       if (_diff > 0) {
