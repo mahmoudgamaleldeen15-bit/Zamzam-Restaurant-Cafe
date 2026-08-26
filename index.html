@@ -12838,7 +12838,7 @@ function setupFirebaseListeners() {
   if ((adminRoleType === 'admin' || adminRoleType === 'cashier') && !window._ordersHandlerOn) { window._ordersHandlerOn = true; db.ref('orders').on('value', window._ordersHandler); if (typeof _startGiftDueListener === 'function') _startGiftDueListener(); }
 
   // --------- BOOKINGS ---------
-  db.ref('bookings').on('value', snap => {
+  db.ref('bookings').once('value', snap => {
     const fbBookings = [];
     snap.forEach(child => { fbBookings.push(child.val()); });
     if (fbBookings.length > 0 || fbConnected) {
@@ -12854,7 +12854,7 @@ function setupFirebaseListeners() {
   });
 
   // --------- TABLE AVAILABILITY (توفّر الترابيزات) ---------
-  db.ref('table_avail').on('value', snap => {
+  db.ref('table_avail').once('value', snap => {
     TABLE_AVAIL = snap.val() || {};
     saveData('zz_table_avail', TABLE_AVAIL);
     if (document.getElementById('tableAvailPanel')) { try { renderTableAvailPanel(); } catch(e){} }
@@ -12876,6 +12876,58 @@ function setupFirebaseListeners() {
         renderCatSelects();
       }
     }
+  });
+
+  /* ══ تحميل config مرة واحدة عند الدخول ══ */
+  function _loadConfigOnce() {
+    db.ref('config').once('value', snap => {
+      if (!snap.exists() || !fbConnected) return;
+      const c = snap.val() || {};
+      /* staff_pins */
+      if (c.staff_pins && typeof c.staff_pins === 'object') {
+        STAFF_PINS = { ...STAFF_PINS, ...c.staff_pins };
+        saveData('zz_staff_pins', STAFF_PINS);
+      }
+      /* admin_pp */
+      if (c.admin_pp) { ADMIN_PP_HASH = c.admin_pp; saveData('zz_admin_pp', c.admin_pp); }
+      /* recovery_phone */
+      if (c.recovery_phone) { RECOVERY_PHONE = String(c.recovery_phone); saveData('zz_recovery_phone', RECOVERY_PHONE); }
+      /* vipAutoSettings */
+      if (c.vipAutoSettings && typeof c.vipAutoSettings === 'object') {
+        VIP_AUTO_SETTINGS = { ...VIP_AUTO_SETTINGS, ...c.vipAutoSettings };
+        saveData('zz_vip_auto_settings', VIP_AUTO_SETTINGS);
+      }
+      /* mainGroups */
+      if (c.mainGroups && typeof c.mainGroups === 'object' && Object.keys(c.mainGroups).length > 0) {
+        MAIN_GROUPS = c.mainGroups;
+        saveData('zz_main_groups', MAIN_GROUPS);
+        syncWorkHoursWithMainGroups();
+        renderMainGroups();
+        renderCategories();
+      }
+      /* vipBenefits */
+      if (c.vipBenefits && Array.isArray(c.vipBenefits) && c.vipBenefits.length > 0) {
+        VIP_BENEFITS = c.vipBenefits;
+        saveData('zz_vip_benefits', VIP_BENEFITS);
+        updateVIPWelcomeBanner();
+      }
+      /* loyaltySettings */
+      if (c.loyaltySettings && typeof c.loyaltySettings === 'object') {
+        LOYALTY_SETTINGS = { ...LOYALTY_SETTINGS, ...c.loyaltySettings };
+        saveData('zz_loyalty_settings', LOYALTY_SETTINGS);
+      }
+    });
+  }
+  _loadConfigOnce();
+
+  /* ══ listener خفيف على settingsVersion فقط (~10 bytes) ══
+     لما الأدمن يغير أي إعداد → settingsVersion يتحدث → config يتحمّل من أول */
+  let _settingsVersionLoaded = false;
+  db.ref('config/settingsVersion').on('value', snap => {
+    if (!snap.exists()) return;
+    if (!_settingsVersionLoaded) { _settingsVersionLoaded = true; return; }
+    /* اتغير → حمّل config من أول */
+    _loadConfigOnce();
   });
 
   /* ══ listener خفيف على menuVersion فقط (~10 bytes) ══
@@ -12901,29 +12953,7 @@ function setupFirebaseListeners() {
 
   // --------- SETTINGS ---------
   // مزامنة رموز PIN للموظفين (كاشير/بيكاب)
-  db.ref('config/staff_pins').on('value', snap => {
-    if (snap.exists() && fbConnected) {
-      const p = snap.val();
-      if (p && typeof p === 'object') {
-        STAFF_PINS = { ...STAFF_PINS, ...p };
-        saveData('zz_staff_pins', STAFF_PINS);
-      }
-    }
-  });
-  // مزامنة كلمة السر السرية للأدمن (مشفّرة)
-  db.ref('config/admin_pp').on('value', snap => {
-    if (snap.exists() && fbConnected) {
-      const h = snap.val();
-      if (h) { ADMIN_PP_HASH = h; saveData('zz_admin_pp', h); }
-    }
-  });
-  // مزامنة رقم الإدارة لاستعادة كلمة السر
-  db.ref('config/recovery_phone').on('value', snap => {
-    if (snap.exists() && fbConnected) {
-      const p = snap.val();
-      if (p) { RECOVERY_PHONE = String(p); saveData('zz_recovery_phone', RECOVERY_PHONE); }
-    }
-  });
+  /* staff_pins / admin_pp / recovery_phone → بيتحملوا من _loadConfigOnce وsettingsVersion */
   db.ref('settings').on('value', snap => {
     if (snap.exists() && fbConnected) {
       const fbSettings = snap.val();
@@ -13172,81 +13202,24 @@ function setupFirebaseListeners() {
   });
 
   // --------- VIP AUTO SETTINGS from Firebase ---------
-  db.ref('config/vipAutoSettings').on('value', snap => {
-    if (snap.exists()) {
-      const s = snap.val();
-      if (s) {
-        VIP_AUTO_SETTINGS = { ...VIP_AUTO_SETTINGS, ...s };
-        saveData('zz_vip_auto_settings', VIP_AUTO_SETTINGS);
-      }
-    }
-  });
+  /* vipAutoSettings / mainGroups / vipBenefits / loyaltySettings → بيتحملوا من _loadConfigOnce وsettingsVersion */
 
-  // --------- WORK HOURS from Firebase ---------
+  // --------- WORK HOURS from Firebase — لازم يفضل on عشان الأدمن ممكن يغلق قسم فجأة ---------
   db.ref('config/workHours').on('value', snap => {
     if (snap.exists()) {
       const wh = snap.val();
       if (wh && typeof wh === 'object') {
-        // دمج القيم مع الـ defaults بدون فقد بيانات
         Object.keys(wh).forEach(k => {
-          if (WORK_HOURS[k]) {
-            WORK_HOURS[k] = { ...WORK_HOURS[k], ...wh[k] };
-          }
+          if (WORK_HOURS[k]) { WORK_HOURS[k] = { ...WORK_HOURS[k], ...wh[k] }; }
         });
         saveData('zz_work_hours', WORK_HOURS);
-        // تحديث الواجهة لو الـ settings tab مفتوح
         const settingsTab = document.getElementById('tab-settings');
-        if (settingsTab && settingsTab.style.display === 'block') {
-          renderWorkHoursAdmin();
-        }
+        if (settingsTab && settingsTab.style.display === 'block') renderWorkHoursAdmin();
         checkCurrentCatWorkHours();
       }
     }
   });
 
-  // --------- MAIN GROUPS from Firebase (Real-Time Sync) ---------
-  db.ref('config/mainGroups').on('value', snap => {
-    if (snap.exists()) {
-      const mg = snap.val();
-      if (mg && typeof mg === 'object' && Object.keys(mg).length > 0) {
-        MAIN_GROUPS = mg;
-        saveData('zz_main_groups', MAIN_GROUPS);
-        syncWorkHoursWithMainGroups();
-        renderMainGroups();
-        renderCategories();
-        // تحديث قائمة catMainGroupInput
-        const sel = document.getElementById('catMainGroupInput');
-        if (sel) {
-          const prevVal = sel.value;
-          sel.innerHTML = '<option value="">— اختر القسم الرئيسي —</option>' +
-            getMainGroupsSorted().map(([k, v]) => `<option value="${k}">${v.emoji} ${v.label}</option>`).join('');
-          sel.value = prevVal;
-        }
-      }
-    }
-  });
-
-  // --------- VIP BENEFITS from Firebase ---------
-  db.ref('config/vipBenefits').on('value', snap => {
-    if (snap.exists()) {
-      const bens = snap.val();
-      if (Array.isArray(bens) && bens.length > 0) {
-        VIP_BENEFITS = bens;
-        saveData('zz_vip_benefits', VIP_BENEFITS);
-        updateVIPWelcomeBanner();
-      }
-    }
-  });
-  /* ── مزامنة إعدادات نقاط الولاء لكل العملاء ── */
-  db.ref('config/loyaltySettings').on('value', snap => {
-    if (snap.exists()) {
-      const ls = snap.val();
-      if (ls && typeof ls === 'object') {
-        LOYALTY_SETTINGS = { ...LOYALTY_SETTINGS, ...ls };
-        saveData('zz_loyalty_settings', LOYALTY_SETTINGS);
-      }
-    }
-  });
   // --------- AGENT RATINGS — Real-Time Sync ---------
   db.ref('agent_ratings').on('value', snap => {
     if (!snap.exists()) return;
@@ -13313,7 +13286,13 @@ async function fbSaveMenu() {
     }
   }
 }
-async function fbSaveSettings() { await fbSet('settings', SETTINGS); }
+async function fbSaveSettings() {
+  await fbSet('settings', SETTINGS);
+  /* تحديث settingsVersion — عشان العملاء يحملوا الإعدادات الجديدة فوراً */
+  if (db && fbConnected) {
+    db.ref('config/settingsVersion').set(Date.now()).catch(() => {});
+  }
+}
 async function fbSaveAddons() { await fbSet('addons', ADDONS); }
 async function fbSaveSpicySettings() { await fbSet('spicy_settings', SPICY_SETTINGS); }
 async function fbSaveOffers() { await fbSet('offers', OFFERS); }
