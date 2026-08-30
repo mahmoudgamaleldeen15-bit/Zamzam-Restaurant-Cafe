@@ -1431,6 +1431,15 @@ input,select,textarea{font-family:inherit;}
         <div class="status-step"><div class="step-dot" id="track5">🎉</div><div class="step-info"><div class="st">تم التسليم</div><div class="sd" id="track5t">—</div></div></div>
       </div>
     </div>
+
+    <!-- زرار تحديث حالة الطلب -->
+    <div style="text-align:center;margin:8px 0 4px">
+      <button id="refreshOrderBtn" onclick="_refreshOrderStatus()" style="background:transparent;border:1px solid var(--border);border-radius:50px;padding:7px 18px;font-size:12px;color:var(--text-muted);cursor:pointer;font-family:inherit;display:flex;align-items:center;gap:6px;margin:0 auto">
+        <span id="refreshOrderIcon">🔄</span>
+        <span id="refreshOrderTxt">تحديث الحالة</span>
+      </button>
+    </div>
+
     <div id="delayMsgBox" style="display:none;background:linear-gradient(135deg,#ff7043,#e53935);border-radius:14px;padding:16px;color:#fff;margin-bottom:16px">
       <div style="font-size:16px;font-weight:800;margin-bottom:6px">⏳ إشعار مهم</div>
       <div id="delayMsgText" style="font-size:13px;opacity:.9;line-height:1.6"></div>
@@ -6179,6 +6188,79 @@ function resetTracking() {
 
 // تتبع لحظي لطلب العميل الحالي فقط (خفيف — طلب واحد، بدل تحميل كل الطلبات)
 let _custOrderListenerRef = null, _custOrderListenerNum = null;
+/* ══ تحديث حالة الطلب يدوياً ══ */
+function _refreshOrderStatus() {
+  const btn = document.getElementById('refreshOrderBtn');
+  const icon = document.getElementById('refreshOrderIcon');
+  const txt = document.getElementById('refreshOrderTxt');
+  if (!btn || !currentOrderNum) return;
+
+  /* منع الضغط المتكرر */
+  btn.disabled = true;
+  if (icon) icon.textContent = '⏳';
+  if (txt) txt.textContent = 'جاري التحديث...';
+
+  if (!db || !fbConnected) {
+    /* مشكلة في الشبكة */
+    if (icon) icon.textContent = '⚠️';
+    if (txt) txt.textContent = 'تعذر التحديث — تأكد من اتصالك';
+    btn.style.borderColor = '#f59e0b';
+    btn.disabled = false;
+    setTimeout(() => {
+      if (icon) icon.textContent = '🔄';
+      if (txt) txt.textContent = 'تحديث الحالة';
+      btn.style.borderColor = '';
+    }, 3000);
+    return;
+  }
+
+  db.ref('orders/' + currentOrderNum).once('value', snap => {
+    btn.disabled = false;
+    if (!snap.exists()) {
+      /* الطلب مش موجود في orders — نشوف في الأرشيف */
+      db.ref('orders_archive/' + currentOrderNum).once('value', archSnap => {
+        btn.disabled = false;
+        if (archSnap.exists()) {
+          /* موجود في الأرشيف = اتسلّم فعلاً */
+          if (icon) icon.textContent = '✅';
+          if (txt) txt.textContent = 'طلبك تم تسليمه بالفعل';
+          btn.style.borderColor = '#16a34a';
+        } else {
+          /* مش موجود في orders ولا في الأرشيف = مشكلة */
+          if (icon) icon.textContent = '⚠️';
+          if (txt) txt.textContent = 'لم يتم إرسال الطلب — تواصل معنا';
+          btn.style.borderColor = '#dc2626';
+        }
+        setTimeout(() => {
+          if (icon) icon.textContent = '🔄';
+          if (txt) txt.textContent = 'تحديث الحالة';
+          btn.style.borderColor = '';
+        }, 4000);
+      });
+      return;
+    }
+    const o = snap.val();
+    /* تحديث البيانات */
+    const idx = ordersData.findIndex(x => x.id === o.id);
+    if (idx >= 0) ordersData[idx] = o; else ordersData.unshift(o);
+    saveData('zz_orders', ordersData);
+    /* تحديث الشاشة */
+    if (o.cashierViewedAt) _cashierViewedCurrentOrder = true;
+    if (document.getElementById('tracking')?.classList.contains('active')) {
+      updateTrackingStatus(o.status, o.outAt);
+    }
+    /* رسالة نجاح */
+    if (icon) icon.textContent = '✅';
+    if (txt) txt.textContent = 'تم التحديث';
+    btn.style.borderColor = '#16a34a';
+    setTimeout(() => {
+      if (icon) icon.textContent = '🔄';
+      if (txt) txt.textContent = 'تحديث الحالة';
+      btn.style.borderColor = '';
+    }, 2000);
+  });
+}
+
 function _startCustomerOrderTracking(orderNum) {
   if (!db || !orderNum) return;
   if (adminRoleType === 'admin' || adminRoleType === 'cashier') return; // الأدمن/الكاشير عندهم listener عام
@@ -10820,7 +10902,7 @@ function confirmFinalOrder() {
       }
     }
   }
-  }
+  } // إغلاق if (currentUser?.phone)
   // 🎀 حرق الهدية الشخصية بعد التأكيد النهائي
   if (typeof _pgBurnGift === 'function' && currentUser?.phone) {
     _pgBurnGift(currentUser.phone);
