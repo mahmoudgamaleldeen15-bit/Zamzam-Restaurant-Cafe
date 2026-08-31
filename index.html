@@ -5306,7 +5306,14 @@ function _wgRenderGame() {
   var g = _wgCurrentGame;
   if (!g || !g.slices || !g.slices.length) { _wgShowNoGame(); return; }
   var now = Date.now();
-  if (g.startAt && now < g.startAt) { _wgShowNoGame('⏳ اللعبة لم تبدأ بعد'); return; }
+  if (g.startAt && now < g.startAt) {
+    /* استنى لحد ما يبدأ وقت اللعبة — بعدين أظهر البانر تلقائياً */
+    var _msToStart = g.startAt - now;
+    if (_msToStart < 24 * 3600 * 1000) { /* بس لو أقل من 24 ساعة عشان مش نحتفظ بـ timer طويل */
+      setTimeout(function() { _wgShowButtonIfActive(); }, _msToStart);
+    }
+    _wgShowNoGame('⏳ اللعبة لم تبدأ بعد'); return;
+  }
   if (g.endAt && now > g.endAt) { _wgShowNoGame('⌛ انتهت اللعبة'); return; }
   var t = document.getElementById('wgGameTitle');
   if (t) t.textContent = '🎰 ' + (g.name || 'عجلة الحظ');
@@ -12150,12 +12157,34 @@ function _pgLoadForCustomer() {
   if (!db || !currentUser || !currentUser.phone) return;
   var ph = currentUser.phone.replace(/\D/g,'');
   if (!ph || ph.length < 8) return;
+
+  /* تحميل الهدية مرة عند الدخول */
   db.ref('personal_gifts/' + ph).once('value').then(function(snap) {
     var gift = snap.val();
     if (!gift || gift.used) { _currentPersonalGift = null; return; }
     _currentPersonalGift = gift;
     _pgShowCustomerCard(gift);
   }).catch(function(){});
+
+  /* listener خفيف على gifts_version/{phone} (~10 bytes)
+     لما الأدمن يضيف هدية → العميل يعرف فوراً بدون refresh */
+  var _giftsLocalVersion = null;
+  db.ref('gifts_version/' + ph).on('value', function(snap) {
+    if (!snap.exists()) return;
+    var v = snap.val();
+    if (_giftsLocalVersion === null) { _giftsLocalVersion = v; return; }
+    if (v !== _giftsLocalVersion) {
+      _giftsLocalVersion = v;
+      /* جيب الهدية الجديدة */
+      db.ref('personal_gifts/' + ph).once('value').then(function(gSnap) {
+        var gift = gSnap.val();
+        if (!gift || gift.used) { _currentPersonalGift = null; return; }
+        _currentPersonalGift = gift;
+        _pgShowCustomerCard(gift);
+        if (typeof updateCartUI === 'function') updateCartUI();
+      }).catch(function(){});
+    }
+  });
 }
 
 /* --- كارت الاحتفال للعميل --- */
@@ -12334,6 +12363,8 @@ function _pgSaveGift() {
 
   if (!db) { showNotif('❌ لا يوجد اتصال بقاعدة البيانات'); return; }
   db.ref('personal_gifts/' + ph).set(gift).then(function() {
+    /* تحديث gifts_version عشان العميل يعرف فوراً */
+    db.ref('gifts_version/' + ph).set(Date.now()).catch(function(){});
     showNotif('✅ تم إرسال الهدية لـ ' + custName);
     document.getElementById('_pgCreateModal').style.display = 'none';
     _pgLoadAdmin();
