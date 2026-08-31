@@ -6941,13 +6941,49 @@ ${autoDisc > 0 ? `🏷️ خصم العروض/VIP: - ${autoDisc} ج.م\\n` : ''}
     /* ══ تفاصيل الخصومات — للعرض فقط عند الكاشير والأدمن ══ */
     discountDetails: (function(){
       var d = [];
-      if (autoDisc > 0) d.push({ label: '🏷️ خصم العروض/VIP', amount: autoDisc });
+      /* ══ فصل VIP عن خصم العجلة ══ */
+      var _vipOnly = 0;
+      var _wheelDisc = 0;
+      var _offerDisc = 0;
+      if (autoDisc > 0) {
+        /* خصم VIP */
+        var _vipPct = 0;
+        var _vipPhone = currentUser&&currentUser.phone ? currentUser.phone.replace(/\D/g,'') : '';
+        var _vipData = VIP_CUSTOMERS[_vipPhone]||VIP_CUSTOMERS['0'+_vipPhone.slice(1)]||VIP_CUSTOMERS['2'+_vipPhone];
+        if (_vipData && _vipData.discount > 0) _vipPct = _vipData.discount;
+        if (_vipPct > 0) _vipOnly = Math.round(subtotal * _vipPct / 100);
+        /* خصم العجلة أو هدية شخصية discount */
+        if (typeof _currentPersonalGift !== 'undefined' && _currentPersonalGift && !_currentPersonalGift.used) {
+          if (_currentPersonalGift.type === 'discount_amount') _wheelDisc = Number(_currentPersonalGift.value)||0;
+          else if (_currentPersonalGift.type === 'discount_percent') _wheelDisc = Math.round(subtotal * (Number(_currentPersonalGift.value)||0) / 100);
+        }
+        /* باقي autoDisc = عروض */
+        _offerDisc = Math.max(0, autoDisc - _vipOnly - _wheelDisc);
+        if (_offerDisc > 0) d.push({ label: '🏷️ خصم العروض', amount: _offerDisc });
+        if (_vipOnly > 0) d.push({ label: '👑 خصم VIP ' + (_vipPct||'') + '%', amount: _vipOnly });
+      }
       if (_loyaltyDiscountApplied > 0) d.push({ label: '🏆 كاش باك النقاط', amount: _loyaltyDiscountApplied });
       if (typeof _currentPersonalGift !== 'undefined' && _currentPersonalGift && !_currentPersonalGift.used) {
-        var pgLabel = ({ discount_amount: 'خصم ' + _currentPersonalGift.value + ' ج.م', discount_percent: 'خصم ' + _currentPersonalGift.value + '%', free_product: 'منتج مجاني: ' + _currentPersonalGift.value, free_delivery: 'توصيل مجاني' })[_currentPersonalGift.type] || 'هدية شخصية';
-        d.push({ label: '🎀 ' + pgLabel, amount: null, note: _currentPersonalGift.source === 'wheel_game' ? '🎰 جائزة عجلة الحظ' : 'هدية شخصية' });
+        var _src = _currentPersonalGift.source === 'wheel_game';
+        if (_currentPersonalGift.type === 'discount_amount') {
+          d.push({ label: (_src?'🎰 خصم عجلة الحظ':'🎀 هدية خصم') + ' ' + _currentPersonalGift.value + ' ج.م', amount: Number(_currentPersonalGift.value)||0 });
+        } else if (_currentPersonalGift.type === 'discount_percent') {
+          d.push({ label: (_src?'🎰 خصم عجلة الحظ':'🎀 هدية خصم') + ' ' + _currentPersonalGift.value + '%', amount: _wheelDisc });
+        } else if (_currentPersonalGift.type === 'free_product') {
+          d.push({ label: (_src?'🎰':'🎀') + ' منتج مجاني: ' + _currentPersonalGift.value, amount: null });
+        } else if (_currentPersonalGift.type === 'free_delivery') {
+          var _zoneFee = selectedDeliveryZone ? (Number(selectedDeliveryZone.fee)||0) : 0;
+          d.push({ label: (_src?'🎰':'🎀') + ' توصيل مجاني (هدية)', amount: _zoneFee > 0 ? _zoneFee : null });
+        }
       }
-      if (deliveryFee === 0 && deliveryType === 'delivery') d.push({ label: '🛵 توصيل مجاني', amount: null });
+      if (deliveryFee === 0 && deliveryType === 'delivery') {
+        /* توصيل مجاني من إعداد المنطقة (مش هدية) */
+        var _hasGiftDelivery = typeof _currentPersonalGift !== 'undefined' && _currentPersonalGift && !_currentPersonalGift.used && _currentPersonalGift.type === 'free_delivery';
+        if (!_hasGiftDelivery) {
+          var _zFee = selectedDeliveryZone ? (Number(selectedDeliveryZone.fee)||0) : 0;
+          d.push({ label: '🛵 توصيل مجاني', amount: _zFee > 0 ? _zFee : null });
+        }
+      }
       return d.length ? d : null;
     })(),
     gps: gpsCoords ? { lat: gpsCoords.lat, lng: gpsCoords.lng, accuracy: gpsCoords.accuracy } : null,
