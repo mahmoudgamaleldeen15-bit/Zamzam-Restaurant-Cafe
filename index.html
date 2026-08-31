@@ -5575,15 +5575,15 @@ function _wgRenderSlicesForm(){
   var el=document.getElementById('wgSlicesForm'); if(!el) return;
   if(!_wgFormSlices.length){ el.innerHTML='<div style="text-align:center;padding:20px;color:var(--text-muted);font-size:13px">اضغط "+ إضافة شريحة" لإضافة جوائز</div>'; return; }
   el.innerHTML=_wgFormSlices.map(function(sl,i){
-    return '<div style="background:var(--bg);border-radius:12px;padding:12px;margin-bottom:8px;border:1px solid var(--border)">'+
+    return '<div style="background:var(--bg);border-radius:12px;padding:12px;margin-bottom:8px;border:1px solid var(--border)" data-slice-idx="'+i+'">'+
       '<div style="display:flex;align-items:center;gap:6px;margin-bottom:8px">'+
         '<div style="width:18px;height:18px;border-radius:50%;background:'+(sl.color||'#f59e0b')+';cursor:pointer;flex-shrink:0" onclick="_wgPickColor('+i+')"></div>'+
-        '<input type="text" placeholder="نص الشريحة" value="'+(sl.label||'')+'" oninput="_wgFormSlices['+i+'].label=this.value" style="flex:1;padding:7px;border:1px solid var(--border);border-radius:8px;font-size:13px;font-family:inherit;background:var(--white);color:var(--text)">'+
-        '<input type="text" placeholder="🎁" value="'+(sl.emoji||'')+'" oninput="_wgFormSlices['+i+'].emoji=this.value" style="width:48px;padding:7px;border:1px solid var(--border);border-radius:8px;font-size:13px;text-align:center;font-family:inherit;background:var(--white);color:var(--text)">'+
+        '<input type="text" data-field="label" placeholder="نص الشريحة" value="'+(sl.label||'')+'" oninput="_wgFormSlices['+i+'].label=this.value" style="flex:1;padding:7px;border:1px solid var(--border);border-radius:8px;font-size:13px;font-family:inherit;background:var(--white);color:var(--text)">'+
+        '<input type="text" data-field="emoji" placeholder="🎁" value="'+(sl.emoji||'')+'" oninput="_wgFormSlices['+i+'].emoji=this.value" style="width:48px;padding:7px;border:1px solid var(--border);border-radius:8px;font-size:13px;text-align:center;font-family:inherit;background:var(--white);color:var(--text)">'+
         '<button onclick="_wgFormSlices.splice('+i+',1);_wgRenderSlicesForm()" style="width:28px;height:28px;background:#fff0f0;color:#c00;border:none;border-radius:6px;cursor:pointer">✕</button>'+
       '</div>'+
       '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px">'+
-        '<select onchange="_wgFormSlices['+i+'].type=this.value" style="padding:6px;border:1px solid var(--border);border-radius:8px;font-size:11px;font-family:inherit;background:var(--white);color:var(--text)">'+
+        '<select data-field="type" onchange="_wgFormSlices['+i+'].type=this.value" style="padding:6px;border:1px solid var(--border);border-radius:8px;font-size:11px;font-family:inherit;background:var(--white);color:var(--text)">'+
           '<option value="discount_percent"'+(sl.type==='discount_percent'?' selected':'')+'>خصم %</option>'+
           '<option value="discount_amount"'+(sl.type==='discount_amount'?' selected':'')+'>خصم ج.م</option>'+
           '<option value="free_delivery"'+(sl.type==='free_delivery'?' selected':'')+'>توصيل مجاني</option>'+
@@ -5591,10 +5591,10 @@ function _wgRenderSlicesForm(){
           '<option value="points"'+(sl.type==='points'?' selected':'')+'>نقاط</option>'+
           '<option value="none"'+(sl.type==='none'?' selected':'')+'>بدون جائزة</option>'+
         '</select>'+
-        '<input type="text" placeholder="القيمة" value="'+(sl.value||'')+'" oninput="_wgFormSlices['+i+'].value=this.value" style="padding:6px;border:1px solid var(--border);border-radius:8px;font-size:12px;font-family:inherit;background:var(--white);color:var(--text)">'+
-        '<input type="number" placeholder="احتمال" value="'+(sl.prob||1)+'" min="1" oninput="_wgFormSlices['+i+'].prob=Number(this.value)||1" style="padding:6px;border:1px solid var(--border);border-radius:8px;font-size:12px;font-family:inherit;background:var(--white);color:var(--text)">'+
+        '<input type="text" data-field="value" placeholder="القيمة" value="'+(sl.value||'')+'" oninput="_wgFormSlices['+i+'].value=this.value" style="padding:6px;border:1px solid var(--border);border-radius:8px;font-size:12px;font-family:inherit;background:var(--white);color:var(--text)">'+
+        '<input type="number" data-field="prob" placeholder="احتمال" value="'+(sl.prob||1)+'" min="1" oninput="_wgFormSlices['+i+'].prob=Number(this.value)||1" style="padding:6px;border:1px solid var(--border);border-radius:8px;font-size:12px;font-family:inherit;background:var(--white);color:var(--text)">'+
       '</div>'+
-      '<input type="url" placeholder="رابط صورة PNG (اختياري)" value="'+(sl.image||'')+'" oninput="_wgFormSlices['+i+'].image=this.value" style="width:100%;margin-top:6px;padding:6px;border:1px solid var(--border);border-radius:8px;font-size:11px;font-family:inherit;background:var(--white);color:var(--text);box-sizing:border-box">'+
+      '<input type="url" data-field="image" placeholder="رابط صورة PNG (اختياري)" value="'+(sl.image||'')+'" oninput="_wgFormSlices['+i+'].image=this.value" style="width:100%;margin-top:6px;padding:6px;border:1px solid var(--border);border-radius:8px;font-size:11px;font-family:inherit;background:var(--white);color:var(--text);box-sizing:border-box">'+
     '</div>';
   }).join('');
 }
@@ -5611,12 +5611,33 @@ function _wgSaveGame(){
   var audience=(document.getElementById('wgFAudience')||{}).value||'all';
   var location=(document.getElementById('wgFLocation')||{}).value||'anywhere';
   var minOrder=Number((document.getElementById('wgFMinOrder')||{}).value)||0;
+
+  /* قراءة قيم الشرائح من الـ DOM مباشرة عشان نضمن الحفظ الصح */
+  var sliceRows = document.querySelectorAll('#wgSlicesForm > div[data-slice-idx]');
+  if(sliceRows.length > 0) {
+    sliceRows.forEach(function(row) {
+      var idx = parseInt(row.dataset.sliceIdx);
+      if(isNaN(idx) || !_wgFormSlices[idx]) return;
+      var labelInput = row.querySelector('[data-field="label"]');
+      var emojiInput = row.querySelector('[data-field="emoji"]');
+      var typeSelect = row.querySelector('[data-field="type"]');
+      var valueInput = row.querySelector('[data-field="value"]');
+      var probInput  = row.querySelector('[data-field="prob"]');
+      var imageInput = row.querySelector('[data-field="image"]');
+      if(labelInput) _wgFormSlices[idx].label = labelInput.value;
+      if(emojiInput) _wgFormSlices[idx].emoji = emojiInput.value;
+      if(typeSelect) _wgFormSlices[idx].type  = typeSelect.value;
+      if(valueInput) _wgFormSlices[idx].value = valueInput.value;
+      if(probInput)  _wgFormSlices[idx].prob  = Number(probInput.value)||1;
+      if(imageInput) _wgFormSlices[idx].image = imageInput.value;
+    });
+  }
+
   if(!_wgFormSlices.length){ showNotif('⚠️ أضف شريحة واحدة على الأقل'); return; }
   if(!endVal){ showNotif('⚠️ حدد تاريخ الانتهاء'); return; }
   if(!db||!fbConnected){ showNotif('⚠️ تأكد من الاتصال بالإنترنت'); return; }
   var v=Date.now();
   var game={id:'active',name:name,startAt:startVal?new Date(startVal).getTime():Date.now(),endAt:new Date(endVal).getTime(),audience:audience,location:location,minOrder:minOrder,slices:_wgFormSlices,createdAt:v,version:v};
-  if(!db){ showNotif('❌ غير متصل'); return; }
   db.ref('wheel_games/active').set(game).then(function(){
     db.ref('wheel_version').set(v).catch(function(){});
     showNotif('✅ تم حفظ اللعبة'); _wgCloseForm(); _wgAdminLoad();
