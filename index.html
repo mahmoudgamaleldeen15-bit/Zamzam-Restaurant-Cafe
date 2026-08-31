@@ -1228,7 +1228,7 @@ input,select,textarea{font-family:inherit;}
   </div>
 
   <!-- زرار اللف -->
-  <button class="wg-spin-btn" id="wgSpinBtn" onclick="_wgSpin()">🎰 الف العجلة!</button>
+  <button class="wg-spin-btn" id="wgSpinBtn" onclick="_wgSpin()">🎡 لِفَّة العَجَلة واكسب مع زمزم!</button>
 
   <!-- لو لعب قبل -->
   <div id="wgAlreadyPlayed" class="wg-already-played" style="display:none">
@@ -1301,6 +1301,22 @@ input,select,textarea{font-family:inherit;}
         <div class="ads-slider" id="adsSlider"></div>
       </div>
       <div class="ads-dots" id="adsDots"></div>
+    </div>
+
+    <!-- بانر عجلة الحظ — يظهر تلقائياً لما اللعبة تكون شغّالة -->
+    <div id="wgMainBanner" style="display:none;margin:6px 16px 4px;border-radius:16px;overflow:hidden;cursor:pointer" onclick="openWheelGame()">
+      <div style="background:linear-gradient(135deg,#1e1b4b,#4c1d95,#7c3aed);padding:14px 18px;display:flex;align-items:center;justify-content:space-between;position:relative;overflow:hidden">
+        <div style="position:absolute;top:-20px;right:-20px;width:100px;height:100px;background:rgba(255,255,255,.05);border-radius:50%"></div>
+        <div style="position:absolute;bottom:-30px;left:40px;width:80px;height:80px;background:rgba(255,255,255,.04);border-radius:50%"></div>
+        <div style="position:relative;z-index:1">
+          <div style="font-size:15px;font-weight:900;color:#fff;margin-bottom:3px" id="wgBannerTitle">🎡 عجلة الحظ</div>
+          <div style="font-size:12px;color:rgba(255,255,255,.8)">لِفَّة واكسب جوائز مميزة! ⭐</div>
+        </div>
+        <div style="position:relative;z-index:1;display:flex;align-items:center;gap:10px">
+          <div id="wgBannerCountdown" style="font-size:13px;font-weight:900;color:#f59e0b;font-family:monospace;background:rgba(0,0,0,.3);padding:5px 10px;border-radius:8px"></div>
+          <div style="background:linear-gradient(135deg,#f59e0b,#d97706);color:#fff;font-size:13px;font-weight:900;padding:10px 18px;border-radius:50px;animation:wg-btn-pulse 1.5s ease infinite;white-space:nowrap">العب الآن 🎰</div>
+        </div>
+      </div>
     </div>
     <div class="offer-strip hidden" id="offerStrip"></div>
     <div style="padding:0 16px 8px;display:flex;gap:8px">
@@ -5297,17 +5313,23 @@ function _wgDrawWheel(slices) {
 }
 
 function _wgSpin() {
-  if (_wgSpinning || _wgUpdatePending || !_wgCurrentGame) return;
+  console.log('[WG] _wgSpin called', {spinning:_wgSpinning, pending:_wgUpdatePending, game:!!_wgCurrentGame, user:!!(currentUser&&currentUser.phone)});
+  if (_wgSpinning) { showNotif('⏳ العجلة بتلف...'); return; }
+  if (_wgUpdatePending) { showNotif('🔄 يوجد تحديث للعبة — اضغط تحديث أولاً'); return; }
+  if (!_wgCurrentGame) { showNotif('⚠️ لم يتم تحميل اللعبة بعد'); return; }
+  if (!currentUser||!currentUser.phone) { showNotif('⚠️ يجب تسجيل الدخول أولاً'); return; }
   var g = _wgCurrentGame, now = Date.now();
   if (g.endAt && now > g.endAt) { showNotif('⌛ انتهت اللعبة'); return; }
+  if (g.startAt && now < g.startAt) { showNotif('⏳ اللعبة لم تبدأ بعد'); return; }
   if (g.minOrder > 0) {
-    var ph2 = currentUser&&currentUser.phone ? currentUser.phone.replace(/\D/g,'') : '';
-    var myOrd = (ordersData||[]).filter(function(o){ return (o.whatsapp||o.phone||'').replace(/\D/g,'')===(ph2); });
+    var ph2 = currentUser.phone.replace(/\D/g,'');
+    var myOrd = (ordersData||[]).filter(function(o){ return (o.whatsapp||o.phone||'').replace(/\D/g,'')===ph2; });
     var lastTotal = myOrd.length ? (myOrd[myOrd.length-1].total||0) : 0;
-    if (lastTotal < g.minOrder) { showNotif('📦 تحتاج طلب بقيمة '+g.minOrder+' ج.م أو أكثر'); return; }
+    console.log('[WG] minOrder check', {required:g.minOrder, lastTotal:lastTotal});
+    if (lastTotal < g.minOrder) { showNotif('📦 تحتاج طلب بقيمة '+g.minOrder+' ج.م أو أكثر للعب'); return; }
   }
   if (g.audience==='vip') {
-    var ph3 = currentUser&&currentUser.phone ? currentUser.phone.replace(/\D/g,'') : '';
+    var ph3 = currentUser.phone.replace(/\D/g,'');
     if (!ph3||(! VIP_CUSTOMERS[ph3]&&!VIP_CUSTOMERS['0'+ph3.slice(1)]&&!VIP_CUSTOMERS['2'+ph3])) { showNotif('👑 هذه اللعبة لعملاء VIP فقط'); return; }
   }
   if (g.location==='cafe') { _wgCheckLocation(function(ok){ if(ok) _wgDoSpin(); else showNotif('📍 يجب أن تكون في الكافيه للعب'); }); return; }
@@ -5325,7 +5347,8 @@ function _wgDoSpin() {
   var rand = Math.random()*total, cum = 0, winIdx = 0;
   for (var i=0; i<slices.length; i++) { cum+=(slices[i].prob||1); if(rand<=cum){ winIdx=i; break; } }
   var phone = currentUser.phone.replace(/\D/g,'');
-  var playData = { phone:phone, name:(currentUser.name||''), gameId:(_wgCurrentGame.id||'active'), gameName:(_wgCurrentGame.name||'عجلة الحظ'), winnerIdx:winIdx, prize:slices[winIdx], playedAt:Date.now(), claimed:false };
+  var prizeType = slices[winIdx] ? slices[winIdx].type : 'none';
+  var playData = { phone:phone, name:(currentUser.name||''), gameId:(_wgCurrentGame.id||'active'), gameName:(_wgCurrentGame.name||'عجلة الحظ'), winnerIdx:winIdx, prize:slices[winIdx], playedAt:Date.now(), claimed: (prizeType==='points'||prizeType==='none') };
   db.ref('wheel_plays/'+phone).set({ playedAt:Date.now(), gameId:(_wgCurrentGame.id||'active'), winnerIdx:winIdx })
   .then(function() {
     db.ref('wheel_winners').push(playData).catch(function(){});
@@ -5345,12 +5368,78 @@ function _wgAnimateSpin(winIdx, slices, cb) {
   var targetAngle = -winMid + Math.PI*2*(5+Math.floor(Math.random()*4));
   var startAngle = _wgAngle, startTime = null, duration = 4500;
   function ease(t){ return 1-Math.pow(1-t,4); }
+
+  /* صوت العجلة */
+  var audioCtx = null;
+  try { audioCtx = new (window.AudioContext||window.webkitAudioContext)(); } catch(e){}
+  var lastTickAngle = startAngle;
+  var tickCount = 0;
+
+  function playTick(speed) {
+    if(!audioCtx) return;
+    try {
+      var osc = audioCtx.createOscillator();
+      var gain = audioCtx.createGain();
+      osc.connect(gain); gain.connect(audioCtx.destination);
+      osc.type = 'triangle';
+      osc.frequency.value = 300 + speed * 200;
+      gain.gain.setValueAtTime(0.15, audioCtx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.08);
+      osc.start(audioCtx.currentTime);
+      osc.stop(audioCtx.currentTime + 0.08);
+    } catch(e){}
+  }
+
   function frame(ts) {
     if(!startTime) startTime=ts;
     var progress = Math.min((ts-startTime)/duration,1);
-    _wgAngle = startAngle + targetAngle*ease(progress);
+    var eased = ease(progress);
+    _wgAngle = startAngle + targetAngle*eased;
     _wgDrawWheel(slices);
-    if(progress<1) requestAnimationFrame(frame); else cb();
+
+    /* صوت تيك كل شريحة */
+    var speed = 1 - progress;
+    var sliceAngle = Math.PI*2/slices.length;
+    var currentTick = Math.floor((_wgAngle % (Math.PI*2)) / sliceAngle);
+    if(currentTick !== tickCount && speed > 0.05) {
+      playTick(speed);
+      tickCount = currentTick;
+    }
+
+    if(progress<1) {
+      requestAnimationFrame(frame);
+    } else {
+      /* صوت الفوز */
+      if(audioCtx) {
+        try {
+          var isNone = slices[winIdx] && slices[winIdx].type === 'none';
+          if(isNone) {
+            /* صوت الخسارة — نغمة هابطة حزينة */
+            [[400,.0],[350,.2],[280,.4],[220,.65]].forEach(function(note){
+              var o=audioCtx.createOscillator(), g=audioCtx.createGain();
+              o.connect(g); g.connect(audioCtx.destination);
+              o.type='sawtooth'; o.frequency.value=note[0];
+              g.gain.setValueAtTime(0.15, audioCtx.currentTime+note[1]);
+              g.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime+note[1]+0.25);
+              o.start(audioCtx.currentTime+note[1]);
+              o.stop(audioCtx.currentTime+note[1]+0.25);
+            });
+          } else {
+            /* صوت الفوز — نغمة صاعدة */
+            [[523,.0],[659,.15],[784,.3],[1047,.5]].forEach(function(note){
+              var o=audioCtx.createOscillator(), g=audioCtx.createGain();
+              o.connect(g); g.connect(audioCtx.destination);
+              o.type='sine'; o.frequency.value=note[0];
+              g.gain.setValueAtTime(0.2, audioCtx.currentTime+note[1]);
+              g.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime+note[1]+0.3);
+              o.start(audioCtx.currentTime+note[1]);
+              o.stop(audioCtx.currentTime+note[1]+0.3);
+            });
+          }
+        } catch(e){}
+      }
+      cb();
+    }
   }
   requestAnimationFrame(frame);
 }
@@ -5657,7 +5746,7 @@ function _wgAdminDelete(){
 
 /* ربط تاب الألعاب — مدمج في switchAdminTab مباشرة */
 
-/* زرار عائم للعميل */
+/* زرار/بانر العجلة للعميل */
 function _wgShowButtonIfActive(){
   if(!db||!fbConnected||adminRoleType) return;
   db.ref('wheel_games/active').once('value').then(function(snap){
@@ -5665,14 +5754,39 @@ function _wgShowButtonIfActive(){
     var g=snap.val(), now=Date.now();
     if(g.endAt&&now>g.endAt) return;
     if(g.startAt&&now<g.startAt) return;
+
+    /* إظهار البانر الرئيسي */
+    var banner = document.getElementById('wgMainBanner');
+    if(banner) {
+      banner.style.display = 'block';
+      var titleEl = document.getElementById('wgBannerTitle');
+      if(titleEl) titleEl.textContent = '🎡 ' + (g.name || 'عجلة الحظ');
+      /* عداد تنازلي في البانر */
+      if(g.endAt) {
+        var cdEl = document.getElementById('wgBannerCountdown');
+        if(cdEl) {
+          function updateBannerCd() {
+            var rem = Math.max(0, g.endAt - Date.now());
+            if(rem <= 0) { if(banner) banner.style.display='none'; return; }
+            var h=Math.floor(rem/3600000),m=Math.floor((rem%3600000)/60000),s=Math.floor((rem%60000)/1000);
+            cdEl.textContent = _wgPad(h)+':'+_wgPad(m)+':'+_wgPad(s);
+          }
+          updateBannerCd();
+          setInterval(updateBannerCd, 1000);
+        }
+      }
+    }
+
+    /* زرار عائم صغير كـ backup للموبايل */
     if(document.getElementById('wgFloatBtn')) return;
     var style=document.createElement('style');
-    style.textContent='@keyframes wg-float{0%,100%{transform:scale(1)}50%{transform:scale(1.1)}}';
+    style.textContent='@keyframes wg-float{0%,100%{transform:scale(1) rotate(-5deg)}50%{transform:scale(1.1) rotate(5deg)}}';
     document.head.appendChild(style);
     var btn=document.createElement('button');
     btn.id='wgFloatBtn'; btn.onclick=openWheelGame;
-    btn.style.cssText='position:fixed;bottom:90px;left:16px;z-index:8000;width:52px;height:52px;border-radius:50%;background:linear-gradient(135deg,#7c3aed,#6d28d9);border:none;color:#fff;font-size:24px;cursor:pointer;box-shadow:0 4px 20px rgba(124,58,237,.5);animation:wg-float 2s ease infinite';
-    btn.textContent='🎰'; btn.title=g.name||'عجلة الحظ';
+    btn.style.cssText='position:fixed;bottom:90px;left:16px;z-index:8000;width:48px;height:48px;border-radius:50%;background:linear-gradient(135deg,#7c3aed,#6d28d9);border:none;color:#fff;font-size:22px;cursor:pointer;box-shadow:0 4px 20px rgba(124,58,237,.6);animation:wg-float 2s ease infinite';
+    btn.textContent='🎡';
+    btn.title=g.name||'عجلة الحظ';
     document.body.appendChild(btn);
   }).catch(function(){});
 }
