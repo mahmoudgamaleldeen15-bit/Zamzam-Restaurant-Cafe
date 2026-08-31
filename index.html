@@ -11660,7 +11660,7 @@ function confirmFinalOrder() {
   if (_currentPersonalGift && !_currentPersonalGift.used &&
       _currentPersonalGift.source === 'wheel_game' &&
       _currentPersonalGift.minOrderRequired > 0) {
-    var _orderSub = cartSubtotal();
+    var _orderSub = (_pendingOrderForReview && _pendingOrderForReview.subtotal) ? _pendingOrderForReview.subtotal : cartSubtotal();
     if (_orderSub < _currentPersonalGift.minOrderRequired) {
       var _needed2 = _currentPersonalGift.minOrderRequired - _orderSub;
       showNotif('🎁 أضف ' + _needed2 + ' ج.م للاستفادة من جائزة العجلة!');
@@ -13527,7 +13527,8 @@ function openOrderDetailsModal(orderId) {
           ${itemsHtml || '<div style="color:var(--text-muted);text-align:center;padding:10px">لا توجد أصناف</div>'}
           <!-- الإجمالى -->
           <div style="margin-top:10px;padding-top:10px;border-top:2px solid var(--olive)">
-            ${o.disc > 0 ? `<div style="display:flex;justify-content:space-between;font-size:12px;color:var(--red);font-weight:700;margin-bottom:4px"><span>خصم</span><span>- ${o.disc} ج</span></div>` : ''}
+            ${o.subtotal && o.disc > 0 ? `<div style="display:flex;justify-content:space-between;font-size:12px;color:var(--text-muted);font-weight:700;margin-bottom:4px"><span>المجموع قبل الخصم</span><span>${o.subtotal} ج.م</span></div>` : ''}
+            ${o.discountDetails && o.discountDetails.length ? o.discountDetails.map(d => `<div style="display:flex;justify-content:space-between;font-size:12px;color:#7c3aed;font-weight:700;margin-bottom:3px"><span>${d.label}${d.note?' ('+d.note+')':''}</span><span>${d.amount?'- '+d.amount+' ج.م':'✓'}</span></div>`).join('') : (o.disc > 0 ? `<div style="display:flex;justify-content:space-between;font-size:12px;color:#7c3aed;font-weight:700;margin-bottom:4px"><span>🏷️ إجمالي الخصومات</span><span>- ${o.disc} ج</span></div>` : '')}
             ${o.deliveryFee > 0 ? `<div style="display:flex;justify-content:space-between;font-size:12px;color:var(--text-muted);font-weight:700;margin-bottom:4px"><span>🛵 رسوم التوصيل</span><span>${o.deliveryFee} ج</span></div>` : ''}
             <div style="display:flex;justify-content:space-between;font-size:16px;font-weight:900;color:var(--olive-dark)"><span>💰 الإجمالى</span><span>${o.total} ج.م</span></div>
           </div>
