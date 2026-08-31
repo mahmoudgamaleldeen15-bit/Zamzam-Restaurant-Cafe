@@ -5351,6 +5351,9 @@ function _wgDoSpin() {
   var playData = { phone:phone, name:(currentUser.name||''), gameId:(_wgCurrentGame.id||'active'), gameName:(_wgCurrentGame.name||'عجلة الحظ'), winnerIdx:winIdx, prize:slices[winIdx], playedAt:Date.now(), claimed: (prizeType==='points'||prizeType==='none') };
   db.ref('wheel_plays/'+phone).set({ playedAt:Date.now(), gameId:(_wgCurrentGame.id||'active'), winnerIdx:winIdx })
   .then(function() {
+    /* حفظ في localStorage لقفل الجهاز */
+    var localKey = 'wg_played_' + (_wgCurrentGame.id||'active') + '_' + phone;
+    saveData(localKey, { playedAt: Date.now() });
     db.ref('wheel_winners').push(playData).catch(function(){});
     _wgApplyPrize(phone, slices[winIdx]);
     _wgAnimateSpin(winIdx, slices, function() { _wgShowPrize(slices[winIdx]); _wgSpinning=false; });
@@ -5500,7 +5503,8 @@ function _wgApplyPrize(phone, prize) {
   /* جوائز أخرى → personal_gifts */
   var typeMap = {discount_percent:'discount_percent',discount_amount:'discount_amount',free_delivery:'free_delivery',free_product:'free_product'};
   if(!typeMap[prize.type]) return;
-  var gift={id:'wg_'+Date.now(),phone:phone,name:(currentUser&&currentUser.name)||'',type:typeMap[prize.type],value:prize.value||'',msg:'🎰 جائزة عجلة الحظ: '+(prize.label||''),createdAt:new Date().toISOString(),used:false,usedAt:null,source:'wheel_game'};
+  var minOrder = (_wgCurrentGame && _wgCurrentGame.minOrder) ? Number(_wgCurrentGame.minOrder) : 0;
+  var gift={id:'wg_'+Date.now(),phone:phone,name:(currentUser&&currentUser.name)||'',type:typeMap[prize.type],value:prize.value||'',msg:'🎰 جائزة عجلة الحظ: '+(prize.label||''),createdAt:new Date().toISOString(),used:false,usedAt:null,source:'wheel_game',minOrderRequired:minOrder};
   /* فحص لو عنده هدية قديمة مش استخدمها — مش بنمسحها */
   db.ref('personal_gifts/'+phone).once('value').then(function(snap){
     if(snap.exists() && snap.val().used === false) {
@@ -5518,8 +5522,20 @@ function _wgApplyPrize(phone, prize) {
 function _wgCheckPlayed(g) {
   var phone = currentUser&&currentUser.phone ? currentUser.phone.replace(/\D/g,'') : null;
   if(!phone) { _wgShowSpinBtn(); return; }
+
+  /* فحص localStorage أولاً كطبقة حماية للجهاز */
+  var localKey = 'wg_played_' + (g.id||'active') + '_' + phone;
+  var localPlayed = loadData(localKey, null);
+  if(localPlayed) { _wgShowAlreadyPlayed(); return; }
+
+  /* فحص Firebase */
   db.ref('wheel_plays/'+phone).once('value').then(function(snap) {
-    if(!snap.exists()||snap.val().gameId!==(g.id||'active')) { _wgShowSpinBtn(); return; }
+    if(!snap.exists()||snap.val().gameId!==(g.id||'active')) {
+      _wgShowSpinBtn();
+      return;
+    }
+    /* حفظ في localStorage عشان نقفل الجهاز كمان */
+    saveData(localKey, { playedAt: snap.val().playedAt });
     _wgShowAlreadyPlayed();
   }).catch(function(){ _wgShowSpinBtn(); });
 }
@@ -5533,12 +5549,17 @@ function _wgShowSpinBtn() {
 function _wgShowAlreadyPlayed() {
   var btn=document.getElementById('wgSpinBtn'), pl=document.getElementById('wgAlreadyPlayed');
   if(btn) btn.style.display='none';
-  if(pl){ pl.style.display='block';
+  if(pl){
+    pl.style.display='block';
+    var icon = pl.querySelector('div:first-child');
+    if(icon) icon.textContent = '🎊';
     var mg=document.getElementById('wgAlreadyMsg');
     if(mg&&_wgCurrentGame&&_wgCurrentGame.endAt){
       var rem=Math.max(0,_wgCurrentGame.endAt-Date.now());
       var h=Math.floor(rem/3600000),m=Math.floor((rem%3600000)/60000);
-      mg.textContent='لقد لعبت في هذه الجولة. تنتهي بعد '+h+' ساعة '+m+' دقيقة';
+      mg.textContent='سبق ولعبت في هذه الجولة. جائزتك محفوظة لك! 🎁\nتنتهي الجولة بعد '+h+' ساعة '+m+' دقيقة';
+    } else if(mg) {
+      mg.textContent='سبق ولعبت في هذه الجولة. جائزتك محفوظة لك! 🎁';
     }
   }
 }
@@ -5577,8 +5598,21 @@ function _wgStartVersionListener() {
     if(_wgLocalVersion===null){ _wgLocalVersion=v; return; }
     if(v!==_wgLocalVersion){
       _wgUpdatePending=true; _wgLocalVersion=v;
-      var b=document.getElementById('wgUpdateBanner'); if(b) b.style.display='flex';
-      var sb=document.getElementById('wgSpinBtn'); if(sb) sb.disabled=true;
+      /* فحص هل اللعبة لا تزال موجودة */
+      db.ref('wheel_games/active').once('value',function(gameSnap){
+        if(!gameSnap.exists()) {
+          /* اللعبة اتحذفت — أخفي البانر والزرار فوراً */
+          var banner=document.getElementById('wgMainBanner'); if(banner) banner.style.display='none';
+          var floatBtn=document.getElementById('wgFloatBtn'); if(floatBtn) floatBtn.remove();
+          var screen=document.getElementById('wheelGameScreen'); if(screen) screen.style.display='none';
+          if(_wgCountdownInterval){ clearInterval(_wgCountdownInterval); _wgCountdownInterval=null; }
+          _wgCurrentGame=null;
+        } else {
+          /* اللعبة اتحدثت — أظهر بانر التحديث */
+          var b=document.getElementById('wgUpdateBanner'); if(b) b.style.display='flex';
+          var sb=document.getElementById('wgSpinBtn'); if(sb) sb.disabled=true;
+        }
+      });
     }
   });
 }
@@ -5672,7 +5706,7 @@ function _wgRenderSlicesForm(){
         '<button onclick="_wgFormSlices.splice('+i+',1);_wgRenderSlicesForm()" style="width:28px;height:28px;background:#fff0f0;color:#c00;border:none;border-radius:6px;cursor:pointer">✕</button>'+
       '</div>'+
       '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px">'+
-        '<select data-field="type" onchange="_wgFormSlices['+i+'].type=this.value" style="padding:6px;border:1px solid var(--border);border-radius:8px;font-size:11px;font-family:inherit;background:var(--white);color:var(--text)">'+
+        '<select data-field="type" onchange="_wgFormSlices['+i+'].type=this.value;_wgRenderSlicesForm()" style="padding:6px;border:1px solid var(--border);border-radius:8px;font-size:11px;font-family:inherit;background:var(--white);color:var(--text)">'+
           '<option value="discount_percent"'+(sl.type==='discount_percent'?' selected':'')+'>خصم %</option>'+
           '<option value="discount_amount"'+(sl.type==='discount_amount'?' selected':'')+'>خصم ج.م</option>'+
           '<option value="free_delivery"'+(sl.type==='free_delivery'?' selected':'')+'>توصيل مجاني</option>'+
@@ -5684,6 +5718,12 @@ function _wgRenderSlicesForm(){
         '<input type="number" data-field="prob" placeholder="احتمال" value="'+(sl.prob||1)+'" min="1" oninput="_wgFormSlices['+i+'].prob=Number(this.value)||1" style="padding:6px;border:1px solid var(--border);border-radius:8px;font-size:12px;font-family:inherit;background:var(--white);color:var(--text)">'+
       '</div>'+
       '<input type="url" data-field="image" placeholder="رابط صورة PNG (اختياري)" value="'+(sl.image||'')+'" oninput="_wgFormSlices['+i+'].image=this.value" style="width:100%;margin-top:6px;padding:6px;border:1px solid var(--border);border-radius:8px;font-size:11px;font-family:inherit;background:var(--white);color:var(--text);box-sizing:border-box">'+
+      (sl.type==='free_delivery' ?
+        '<div style="margin-top:6px;background:#fef3c7;border:1px solid #f59e0b;border-radius:8px;padding:8px 10px">'+
+          '<div style="font-size:11px;font-weight:700;color:#92400e;margin-bottom:4px">🔄 خصم بديل لو المنطقة خارج التوصيل المجاني</div>'+
+          '<input type="number" data-field="altDiscount" placeholder="مثال: 10 ج.م" value="'+(sl.altDiscount||'')+'" oninput="_wgFormSlices['+i+'].altDiscount=Number(this.value)||0" style="width:100%;padding:6px;border:1px solid var(--border);border-radius:8px;font-size:12px;font-family:inherit;background:var(--white);color:var(--text);box-sizing:border-box">'+
+        '</div>'
+      : '')+
     '</div>';
   }).join('');
 }
@@ -5719,6 +5759,8 @@ function _wgSaveGame(){
       if(valueInput) _wgFormSlices[idx].value = valueInput.value;
       if(probInput)  _wgFormSlices[idx].prob  = Number(probInput.value)||1;
       if(imageInput) _wgFormSlices[idx].image = imageInput.value;
+      var altInput = row.querySelector('[data-field="altDiscount"]');
+      if(altInput) _wgFormSlices[idx].altDiscount = Number(altInput.value)||0;
     });
   }
 
@@ -5754,6 +5796,13 @@ function _wgShowButtonIfActive(){
     var g=snap.val(), now=Date.now();
     if(g.endAt&&now>g.endAt) return;
     if(g.startAt&&now<g.startAt) return;
+
+    /* فحص VIP — لو اللعبة لـ VIP فقط → إخفاء البانر لغير VIP */
+    if(g.audience==='vip') {
+      var ph = currentUser&&currentUser.phone ? currentUser.phone.replace(/\D/g,'') : '';
+      var isVip = ph && (VIP_CUSTOMERS[ph]||VIP_CUSTOMERS['0'+ph.slice(1)]||VIP_CUSTOMERS['2'+ph]);
+      if(!isVip) return;
+    }
 
     /* إظهار البانر الرئيسي */
     var banner = document.getElementById('wgMainBanner');
@@ -6408,7 +6457,12 @@ function calcDeliveryFee() {
   // 🎀 هدية شخصية — توصيل مجاني
   if (typeof _pgGetDiscount === 'function' && _currentPersonalGift && !_currentPersonalGift.used) {
     var _pgRes = _pgGetDiscount(cartSubtotal(), 0);
-    if (_pgRes.freeDelivery) return 0;
+    if (_pgRes.freeDelivery) {
+      /* فحص لو المنطقة مسموح ليها بالتوصيل المجاني */
+      var _zoneAllowsFree = selectedDeliveryZone && selectedDeliveryZone.freeDelivery;
+      if (_zoneAllowsFree) return 0;
+      /* المنطقة مش مجانية — بيرجع رسوم المنطقة (الخصم البديل بيطبّق في _pgGetDiscount) */
+    }
   }
   const subtotal = cartSubtotal();
   const minFree = Number(SETTINGS.freeDeliveryMin);
@@ -6473,7 +6527,19 @@ function updateCartUI() {
     // 🎀 هدية شخصية
     if (typeof _pgGetDiscount === 'function' && typeof _currentPersonalGift !== 'undefined' && _currentPersonalGift && !_currentPersonalGift.used) {
       var _pgSumRes = _pgGetDiscount(subtotal, deliveryFee);
-      if (_pgSumRes.disc > 0) sumHtml += `<div class="cart-summary-row disc" style="color:#7c3aed"><span>🎀 هدية شخصية</span><span>- ${_pgSumRes.disc} ج.م</span></div>`;
+      if (_pgSumRes.belowMin) {
+        var _needed = _pgSumRes.minRequired - subtotal;
+        sumHtml += `<div style="background:linear-gradient(135deg,#fef3c7,#fffbeb);border:1.5px solid #f59e0b;border-radius:10px;padding:8px 12px;margin:4px 0;font-size:12px;font-weight:700;color:#92400e;text-align:center">🎁 أضف <strong>${_needed} ج.م</strong> للاستفادة من جائزة العجلة!</div>`;
+      }
+      if (_pgSumRes.disc > 0) {
+        /* شوف لو ده خصم بديل عن توصيل مجاني */
+        var _isAltDisc = _currentPersonalGift && _currentPersonalGift.type === 'free_delivery' && selectedDeliveryZone && !selectedDeliveryZone.freeDelivery;
+        if (_isAltDisc) {
+          sumHtml += `<div class="cart-summary-row disc" style="color:#7c3aed"><span>🛵 منطقتك غير مشمولة بالتوصيل المجاني — خصم بديل</span><span>- ${_pgSumRes.disc} ج.م</span></div>`;
+        } else {
+          sumHtml += `<div class="cart-summary-row disc" style="color:#7c3aed"><span>🎀 هدية شخصية</span><span>- ${_pgSumRes.disc} ج.م</span></div>`;
+        }
+      }
       if (_pgSumRes.freeDelivery && deliveryType === 'delivery') sumHtml += `<div class="cart-summary-row disc" style="color:#7c3aed"><span>🎀 توصيل مجاني (هدية)</span><span>✓</span></div>`;
     }
     if (deliveryFee > 0) sumHtml += `<div class="cart-summary-row"><span>🛵 رسوم التوصيل</span><span>${deliveryFee} ج.م</span></div>`;
@@ -11590,6 +11656,18 @@ function confirmFinalOrder() {
     _showMenuUpdateBanner();
     return;
   }
+  /* ══ فحص الحد الأدنى لجائزة العجلة ══ */
+  if (_currentPersonalGift && !_currentPersonalGift.used &&
+      _currentPersonalGift.source === 'wheel_game' &&
+      _currentPersonalGift.minOrderRequired > 0) {
+    var _orderSub = cartSubtotal();
+    if (_orderSub < _currentPersonalGift.minOrderRequired) {
+      var _needed2 = _currentPersonalGift.minOrderRequired - _orderSub;
+      showNotif('🎁 أضف ' + _needed2 + ' ج.م للاستفادة من جائزة العجلة!');
+      /* الجائزة مش بتتحرق — بتفضل للطلب الجاي */
+      return;
+    }
+  }
   clearInterval(_orderReviewTimer);
   const order = _pendingOrderForReview;
   const _isElec = !!order.isElectronicPayment;
@@ -12049,10 +12127,24 @@ var _pgAppliedThisOrder = false; /* يُعاد ضبطه بعد حرق الهدي
 function _pgGetDiscount(subtotal, deliveryFee) {
   if (!_currentPersonalGift || _currentPersonalGift.used) return { disc: 0, freeDelivery: false };
   var g = _currentPersonalGift;
+  /* فحص الحد الأدنى للطلب لو الهدية من عجلة الحظ */
+  if (g.source === 'wheel_game' && g.minOrderRequired > 0 && subtotal < g.minOrderRequired) {
+    return { disc: 0, freeDelivery: false, belowMin: true, minRequired: g.minOrderRequired };
+  }
   var disc = 0; var freeDelivery = false;
   if (g.type === 'discount_amount') disc = Math.min(Number(g.value) || 0, subtotal);
   else if (g.type === 'discount_percent') disc = Math.round(subtotal * (Number(g.value) || 0) / 100);
-  else if (g.type === 'free_delivery') freeDelivery = true;
+  else if (g.type === 'free_delivery') {
+    /* فحص لو المنطقة مسموح ليها بالتوصيل المجاني */
+    var _zoneAllowsFree = selectedDeliveryZone && selectedDeliveryZone.freeDelivery;
+    if (_zoneAllowsFree) {
+      freeDelivery = true;
+    } else if (g.source === 'wheel_game' && g.altDiscount > 0) {
+      /* منطقة غير مجانية + هدية من العجلة + فيه خصم بديل → طبّق الخصم البديل */
+      disc = Math.min(Number(g.altDiscount) || 0, subtotal);
+      freeDelivery = false;
+    }
+  }
   /* free_product: خصم 0 (المنتج يُضاف يدوياً من الأدمن في الأوردر) */
   return { disc: disc, freeDelivery: freeDelivery };
 }
@@ -16199,7 +16291,7 @@ function showVIPCashierPopup(order) {
           </div>`).join('')}
         ${order.notes ? `<div style="margin-top:8px;background:#fff7ed;border:1.5px solid var(--gold);border-radius:8px;padding:6px 9px;color:#9a3412;font-size:12.5px;font-weight:800">📝 ملاحظات: ${order.notes}</div>` : ''}
         ${order.subtotal && order.disc > 0 ? `<div style="display:flex;justify-content:space-between;margin-top:8px;font-size:12px;color:var(--text-muted)"><span>المجموع قبل الخصم</span><span>${order.subtotal} ج.م</span></div>` : ''}
-        ${order.discountDetails && order.discountDetails.length ? order.discountDetails.map(function(d){ return '<div style="display:flex;justify-content:space-between;font-size:12px;color:#7c3aed;margin-top:3px"><span>'+d.label+(d.note?' ('+d.note+')':'')+'</span><span>'+(d.amount?'- '+d.amount+' ج.م':'✓')+'</span></div>'; }).join('') : ''}
+        ${order.discountDetails && order.discountDetails.length ? order.discountDetails.map(function(d){ return '<div style="display:flex;justify-content:space-between;font-size:12px;color:#7c3aed;margin-top:3px"><span>'+d.label+(d.note?' ('+d.note+')':'')+'</span><span>'+(d.amount?'- '+d.amount+' ج.م':'✓')+'</span></div>'; }).join('') : (order.disc > 0 ? `<div style="display:flex;justify-content:space-between;font-size:12px;color:#7c3aed;margin-top:3px"><span>🏷️ إجمالي الخصومات</span><span>- ${order.disc} ج.م</span></div>` : '')}
         ${order.deliveryFee > 0 ? `<div style="display:flex;justify-content:space-between;font-size:12px;color:var(--text-muted);margin-top:3px"><span>🛵 التوصيل</span><span>${order.deliveryFee} ج.م</span></div>` : ''}
         <div style="display:flex;justify-content:space-between;margin-top:8px;font-weight:900;border-top:1.5px solid var(--border);padding-top:6px">
           <span>الإجمالي النهائي</span>
