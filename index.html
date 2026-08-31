@@ -4027,6 +4027,28 @@ function _goToAppOrTracking() {
         }
       }
     }).catch(function(){});
+
+    /* ══ listener خفيف على loyalty_version/{phone} ══
+       لما الأدمن يعدّل النقاط → بيجيب القيمة الجديدة فوراً */
+    var _loyLocalVersion = null;
+    db.ref('loyalty_version/' + _ph).on('value', function(snap) {
+      if (!snap.exists()) return;
+      var v = snap.val();
+      if (_loyLocalVersion === null) { _loyLocalVersion = v; return; }
+      if (v !== _loyLocalVersion) {
+        _loyLocalVersion = v;
+        /* جيب النقاط الجديدة من Firebase */
+        db.ref('loyalty/' + _ph).once('value').then(function(loySnap) {
+          if (loySnap.exists()) {
+            var newData = loySnap.val();
+            saveData('zz_loyalty_' + _ph, newData);
+            /* تحديث البانر فوراً */
+            if (typeof updateVIPWelcomeBanner === 'function') updateVIPWelcomeBanner();
+            if (typeof updateCartUI === 'function') updateCartUI();
+          }
+        }).catch(function(){});
+      }
+    });
   }
   /* عرض popup الإشعارات بعد 5 ثوان — مرة واحدة فقط */
   setTimeout(_showOSPromptSheet, 5000);
@@ -4890,8 +4912,16 @@ async function doRegister() {
   const phone = document.getElementById('regPhone').value.trim();
   const wa = document.getElementById('regWhatsapp').value.trim();
   const addr = document.getElementById('regAddress').value.trim();
-  if (!name || !phone) { showNotif('يرجى ملء الاسم ورقم الهاتف'); return; }
-  if (!wa) { showNotif('⚠️ رقم الواتساب إجبارى'); return; }
+
+  /* loading state للزرار */
+  const _regBtn = document.querySelector('#registerForm .btn-primary') || document.querySelector('[onclick="doRegister()"]');
+  const _regBtnOrigText = _regBtn ? _regBtn.textContent : '';
+  if (_regBtn) { _regBtn.disabled = true; _regBtn.textContent = '⏳ جاري التسجيل...'; }
+
+  function _regRestore() { if (_regBtn) { _regBtn.disabled = false; _regBtn.textContent = _regBtnOrigText; } }
+
+  if (!name || !phone) { showNotif('يرجى ملء الاسم ورقم الهاتف'); _regRestore(); return; }
+  if (!wa) { showNotif('⚠️ رقم الواتساب إجبارى'); _regRestore(); return; }
   // ✅ التحقق من شكل رقم الموبايل المصري (11 رقم ويبدأ بـ 010/011/012/015) — إنشاء الحساب فقط
   // إخفاء أي رسائل خطأ قديمة أول كل محاولة
   const _phoneEl = document.getElementById('regPhone');
@@ -4907,7 +4937,7 @@ async function doRegister() {
     if (_phoneErr) _phoneErr.style.display = 'block';
     if (_phoneEl) { _phoneEl.style.borderColor = 'var(--red)'; _phoneEl.focus(); _phoneEl.scrollIntoView({behavior:'smooth', block:'center'}); }
     showNotif('⚠️ رقم موبايل غير صحيح');
-    return;
+    _regRestore(); return;
   }
   // ✅ التحقق من شكل رقم الواتساب المصري (11 رقم ويبدأ بـ 010/011/012/015) — إنشاء الحساب فقط
   const _regWaClean = wa.replace(/[^0-9]/g,'');
@@ -4915,7 +4945,7 @@ async function doRegister() {
     if (_waErr) _waErr.style.display = 'block';
     if (_waEl) { _waEl.style.borderColor = 'var(--red)'; _waEl.focus(); _waEl.scrollIntoView({behavior:'smooth', block:'center'}); }
     showNotif('⚠️ رقم واتساب غير صحيح');
-    return;
+    _regRestore(); return;
   }
   // Check if phone already registered — local first
   const INVALID_NAMES_REG = ['عميل', 'مجهول', 'زائر', 'guest', 'unknown', ''];
@@ -4939,13 +4969,13 @@ async function doRegister() {
     switchAuthTab('login');
     const loginPhoneEl = document.getElementById('loginPhone');
     if (loginPhoneEl) { loginPhoneEl.value = phone; previewLoginUser(phone); }
-    return;
+    _regRestore(); return;
   }
   // If existing has corrupted/empty name — allow re-registration to fix it
   const pass = document.getElementById('regPass').value;
   const pass2 = document.getElementById('regPass2').value;
-  if (!pass || pass.length < 4) { showNotif('🔒 اختر كلمة سر (4 أحرف على الأقل)'); return; }
-  if (pass !== pass2) { showNotif('🔒 كلمتا السر غير متطابقتين'); return; }
+  if (!pass || pass.length < 4) { showNotif('🔒 اختر كلمة سر (4 أحرف على الأقل)'); _regRestore(); return; }
+  if (pass !== pass2) { showNotif('🔒 كلمتا السر غير متطابقتين'); _regRestore(); return; }
   const user = { name, phone, whatsapp: wa, address: addr, password: _hashPw(pass), verified: false };
   _completeRegisterNoOtp(user);
 }
@@ -5006,6 +5036,7 @@ function _completeRegisterNoOtp(userData) {
   const phoneKey = (currentUser.phone||'').replace(/[^0-9]/g,'');
   if (phoneKey) fbSet('users/' + phoneKey, { ...currentUser, verified: true, registeredAt: users[existIdx >= 0 ? existIdx : users.length-1]?.registeredAt || new Date().toLocaleDateString('ar-EG') });
   showNotif('✅ تم إنشاء حسابك بنجاح — أهلاً ' + currentUser.name);
+  _regRestore();
   getGPS(); _goToAppOrTracking();
 }
 
@@ -16618,7 +16649,11 @@ function getLoyaltyData(phone) {
 function saveLoyaltyData(phone, data) {
   const p = (phone || '').replace(/\D/g,'');
   saveData('zz_loyalty_' + p, data);
-  if (db) db.ref('loyalty/' + p).set(data).catch(() => {});
+  if (db) {
+    db.ref('loyalty/' + p).set(data).catch(() => {});
+    /* تحديث loyalty_version عشان العميل يعرف فوراً */
+    db.ref('loyalty_version/' + p).set(Date.now()).catch(() => {});
+  }
 }
 
 // كسب نقاط بعد إتمام الطلب
