@@ -211,8 +211,45 @@ input,select,textarea{font-family:inherit;}
 /* السعر القديم المشطوب */
 
 /* ═══════════════════════════════════════════════════
-   🎰 WHEEL OF FORTUNE — Lucky Wheel Game
+   ⏱️ STOPWATCH GAME — لعبة العداد
    ═══════════════════════════════════════════════════ */
+#swGameScreen{position:fixed;inset:0;z-index:9000;background:linear-gradient(160deg,#0a0a1a 0%,#0d1117 40%,#0a0f1e 100%);display:none;flex-direction:column;align-items:center;overflow-y:auto;padding:0 0 32px}
+#swGameScreen .sw-header{width:100%;padding:14px 16px 10px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:2;background:rgba(10,10,26,.9);backdrop-filter:blur(12px);border-bottom:1px solid rgba(255,255,255,.07)}
+#swGameScreen .sw-title{font-size:17px;font-weight:900;color:#fff;letter-spacing:.5px}
+#swGameScreen .sw-close{width:36px;height:36px;border-radius:50%;background:rgba(255,255,255,.1);border:none;color:#fff;font-size:18px;cursor:pointer}
+.sw-target-box{margin:16px;width:calc(100% - 32px);background:rgba(255,255,255,.05);border:1.5px solid rgba(99,102,241,.4);border-radius:16px;padding:14px 20px;text-align:center}
+.sw-target-label{font-size:12px;color:rgba(255,255,255,.5);margin-bottom:6px;letter-spacing:1px;text-transform:uppercase}
+.sw-target-num{font-size:36px;font-weight:900;color:#f59e0b;font-family:monospace;letter-spacing:4px;text-shadow:0 0 20px rgba(245,158,11,.5)}
+/* الشاشة الرقمية */
+.sw-display-wrap{position:relative;margin:8px auto;width:min(340px,calc(100vw - 32px))}
+.sw-display-outer{background:linear-gradient(145deg,#0a0a1a,#111827);border-radius:20px;padding:24px;border:2px solid rgba(99,102,241,.3);box-shadow:0 0 40px rgba(99,102,241,.15),inset 0 0 60px rgba(0,0,0,.5);position:relative;overflow:hidden}
+.sw-display-outer::before{content:'';position:absolute;inset:0;background:repeating-linear-gradient(0deg,rgba(0,255,0,.02) 0px,rgba(0,255,0,.02) 1px,transparent 1px,transparent 3px);pointer-events:none}
+.sw-digits{font-size:72px;font-weight:900;color:#00ff88;font-family:'Courier New',monospace;letter-spacing:6px;text-align:center;text-shadow:0 0 20px rgba(0,255,136,.6),0 0 40px rgba(0,255,136,.3);line-height:1;position:relative;z-index:1}
+.sw-digits.sw-flash{animation:sw-digit-flash .1s ease}
+@keyframes sw-digit-flash{0%,100%{color:#00ff88;text-shadow:0 0 20px rgba(0,255,136,.6)}50%{color:#fff;text-shadow:0 0 40px rgba(255,255,255,.9)}}
+.sw-dot-separator{display:inline-block;animation:sw-blink .5s ease infinite}
+@keyframes sw-blink{0%,100%{opacity:1}50%{opacity:.3}}
+.sw-unit{font-size:13px;color:rgba(255,255,255,.4);text-align:center;margin-top:8px;letter-spacing:2px}
+/* زرار الإيقاف */
+.sw-stop-btn{width:calc(100% - 32px);margin:20px 16px 0;padding:20px;background:linear-gradient(135deg,#ef4444,#dc2626);border:none;border-radius:20px;color:#fff;font-size:20px;font-weight:900;cursor:pointer;font-family:inherit;box-shadow:0 8px 32px rgba(239,68,68,.5);transition:transform .1s,box-shadow .1s;letter-spacing:.5px;position:relative;overflow:hidden}
+.sw-stop-btn::before{content:'';position:absolute;inset:0;background:linear-gradient(135deg,rgba(255,255,255,.15),transparent);pointer-events:none}
+.sw-stop-btn:active{transform:scale(.96);box-shadow:0 4px 16px rgba(239,68,68,.4)}
+.sw-stop-btn:disabled{opacity:.5;cursor:not-allowed;transform:none}
+@keyframes sw-btn-ready{0%,100%{box-shadow:0 8px 32px rgba(239,68,68,.5)}50%{box-shadow:0 8px 48px rgba(239,68,68,.8),0 0 60px rgba(239,68,68,.3)}}
+.sw-stop-btn.ready{animation:sw-btn-ready 1.2s ease infinite}
+/* Prize Modal */
+.sw-prize-overlay{position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.9);display:flex;align-items:center;justify-content:center;padding:20px;animation:sw-fade-in .3s ease}
+@keyframes sw-fade-in{from{opacity:0}to{opacity:1}}
+.sw-prize-card{background:linear-gradient(145deg,#0a1628,#0f2040);border:2px solid rgba(99,102,241,.5);border-radius:24px;padding:32px 24px;text-align:center;width:100%;max-width:340px;position:relative;overflow:hidden;animation:sw-prize-in .5s cubic-bezier(.34,1.56,.64,1)}
+@keyframes sw-prize-in{from{transform:scale(.5);opacity:0}to{transform:scale(1);opacity:1}}
+.sw-prize-emoji{font-size:64px;margin-bottom:12px;display:block}
+.sw-stopped-num{font-size:32px;font-weight:900;font-family:monospace;margin:8px 0}
+/* بانر العداد في الواجهة */
+#swMainBanner{display:none;margin:6px 16px 4px;border-radius:16px;overflow:hidden;cursor:pointer}
+/* Admin */
+.sw-admin-card{background:var(--white);border-radius:16px;border:1.5px solid var(--border);padding:16px;margin-bottom:12px}
+.sw-winner-row{display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--border)}
+.sw-winner-row:last-child{border-bottom:none}
 #wheelGameScreen{position:fixed;inset:0;z-index:9000;background:linear-gradient(160deg,#0f172a 0%,#1e1b4b 50%,#0f172a 100%);display:flex;flex-direction:column;align-items:center;justify-content:flex-start;overflow-y:auto;padding:0 0 32px;display:none}
 #wheelGameScreen .wg-header{width:100%;padding:14px 16px 10px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:2;background:rgba(15,23,42,.85);backdrop-filter:blur(12px)}
 #wheelGameScreen .wg-title{font-size:17px;font-weight:900;color:#fff;letter-spacing:.5px}
@@ -1319,6 +1356,66 @@ input,select,textarea{font-family:inherit;}
       </div>
     </div>
     <div class="offer-strip hidden" id="offerStrip"></div>
+
+    <!-- بانر لعبة العداد -->
+    <div id="swMainBanner" onclick="openSwGame()" style="display:none;margin:6px 16px 4px;border-radius:16px;overflow:hidden;cursor:pointer">
+      <div style="background:linear-gradient(135deg,#0a0a1a,#1e1b4b,#312e81);padding:14px 18px;display:flex;align-items:center;justify-content:space-between;position:relative;overflow:hidden">
+        <div style="position:absolute;top:-20px;right:-20px;width:100px;height:100px;background:rgba(99,102,241,.1);border-radius:50%"></div>
+        <div style="position:relative;z-index:1">
+          <div style="font-size:15px;font-weight:900;color:#fff;margin-bottom:3px" id="swBannerTitle">⏱️ لعبة العداد</div>
+          <div style="font-size:12px;color:rgba(255,255,255,.7)">وقّف العداد على الرقم الصحيح واكسب! 🎯</div>
+        </div>
+        <div style="position:relative;z-index:1">
+          <div style="background:linear-gradient(135deg,#ef4444,#dc2626);color:#fff;font-size:13px;font-weight:900;padding:10px 18px;border-radius:50px;animation:sw-btn-ready 1.5s ease infinite;white-space:nowrap">العب الآن ⏱️</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ⏱️ Stopwatch Game Screen -->
+    <div id="swGameScreen">
+      <div class="sw-header">
+        <button class="sw-close" onclick="_swClose()">✕</button>
+        <div class="sw-title" id="swGameTitle">⏱️ لعبة العداد</div>
+        <div style="width:36px"></div>
+      </div>
+
+      <!-- تحديث مطلوب -->
+      <div id="swUpdateBanner" style="display:none;background:linear-gradient(135deg,#f59e0b,#d97706);border-radius:12px;padding:12px 16px;margin:8px 16px;display:none;flex-direction:row;align-items:center;justify-content:space-between;gap:10px">
+        <span style="font-size:13px;font-weight:700;color:#fff">🔄 تم تحديث اللعبة — اضغط للتحميل</span>
+        <button onclick="_swReload()" style="background:rgba(255,255,255,.25);border:1px solid rgba(255,255,255,.4);border-radius:8px;padding:6px 14px;color:#fff;font-size:12px;font-weight:800;cursor:pointer;font-family:inherit">تحديث</button>
+      </div>
+
+      <!-- الرقم المستهدف -->
+      <div class="sw-target-box">
+        <div class="sw-target-label">🎯 الرقم المستهدف</div>
+        <div class="sw-target-num" id="swTargetNum">--.-−</div>
+        <div style="font-size:11px;color:rgba(255,255,255,.4);margin-top:4px" id="swToleranceNote"></div>
+      </div>
+
+      <!-- شاشة العداد الرقمية -->
+      <div class="sw-display-wrap">
+        <div class="sw-display-outer">
+          <div class="sw-digits" id="swDigits">00.00</div>
+          <div class="sw-unit">ثانية . جزء من الثانية</div>
+        </div>
+      </div>
+
+      <!-- زرار الإيقاف -->
+      <button class="sw-stop-btn ready" id="swStopBtn" onclick="_swStop()">⏹️ وقّف العداد!</button>
+
+      <!-- لو لعب قبل -->
+      <div id="swAlreadyPlayed" style="display:none;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.15);border-radius:14px;padding:20px;text-align:center;margin:16px;color:rgba(255,255,255,.9);font-size:14px;line-height:1.7">
+        <div style="font-size:32px;margin-bottom:8px">🎊</div>
+        <div style="font-weight:800;margin-bottom:4px">سبق ولعبت في هذه الجولة!</div>
+        <div style="font-size:12px;color:rgba(255,255,255,.6)" id="swAlreadyMsg">جائزتك محفوظة لك</div>
+      </div>
+
+      <!-- الجائزة -->
+      <div style="width:calc(100% - 32px);margin-top:16px;background:rgba(255,255,255,.05);border-radius:12px;padding:12px 16px;text-align:center">
+        <div style="font-size:12px;font-weight:700;color:rgba(255,255,255,.5);margin-bottom:6px">🎁 الجائزة</div>
+        <div id="swPrizeLabel" style="font-size:14px;font-weight:800;color:#f59e0b"></div>
+      </div>
+    </div>
     <div style="padding:0 16px 8px;display:flex;gap:8px">
       <button onclick="openScreen('booking')" style="flex:1;padding:11px;background:linear-gradient(135deg,var(--gold),var(--gold-light));color:#fff;border-radius:12px;font-size:13px;font-weight:800;text-align:center">☕ احجز ترابيزة</button>
       <button onclick="openOffersSheet()" id="offersMainBtn" style="flex:1;padding:11px;background:linear-gradient(135deg,var(--red),#ff5252);color:#fff;border-radius:12px;font-size:13px;font-weight:800;text-align:center;position:relative">🎁 العروض<span id="offersBtnBadge" style="position:absolute;top:-4px;left:-4px;background:#fff;color:var(--red);font-size:9px;font-weight:900;min-width:16px;height:16px;border-radius:8px;display:none;align-items:center;justify-content:center;padding:0 3px">جديد</span></button>
@@ -2430,12 +2527,107 @@ input,select,textarea{font-family:inherit;}
 
       <!-- الفائزون -->
       <div class="wg-admin-card" id="wgWinnersCard" style="display:none">
-        <h4>🏆 الفائزون</h4>
+        <h4>🏆 الفائزون — عجلة الحظ</h4>
         <div id="wgWinnersList"></div>
+      </div>
+
+      <!-- ══ لعبة العداد ══ -->
+      <div style="height:1px;background:var(--border);margin:16px 0"></div>
+      <div style="font-size:13px;font-weight:800;color:var(--dark);margin-bottom:10px">⏱️ لعبة العداد</div>
+
+      <div id="swAdminGameCard" style="display:none" class="sw-admin-card">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+          <h4 style="margin:0" id="swAdminGameName">⏱️ لعبة العداد</h4>
+          <div style="display:flex;gap:6px">
+            <button onclick="_swAdminEdit()" style="padding:6px 12px;background:var(--olive-ultra);color:var(--olive-dark);border:1px solid var(--olive);border-radius:8px;font-size:12px;font-weight:700;cursor:pointer">✏️ تعديل</button>
+            <button onclick="_swAdminDelete()" style="padding:6px 12px;background:#fff0f0;color:#c00;border:1px solid #fca5a5;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer">🗑️</button>
+          </div>
+        </div>
+        <div id="swAdminGameInfo" style="font-size:12px;color:var(--text-muted);line-height:1.8;margin-bottom:10px"></div>
+      </div>
+
+      <div id="swAdminAddBtn">
+        <button onclick="_swOpenCreateForm()" style="width:100%;padding:14px;background:linear-gradient(135deg,#dc2626,#b91c1c);color:#fff;border-radius:12px;font-size:14px;font-weight:800;border:none;cursor:pointer;margin-bottom:16px">⏱️ + إنشاء لعبة العداد</button>
+      </div>
+
+      <div class="sw-admin-card" id="swWinnersCard" style="display:none">
+        <h4>🏆 الفائزون — لعبة العداد</h4>
+        <div id="swWinnersList"></div>
       </div>
     </div>
 
-    <!-- نموذج إنشاء/تعديل اللعبة -->
+    <!-- نموذج إنشاء لعبة العداد -->
+    <div id="swCreateFormOverlay" style="display:none;position:fixed;inset:0;z-index:8000;background:rgba(0,0,0,.7);overflow-y:auto">
+      <div style="background:var(--bg);border-radius:20px 20px 0 0;margin-top:60px;min-height:calc(100vh - 60px);padding:16px">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
+          <h3 style="margin:0;font-size:16px;font-weight:900" id="swFormTitle">⏱️ إنشاء لعبة العداد</h3>
+          <button onclick="_swCloseForm()" style="width:32px;height:32px;border-radius:50%;background:var(--border);border:none;font-size:16px;cursor:pointer">✕</button>
+        </div>
+        <div style="margin-bottom:12px">
+          <label style="font-size:12px;font-weight:700;color:var(--text-muted);display:block;margin-bottom:4px">🎮 اسم اللعبة</label>
+          <input type="text" id="swFName" placeholder="مثال: لعبة العداد" style="width:100%;padding:10px;border:1.5px solid var(--border);border-radius:10px;font-size:13px;font-family:inherit;background:var(--bg);color:var(--text);box-sizing:border-box"/>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px">
+          <div>
+            <label style="font-size:12px;font-weight:700;color:var(--text-muted);display:block;margin-bottom:4px">📅 تاريخ البداية</label>
+            <input type="datetime-local" id="swFStart" style="width:100%;padding:10px;border:1.5px solid var(--border);border-radius:10px;font-size:12px;font-family:inherit;background:var(--bg);color:var(--text);box-sizing:border-box"/>
+          </div>
+          <div>
+            <label style="font-size:12px;font-weight:700;color:var(--text-muted);display:block;margin-bottom:4px">📅 تاريخ الانتهاء</label>
+            <input type="datetime-local" id="swFEnd" style="width:100%;padding:10px;border:1.5px solid var(--border);border-radius:10px;font-size:12px;font-family:inherit;background:var(--bg);color:var(--text);box-sizing:border-box"/>
+          </div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px">
+          <div>
+            <label style="font-size:12px;font-weight:700;color:var(--text-muted);display:block;margin-bottom:4px">👥 من يلعب؟</label>
+            <select id="swFAudience" style="width:100%;padding:10px;border:1.5px solid var(--border);border-radius:10px;font-size:13px;font-family:inherit;background:var(--bg);color:var(--text);box-sizing:border-box">
+              <option value="all">الكل</option>
+              <option value="vip">VIP فقط</option>
+            </select>
+          </div>
+          <div>
+            <label style="font-size:12px;font-weight:700;color:var(--text-muted);display:block;margin-bottom:4px">💰 حد أدنى للطلب (ج.م)</label>
+            <input type="number" id="swFMinOrder" value="0" min="0" style="width:100%;padding:10px;border:1.5px solid var(--border);border-radius:10px;font-size:13px;font-family:inherit;background:var(--bg);color:var(--text);box-sizing:border-box"/>
+          </div>
+        </div>
+        <!-- الرقم المستهدف -->
+        <div style="background:linear-gradient(135deg,#fef3c7,#fffbeb);border:1.5px solid #f59e0b;border-radius:12px;padding:14px;margin-bottom:12px">
+          <label style="font-size:13px;font-weight:800;color:#92400e;display:block;margin-bottom:8px">🎯 إعدادات العداد</label>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+            <div>
+              <label style="font-size:11px;font-weight:700;color:#92400e;display:block;margin-bottom:4px">الرقم المستهدف (مثال: 42.75)</label>
+              <input type="number" id="swFTarget" step="0.01" min="0" max="99.99" placeholder="42.75" style="width:100%;padding:8px;border:1.5px solid #f59e0b;border-radius:8px;font-size:14px;font-family:monospace;background:#fff;color:#92400e;box-sizing:border-box;font-weight:900"/>
+            </div>
+            <div>
+              <label style="font-size:11px;font-weight:700;color:#92400e;display:block;margin-bottom:4px">هامش السماح (باللحظات) — 0 = بدون هامش</label>
+              <input type="number" id="swFTolerance" value="0" min="0" max="99" placeholder="0" style="width:100%;padding:8px;border:1.5px solid #f59e0b;border-radius:8px;font-size:14px;font-family:monospace;background:#fff;color:#92400e;box-sizing:border-box;font-weight:900"/>
+            </div>
+          </div>
+        </div>
+        <!-- الجائزة -->
+        <div style="background:var(--bg);border:1.5px solid var(--border);border-radius:12px;padding:14px;margin-bottom:12px">
+          <label style="font-size:13px;font-weight:800;color:var(--dark);display:block;margin-bottom:8px">🎁 الجائزة</label>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+            <select id="swFPrizeType" onchange="_swUpdatePrizeForm()" style="padding:8px;border:1.5px solid var(--border);border-radius:8px;font-size:12px;font-family:inherit;background:var(--white);color:var(--text)">
+              <option value="discount_percent">خصم %</option>
+              <option value="discount_amount">خصم ج.م</option>
+              <option value="free_delivery">توصيل مجاني</option>
+              <option value="free_product">منتج مجاني</option>
+              <option value="points">نقاط</option>
+            </select>
+            <input type="text" id="swFPrizeValue" placeholder="القيمة" style="padding:8px;border:1.5px solid var(--border);border-radius:8px;font-size:13px;font-family:inherit;background:var(--white);color:var(--text)"/>
+          </div>
+          <div id="swFAltDiscountWrap" style="display:none;margin-top:8px;background:#fef3c7;border-radius:8px;padding:8px 10px">
+            <label style="font-size:11px;font-weight:700;color:#92400e;display:block;margin-bottom:4px">🔄 خصم بديل لو المنطقة خارج التوصيل المجاني (ج.م)</label>
+            <input type="number" id="swFAltDiscount" value="0" min="0" style="width:100%;padding:6px;border:1px solid #f59e0b;border-radius:6px;font-size:12px;font-family:inherit;background:#fff;box-sizing:border-box"/>
+          </div>
+          <div style="margin-top:8px">
+            <input type="text" id="swFPrizeEmoji" placeholder="🎁 Emoji الجائزة" style="width:100%;padding:8px;border:1.5px solid var(--border);border-radius:8px;font-size:13px;font-family:inherit;background:var(--white);color:var(--text);box-sizing:border-box"/>
+          </div>
+        </div>
+        <button onclick="_swSaveGame()" style="width:100%;padding:14px;background:linear-gradient(135deg,#dc2626,#b91c1c);color:#fff;border-radius:12px;font-size:15px;font-weight:900;border:none;cursor:pointer">💾 حفظ اللعبة</button>
+      </div>
+    </div>
     <div id="wgCreateFormOverlay" style="display:none;position:fixed;inset:0;z-index:8000;background:rgba(0,0,0,.7);overflow-y:auto">
       <div style="background:var(--bg);border-radius:20px 20px 0 0;margin-top:60px;min-height:calc(100vh - 60px);padding:16px">
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
@@ -4067,6 +4259,8 @@ function _goToAppOrTracking() {
   }
   /* عجلة الحظ — زرار عائم لو اللعبة شغّالة */
   setTimeout(function() { if (typeof _wgShowButtonIfActive === 'function') _wgShowButtonIfActive(); }, 2000);
+  /* لعبة العداد — زرار عائم لو اللعبة شغّالة */
+  setTimeout(function() { if (typeof _swShowButtonIfActive === 'function') _swShowButtonIfActive(); }, 2500);
   const _on = currentOrderNum || loadData('zz_current_order_num', null);
   if (_on && db) {
     db.ref('orders/' + _on).get().then(snap => {
@@ -5269,8 +5463,442 @@ function _publishMenuVersion() {
 }
 
 /* ══════════════════════════════════════════════════════════
-   🎰 WHEEL OF FORTUNE — Lucky Wheel System
+   ⏱️ STOPWATCH GAME — لعبة العداد
    ══════════════════════════════════════════════════════════ */
+var _swCurrentGame=null, _swRunning=false, _swValue=0, _swInterval=null;
+var _swVersionListener=null, _swLocalVersion=null, _swUpdatePending=false;
+var _swAudioCtx=null;
+
+function openSwGame() {
+  if(!db||!fbConnected){ showNotif('⚠️ تأكد من الاتصال بالإنترنت'); return; }
+  var screen=document.getElementById('swGameScreen');
+  if(screen) screen.style.display='flex';
+  _swLoadGame();
+}
+
+function _swClose() {
+  var s=document.getElementById('swGameScreen'); if(s) s.style.display='none';
+  _swStopTimer();
+}
+
+function _swLoadGame() {
+  if(!db) return;
+  db.ref('sw_games/active').once('value').then(function(snap){
+    if(!snap.exists()){ _swShowNoGame(); return; }
+    _swCurrentGame=snap.val();
+    _swLocalVersion=_swCurrentGame.version||0;
+    _swRenderGame();
+    _swStartVersionListener();
+  }).catch(function(){ showNotif('❌ خطأ في تحميل اللعبة'); });
+}
+
+function _swRenderGame() {
+  var g=_swCurrentGame;
+  if(!g) return;
+  var now=Date.now();
+  if(g.startAt&&now<g.startAt){
+    _swShowNoGame('⏳ اللعبة لم تبدأ بعد');
+    var ms=g.startAt-now;
+    if(ms<24*3600*1000) setTimeout(function(){ _swShowButtonIfActive(); },ms);
+    return;
+  }
+  if(g.endAt&&now>g.endAt){ _swShowNoGame('⌛ انتهت اللعبة'); return; }
+  var titleEl=document.getElementById('swGameTitle');
+  if(titleEl) titleEl.textContent='⏱️ '+(g.name||'لعبة العداد');
+  var targetEl=document.getElementById('swTargetNum');
+  if(targetEl) targetEl.textContent=Number(g.target).toFixed(2);
+  var tolEl=document.getElementById('swToleranceNote');
+  if(tolEl) tolEl.textContent=g.tolerance>0?'هامش السماح: ±'+g.tolerance+' لحظة':'لا يوجد هامش — الدقة المطلقة!';
+  var prizeEl=document.getElementById('swPrizeLabel');
+  if(prizeEl&&g.prize) prizeEl.textContent=(g.prize.emoji||'🎁')+' '+_swPrizeLabel(g.prize);
+  _swCheckPlayed(g);
+  _swStartTimer();
+}
+
+function _swPrizeLabel(prize) {
+  if(!prize) return 'جائزة';
+  if(prize.type==='discount_percent') return 'خصم '+prize.value+'%';
+  if(prize.type==='discount_amount') return 'خصم '+prize.value+' ج.م';
+  if(prize.type==='free_delivery') return 'توصيل مجاني';
+  if(prize.type==='free_product') return 'منتج مجاني: '+prize.value;
+  if(prize.type==='points') return prize.value+' نقطة';
+  return 'جائزة';
+}
+
+function _swStartTimer() {
+  _swStopTimer();
+  _swValue=0;
+  var lastTick=0;
+  var tickSound=false;
+  _swInterval=setInterval(function(){
+    _swValue+=0.01;
+    if(_swValue>=100) _swValue=0;
+    var disp=_swValue.toFixed(2).padStart(5,'0');
+    var el=document.getElementById('swDigits');
+    if(el){
+      el.textContent=disp;
+      /* flash كل 0.1 ثانية */
+      var whole=Math.floor(_swValue*10);
+      if(whole!==lastTick){
+        lastTick=whole;
+        el.classList.add('sw-flash');
+        setTimeout(function(){ el.classList.remove('sw-flash'); },100);
+        _swPlayTick();
+      }
+    }
+  },10);
+}
+
+function _swStopTimer() {
+  if(_swInterval){ clearInterval(_swInterval); _swInterval=null; }
+}
+
+function _swStop() {
+  if(!_swRunning&&_swInterval===null) return;
+  if(!_swCurrentGame) return;
+  if(!currentUser||!currentUser.phone){ showNotif('⚠️ يجب تسجيل الدخول أولاً'); return; }
+
+  var stoppedVal=parseFloat(_swValue.toFixed(2));
+  _swStopTimer();
+
+  var btn=document.getElementById('swStopBtn');
+  if(btn){ btn.disabled=true; btn.classList.remove('ready'); btn.textContent='⏳ جاري التحقق...'; }
+
+  var g=_swCurrentGame;
+  var target=parseFloat(Number(g.target).toFixed(2));
+  var tolerance=Number(g.tolerance)||0;
+  var diff=Math.abs(Math.round((stoppedVal-target)*100));
+  var won=diff<=tolerance;
+
+  var phone=currentUser.phone.replace(/\D/g,'');
+  var localKey='sw_played_'+(g.id||'active')+'_'+phone;
+
+  /* حفظ في Firebase */
+  db.ref('sw_plays/'+phone).set({
+    playedAt:Date.now(), gameId:(g.id||'active'),
+    stopped:stoppedVal, target:target, won:won, diff:diff
+  }).then(function(){
+    saveData(localKey,{playedAt:Date.now()});
+    /* حفظ في winners */
+    db.ref('sw_winners').push({
+      phone:phone, name:(currentUser.name||''), gameId:(g.id||'active'),
+      gameName:(g.name||'لعبة العداد'), stopped:stoppedVal, target:target,
+      won:won, diff:diff, prize:won?g.prize:null, playedAt:Date.now(), claimed:false
+    }).catch(function(){});
+    if(won){ _swApplyPrize(phone,g.prize); }
+    _swShowResult(won,stoppedVal,target,won?g.prize:null);
+  }).catch(function(){
+    if(btn){ btn.disabled=false; btn.classList.add('ready'); btn.textContent='⏹️ وقّف العداد!'; }
+    _swStartTimer();
+    showNotif('❌ حدث خطأ — حاول مرة أخرى');
+  });
+}
+
+function _swShowResult(won,stopped,target,prize) {
+  var colors=won?['#f59e0b','#22c55e','#3b82f6']:['#ef4444','#6b7280'];
+  var ov=document.createElement('div');
+  ov.className='sw-prize-overlay'; ov.id='swResultOverlay';
+  var confetti='';
+  if(won){
+    confetti='<div style="position:absolute;inset:0;pointer-events:none;overflow:hidden">';
+    for(var ci=0;ci<16;ci++){
+      confetti+='<div style="position:absolute;left:'+Math.random()*100+'%;top:-10px;width:'+(6+Math.random()*8)+'px;height:'+(6+Math.random()*8)+'px;background:'+colors[ci%colors.length]+';border-radius:2px;animation:wg-fall '+(1.5+Math.random())+'s ease '+Math.random()+'s forwards"></div>';
+    }
+    confetti+='</div>';
+  }
+  ov.innerHTML='<div class="sw-prize-card">'+confetti+
+    '<span class="sw-prize-emoji">'+(won?'🎯':'⏱️')+'</span>'+
+    '<div style="font-size:22px;font-weight:900;color:'+(won?'#f59e0b':'#94a3b8')+';margin-bottom:8px">'+(won?'🎉 رائع! أصبت بدقة!':'ياااه! كنت قريب!')+'</div>'+
+    '<div class="sw-stopped-num" style="color:'+(won?'#00ff88':'#ef4444')+'">'+(stopped.toFixed(2))+'</div>'+
+    '<div style="font-size:13px;color:rgba(255,255,255,.6);margin-bottom:12px">'+(won?'وقفت على الرقم المستهدف ✅':'المستهدف كان: '+target.toFixed(2)+' — الفرق: 0.'+(String(Math.abs(Math.round((stopped-target)*100))).padStart(2,'0')))+'</div>'+
+    (won&&prize?'<div style="font-size:15px;font-weight:800;color:#f59e0b;margin-bottom:8px">🎁 مبروك فزت بـ '+_swPrizeLabel(prize)+'</div><div style="font-size:12px;color:rgba(255,255,255,.6);margin-bottom:16px">✅ تم إضافة جائزتك وستُطبَّق على فاتورتك القادمة</div>':
+    (won?'':'<div style="font-size:14px;color:rgba(255,255,255,.7);margin-bottom:16px">كنت على بُعد 0.'+(String(Math.abs(Math.round((stopped-target)*100))).padStart(2,'0'))+' بس! جرّب حظك تاني في الجولة الجاية 💪</div>'))+
+    '<button onclick="document.getElementById(\'swResultOverlay\').remove();_swShowAlreadyPlayed()" style="width:100%;padding:14px;background:linear-gradient(135deg,'+(won?'#f59e0b,#d97706':'#475569,#334155')+');border:none;border-radius:14px;color:#fff;font-size:16px;font-weight:900;cursor:pointer;font-family:inherit">'+(won?'🎊 رائع!':'حسناً 👍')+'</button>'+
+    '</div>';
+  document.body.appendChild(ov);
+  if(won) _swPlayWin(); else _swPlayLose();
+}
+
+function _swApplyPrize(phone,prize) {
+  if(!prize||!phone||!db) return;
+  if(prize.type==='points'){
+    var pts=Number(prize.value)||0; if(pts<=0) return;
+    var data=getLoyaltyData(phone);
+    data.points=(data.points||0)+pts; data.earned=(data.earned||0)+pts;
+    data.lastEarned=new Date().toISOString();
+    saveLoyaltyData(phone,data);
+    showNotif('🌟 كسبت '+pts+' نقطة!');
+    return;
+  }
+  var typeMap={discount_percent:'discount_percent',discount_amount:'discount_amount',free_delivery:'free_delivery',free_product:'free_product'};
+  if(!typeMap[prize.type]) return;
+  var minOrder=(_swCurrentGame&&_swCurrentGame.minOrder)?Number(_swCurrentGame.minOrder):0;
+  var gift={id:'sw_'+Date.now(),phone:phone,name:(currentUser&&currentUser.name)||'',type:typeMap[prize.type],value:prize.value||'',msg:'⏱️ جائزة لعبة العداد: '+_swPrizeLabel(prize),createdAt:new Date().toISOString(),used:false,usedAt:null,source:'sw_game',minOrderRequired:minOrder,altDiscount:prize.altDiscount||0};
+  db.ref('personal_gifts/'+phone).once('value').then(function(snap){
+    if(snap.exists()&&snap.val().used===false){ showNotif('🎁 لديك هدية سابقة لم تستخدمها!'); return; }
+    db.ref('personal_gifts/'+phone).set(gift).then(function(){
+      _currentPersonalGift=gift; _pgShowCustomerCard(gift);
+      db.ref('gifts_version/'+phone).set(Date.now()).catch(function(){});
+    }).catch(function(){});
+  }).catch(function(){
+    db.ref('personal_gifts/'+phone).set(gift).then(function(){ _currentPersonalGift=gift; _pgShowCustomerCard(gift); }).catch(function(){});
+  });
+}
+
+function _swCheckPlayed(g) {
+  var phone=currentUser&&currentUser.phone?currentUser.phone.replace(/\D/g,''):null;
+  if(!phone){ _swShowStopBtn(); return; }
+  var localKey='sw_played_'+(g.id||'active')+'_'+phone;
+  if(loadData(localKey,null)){ _swShowAlreadyPlayed(); return; }
+  db.ref('sw_plays/'+phone).once('value').then(function(snap){
+    if(!snap.exists()||snap.val().gameId!==(g.id||'active')){ _swShowStopBtn(); return; }
+    saveData(localKey,{playedAt:snap.val().playedAt});
+    _swShowAlreadyPlayed();
+  }).catch(function(){ _swShowStopBtn(); });
+}
+
+function _swShowStopBtn() {
+  var btn=document.getElementById('swStopBtn'),pl=document.getElementById('swAlreadyPlayed');
+  if(btn){ btn.style.display='block'; btn.disabled=false; btn.classList.add('ready'); btn.textContent='⏹️ وقّف العداد!'; }
+  if(pl) pl.style.display='none';
+  _swRunning=true;
+}
+
+function _swShowAlreadyPlayed() {
+  var btn=document.getElementById('swStopBtn'),pl=document.getElementById('swAlreadyPlayed');
+  if(btn){ btn.style.display='none'; } _swStopTimer();
+  if(pl){ pl.style.display='block';
+    var mg=document.getElementById('swAlreadyMsg');
+    if(mg) mg.textContent='سبق ولعبت في هذه الجولة. جائزتك محفوظة لك! 🎁';
+  }
+}
+
+function _swShowNoGame(msg) {
+  var btn=document.getElementById('swStopBtn'),pl=document.getElementById('swAlreadyPlayed');
+  if(btn) btn.style.display='none'; _swStopTimer();
+  if(pl){ pl.style.display='block';
+    var mg=document.getElementById('swAlreadyMsg'); if(mg) mg.textContent=msg||'لا توجد لعبة متاحة حالياً';
+  }
+}
+
+/* ── أصوات ── */
+function _swGetAudio() {
+  if(!_swAudioCtx) try{ _swAudioCtx=new(window.AudioContext||window.webkitAudioContext)(); }catch(e){}
+  return _swAudioCtx;
+}
+function _swPlayTick() {
+  var ac=_swGetAudio(); if(!ac) return;
+  try{
+    var o=ac.createOscillator(),g=ac.createGain();
+    o.connect(g); g.connect(ac.destination);
+    o.type='square'; o.frequency.value=800;
+    g.gain.setValueAtTime(0.04,ac.currentTime);
+    g.gain.exponentialRampToValueAtTime(0.001,ac.currentTime+0.02);
+    o.start(ac.currentTime); o.stop(ac.currentTime+0.02);
+  }catch(e){}
+}
+function _swPlayWin() {
+  var ac=_swGetAudio(); if(!ac) return;
+  try{
+    [[523,.0],[659,.1],[784,.2],[1047,.35]].forEach(function(n){
+      var o=ac.createOscillator(),g=ac.createGain();
+      o.connect(g); g.connect(ac.destination);
+      o.type='sine'; o.frequency.value=n[0];
+      g.gain.setValueAtTime(0.2,ac.currentTime+n[1]);
+      g.gain.exponentialRampToValueAtTime(0.001,ac.currentTime+n[1]+0.3);
+      o.start(ac.currentTime+n[1]); o.stop(ac.currentTime+n[1]+0.3);
+    });
+  }catch(e){}
+}
+function _swPlayLose() {
+  var ac=_swGetAudio(); if(!ac) return;
+  try{
+    [[400,.0],[320,.2],[240,.4]].forEach(function(n){
+      var o=ac.createOscillator(),g=ac.createGain();
+      o.connect(g); g.connect(ac.destination);
+      o.type='sawtooth'; o.frequency.value=n[0];
+      g.gain.setValueAtTime(0.12,ac.currentTime+n[1]);
+      g.gain.exponentialRampToValueAtTime(0.001,ac.currentTime+n[1]+0.2);
+      o.start(ac.currentTime+n[1]); o.stop(ac.currentTime+n[1]+0.2);
+    });
+  }catch(e){}
+}
+
+/* ── Version Listener ── */
+function _swStartVersionListener() {
+  if(_swVersionListener||!db) return;
+  _swVersionListener=db.ref('sw_version').on('value',function(snap){
+    if(!snap.exists()) return;
+    var v=snap.val();
+    if(_swLocalVersion===null){ _swLocalVersion=v; return; }
+    if(v!==_swLocalVersion){
+      _swUpdatePending=true; _swLocalVersion=v;
+      db.ref('sw_games/active').once('value',function(gameSnap){
+        if(!gameSnap.exists()){
+          var banner=document.getElementById('swMainBanner'); if(banner) banner.style.display='none';
+          var floatBtn=document.getElementById('swFloatBtn'); if(floatBtn) floatBtn.remove();
+          var screen=document.getElementById('swGameScreen'); if(screen) screen.style.display='none';
+          _swStopTimer(); _swCurrentGame=null;
+        } else {
+          var b=document.getElementById('swUpdateBanner'); if(b) b.style.display='flex';
+          var sb=document.getElementById('swStopBtn'); if(sb) sb.disabled=true;
+        }
+      });
+    }
+  });
+}
+
+function _swReload() {
+  _swUpdatePending=false;
+  var b=document.getElementById('swUpdateBanner'); if(b) b.style.display='none';
+  _swLoadGame();
+}
+
+/* ── بانر + زرار عائم ── */
+function _swShowButtonIfActive() {
+  if(!db||!fbConnected||adminRoleType) return;
+  db.ref('sw_games/active').once('value').then(function(snap){
+    if(!snap.exists()) return;
+    var g=snap.val(), now=Date.now();
+    if(g.endAt&&now>g.endAt) return;
+    if(g.startAt&&now<g.startAt){ var ms=g.startAt-now; if(ms<24*3600*1000) setTimeout(_swShowButtonIfActive,ms); return; }
+    if(g.audience==='vip'){
+      var ph=currentUser&&currentUser.phone?currentUser.phone.replace(/\D/g,''):'';
+      if(!ph||(! VIP_CUSTOMERS[ph]&&!VIP_CUSTOMERS['0'+ph.slice(1)]&&!VIP_CUSTOMERS['2'+ph])) return;
+    }
+    var banner=document.getElementById('swMainBanner'); if(banner){ banner.style.display='block'; var t=document.getElementById('swBannerTitle'); if(t) t.textContent='⏱️ '+(g.name||'لعبة العداد'); }
+    if(document.getElementById('swFloatBtn')) return;
+    var style=document.createElement('style');
+    style.textContent='@keyframes sw-float{0%,100%{transform:scale(1) rotate(-3deg)}50%{transform:scale(1.1) rotate(3deg)}}';
+    document.head.appendChild(style);
+    var btn=document.createElement('button');
+    btn.id='swFloatBtn'; btn.onclick=openSwGame;
+    btn.style.cssText='position:fixed;bottom:148px;left:16px;z-index:8000;width:48px;height:48px;border-radius:50%;background:linear-gradient(135deg,#dc2626,#b91c1c);border:none;color:#fff;font-size:22px;cursor:pointer;box-shadow:0 4px 20px rgba(220,38,38,.6);animation:sw-float 2s ease infinite';
+    btn.textContent='⏱️';
+    document.body.appendChild(btn);
+  }).catch(function(){});
+}
+
+/* ══ Admin Functions ══ */
+var _swTabLoaded=false;
+
+function _swAdminLoad() {
+  if(!db) return;
+  db.ref('sw_games/active').once('value').then(function(snap){
+    var card=document.getElementById('swAdminGameCard'),addBtn=document.getElementById('swAdminAddBtn');
+    if(!snap.exists()){ if(card) card.style.display='none'; if(addBtn) addBtn.style.display='block'; return; }
+    var g=snap.val();
+    if(card) card.style.display='block'; if(addBtn) addBtn.style.display='none';
+    var nameEl=document.getElementById('swAdminGameName'); if(nameEl) nameEl.textContent='⏱️ '+(g.name||'لعبة العداد');
+    var infoEl=document.getElementById('swAdminGameInfo');
+    if(infoEl){
+      var s2=g.startAt?new Date(g.startAt).toLocaleString('ar-EG'):'فوراً';
+      var e2=g.endAt?new Date(g.endAt).toLocaleString('ar-EG'):'غير محدد';
+      infoEl.innerHTML='🎯 الهدف: <strong>'+Number(g.target).toFixed(2)+'</strong> · هامش: '+(g.tolerance||0)+' لحظة<br>📅 من: '+s2+'<br>📅 إلى: '+e2+'<br>👥 '+(g.audience==='vip'?'VIP فقط':'الكل')+(g.minOrder?' · 💰 حد أدنى: '+g.minOrder+' ج.م':'')+'<br>🎁 الجائزة: '+(g.prize?_swPrizeLabel(g.prize):'—');
+    }
+    _swAdminLoadWinners();
+  });
+}
+
+function _swAdminLoadWinners() {
+  if(!db) return;
+  db.ref('sw_winners').orderByChild('playedAt').limitToLast(20).once('value').then(function(snap){
+    var card=document.getElementById('swWinnersCard'),list=document.getElementById('swWinnersList');
+    if(!snap.exists()||!list) return;
+    if(card) card.style.display='block';
+    var winners=[]; snap.forEach(function(ch){ winners.unshift(ch.val()); });
+    list.innerHTML=winners.map(function(w){
+      var d=new Date(w.playedAt).toLocaleDateString('ar-EG');
+      var wonLabel=w.won?'<span style="color:#16a34a;font-weight:800">✅ فاز</span>':'<span style="color:#dc2626;font-weight:800">❌ خسر</span>';
+      return '<div class="sw-winner-row">'+
+        '<div style="flex:1"><div style="font-size:13px;font-weight:700">'+(w.name||'عميل')+'</div>'+
+        '<div style="font-size:11px;color:var(--text-muted)">'+(w.phone||'')+' · '+d+'</div>'+
+        '<div style="font-size:11px;color:var(--text-muted)">وقّف على: <strong>'+Number(w.stopped).toFixed(2)+'</strong> | الهدف: <strong>'+Number(w.target).toFixed(2)+'</strong></div></div>'+
+        '<div style="text-align:left">'+wonLabel+'<br>'+
+        (w.won&&w.prize?'<span style="font-size:11px;color:var(--olive-dark)">'+_swPrizeLabel(w.prize)+'</span>':'')+'</div>'+
+        '</div>';
+    }).join('');
+  });
+}
+
+function _swOpenCreateForm(editing) {
+  var ov=document.getElementById('swCreateFormOverlay'); if(!ov) return;
+  ov.style.display='block';
+  var t=document.getElementById('swFormTitle'); if(t) t.textContent=editing?'✏️ تعديل لعبة العداد':'⏱️ إنشاء لعبة العداد';
+  if(editing){
+    var n=document.getElementById('swFName'); if(n) n.value=editing.name||'';
+    var st=document.getElementById('swFStart'); if(st&&editing.startAt) st.value=new Date(editing.startAt-new Date().getTimezoneOffset()*60000).toISOString().slice(0,16);
+    var en=document.getElementById('swFEnd'); if(en&&editing.endAt) en.value=new Date(editing.endAt-new Date().getTimezoneOffset()*60000).toISOString().slice(0,16);
+    var au=document.getElementById('swFAudience'); if(au) au.value=editing.audience||'all';
+    var mo=document.getElementById('swFMinOrder'); if(mo) mo.value=editing.minOrder||0;
+    var tg=document.getElementById('swFTarget'); if(tg) tg.value=editing.target||'';
+    var tl=document.getElementById('swFTolerance'); if(tl) tl.value=editing.tolerance||0;
+    if(editing.prize){
+      var pt=document.getElementById('swFPrizeType'); if(pt) pt.value=editing.prize.type||'discount_percent';
+      var pv=document.getElementById('swFPrizeValue'); if(pv) pv.value=editing.prize.value||'';
+      var pe=document.getElementById('swFPrizeEmoji'); if(pe) pe.value=editing.prize.emoji||'';
+      var pa=document.getElementById('swFAltDiscount'); if(pa) pa.value=editing.prize.altDiscount||0;
+    }
+    _swUpdatePrizeForm();
+  }
+}
+
+function _swUpdatePrizeForm() {
+  var type=(document.getElementById('swFPrizeType')||{}).value;
+  var wrap=document.getElementById('swFAltDiscountWrap');
+  if(wrap) wrap.style.display=type==='free_delivery'?'block':'none';
+}
+
+function _swCloseForm() { var ov=document.getElementById('swCreateFormOverlay'); if(ov) ov.style.display='none'; }
+
+function _swSaveGame() {
+  var name=(document.getElementById('swFName')||{}).value||'لعبة العداد';
+  var startVal=(document.getElementById('swFStart')||{}).value;
+  var endVal=(document.getElementById('swFEnd')||{}).value;
+  var audience=(document.getElementById('swFAudience')||{}).value||'all';
+  var minOrder=Number((document.getElementById('swFMinOrder')||{}).value)||0;
+  var target=parseFloat((document.getElementById('swFTarget')||{}).value);
+  var tolerance=Number((document.getElementById('swFTolerance')||{}).value)||0;
+  var prizeType=(document.getElementById('swFPrizeType')||{}).value||'discount_percent';
+  var prizeValue=(document.getElementById('swFPrizeValue')||{}).value||'';
+  var prizeEmoji=(document.getElementById('swFPrizeEmoji')||{}).value||'🎁';
+  var altDiscount=Number((document.getElementById('swFAltDiscount')||{}).value)||0;
+
+  if(isNaN(target)||target<0||target>99.99){ showNotif('⚠️ حدد الرقم المستهدف (0-99.99)'); return; }
+  if(!endVal){ showNotif('⚠️ حدد تاريخ الانتهاء'); return; }
+  if(!db||!fbConnected){ showNotif('⚠️ تأكد من الاتصال بالإنترنت'); return; }
+
+  var v=Date.now();
+  var game={
+    id:'sw_game_'+v, name:name,
+    startAt:startVal?new Date(startVal).getTime():Date.now(),
+    endAt:new Date(endVal).getTime(),
+    audience:audience, minOrder:minOrder,
+    target:parseFloat(target.toFixed(2)), tolerance:tolerance,
+    prize:{ type:prizeType, value:prizeValue, emoji:prizeEmoji, altDiscount:altDiscount },
+    createdAt:v, version:v
+  };
+  db.ref('sw_games/active').set(game).then(function(){
+    db.ref('sw_version').set(v).catch(function(){});
+    showNotif('✅ تم حفظ اللعبة'); _swCloseForm(); _swAdminLoad();
+  }).catch(function(){ showNotif('❌ خطأ في الحفظ'); });
+}
+
+function _swAdminEdit() {
+  if(!db) return;
+  db.ref('sw_games/active').once('value').then(function(snap){ if(snap.exists()) _swOpenCreateForm(snap.val()); });
+}
+
+function _swAdminDelete() {
+  if(!confirm('⚠️ حذف لعبة العداد؟')) return;
+  if(!db) return;
+  db.ref('sw_games/active').remove().then(function(){
+    db.ref('sw_version').set(Date.now()).catch(function(){});
+    showNotif('✅ تم حذف اللعبة'); _swAdminLoad();
+  }).catch(function(){ showNotif('❌ خطأ في الحذف'); });
+}
+
+/* ══════════════════════════════════════════════════════════ */
 
 var _wgCurrentGame = null, _wgSpinning = false, _wgAngle = 0;
 var _wgCountdownInterval = null, _wgVersionListener = null;
@@ -7864,7 +8492,7 @@ function switchAdminTab(tab, el) {
   });
   if (tab === 'loyalty') { _loadLoyaltyAdmin(); }
   if (tab === 'vip-gifts') { _loadVIPGiftAdmin(); }
-  if (tab === 'games') { if (typeof _wgAdminLoad === 'function') _wgAdminLoad(); }
+  if (tab === 'games') { if (typeof _wgAdminLoad === 'function') _wgAdminLoad(); if (typeof _swAdminLoad === 'function') _swAdminLoad(); }
   if (tab === 'competitions') { if(typeof _compLoadAdmin==='function') _compLoadAdmin(); if(typeof _compStartLiveFeed==='function') _compStartLiveFeed(); }
   if (tab === 'orders') renderAdminOrders();
   if (tab === 'cashier') {
