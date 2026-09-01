@@ -6022,8 +6022,14 @@ function _wgRenderGame() {
   var t = document.getElementById('wgGameTitle');
   if (t) t.textContent = '🎰 ' + (g.name || 'عجلة الحظ');
   _wgStartCountdown(g.endAt);
-  _wgDrawWheel(g.slices);
-  _wgRenderPrizesList(g.slices);
+  /* Firebase بيحوّل arrays لـ objects — نتأكد إنها array */
+  var _slices = g.slices||[];
+  if (!Array.isArray(_slices)) {
+    _slices = Object.keys(_slices).sort(function(a,b){ return Number(a)-Number(b); }).map(function(k){ return _slices[k]; });
+  }
+  g.slices = _slices;
+  _wgDrawWheel(_slices);
+  _wgRenderPrizesList(_slices);
   _wgCheckPlayed(g);
 }
 
@@ -6078,6 +6084,10 @@ function _wgDoSpin() {
   var btn = document.getElementById('wgSpinBtn');
   if (btn) { btn.disabled=true; btn.textContent='🎰 جاري اللف...'; }
   var slices = _wgCurrentGame.slices||[];
+  /* Firebase بيحوّل arrays لـ objects — نتأكد إنها array */
+  if (!Array.isArray(slices)) {
+    slices = Object.keys(slices).sort(function(a,b){ return Number(a)-Number(b); }).map(function(k){ return slices[k]; });
+  }
   var total = slices.reduce(function(s,sl){ return s+(sl.prob||1); },0);
   var rand = Math.random()*total, cum = 0, winIdx = slices.length-1;
   for (var i=0; i<slices.length; i++) { cum+=(slices[i].prob||1); if(rand<=cum){ winIdx=i; break; } }
