@@ -2513,6 +2513,7 @@ input,select,textarea{font-family:inherit;}
           <h4 style="margin:0" id="wgAdminGameName">عجلة الحظ</h4>
           <div style="display:flex;gap:6px">
             <button onclick="_wgAdminEdit()" style="padding:6px 12px;background:var(--olive-ultra);color:var(--olive-dark);border:1px solid var(--olive);border-radius:8px;font-size:12px;font-weight:700;cursor:pointer">✏️ تعديل</button>
+            <button onclick="_wgAdminEndAndNew()" style="padding:6px 12px;background:#eff6ff;color:#1d4ed8;border:1px solid #93c5fd;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer">🔄 جديدة</button>
             <button onclick="_wgAdminDelete()" style="padding:6px 12px;background:#fff0f0;color:#c00;border:1px solid #fca5a5;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer">🗑️</button>
           </div>
         </div>
@@ -2540,6 +2541,7 @@ input,select,textarea{font-family:inherit;}
           <h4 style="margin:0" id="swAdminGameName">⏱️ لعبة العداد</h4>
           <div style="display:flex;gap:6px">
             <button onclick="_swAdminEdit()" style="padding:6px 12px;background:var(--olive-ultra);color:var(--olive-dark);border:1px solid var(--olive);border-radius:8px;font-size:12px;font-weight:700;cursor:pointer">✏️ تعديل</button>
+            <button onclick="_swAdminEndAndNew()" style="padding:6px 12px;background:#eff6ff;color:#1d4ed8;border:1px solid #93c5fd;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer">🔄 جديدة</button>
             <button onclick="_swAdminDelete()" style="padding:6px 12px;background:#fff0f0;color:#c00;border:1px solid #fca5a5;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer">🗑️</button>
           </div>
         </div>
@@ -5674,6 +5676,9 @@ function _swApplyPrize(phone,prize) {
     data.lastEarned=new Date().toISOString();
     saveLoyaltyData(phone,data);
     showNotif('🌟 كسبت '+pts+' نقطة!');
+    /* تحديث كارت النقاط فوراً */
+    if(typeof updateVIPWelcomeBanner==='function') updateVIPWelcomeBanner();
+    if(typeof updateCartUI==='function') updateCartUI();
     return;
   }
   var typeMap={discount_percent:'discount_percent',discount_amount:'discount_amount',free_delivery:'free_delivery',free_product:'free_product'};
@@ -6543,6 +6548,42 @@ function _wgSaveGame(){
     db.ref('wheel_version').set(v).catch(function(){});
     showNotif('✅ تم حفظ اللعبة'); _wgCloseForm(); _wgAdminLoad();
   }).catch(function(){ showNotif('❌ خطأ في الحفظ'); });
+}
+
+function _wgAdminEndAndNew() {
+  if(!db) return;
+  if(!confirm('⚠️ سيتم إنهاء اللعبة الحالية وأرشفتها — العملاء يقدروا يلعبوا في الجديدة. متابعة؟')) return;
+  db.ref('wheel_games/active').once('value').then(function(snap) {
+    if(!snap.exists()) { _wgOpenCreateForm(); return; }
+    var old = snap.val();
+    /* أرشفة اللعبة القديمة */
+    db.ref('wheel_games/archive/' + (old.id||'game_'+Date.now())).set(old).catch(function(){});
+    /* حذف الـ active */
+    db.ref('wheel_games/active').remove().then(function() {
+      db.ref('wheel_version').set(Date.now()).catch(function(){});
+      showNotif('✅ تم إنهاء اللعبة — أنشئ الجديدة');
+      _wgAdminLoad();
+      setTimeout(function(){ _wgOpenCreateForm(); }, 300);
+    }).catch(function(){ showNotif('❌ خطأ'); });
+  });
+}
+
+function _swAdminEndAndNew() {
+  if(!db) return;
+  if(!confirm('⚠️ سيتم إنهاء لعبة العداد الحالية وأرشفتها — العملاء يقدروا يلعبوا في الجديدة. متابعة؟')) return;
+  db.ref('sw_games/active').once('value').then(function(snap) {
+    if(!snap.exists()) { _swOpenCreateForm(); return; }
+    var old = snap.val();
+    /* أرشفة اللعبة القديمة */
+    db.ref('sw_games/archive/' + (old.id||'sw_game_'+Date.now())).set(old).catch(function(){});
+    /* حذف الـ active */
+    db.ref('sw_games/active').remove().then(function() {
+      db.ref('sw_version').set(Date.now()).catch(function(){});
+      showNotif('✅ تم إنهاء اللعبة — أنشئ الجديدة');
+      _swAdminLoad();
+      setTimeout(function(){ _swOpenCreateForm(); }, 300);
+    }).catch(function(){ showNotif('❌ خطأ'); });
+  });
 }
 
 function _wgAdminEdit(){ if(!db) return; db.ref('wheel_games/active').once('value').then(function(snap){ if(snap.exists()) _wgOpenCreateForm(snap.val()); }); }
