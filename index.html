@@ -5806,7 +5806,7 @@ function _wgSaveGame(){
   if(!endVal){ showNotif('⚠️ حدد تاريخ الانتهاء'); return; }
   if(!db||!fbConnected){ showNotif('⚠️ تأكد من الاتصال بالإنترنت'); return; }
   var v=Date.now();
-  var game={id:'active',name:name,startAt:startVal?new Date(startVal).getTime():Date.now(),endAt:new Date(endVal).getTime(),audience:audience,location:location,minOrder:minOrder,slices:_wgFormSlices,createdAt:v,version:v};
+  var game={id:'game_'+v, name:name,startAt:startVal?new Date(startVal).getTime():Date.now(),endAt:new Date(endVal).getTime(),audience:audience,location:location,minOrder:minOrder,slices:_wgFormSlices,createdAt:v,version:v};
   db.ref('wheel_games/active').set(game).then(function(){
     db.ref('wheel_version').set(v).catch(function(){});
     showNotif('✅ تم حفظ اللعبة'); _wgCloseForm(); _wgAdminLoad();
