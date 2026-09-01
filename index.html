@@ -6000,6 +6000,12 @@ function _wgLoadGame() {
   db.ref('wheel_games/active').once('value').then(function(snap) {
     if (!snap.exists()) { _wgShowNoGame(); return; }
     _wgCurrentGame = snap.val();
+    /* تحويل slices من object لـ array فوراً عند التحميل */
+    if (_wgCurrentGame.slices && !Array.isArray(_wgCurrentGame.slices)) {
+      _wgCurrentGame.slices = Object.keys(_wgCurrentGame.slices)
+        .sort(function(a,b){ return Number(a)-Number(b); })
+        .map(function(k){ return _wgCurrentGame.slices[k]; });
+    }
     _wgLocalVersion = _wgCurrentGame.version || 0;
     _wgRenderGame();
     _wgStartVersionListener();
@@ -6116,20 +6122,21 @@ function _wgAnimateSpin(winIdx, slices, cb) {
   for (var i=0; i<winIdx; i++) cum+=(slices[i].prob||1)/total*Math.PI*2;
   var winMid = cum + (slices[winIdx].prob||1)/total*Math.PI*2/2;
 
-  /* الزاوية النهائية الصحيحة:
-     السهم في الأعلى = angle 0
-     نريد العجلة تدور لحد ما winMid يكون في الأعلى
-     + عدد دورات كاملة (5-8) */
-  var fullRotations = (5 + Math.floor(Math.random()*4)) * Math.PI * 2;
-  /* نطبّع الـ startAngle عشان الحسبة تكون صح */
-  var normalizedStart = _wgAngle % (Math.PI*2);
-  var targetFinal = fullRotations + (Math.PI*2 - winMid);
-  var targetAngle = targetFinal - normalizedStart + (Math.PI*2 - (targetFinal - normalizedStart) % (Math.PI*2));
-  /* تبسيط: نضيف دورات كاملة + نوقف على winMid */
-  targetAngle = fullRotations + (Math.PI*2*10 - winMid - normalizedStart) % (Math.PI*2);
-  if(targetAngle < 0) targetAngle += Math.PI*2;
+  /* نقطة بداية عشوائية — كل عميل يشوف أنيميشن مختلف */
+  _wgAngle = Math.random() * Math.PI * 2;
 
-  var startAngle = _wgAngle, startTime = null, duration = 4500;
+  /* وقت لف عشوائي بين 4 و 6.5 ثانية */
+  var duration = 4000 + Math.random() * 2500;
+
+  /* دورات عشوائية بين 5 و 9 */
+  var fullRotations = (5 + Math.floor(Math.random()*5)) * Math.PI * 2;
+
+  /* حساب الزاوية النهائية الصح */
+  var normalizedStart = _wgAngle % (Math.PI*2);
+  var needed = (Math.PI*2 - winMid - normalizedStart + Math.PI*2*10) % (Math.PI*2);
+  var targetAngle = fullRotations + needed;
+
+  var startAngle = _wgAngle, startTime = null;
   function ease(t){ return 1-Math.pow(1-t,4); }
 
   /* صوت العجلة */
@@ -13130,7 +13137,7 @@ function _pgLoadAdmin() {
         '<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px">' +
         '<div style="flex:1">' +
         '<div style="font-size:13px;font-weight:900;color:var(--text);margin-bottom:4px">' + typeIcon + ' ' + typeText + '</div>' +
-        '<div style="font-size:12px;color:var(--text-muted);margin-bottom:2px">👤 ' + (g.customerName||g.phone) + ' — 📞 ' + g.phone + '</div>' +
+        '<div style="font-size:12px;color:var(--text-muted);margin-bottom:2px">👤 ' + (g.name||g.customerName||'—') + ' — 📞 ' + g.phone + '</div>' +
         (g.msg ? '<div style="font-size:11px;color:var(--text-muted);font-style:italic">💬 ' + g.msg + '</div>' : '') +
         '<div style="font-size:10px;color:var(--text-muted);margin-top:4px">📅 ' + (g.createdAt ? new Date(g.createdAt).toLocaleString('ar-EG') : '') + '</div>' +
         (g.usedAt ? '<div style="font-size:10px;color:#16a34a;margin-top:2px">✅ استُخدمت في: ' + new Date(g.usedAt).toLocaleString('ar-EG') + '</div>' : '') +
