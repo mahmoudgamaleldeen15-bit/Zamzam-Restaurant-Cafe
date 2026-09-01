@@ -6063,13 +6063,6 @@ function _wgSpin() {
   var g = _wgCurrentGame, now = Date.now();
   if (g.endAt && now > g.endAt) { showNotif('⌛ انتهت اللعبة'); return; }
   if (g.startAt && now < g.startAt) { showNotif('⏳ اللعبة لم تبدأ بعد'); return; }
-  if (g.minOrder > 0) {
-    var ph2 = currentUser.phone.replace(/\D/g,'');
-    var myOrd = (ordersData||[]).filter(function(o){ return (o.whatsapp||o.phone||'').replace(/\D/g,'')===ph2; });
-    var lastTotal = myOrd.length ? (myOrd[myOrd.length-1].total||0) : 0;
-    console.log('[WG] minOrder check', {required:g.minOrder, lastTotal:lastTotal});
-    if (lastTotal < g.minOrder) { showNotif('📦 تحتاج طلب بقيمة '+g.minOrder+' ج.م أو أكثر للعب'); return; }
-  }
   if (g.audience==='vip') {
     var ph3 = currentUser.phone.replace(/\D/g,'');
     if (!ph3||(! VIP_CUSTOMERS[ph3]&&!VIP_CUSTOMERS['0'+ph3.slice(1)]&&!VIP_CUSTOMERS['2'+ph3])) { showNotif('👑 هذه اللعبة لعملاء VIP فقط'); return; }
@@ -6569,7 +6562,8 @@ function _wgShowButtonIfActive(){
     }
 
     /* زرار عائم صغير كـ backup للموبايل */
-    if(document.getElementById('wgFloatBtn')) return;
+    /* البانر الرئيسي كافي — مش محتاج زرار عائم للعجلة */
+    /* if(document.getElementById('wgFloatBtn')) return; */
     var style=document.createElement('style');
     style.textContent='@keyframes wg-float{0%,100%{transform:scale(1) rotate(-5deg)}50%{transform:scale(1.1) rotate(5deg)}}';
     document.head.appendChild(style);
