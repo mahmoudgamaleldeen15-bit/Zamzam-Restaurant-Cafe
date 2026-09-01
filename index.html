@@ -6147,12 +6147,15 @@ function _wgAnimateSpin(winIdx, slices, cb) {
   /* دورات عشوائية بين 5 و 9 */
   var fullRotations = (5 + Math.floor(Math.random()*5)) * Math.PI * 2;
 
-  /* حساب الزاوية النهائية الصح */
-  var normalizedStart = _wgAngle % (Math.PI*2);
-  var needed = (Math.PI*2 - winMid - normalizedStart + Math.PI*2*10) % (Math.PI*2);
-  var targetAngle = fullRotations + needed;
+  /* حساب الزاوية النهائية الصح:
+     المطلوب: _wgAngle النهائي = winMid
+     يعني targetAngle = (winMid - startAngle) + دورات كاملة */
+  var startAngle = _wgAngle;
+  var diff = winMid - (startAngle % (Math.PI*2));
+  if (diff < 0) diff += Math.PI*2;
+  var targetAngle = fullRotations + diff;
 
-  var startAngle = _wgAngle, startTime = null;
+  var startTime = null;
   function ease(t){ return 1-Math.pow(1-t,4); }
 
   /* صوت العجلة */
