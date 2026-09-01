@@ -6079,7 +6079,7 @@ function _wgDoSpin() {
   if (btn) { btn.disabled=true; btn.textContent='🎰 جاري اللف...'; }
   var slices = _wgCurrentGame.slices||[];
   var total = slices.reduce(function(s,sl){ return s+(sl.prob||1); },0);
-  var rand = Math.random()*total, cum = 0, winIdx = 0;
+  var rand = Math.random()*total, cum = 0, winIdx = slices.length-1;
   for (var i=0; i<slices.length; i++) { cum+=(slices[i].prob||1); if(rand<=cum){ winIdx=i; break; } }
   var phone = currentUser.phone.replace(/\D/g,'');
   var prizeType = slices[winIdx] ? slices[winIdx].type : 'none';
@@ -6103,7 +6103,20 @@ function _wgAnimateSpin(winIdx, slices, cb) {
   var cum=0;
   for (var i=0; i<winIdx; i++) cum+=(slices[i].prob||1)/total*Math.PI*2;
   var winMid = cum + (slices[winIdx].prob||1)/total*Math.PI*2/2;
-  var targetAngle = -winMid + Math.PI*2*(5+Math.floor(Math.random()*4));
+
+  /* الزاوية النهائية الصحيحة:
+     السهم في الأعلى = angle 0
+     نريد العجلة تدور لحد ما winMid يكون في الأعلى
+     + عدد دورات كاملة (5-8) */
+  var fullRotations = (5 + Math.floor(Math.random()*4)) * Math.PI * 2;
+  /* نطبّع الـ startAngle عشان الحسبة تكون صح */
+  var normalizedStart = _wgAngle % (Math.PI*2);
+  var targetFinal = fullRotations + (Math.PI*2 - winMid);
+  var targetAngle = targetFinal - normalizedStart + (Math.PI*2 - (targetFinal - normalizedStart) % (Math.PI*2));
+  /* تبسيط: نضيف دورات كاملة + نوقف على winMid */
+  targetAngle = fullRotations + (Math.PI*2*10 - winMid - normalizedStart) % (Math.PI*2);
+  if(targetAngle < 0) targetAngle += Math.PI*2;
+
   var startAngle = _wgAngle, startTime = null, duration = 4500;
   function ease(t){ return 1-Math.pow(1-t,4); }
 
