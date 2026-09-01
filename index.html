@@ -6091,7 +6091,9 @@ function _wgDoSpin() {
     saveData(localKey, { playedAt: Date.now() });
     db.ref('wheel_winners').push(playData).catch(function(){});
     _wgApplyPrize(phone, slices[winIdx]);
-    _wgAnimateSpin(winIdx, slices, function() { _wgShowPrize(slices[winIdx]); _wgSpinning=false; });
+    /* احفظ الجائزة في متغير ثابت قبل الـ callback عشان الـ closure يبعت الصح */
+    var _winnerPrize = slices[winIdx];
+    _wgAnimateSpin(winIdx, slices, function() { _wgShowPrize(_winnerPrize); _wgSpinning=false; });
   }).catch(function() {
     _wgSpinning=false; if(btn){ btn.disabled=false; btn.textContent='🎰 الف العجلة!'; }
     showNotif('❌ حدث خطأ — حاول مرة أخرى');
@@ -6245,6 +6247,9 @@ function _wgApplyPrize(phone, prize) {
     data.name = (currentUser&&currentUser.name)||data.name||'';
     saveLoyaltyData(phone, data);
     showNotif('🌟 كسبت '+pts+' نقطة! رصيدك: '+data.points+' نقطة');
+    /* تحديث كارت النقاط فوراً بدون refresh */
+    if (typeof updateVIPWelcomeBanner === 'function') updateVIPWelcomeBanner();
+    if (typeof updateCartUI === 'function') updateCartUI();
     return;
   }
 
@@ -6252,7 +6257,7 @@ function _wgApplyPrize(phone, prize) {
   var typeMap = {discount_percent:'discount_percent',discount_amount:'discount_amount',free_delivery:'free_delivery',free_product:'free_product'};
   if(!typeMap[prize.type]) return;
   var minOrder = (_wgCurrentGame && _wgCurrentGame.minOrder) ? Number(_wgCurrentGame.minOrder) : 0;
-  var gift={id:'wg_'+Date.now(),phone:phone,name:(currentUser&&currentUser.name)||'',type:typeMap[prize.type],value:prize.value||'',msg:'🎰 جائزة عجلة الحظ: '+(prize.label||''),createdAt:new Date().toISOString(),used:false,usedAt:null,source:'wheel_game',minOrderRequired:minOrder};
+  var gift={id:'wg_'+Date.now(),phone:phone,name:(currentUser&&currentUser.name)||'',type:typeMap[prize.type],value:prize.value||'',msg:'🎰 جائزة عجلة الحظ: '+(prize.label||''),createdAt:new Date().toISOString(),used:false,usedAt:null,source:'wheel_game',minOrderRequired:minOrder,altDiscount:Number(prize.altDiscount)||0};
   /* فحص لو عنده هدية قديمة مش استخدمها — مش بنمسحها */
   db.ref('personal_gifts/'+phone).once('value').then(function(snap){
     if(snap.exists() && snap.val().used === false) {
