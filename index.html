@@ -5158,9 +5158,20 @@ async function doRegister() {
   /* loading state للزرار */
   const _regBtn = document.querySelector('#registerForm .btn-primary') || document.querySelector('[onclick="doRegister()"]');
   const _regBtnOrigText = _regBtn ? _regBtn.textContent : '';
-  if (_regBtn) { _regBtn.disabled = true; _regBtn.textContent = '⏳ جاري التسجيل...'; }
+  if (_regBtn) { _regBtn.disabled = true; _regBtn.textContent = '⏳ جاري التسجيل'; }
 
-  function _regRestore() { if (_regBtn) { _regBtn.disabled = false; _regBtn.textContent = _regBtnOrigText; } }
+  /* dots animation عشان العميل يعرف إن البرنامج شغّال */
+  var _regDots = 0;
+  var _regDotsInterval = setInterval(function() {
+    if (!_regBtn) return;
+    _regDots = (_regDots + 1) % 4;
+    _regBtn.textContent = '⏳ جاري التسجيل' + '.'.repeat(_regDots);
+  }, 500);
+
+  function _regRestore() {
+    clearInterval(_regDotsInterval);
+    if (_regBtn) { _regBtn.disabled = false; _regBtn.textContent = _regBtnOrigText; }
+  }
 
   if (!name || !phone) { showNotif('يرجى ملء الاسم ورقم الهاتف'); _regRestore(); return; }
   if (!wa) { showNotif('⚠️ رقم الواتساب إجبارى'); _regRestore(); return; }
