@@ -5645,6 +5645,9 @@ function _swStop() {
     stopped:stoppedVal, target:target, won:won, diff:diff
   }).then(function(){
     saveData(localKey,{playedAt:Date.now()});
+    /* إخفاء بانر العداد بعد اللعب */
+    var swBanner=document.getElementById('swMainBanner');
+    if(swBanner) swBanner.style.display='none';
     /* حفظ في winners */
     db.ref('sw_winners').push({
       phone:phone, name:(currentUser.name||''), gameId:(g.id||'active'),
@@ -6195,6 +6198,9 @@ function _wgDoSpin() {
     /* حفظ في localStorage لقفل الجهاز */
     var localKey = 'wg_played_' + (_wgCurrentGame.id||'active') + '_' + phone;
     saveData(localKey, { playedAt: Date.now() });
+    /* إخفاء بانر العجلة بعد اللعب */
+    var wgBanner = document.getElementById('wgMainBanner');
+    if(wgBanner) wgBanner.style.display='none';
     db.ref('wheel_winners').push(playData).catch(function(){});
     _wgApplyPrize(phone, slices[winIdx]);
     /* احفظ الجائزة في متغير ثابت قبل الـ callback عشان الـ closure يبعت الصح */
