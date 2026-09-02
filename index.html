@@ -4307,8 +4307,16 @@ function _goToAppOrTracking() {
   }
   /* عجلة الحظ — زرار عائم لو اللعبة شغّالة */
   setTimeout(function() { if (typeof _wgShowButtonIfActive === 'function') _wgShowButtonIfActive(); }, 2000);
+  /* wg_version listener — يشتغل دايماً عشان يشوف لعبة جديدة */
+  setTimeout(function() {
+    if(typeof _wgStartVersionListenerGlobal === 'function') _wgStartVersionListenerGlobal();
+  }, 2500);
   /* لعبة العداد — زرار عائم لو اللعبة شغّالة */
   setTimeout(function() { if (typeof _swShowButtonIfActive === 'function') _swShowButtonIfActive(); }, 2500);
+  /* sw_version listener — يشتغل دايماً عشان يشوف لعبة جديدة */
+  setTimeout(function() {
+    if(typeof _swStartVersionListenerGlobal === 'function') _swStartVersionListenerGlobal();
+  }, 3000);
   const _on = currentOrderNum || loadData('zz_current_order_num', null);
   if (_on && db) {
     db.ref('orders/' + _on).get().then(snap => {
@@ -5788,6 +5796,34 @@ function _swPlayLose() {
 }
 
 /* ── Version Listener ── */
+/* ── Global Version Listener للعداد — يشتغل حتى لو العميل مفتحش اللعبة ── */
+var _swGlobalVersionListener=null, _swGlobalLocalVersion=null;
+function _swStartVersionListenerGlobal() {
+  if(_swGlobalVersionListener||!db||adminRoleType) return;
+  _swGlobalVersionListener=db.ref('sw_version').on('value',function(snap){
+    if(!snap.exists()) return;
+    var v=snap.val();
+    if(_swGlobalLocalVersion===null){ _swGlobalLocalVersion=v; return; }
+    if(v!==_swGlobalLocalVersion){
+      _swGlobalLocalVersion=v;
+      db.ref('sw_games/active').once('value',function(gameSnap){
+        /* شيل البانر والزرار القديم */
+        var banner=document.getElementById('swMainBanner'); if(banner) banner.style.display='none';
+        var oldFloat=document.getElementById('swFloatBtn'); if(oldFloat) oldFloat.remove();
+        if(!gameSnap.exists()){
+          /* اللعبة اتحذفت */
+          var screen=document.getElementById('swGameScreen'); if(screen) screen.style.display='none';
+          _swStopTimer(); _swCurrentGame=null;
+        } else {
+          /* لعبة جديدة — أظهر البانر */
+          _swCurrentGame=null;
+          _swShowButtonIfActive();
+        }
+      });
+    }
+  });
+}
+
 function _swStartVersionListener() {
   if(_swVersionListener||!db) return;
   _swVersionListener=db.ref('sw_version').on('value',function(snap){
@@ -6008,6 +6044,32 @@ var _wgCurrentGame = null, _wgSpinning = false, _wgAngle = 0;
 var _wgCountdownInterval = null, _wgVersionListener = null;
 var _wgLocalVersion = null, _wgUpdatePending = false;
 var _wgSliceColors = ['#ef4444','#f59e0b','#22c55e','#3b82f6','#8b5cf6','#ec4899','#06b6d4','#f97316'];
+
+/* ── Global Version Listener للعجلة — يشتغل حتى لو العميل مفتحش اللعبة ── */
+var _wgGlobalVersionListener=null, _wgGlobalLocalVersion=null;
+function _wgStartVersionListenerGlobal() {
+  if(_wgGlobalVersionListener||!db||adminRoleType) return;
+  _wgGlobalVersionListener=db.ref('wheel_version').on('value',function(snap){
+    if(!snap.exists()) return;
+    var v=snap.val();
+    if(_wgGlobalLocalVersion===null){ _wgGlobalLocalVersion=v; return; }
+    if(v!==_wgGlobalLocalVersion){
+      _wgGlobalLocalVersion=v;
+      db.ref('wheel_games/active').once('value',function(gameSnap){
+        var banner=document.getElementById('wgMainBanner'); if(banner) banner.style.display='none';
+        var oldFloat=document.getElementById('wgFloatBtn'); if(oldFloat) oldFloat.remove();
+        if(!gameSnap.exists()){
+          var screen=document.getElementById('wheelGameScreen'); if(screen) screen.style.display='none';
+          if(_wgCountdownInterval){ clearInterval(_wgCountdownInterval); _wgCountdownInterval=null; }
+          _wgCurrentGame=null;
+        } else {
+          _wgCurrentGame=null;
+          _wgShowButtonIfActive();
+        }
+      });
+    }
+  });
+}
 
 function openWheelGame() {
   if (!db || !fbConnected) { showNotif('⚠️ تأكد من الاتصال بالإنترنت'); return; }
