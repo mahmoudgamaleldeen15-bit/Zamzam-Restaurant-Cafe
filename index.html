@@ -5570,8 +5570,7 @@ function _swRenderGame() {
   if(tolEl) tolEl.textContent=g.tolerance>0?'هامش السماح: ±'+g.tolerance+' لحظة':'لا يوجد هامش — الدقة المطلقة!';
   var prizeEl=document.getElementById('swPrizeLabel');
   if(prizeEl&&g.prize) prizeEl.textContent=(g.prize.emoji||'🎁')+' '+_swPrizeLabel(g.prize);
-  _swCheckPlayed(g);
-  _swStartTimer();
+  _swCheckPlayed(g); /* العداد بيبدأ جوا _swCheckPlayed بس لو ملعبش */
 }
 
 function _swPrizeLabel(prize) {
@@ -5724,6 +5723,8 @@ function _swShowStopBtn() {
   if(btn){ btn.style.display='block'; btn.disabled=false; btn.classList.add('ready'); btn.textContent='⏹️ وقّف العداد!'; }
   if(pl) pl.style.display='none';
   _swRunning=true;
+  /* العداد بيبدأ بس لما العميل ملعبش */
+  _swStartTimer();
 }
 
 function _swShowAlreadyPlayed() {
