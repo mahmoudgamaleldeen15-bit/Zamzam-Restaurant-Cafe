@@ -5803,8 +5803,19 @@ function _swStartVersionListener() {
           var screen=document.getElementById('swGameScreen'); if(screen) screen.style.display='none';
           _swStopTimer(); _swCurrentGame=null;
         } else {
-          var b=document.getElementById('swUpdateBanner'); if(b) b.style.display='flex';
-          var sb=document.getElementById('swStopBtn'); if(sb) sb.disabled=true;
+          /* لعبة جديدة أو تحديث — أظهر البانر للعميل فوراً */
+          _swUpdatePending=false;
+          _swCurrentGame=null;
+          /* أزل الزرار القديم عشان _swShowButtonIfActive تعمل جديد */
+          var oldFloat=document.getElementById('swFloatBtn'); if(oldFloat) oldFloat.remove();
+          _swShowButtonIfActive();
+          /* لو اللعبة مفتوحة → أظهر بانر التحديث */
+          var screen2=document.getElementById('swGameScreen');
+          if(screen2 && screen2.style.display==='flex'){
+            _swUpdatePending=true;
+            var b=document.getElementById('swUpdateBanner'); if(b) b.style.display='flex';
+            var sb=document.getElementById('swStopBtn'); if(sb) sb.disabled=true;
+          }
         }
       });
     }
@@ -6398,9 +6409,18 @@ function _wgStartVersionListener() {
           if(_wgCountdownInterval){ clearInterval(_wgCountdownInterval); _wgCountdownInterval=null; }
           _wgCurrentGame=null;
         } else {
-          /* اللعبة اتحدثت — أظهر بانر التحديث */
-          var b=document.getElementById('wgUpdateBanner'); if(b) b.style.display='flex';
-          var sb=document.getElementById('wgSpinBtn'); if(sb) sb.disabled=true;
+          /* لعبة جديدة أو تحديث — أظهر البانر للعميل فوراً */
+          _wgUpdatePending=false;
+          _wgCurrentGame=null;
+          var oldWgFloat=document.getElementById('wgFloatBtn'); if(oldWgFloat) oldWgFloat.remove();
+          _wgShowButtonIfActive();
+          /* لو اللعبة مفتوحة → أظهر بانر التحديث */
+          var wgScreen=document.getElementById('wheelGameScreen');
+          if(wgScreen && wgScreen.style.display==='flex'){
+            _wgUpdatePending=true;
+            var b=document.getElementById('wgUpdateBanner'); if(b) b.style.display='flex';
+            var sb=document.getElementById('wgSpinBtn'); if(sb) sb.disabled=true;
+          }
         }
       });
     }
