@@ -5645,9 +5645,8 @@ function _swStop() {
     stopped:stoppedVal, target:target, won:won, diff:diff
   }).then(function(){
     saveData(localKey,{playedAt:Date.now()});
-    /* إخفاء بانر العداد بعد اللعب */
-    var swBanner=document.getElementById('swMainBanner');
-    if(swBanner) swBanner.style.display='none';
+    /* شيل الزرار العائم بعد اللعب */
+    var swFloat=document.getElementById('swFloatBtn'); if(swFloat) swFloat.remove();
     /* حفظ في winners */
     db.ref('sw_winners').push({
       phone:phone, name:(currentUser.name||''), gameId:(g.id||'active'),
@@ -5664,6 +5663,19 @@ function _swStop() {
 }
 
 function _swShowResult(won,stopped,target,prize) {
+  /* تغيير نص البانر حسب النتيجة */
+  var swBannerBtn = document.querySelector('#swMainBanner [style*="العب الآن"]');
+  if(swBannerBtn) {
+    if(won) {
+      swBannerBtn.textContent='كسبت التحدي 🏆';
+      swBannerBtn.style.background='linear-gradient(135deg,#16a34a,#15803d)';
+    } else {
+      swBannerBtn.textContent='حظ أوفر 😔';
+      swBannerBtn.style.background='linear-gradient(135deg,#475569,#334155)';
+    }
+    swBannerBtn.style.animation='none';
+  }
+
   var colors=won?['#f59e0b','#22c55e','#3b82f6']:['#ef4444','#6b7280'];
   var ov=document.createElement('div');
   ov.className='sw-prize-overlay'; ov.id='swResultOverlay';
@@ -6198,9 +6210,8 @@ function _wgDoSpin() {
     /* حفظ في localStorage لقفل الجهاز */
     var localKey = 'wg_played_' + (_wgCurrentGame.id||'active') + '_' + phone;
     saveData(localKey, { playedAt: Date.now() });
-    /* إخفاء بانر العجلة بعد اللعب */
-    var wgBanner = document.getElementById('wgMainBanner');
-    if(wgBanner) wgBanner.style.display='none';
+    /* شيل الزرار العائم بعد اللعب */
+    var wgFloat=document.getElementById('wgFloatBtn'); if(wgFloat) wgFloat.remove();
     db.ref('wheel_winners').push(playData).catch(function(){});
     _wgApplyPrize(phone, slices[winIdx]);
     /* احفظ الجائزة في متغير ثابت قبل الـ callback عشان الـ closure يبعت الصح */
@@ -6315,6 +6326,19 @@ function _wgAnimateSpin(winIdx, slices, cb) {
 
 function _wgShowPrize(prize) {
   if(!prize) return;
+
+  /* تغيير نص البانر حسب النتيجة */
+  var wgBannerBtn = document.querySelector('#wgMainBanner [style*="العب الآن"]');
+  if(wgBannerBtn) {
+    if(prize.type==='none') {
+      wgBannerBtn.textContent='حظ أوفر 😔';
+      wgBannerBtn.style.background='linear-gradient(135deg,#475569,#334155)';
+    } else {
+      wgBannerBtn.textContent='كسبت التحدي 🏆';
+      wgBannerBtn.style.background='linear-gradient(135deg,#16a34a,#15803d)';
+    }
+  }
+
   var ov = document.createElement('div');
   ov.className='wg-prize-overlay'; ov.id='wgPrizeOverlay';
 
