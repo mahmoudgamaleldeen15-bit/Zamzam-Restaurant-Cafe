@@ -261,7 +261,7 @@ input,select,textarea{font-family:inherit;}
 .wg-wheel-outer{position:absolute;inset:-8px;border-radius:50%;background:conic-gradient(from 0deg,#f59e0b,#ef4444,#8b5cf6,#06b6d4,#22c55e,#f59e0b);animation:wg-glow-spin 3s linear infinite;filter:blur(4px);opacity:.7}
 @keyframes wg-glow-spin{to{transform:rotate(360deg)}}
 #wgCanvas{border-radius:50%;position:relative;z-index:1;width:100%;height:100%;touch-action:none;box-shadow:0 0 40px rgba(245,158,11,.3)}
-.wg-pointer{position:absolute;top:-16px;left:50%;transform:translateX(-50%);z-index:3;filter:drop-shadow(0 4px 8px rgba(245,158,11,.8))}
+.wg-pointer{position:absolute;top:-22px;left:50%;transform:translateX(-50%);z-index:3;filter:drop-shadow(0 4px 12px rgba(245,158,11,1))}
 .wg-spin-btn{margin:20px auto 0;display:block;padding:16px 48px;background:linear-gradient(135deg,#f59e0b,#d97706);border:none;border-radius:50px;color:#fff;font-size:17px;font-weight:900;cursor:pointer;font-family:inherit;box-shadow:0 8px 24px rgba(245,158,11,.45);transition:transform .15s,box-shadow .15s;letter-spacing:.5px}
 .wg-spin-btn:active{transform:scale(.96)}
 .wg-spin-btn:disabled{opacity:.5;cursor:not-allowed;transform:none}
@@ -1258,9 +1258,9 @@ input,select,textarea{font-family:inherit;}
     <div class="wg-wheel-outer"></div>
     <canvas id="wgCanvas" width="320" height="320"></canvas>
     <!-- Pointer -->
-    <svg class="wg-pointer" width="28" height="36" viewBox="0 0 28 36">
-      <polygon points="14,0 28,36 14,28 0,36" fill="#f59e0b" filter="drop-shadow(0 4px 8px rgba(245,158,11,.8))"/>
-      <circle cx="14" cy="26" r="5" fill="#fff"/>
+    <svg class="wg-pointer" width="36" height="48" viewBox="0 0 36 48">
+      <polygon points="18,48 36,0 18,12 0,0" fill="#f59e0b" filter="drop-shadow(0 4px 8px rgba(245,158,11,.9))"/>
+      <circle cx="18" cy="12" r="6" fill="#fff" opacity="0.9"/>
     </svg>
   </div>
 
