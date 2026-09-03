@@ -5912,6 +5912,15 @@ function _swShowButtonIfActive() {
       if(!ph||(! VIP_CUSTOMERS[ph]&&!VIP_CUSTOMERS['0'+ph.slice(1)]&&!VIP_CUSTOMERS['2'+ph])) return;
     }
     var banner=document.getElementById('swMainBanner'); if(banner){ banner.style.display='block'; var t=document.getElementById('swBannerTitle'); if(t) t.textContent='⏱️ '+(g.name||'لعبة العداد'); }
+    /* زرار عائم — بس لو العميل ملعبش */
+    var _swPhone = currentUser&&currentUser.phone ? currentUser.phone.replace(/\D/g,'') : '';
+    var _swLocalKey = 'sw_played_' + (g.id||'active') + '_' + _swPhone;
+    var _swPlayed = _swPhone && loadData(_swLocalKey, null);
+    if(_swPlayed) {
+      var oldSF=document.getElementById('swFloatBtn'); if(oldSF) oldSF.remove();
+      _swUpdateBannerAfterPlay();
+      return;
+    }
     if(document.getElementById('swFloatBtn')) return;
     var style=document.createElement('style');
     style.textContent='@keyframes sw-float{0%,100%{transform:scale(1) rotate(-3deg)}50%{transform:scale(1.1) rotate(3deg)}}';
@@ -6808,9 +6817,17 @@ function _wgShowButtonIfActive(){
       }
     }
 
-    /* زرار عائم صغير كـ backup للموبايل */
-    /* البانر الرئيسي كافي — مش محتاج زرار عائم للعجلة */
-    /* if(document.getElementById('wgFloatBtn')) return; */
+    /* زرار عائم — بس لو العميل ملعبش */
+    var _wgPhone = currentUser&&currentUser.phone ? currentUser.phone.replace(/\D/g,'') : '';
+    var _wgLocalKey = 'wg_played_' + (g.id||'active') + '_' + _wgPhone;
+    var _wgPlayed = _wgPhone && loadData(_wgLocalKey, null);
+    if(_wgPlayed) {
+      /* لعب قبل — شيل الزرار لو موجود وحدّث البانر */
+      var oldF=document.getElementById('wgFloatBtn'); if(oldF) oldF.remove();
+      _wgUpdateBannerAfterPlay();
+      return;
+    }
+    if(document.getElementById('wgFloatBtn')) return;
     var style=document.createElement('style');
     style.textContent='@keyframes wg-float{0%,100%{transform:scale(1) rotate(-5deg)}50%{transform:scale(1.1) rotate(5deg)}}';
     document.head.appendChild(style);
