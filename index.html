@@ -5757,6 +5757,26 @@ function _swShowAlreadyPlayed() {
     var mg=document.getElementById('swAlreadyMsg');
     if(mg) mg.textContent='سبق ولعبت في هذه الجولة. جائزتك محفوظة لك! 🎁';
   }
+  /* شيل الزرار العائم + غيّر نص البانر */
+  var swFloat=document.getElementById('swFloatBtn'); if(swFloat) swFloat.remove();
+  _swUpdateBannerAfterPlay();
+}
+
+function _swUpdateBannerAfterPlay() {
+  if(!db||!currentUser||!currentUser.phone) return;
+  var ph=currentUser.phone.replace(/\D/g,'');
+  var gameId=_swCurrentGame?(_swCurrentGame.id||'active'):'active';
+  db.ref('sw_winners').orderByChild('phone').equalTo(ph).limitToLast(5).once('value').then(function(wSnap){
+    var bannerBtn=document.querySelector('#swMainBanner div[style*="border-radius:50px"]');
+    if(!bannerBtn) return;
+    var lastWon=false;
+    if(wSnap.exists()) wSnap.forEach(function(ch){
+      if(ch.val().gameId===gameId) lastWon=ch.val().won===true;
+    });
+    bannerBtn.textContent=lastWon?'كسبت التحدي 🏆':'حظ أوفر 😔';
+    bannerBtn.style.background=lastWon?'linear-gradient(135deg,#16a34a,#15803d)':'linear-gradient(135deg,#475569,#334155)';
+    bannerBtn.style.animation='none';
+  }).catch(function(){});
 }
 
 function _swShowNoGame(msg) {
@@ -6455,6 +6475,30 @@ function _wgShowAlreadyPlayed() {
       mg.textContent='سبق ولعبت في هذه الجولة. جائزتك محفوظة لك! 🎁';
     }
   }
+  /* شيل الزرار العائم + غيّر نص البانر */
+  var wgFloat=document.getElementById('wgFloatBtn'); if(wgFloat) wgFloat.remove();
+  _wgUpdateBannerAfterPlay();
+}
+
+function _wgUpdateBannerAfterPlay() {
+  if(!db||!currentUser||!currentUser.phone) return;
+  var ph=currentUser.phone.replace(/\D/g,'');
+  var gameId=_wgCurrentGame?(_wgCurrentGame.id||'active'):'active';
+  db.ref('wheel_plays/'+ph).once('value').then(function(snap){
+    var bannerBtn=document.querySelector('#wgMainBanner div[style*="border-radius:50px"]');
+    if(!bannerBtn) return;
+    var won=snap.exists()&&snap.val().prize&&snap.val().prize.type!=='none';
+    /* من wheel_winners — أدق */
+    db.ref('wheel_winners').orderByChild('phone').equalTo(ph).limitToLast(5).once('value').then(function(wSnap){
+      var lastWon=false;
+      if(wSnap.exists()) wSnap.forEach(function(ch){
+        if(ch.val().gameId===gameId) lastWon=(ch.val().prize&&ch.val().prize.type!=='none');
+      });
+      bannerBtn.textContent=lastWon?'كسبت التحدي 🏆':'حظ أوفر 😔';
+      bannerBtn.style.background=lastWon?'linear-gradient(135deg,#16a34a,#15803d)':'linear-gradient(135deg,#475569,#334155)';
+      bannerBtn.style.animation='none';
+    }).catch(function(){});
+  }).catch(function(){});
 }
 
 function _wgShowNoGame(msg) {
