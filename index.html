@@ -6759,6 +6759,8 @@ function _swAdminEndAndNew() {
     /* حذف الـ active */
     db.ref('sw_games/active').remove().then(function() {
       db.ref('sw_version').set(Date.now()).catch(function(){});
+      /* تحديث wheel_version عشان العملاء يشوفوا لعبة العجلة الجديدة لو موجودة */
+      db.ref('wheel_version').set(Date.now()).catch(function(){});
       showNotif('✅ تم إنهاء اللعبة — أنشئ الجديدة');
       _swAdminLoad();
       setTimeout(function(){ _swOpenCreateForm(); }, 300);
