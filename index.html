@@ -5914,8 +5914,9 @@ function _swShowButtonIfActive() {
     var banner=document.getElementById('swMainBanner'); if(banner){ banner.style.display='block'; var t=document.getElementById('swBannerTitle'); if(t) t.textContent='⏱️ '+(g.name||'لعبة العداد'); }
     /* زرار عائم — بس لو العميل ملعبش */
     var _swPhone = currentUser&&currentUser.phone ? currentUser.phone.replace(/\D/g,'') : '';
-    var _swLocalKey = 'sw_played_' + (g.id||'active') + '_' + _swPhone;
-    var _swPlayed = _swPhone && loadData(_swLocalKey, null);
+    var _swGameId = g.id||('sw_game_'+g.version)||'active';
+    var _swLocalKey = 'sw_played_' + _swGameId + '_' + _swPhone;
+    var _swPlayed = _swPhone ? loadData(_swLocalKey, null) : false;
     if(_swPlayed) {
       var oldSF=document.getElementById('swFloatBtn'); if(oldSF) oldSF.remove();
       _swUpdateBannerAfterPlay();
@@ -6821,8 +6822,9 @@ function _wgShowButtonIfActive(){
 
     /* زرار عائم — بس لو العميل ملعبش */
     var _wgPhone = currentUser&&currentUser.phone ? currentUser.phone.replace(/\D/g,'') : '';
-    var _wgLocalKey = 'wg_played_' + (g.id||'active') + '_' + _wgPhone;
-    var _wgPlayed = _wgPhone && loadData(_wgLocalKey, null);
+    var _wgGameId = g.id||('game_'+g.version)||'active';
+    var _wgLocalKey = 'wg_played_' + _wgGameId + '_' + _wgPhone;
+    var _wgPlayed = _wgPhone ? loadData(_wgLocalKey, null) : false;
     if(_wgPlayed) {
       /* لعب قبل — شيل الزرار لو موجود وحدّث البانر */
       var oldF=document.getElementById('wgFloatBtn'); if(oldF) oldF.remove();
