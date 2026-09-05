@@ -5998,6 +5998,19 @@ function _swOpenCreateForm(editing) {
       var pa=document.getElementById('swFAltDiscount'); if(pa) pa.value=editing.prize.altDiscount||0;
     }
     _swUpdatePrizeForm();
+  } else {
+    /* لعبة جديدة — لازم نصفّر كل الحقول عشان ما توريثش قيم من تعديل سابق */
+    var n2=document.getElementById('swFName'); if(n2) n2.value='';
+    var st2=document.getElementById('swFStart'); if(st2) st2.value='';
+    var en2=document.getElementById('swFEnd'); if(en2) en2.value='';
+    var au2=document.getElementById('swFAudience'); if(au2) au2.value='all';
+    var mo2=document.getElementById('swFMinOrder'); if(mo2) mo2.value=0;
+    var tg2=document.getElementById('swFTarget'); if(tg2) tg2.value='';
+    var tl2=document.getElementById('swFTolerance'); if(tl2) tl2.value=0;
+    var pv2=document.getElementById('swFPrizeValue'); if(pv2) pv2.value='';
+    var pe2=document.getElementById('swFPrizeEmoji'); if(pe2) pe2.value='';
+    var pa2=document.getElementById('swFAltDiscount'); if(pa2) pa2.value=0;
+    _swUpdatePrizeForm();
   }
 }
 
@@ -6639,6 +6652,14 @@ function _wgOpenCreateForm(editing) {
     var au=document.getElementById('wgFAudience'); if(au) au.value=editing.audience||'all';
     var lo=document.getElementById('wgFLocation'); if(lo) lo.value=editing.location||'anywhere';
     var mo=document.getElementById('wgFMinOrder'); if(mo) mo.value=editing.minOrder||0;
+  } else {
+    /* لعبة جديدة — لازم نصفّر كل الحقول عشان ما توريثش قيم من تعديل سابق */
+    var n2=document.getElementById('wgFName'); if(n2) n2.value='';
+    var st2=document.getElementById('wgFStart'); if(st2) st2.value='';
+    var en2=document.getElementById('wgFEnd'); if(en2) en2.value='';
+    var au2=document.getElementById('wgFAudience'); if(au2) au2.value='all';
+    var lo2=document.getElementById('wgFLocation'); if(lo2) lo2.value='anywhere';
+    var mo2=document.getElementById('wgFMinOrder'); if(mo2) mo2.value=0;
   }
   _wgRenderSlicesForm();
 }
