@@ -6205,54 +6205,150 @@ function _wgSetupCanvasDPR() {
   canvas._wgLogicalSize = cssSize;
 }
 
+function _wgWrapLabel(ctx, text, maxWidth) {
+  /* تقسيم النص لسطرين بدل القطع لو أطول من المساحة المتاحة */
+  if (ctx.measureText(text).width <= maxWidth) return [text];
+  var words = text.split(' ');
+  if (words.length < 2) {
+    /* كلمة واحدة طويلة — نقصها بحرص */
+    while (text.length > 3 && ctx.measureText(text+'…').width > maxWidth) text = text.slice(0,-1);
+    return [text+'…'];
+  }
+  var line1='', line2='';
+  for (var i=0;i<words.length;i++){
+    var test=(line1?line1+' ':'')+words[i];
+    if (ctx.measureText(test).width<=maxWidth || !line1) line1=test;
+    else line2=(line2?line2+' ':'')+words[i];
+  }
+  if (line2 && ctx.measureText(line2).width>maxWidth) {
+    while (line2.length>3 && ctx.measureText(line2+'…').width>maxWidth) line2=line2.slice(0,-1);
+    line2+='…';
+  }
+  return line2 ? [line1,line2] : [line1];
+}
+
 function _wgDrawWheel(slices) {
   var canvas = document.getElementById('wgCanvas');
   if (!canvas) return;
   _wgSetupCanvasDPR();
   var ctx = canvas.getContext('2d');
-  var W = canvas._wgLogicalSize || 320, H = W, cx = W/2, cy = H/2, r = W/2 - 4;
+  var W = canvas._wgLogicalSize || 320, H = W, cx = W/2, cy = H/2;
+  var outerR = W/2 - 4;
+  var ringW = Math.max(8, outerR*0.055);   /* سماكة الحلقة الذهبية الخارجية */
+  var r = outerR - ringW - 2;              /* نصف قطر منطقة الشرائح الفعلية */
   var total = slices.reduce(function(s,sl){ return s+(sl.prob||1); }, 0);
   var angle = _wgAngle;
   ctx.clearRect(0, 0, W, H);
+
+  /* ══ 1) الحلقة الذهبية الخارجية (إطار العجلة) ══ */
+  var ringGrad = ctx.createLinearGradient(cx-outerR,cy-outerR,cx+outerR,cy+outerR);
+  ringGrad.addColorStop(0,'#fde68a'); ringGrad.addColorStop(.35,'#f59e0b');
+  ringGrad.addColorStop(.65,'#b45309'); ringGrad.addColorStop(1,'#f59e0b');
+  ctx.beginPath(); ctx.arc(cx,cy,outerR,0,Math.PI*2); ctx.fillStyle=ringGrad; ctx.fill();
+
+  /* نقط إضاءة حوالين الحلقة */
+  var dotCount = Math.max(16, Math.round(outerR/6));
+  for (var d=0; d<dotCount; d++) {
+    var dAng = (d/dotCount)*Math.PI*2;
+    var dx = cx + Math.cos(dAng)*(outerR - ringW/2);
+    var dy = cy + Math.sin(dAng)*(outerR - ringW/2);
+    ctx.beginPath(); ctx.arc(dx,dy,Math.max(1.4,ringW*0.11),0,Math.PI*2);
+    ctx.fillStyle = (d%2===0) ? '#fffbeb' : '#fef3c7';
+    ctx.shadowColor='rgba(255,220,120,.9)'; ctx.shadowBlur=4;
+    ctx.fill();
+  }
+  ctx.shadowBlur=0;
+
+  /* ══ 2) الشرائح ══ */
   slices.forEach(function(sl, i) {
     var sweep = (sl.prob||1)/total*Math.PI*2;
-    ctx.beginPath(); ctx.moveTo(cx,cy); ctx.arc(cx,cy,r,angle,angle+sweep); ctx.closePath();
-    ctx.fillStyle = sl.color || _wgSliceColors[i%_wgSliceColors.length]; ctx.fill();
-    ctx.strokeStyle='rgba(255,255,255,.25)'; ctx.lineWidth=2; ctx.stroke();
+    var baseColor = sl.color || _wgSliceColors[i%_wgSliceColors.length];
 
-    /* رسم صورة الشريحة لو موجودة */
+    /* تدرّج شعاعي يديلها إحساس لمعان/عمق */
+    var grad = ctx.createRadialGradient(cx,cy,r*0.15,cx,cy,r);
+    grad.addColorStop(0, _wgLightenColor(baseColor, 22));
+    grad.addColorStop(1, baseColor);
+    ctx.beginPath(); ctx.moveTo(cx,cy); ctx.arc(cx,cy,r,angle,angle+sweep); ctx.closePath();
+    ctx.fillStyle = grad; ctx.fill();
+
+    /* خط فاصل ذهبي رفيع بين الشرائح */
+    ctx.strokeStyle='rgba(255,235,180,.55)'; ctx.lineWidth=1.5; ctx.stroke();
+
+    var midAngle = angle + sweep/2;
+    /* لو الشريحة في النص الشمال من العجلة، النص هيبان مقلوب — نصلّح باتجاه إضافي 180° */
+    var flip = Math.cos(midAngle) < 0;
+    var textRot = flip ? midAngle + Math.PI : midAngle;
+    var dirSign = flip ? -1 : 1;
+    ctx.save(); ctx.translate(cx,cy); ctx.rotate(textRot);
+
+    /* ══ 3) بادچ دائري أبيض للأيقونة/الصورة (بدون تداخل مع النص) ══ */
+    var badgeR = Math.max(13, Math.min(19, r*0.16));
+    var badgeCx = dirSign * (r*0.40);
+    ctx.beginPath(); ctx.arc(badgeCx,0,badgeR,0,Math.PI*2);
+    ctx.fillStyle='rgba(255,255,255,.95)';
+    ctx.shadowColor='rgba(0,0,0,.35)'; ctx.shadowBlur=4; ctx.shadowOffsetY=1;
+    ctx.fill(); ctx.shadowBlur=0; ctx.shadowOffsetY=0;
+    ctx.strokeStyle='rgba(0,0,0,.08)'; ctx.lineWidth=1; ctx.stroke();
+
     if (sl.image) {
       var img = _wgImageCache[sl.image];
       if (!img) {
-        img = new Image();
-        img.crossOrigin = 'anonymous';
-        img.onload = function(){ _wgDrawWheel(slices); }; /* أعد الرسم لما الصورة توصل */
-        img.onerror = function(){};
-        img.src = sl.image;
-        _wgImageCache[sl.image] = img;
+        img = new Image(); img.crossOrigin='anonymous';
+        img.onload=function(){ _wgDrawWheel(slices); };
+        img.onerror=function(){};
+        img.src=sl.image; _wgImageCache[sl.image]=img;
       }
-      if (img.complete && img.naturalWidth > 0) {
-        ctx.save();
-        ctx.translate(cx,cy); ctx.rotate(angle+sweep/2);
-        var imgSize = Math.min(34, r*0.32);
-        /* الصورة في نص الشريحة، أقرب لمنتصف نصف القطر */
-        ctx.drawImage(img, r*0.55 - imgSize/2, -imgSize/2, imgSize, imgSize);
+      if (img.complete && img.naturalWidth>0) {
+        var imgSize = badgeR*1.5;
+        ctx.save(); ctx.beginPath(); ctx.arc(badgeCx,0,badgeR*0.86,0,Math.PI*2); ctx.clip();
+        ctx.drawImage(img, badgeCx-imgSize/2, -imgSize/2, imgSize, imgSize);
         ctx.restore();
       }
+    } else if (sl.emoji) {
+      ctx.font = (badgeR*1.15)+'px system-ui,sans-serif';
+      ctx.textAlign='center'; ctx.textBaseline='middle';
+      ctx.fillText(sl.emoji, badgeCx, badgeR*0.05);
     }
 
-    ctx.save(); ctx.translate(cx,cy); ctx.rotate(angle+sweep/2);
-    ctx.fillStyle='#fff'; ctx.font='bold 14px system-ui,sans-serif';
-    ctx.textAlign='right'; ctx.shadowColor='rgba(0,0,0,.7)'; ctx.shadowBlur=5;
-    var lbl = (sl.emoji||'') + ' ' + (sl.label||'');
-    if (lbl.length>13) lbl=lbl.substring(0,12)+'…';
-    ctx.fillText(lbl, r-8, 4); ctx.restore();
+    /* ══ 4) النص — تحت البادچ، بدون تداخل، بسطرين لو محتاج ══ */
+    var fontSize = Math.max(11, Math.min(14, r*0.115));
+    ctx.font = 'bold '+fontSize+'px system-ui,"Segoe UI",sans-serif';
+    ctx.textAlign='center'; ctx.textBaseline='middle';
+    ctx.fillStyle='#fff';
+    ctx.shadowColor='rgba(0,0,0,.75)'; ctx.shadowBlur=4; ctx.shadowOffsetY=1;
+    var maxTextWidth = Math.max(50, (r*sweep) * 0.92); /* عرض تقريبي متاح للشريحة عند هذا القطر */
+    var lines = _wgWrapLabel(ctx, sl.label||'', maxTextWidth);
+    var lineH = fontSize + 3;
+    var textStartX = dirSign * (Math.abs(badgeCx) + badgeR + 10);
+    lines.forEach(function(line, li){
+      ctx.fillText(line, textStartX, (li - (lines.length-1)/2)*lineH);
+    });
+    ctx.shadowBlur=0; ctx.shadowOffsetY=0;
+    ctx.restore();
     angle += sweep;
   });
-  ctx.beginPath(); ctx.arc(cx,cy,22,0,Math.PI*2); ctx.fillStyle='#fff'; ctx.fill();
-  ctx.beginPath(); ctx.arc(cx,cy,16,0,Math.PI*2); ctx.fillStyle='#f59e0b'; ctx.fill();
-  ctx.fillStyle='#fff'; ctx.font='bold 13px system-ui'; ctx.textAlign='center'; ctx.textBaseline='middle'; ctx.shadowBlur=0;
-  ctx.fillText('🎰',cx,cy);
+
+  /* ══ 5) المركز — طبقات ذهب/أبيض/داكن ══ */
+  ctx.beginPath(); ctx.arc(cx,cy,26,0,Math.PI*2);
+  ctx.fillStyle=ringGrad; ctx.shadowColor='rgba(0,0,0,.4)'; ctx.shadowBlur=6; ctx.fill(); ctx.shadowBlur=0;
+  ctx.beginPath(); ctx.arc(cx,cy,20,0,Math.PI*2); ctx.fillStyle='#fff'; ctx.fill();
+  var hubGrad = ctx.createRadialGradient(cx-4,cy-4,2,cx,cy,15);
+  hubGrad.addColorStop(0,'#312e81'); hubGrad.addColorStop(1,'#1e1b4b');
+  ctx.beginPath(); ctx.arc(cx,cy,15,0,Math.PI*2); ctx.fillStyle=hubGrad; ctx.fill();
+  ctx.fillStyle='#fbbf24'; ctx.font='bold 15px system-ui'; ctx.textAlign='center'; ctx.textBaseline='middle';
+  ctx.fillText('🎰',cx,cy+1);
+}
+
+function _wgLightenColor(hex, pct) {
+  try {
+    hex = hex.replace('#','');
+    if (hex.length===3) hex = hex.split('').map(function(c){return c+c;}).join('');
+    var num = parseInt(hex,16);
+    var r = Math.min(255, (num>>16) + Math.round(255*pct/100));
+    var g = Math.min(255, ((num>>8)&0xff) + Math.round(255*pct/100));
+    var b = Math.min(255, (num&0xff) + Math.round(255*pct/100));
+    return 'rgb('+r+','+g+','+b+')';
+  } catch(e){ return hex; }
 }
 
 function _wgSpin() {
