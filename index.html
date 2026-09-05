@@ -6091,7 +6091,7 @@ var _wgLocalVersion = null, _wgUpdatePending = false;
 var _wgSliceColors = ['#ef4444','#f59e0b','#22c55e','#3b82f6','#8b5cf6','#ec4899','#06b6d4','#f97316'];
 
 /* ── Global Version Listener للعجلة — يشتغل حتى لو العميل مفتحش اللعبة ── */
-var _wgGlobalVersionListener=null, _wgGlobalLocalVersion=null;
+var _wgGlobalVersionListener=null, _wgGlobalLocalVersion=null, _wgBannerCdInterval=null;
 function _wgStartVersionListenerGlobal() {
   if(_wgGlobalVersionListener||!db||adminRoleType) return;
   _wgGlobalVersionListener=db.ref('wheel_version').on('value',function(snap){
@@ -6808,14 +6808,16 @@ function _wgShowButtonIfActive(){
       if(g.endAt) {
         var cdEl = document.getElementById('wgBannerCountdown');
         if(cdEl) {
+          /* امسح أي interval قديم متراكم من لعبة سابقة قبل ما نعمل جديد */
+          if(_wgBannerCdInterval) { clearInterval(_wgBannerCdInterval); _wgBannerCdInterval=null; }
           function updateBannerCd() {
             var rem = Math.max(0, g.endAt - Date.now());
-            if(rem <= 0) { if(banner) banner.style.display='none'; return; }
+            if(rem <= 0) { if(banner) banner.style.display='none'; if(_wgBannerCdInterval){clearInterval(_wgBannerCdInterval);_wgBannerCdInterval=null;} return; }
             var h=Math.floor(rem/3600000),m=Math.floor((rem%3600000)/60000),s=Math.floor((rem%60000)/1000);
             cdEl.textContent = _wgPad(h)+':'+_wgPad(m)+':'+_wgPad(s);
           }
           updateBannerCd();
-          setInterval(updateBannerCd, 1000);
+          _wgBannerCdInterval = setInterval(updateBannerCd, 1000);
         }
       }
     }
