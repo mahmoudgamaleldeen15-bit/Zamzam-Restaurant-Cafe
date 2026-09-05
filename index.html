@@ -6282,10 +6282,14 @@ function _wgAnimateSpin(winIdx, slices, cb) {
   var fullRotations = (5 + Math.floor(Math.random()*5)) * Math.PI * 2;
 
   /* حساب الزاوية النهائية الصح:
-     المطلوب: _wgAngle النهائي = winMid
-     يعني targetAngle = (winMid - startAngle) + دورات كاملة */
+     المؤشر فوق العجلة تماماً (الساعة 12) = زاوية -π/2 في نظام canvas
+     (لأن زاوية 0 في canvas = يمين العجلة، والزوايا بتزيد باتجاه عقارب الساعة)
+     المطلوب: الشريحة الفائزة تبقى تحت المؤشر بالظبط
+     يعني: _wgAngle النهائي = (-π/2 - winMid) mod 2π */
+  var POINTER_ANGLE = -Math.PI/2;
   var startAngle = _wgAngle;
-  var diff = winMid - (startAngle % (Math.PI*2));
+  var targetFinalMod = ((POINTER_ANGLE - winMid) % (Math.PI*2) + Math.PI*2) % (Math.PI*2);
+  var diff = targetFinalMod - (startAngle % (Math.PI*2));
   if (diff < 0) diff += Math.PI*2;
   var targetAngle = fullRotations + diff;
 
