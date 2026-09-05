@@ -1259,8 +1259,8 @@ input,select,textarea{font-family:inherit;}
     <canvas id="wgCanvas" width="320" height="320"></canvas>
     <!-- Pointer -->
     <svg class="wg-pointer" width="36" height="48" viewBox="0 0 36 48">
-      <polygon points="18,48 36,0 18,12 0,0" fill="#f59e0b" filter="drop-shadow(0 4px 8px rgba(245,158,11,.9))"/>
-      <circle cx="18" cy="12" r="6" fill="#fff" opacity="0.9"/>
+      <polygon points="18,48 36,0 18,12 0,0" fill="#f59e0b" stroke="#7c2d12" stroke-width="2.5" stroke-linejoin="round" filter="drop-shadow(0 4px 8px rgba(0,0,0,.5))"/>
+      <circle cx="18" cy="12" r="6" fill="#fff" stroke="#7c2d12" stroke-width="1.5" opacity="0.95"/>
     </svg>
   </div>
 
@@ -5759,13 +5759,13 @@ function _swShowAlreadyPlayed() {
   }
   /* شيل الزرار العائم + غيّر نص البانر */
   var swFloat=document.getElementById('swFloatBtn'); if(swFloat) swFloat.remove();
-  _swUpdateBannerAfterPlay();
+  _swUpdateBannerAfterPlay(_swCurrentGame?(_swCurrentGame.id||'active'):'active');
 }
 
-function _swUpdateBannerAfterPlay() {
+function _swUpdateBannerAfterPlay(explicitGameId) {
   if(!db||!currentUser||!currentUser.phone) return;
   var ph=currentUser.phone.replace(/\D/g,'');
-  var gameId=_swCurrentGame?(_swCurrentGame.id||'active'):'active';
+  var gameId=explicitGameId||(_swCurrentGame?(_swCurrentGame.id||'active'):'active');
   db.ref('sw_winners').orderByChild('phone').equalTo(ph).limitToLast(5).once('value').then(function(wSnap){
     var bannerBtn=document.querySelector('#swMainBanner div[style*="border-radius:50px"]');
     if(!bannerBtn) return;
@@ -5919,7 +5919,7 @@ function _swShowButtonIfActive() {
     var _swPlayed = _swPhone ? loadData(_swLocalKey, null) : false;
     if(_swPlayed) {
       var oldSF=document.getElementById('swFloatBtn'); if(oldSF) oldSF.remove();
-      _swUpdateBannerAfterPlay();
+      _swUpdateBannerAfterPlay(_swGameId);
       return;
     }
     if(document.getElementById('swFloatBtn')) return;
@@ -6310,16 +6310,17 @@ function _wgDrawWheel(slices) {
       ctx.fillText(sl.emoji, badgeCx, badgeR*0.05);
     }
 
-    /* ══ 4) النص — تحت البادچ، بدون تداخل، بسطرين لو محتاج ══ */
-    var fontSize = Math.max(11, Math.min(14, r*0.115));
+    /* ══ 4) النص — بعيد تماماً عن البادچ، قريب من حافة العجلة، بسطرين لو محتاج ══ */
+    var textRadius = r*0.74; /* أبعد عن الأيقونة، أقرب لحافة العجلة */
+    var fontSize = Math.max(11, Math.min(14, r*0.11));
     ctx.font = 'bold '+fontSize+'px system-ui,"Segoe UI",sans-serif';
     ctx.textAlign='center'; ctx.textBaseline='middle';
     ctx.fillStyle='#fff';
-    ctx.shadowColor='rgba(0,0,0,.75)'; ctx.shadowBlur=4; ctx.shadowOffsetY=1;
-    var maxTextWidth = Math.max(50, (r*sweep) * 0.92); /* عرض تقريبي متاح للشريحة عند هذا القطر */
+    ctx.shadowColor='rgba(0,0,0,.8)'; ctx.shadowBlur=4; ctx.shadowOffsetY=1;
+    var maxTextWidth = Math.max(50, (textRadius*sweep) * 0.88); /* عرض متاح عند قطر النص الجديد */
     var lines = _wgWrapLabel(ctx, sl.label||'', maxTextWidth);
     var lineH = fontSize + 3;
-    var textStartX = dirSign * (Math.abs(badgeCx) + badgeR + 10);
+    var textStartX = dirSign * textRadius;
     lines.forEach(function(line, li){
       ctx.fillText(line, textStartX, (li - (lines.length-1)/2)*lineH);
     });
@@ -6641,13 +6642,13 @@ function _wgShowAlreadyPlayed() {
   }
   /* شيل الزرار العائم + غيّر نص البانر */
   var wgFloat=document.getElementById('wgFloatBtn'); if(wgFloat) wgFloat.remove();
-  _wgUpdateBannerAfterPlay();
+  _wgUpdateBannerAfterPlay(_wgCurrentGame?(_wgCurrentGame.id||'active'):'active');
 }
 
-function _wgUpdateBannerAfterPlay() {
+function _wgUpdateBannerAfterPlay(explicitGameId) {
   if(!db||!currentUser||!currentUser.phone) return;
   var ph=currentUser.phone.replace(/\D/g,'');
-  var gameId=_wgCurrentGame?(_wgCurrentGame.id||'active'):'active';
+  var gameId=explicitGameId||(_wgCurrentGame?(_wgCurrentGame.id||'active'):'active');
   db.ref('wheel_plays/'+ph).once('value').then(function(snap){
     var bannerBtn=document.querySelector('#wgMainBanner div[style*="border-radius:50px"]');
     if(!bannerBtn) return;
@@ -6992,7 +6993,7 @@ function _wgShowButtonIfActive(){
     if(_wgPlayed) {
       /* لعب قبل — شيل الزرار لو موجود وحدّث البانر */
       var oldF=document.getElementById('wgFloatBtn'); if(oldF) oldF.remove();
-      _wgUpdateBannerAfterPlay();
+      _wgUpdateBannerAfterPlay(_wgGameId);
       return;
     }
     if(document.getElementById('wgFloatBtn')) return;
