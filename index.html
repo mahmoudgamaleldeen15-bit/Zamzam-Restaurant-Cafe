@@ -6187,11 +6187,30 @@ function _wgRenderGame() {
   _wgCheckPlayed(g);
 }
 
+var _wgImageCache = {};
+var _wgCanvasDPRSet = false;
+
+function _wgSetupCanvasDPR() {
+  var canvas = document.getElementById('wgCanvas');
+  if (!canvas || _wgCanvasDPRSet) return;
+  var dpr = window.devicePixelRatio || 1;
+  var cssSize = canvas.getBoundingClientRect().width || 320;
+  if (cssSize < 10) cssSize = 320; /* لو الكانفاس لسه مخفي ومفيهوش أبعاد */
+  canvas.width = cssSize * dpr;
+  canvas.height = cssSize * dpr;
+  var ctx = canvas.getContext('2d');
+  ctx.scale(dpr, dpr);
+  _wgCanvasDPRSet = true;
+  /* نخزن الحجم المنطقي (CSS) عشان بقية كود الرسم يستخدمه بدل width/height الفعليين */
+  canvas._wgLogicalSize = cssSize;
+}
+
 function _wgDrawWheel(slices) {
   var canvas = document.getElementById('wgCanvas');
   if (!canvas) return;
+  _wgSetupCanvasDPR();
   var ctx = canvas.getContext('2d');
-  var W = canvas.width, H = canvas.height, cx = W/2, cy = H/2, r = W/2 - 4;
+  var W = canvas._wgLogicalSize || 320, H = W, cx = W/2, cy = H/2, r = W/2 - 4;
   var total = slices.reduce(function(s,sl){ return s+(sl.prob||1); }, 0);
   var angle = _wgAngle;
   ctx.clearRect(0, 0, W, H);
@@ -6200,11 +6219,33 @@ function _wgDrawWheel(slices) {
     ctx.beginPath(); ctx.moveTo(cx,cy); ctx.arc(cx,cy,r,angle,angle+sweep); ctx.closePath();
     ctx.fillStyle = sl.color || _wgSliceColors[i%_wgSliceColors.length]; ctx.fill();
     ctx.strokeStyle='rgba(255,255,255,.25)'; ctx.lineWidth=2; ctx.stroke();
+
+    /* رسم صورة الشريحة لو موجودة */
+    if (sl.image) {
+      var img = _wgImageCache[sl.image];
+      if (!img) {
+        img = new Image();
+        img.crossOrigin = 'anonymous';
+        img.onload = function(){ _wgDrawWheel(slices); }; /* أعد الرسم لما الصورة توصل */
+        img.onerror = function(){};
+        img.src = sl.image;
+        _wgImageCache[sl.image] = img;
+      }
+      if (img.complete && img.naturalWidth > 0) {
+        ctx.save();
+        ctx.translate(cx,cy); ctx.rotate(angle+sweep/2);
+        var imgSize = Math.min(34, r*0.32);
+        /* الصورة في نص الشريحة، أقرب لمنتصف نصف القطر */
+        ctx.drawImage(img, r*0.55 - imgSize/2, -imgSize/2, imgSize, imgSize);
+        ctx.restore();
+      }
+    }
+
     ctx.save(); ctx.translate(cx,cy); ctx.rotate(angle+sweep/2);
-    ctx.fillStyle='#fff'; ctx.font='bold 11px system-ui,sans-serif';
-    ctx.textAlign='right'; ctx.shadowColor='rgba(0,0,0,.6)'; ctx.shadowBlur=4;
+    ctx.fillStyle='#fff'; ctx.font='bold 14px system-ui,sans-serif';
+    ctx.textAlign='right'; ctx.shadowColor='rgba(0,0,0,.7)'; ctx.shadowBlur=5;
     var lbl = (sl.emoji||'') + ' ' + (sl.label||'');
-    if (lbl.length>14) lbl=lbl.substring(0,13)+'…';
+    if (lbl.length>13) lbl=lbl.substring(0,12)+'…';
     ctx.fillText(lbl, r-8, 4); ctx.restore();
     angle += sweep;
   });
