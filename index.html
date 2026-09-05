@@ -4306,7 +4306,8 @@ function _goToAppOrTracking() {
     _pgLoadForCustomer();
   }
   /* عجلة الحظ — زرار عائم لو اللعبة شغّالة */
-  setTimeout(function() { if (typeof _wgShowButtonIfActive === 'function') _wgShowButtonIfActive(); }, 2000);
+  console.log('[WG-DEBUG] ═══ استعداد لاستدعاء _wgShowButtonIfActive بعد 2 ثانية ═══');
+  setTimeout(function() { console.log('[WG-DEBUG] استدعاء _wgShowButtonIfActive الآن'); if (typeof _wgShowButtonIfActive === 'function') _wgShowButtonIfActive(); }, 2000);
   /* wg_version listener — يشتغل دايماً عشان يشوف لعبة جديدة */
   setTimeout(function() {
     if(typeof _wgStartVersionListenerGlobal === 'function') _wgStartVersionListenerGlobal();
@@ -6805,20 +6806,23 @@ function _wgAdminDelete(){
 
 /* زرار/بانر العجلة للعميل */
 function _wgShowButtonIfActive(){
-  if(!db||!fbConnected||adminRoleType) return;
+  if(!db||!fbConnected||adminRoleType) { console.log('[WG-DEBUG] توقف مبكر:', {db:!!db, fbConnected:fbConnected, adminRoleType:adminRoleType}); return; }
   db.ref('wheel_games/active').once('value').then(function(snap){
+    console.log('[WG-DEBUG] اللعبة موجودة في Firebase؟', snap.exists(), snap.exists()?snap.val():null);
     if(!snap.exists()) return;
     var g=snap.val(), now=Date.now();
-    if(g.endAt&&now>g.endAt) return;
-    if(g.startAt&&now<g.startAt) return;
+    if(g.endAt&&now>g.endAt) { console.log('[WG-DEBUG] اللعبة منتهية! endAt:', new Date(g.endAt), 'now:', new Date(now)); return; }
+    if(g.startAt&&now<g.startAt) { console.log('[WG-DEBUG] اللعبة لسه ما بدأتش! startAt:', new Date(g.startAt)); return; }
 
     /* فحص VIP — لو اللعبة لـ VIP فقط → إخفاء البانر لغير VIP */
     if(g.audience==='vip') {
       var ph = currentUser&&currentUser.phone ? currentUser.phone.replace(/\D/g,'') : '';
       var isVip = ph && (VIP_CUSTOMERS[ph]||VIP_CUSTOMERS['0'+ph.slice(1)]||VIP_CUSTOMERS['2'+ph]);
+      console.log('[WG-DEBUG] اللعبة VIP فقط — العميل VIP؟', isVip, 'رقمه:', ph);
       if(!isVip) return;
     }
 
+    console.log('[WG-DEBUG] ✅ كل الفحوص عدّت — البانر المفروض يظهر دلوقتي');
     /* إظهار البانر الرئيسي */
     var banner = document.getElementById('wgMainBanner');
     if(banner) {
