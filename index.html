@@ -5648,12 +5648,12 @@ function _swStop() {
     /* شيل الزرار العائم بعد اللعب */
     var swFloat=document.getElementById('swFloatBtn'); if(swFloat) swFloat.remove();
     /* حفظ في winners */
-    db.ref('sw_winners').push({
+    var _swWinnerRef = db.ref('sw_winners').push({
       phone:phone, name:(currentUser.name||''), gameId:(g.id||'active'),
       gameName:(g.name||'لعبة العداد'), stopped:stoppedVal, target:target,
       won:won, diff:diff, prize:won?g.prize:null, playedAt:Date.now(), claimed:false
-    }).catch(function(){});
-    if(won){ _swApplyPrize(phone,g.prize); }
+    });
+    if(won){ _swApplyPrize(phone,g.prize,_swWinnerRef.key); }
     _swShowResult(won,stoppedVal,target,won?g.prize:null);
   }).catch(function(){
     if(btn){ btn.disabled=false; btn.classList.add('ready'); btn.textContent='⏹️ وقّف العداد!'; }
@@ -5700,7 +5700,7 @@ function _swShowResult(won,stopped,target,prize) {
   if(won) _swPlayWin(); else _swPlayLose();
 }
 
-function _swApplyPrize(phone,prize) {
+function _swApplyPrize(phone,prize,winnerId) {
   if(!prize||!phone||!db) return;
   if(prize.type==='points'){
     var pts=Number(prize.value)||0; if(pts<=0) return;
@@ -5717,7 +5717,7 @@ function _swApplyPrize(phone,prize) {
   var typeMap={discount_percent:'discount_percent',discount_amount:'discount_amount',free_delivery:'free_delivery',free_product:'free_product'};
   if(!typeMap[prize.type]) return;
   var minOrder=(_swCurrentGame&&_swCurrentGame.minOrder)?Number(_swCurrentGame.minOrder):0;
-  var gift={id:'sw_'+Date.now(),phone:phone,name:(currentUser&&currentUser.name)||'',type:typeMap[prize.type],value:prize.value||'',msg:'⏱️ جائزة لعبة العداد: '+_swPrizeLabel(prize),createdAt:new Date().toISOString(),used:false,usedAt:null,source:'sw_game',minOrderRequired:minOrder,altDiscount:prize.altDiscount||0};
+  var gift={id:'sw_'+Date.now(),phone:phone,name:(currentUser&&currentUser.name)||'',type:typeMap[prize.type],value:prize.value||'',msg:'⏱️ جائزة لعبة العداد: '+_swPrizeLabel(prize),createdAt:new Date().toISOString(),used:false,usedAt:null,source:'sw_game',minOrderRequired:minOrder,altDiscount:prize.altDiscount||0,winnerId:winnerId||null,winnerCollection:'sw_winners'};
   db.ref('personal_gifts/'+phone).once('value').then(function(snap){
     if(snap.exists()&&snap.val().used===false){ showNotif('🎁 لديك هدية سابقة لم تستخدمها!'); return; }
     db.ref('personal_gifts/'+phone).set(gift).then(function(){
@@ -6393,8 +6393,8 @@ function _wgDoSpin() {
     saveData(localKey, { playedAt: Date.now() });
     /* شيل الزرار العائم بعد اللعب */
     var wgFloat=document.getElementById('wgFloatBtn'); if(wgFloat) wgFloat.remove();
-    db.ref('wheel_winners').push(playData).catch(function(){});
-    _wgApplyPrize(phone, slices[winIdx]);
+    var _wgWinnerRef = db.ref('wheel_winners').push(playData);
+    _wgApplyPrize(phone, slices[winIdx], _wgWinnerRef.key);
     /* احفظ الجائزة في متغير ثابت قبل الـ callback عشان الـ closure يبعت الصح */
     var _winnerPrize = slices[winIdx];
     _wgAnimateSpin(winIdx, slices, function() { _wgShowPrize(_winnerPrize); _wgSpinning=false; });
@@ -6557,7 +6557,7 @@ function _wgShowPrize(prize) {
   document.body.appendChild(ov);
 }
 
-function _wgApplyPrize(phone, prize) {
+function _wgApplyPrize(phone, prize, winnerId) {
   if(!prize||!phone||!db) return;
   if(prize.type==='none') return;
 
@@ -6582,7 +6582,7 @@ function _wgApplyPrize(phone, prize) {
   var typeMap = {discount_percent:'discount_percent',discount_amount:'discount_amount',free_delivery:'free_delivery',free_product:'free_product'};
   if(!typeMap[prize.type]) return;
   var minOrder = (_wgCurrentGame && _wgCurrentGame.minOrder) ? Number(_wgCurrentGame.minOrder) : 0;
-  var gift={id:'wg_'+Date.now(),phone:phone,name:(currentUser&&currentUser.name)||'',type:typeMap[prize.type],value:prize.value||'',msg:'🎰 جائزة عجلة الحظ: '+(prize.label||''),createdAt:new Date().toISOString(),used:false,usedAt:null,source:'wheel_game',minOrderRequired:minOrder,altDiscount:Number(prize.altDiscount)||0};
+  var gift={id:'wg_'+Date.now(),phone:phone,name:(currentUser&&currentUser.name)||'',type:typeMap[prize.type],value:prize.value||'',msg:'🎰 جائزة عجلة الحظ: '+(prize.label||''),createdAt:new Date().toISOString(),used:false,usedAt:null,source:'wheel_game',minOrderRequired:minOrder,altDiscount:Number(prize.altDiscount)||0,winnerId:winnerId||null,winnerCollection:'wheel_winners'};
   /* فحص لو عنده هدية قديمة مش استخدمها — مش بنمسحها */
   db.ref('personal_gifts/'+phone).once('value').then(function(snap){
     if(snap.exists() && snap.val().used === false) {
@@ -13384,7 +13384,14 @@ function _pgBurnGift(phone) {
   _currentPersonalGift.used = true;
   _currentPersonalGift.usedAt = new Date().toISOString();
   _pgAppliedThisOrder = false;
-  if (db) db.ref('personal_gifts/' + ph).update({ used: true, usedAt: _currentPersonalGift.usedAt }).catch(function(){});
+  if (db) {
+    db.ref('personal_gifts/' + ph).update({ used: true, usedAt: _currentPersonalGift.usedAt }).catch(function(){});
+    /* لو الهدية جايه من عجلة الحظ أو لعبة العداد — حدّث حالتها لـ "استُلم" في سجل الفائزين */
+    if (_currentPersonalGift.winnerId && _currentPersonalGift.winnerCollection) {
+      db.ref(_currentPersonalGift.winnerCollection + '/' + _currentPersonalGift.winnerId)
+        .update({ claimed: true, claimedAt: _currentPersonalGift.usedAt }).catch(function(){});
+    }
+  }
   if (document.getElementById('_pgCustomerCard')) document.getElementById('_pgCustomerCard').remove();
   _currentPersonalGift = null;
 }
