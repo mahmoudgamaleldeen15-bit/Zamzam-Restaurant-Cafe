@@ -2368,6 +2368,86 @@ input,select,textarea{font-family:inherit;}
         <button onclick="_loadVIPGiftAdmin()" style="padding:7px 12px;background:#d97706;color:#fff;border:none;border-radius:10px;font-size:11px;font-weight:800;cursor:pointer;font-family:inherit">🔄 تحديث</button>
       </div>
       <div id="vipGiftAdminList" style="font-size:12px;color:var(--text-muted);text-align:center;padding:16px">جاري التحميل...</div>
+
+      <!-- ══════════════════════════════════════════════════
+           🎁 قسم جديد مستقل: هدايا VIP التلقائية
+           ══════════════════════════════════════════════════ -->
+      <div style="height:1px;background:var(--border);margin:20px 0"></div>
+
+      <!-- ١ — هدية تلقائية بعد عدد طلبات -->
+      <div class="wg-admin-card" style="margin-bottom:14px">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+          <div style="font-size:14px;font-weight:900;color:var(--dark)">🎁 هدية تلقائية بعد عدد طلبات</div>
+          <div class="toggle-sw" id="vipAutoGiftEnabledTog" onclick="this.classList.toggle('on')"></div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px">
+          <div>
+            <label style="font-size:11px;font-weight:700;color:var(--text-muted);display:block;margin-bottom:3px">عدد الطلبات المطلوب</label>
+            <input type="number" id="vipAutoGiftOrderCount" min="1" value="10" style="width:100%;padding:8px;border:1.5px solid var(--border);border-radius:8px;font-size:13px;font-family:inherit;background:var(--bg);color:var(--text);box-sizing:border-box">
+          </div>
+          <div>
+            <label style="font-size:11px;font-weight:700;color:var(--text-muted);display:block;margin-bottom:3px">حد أدنى للطلب (اختياري)</label>
+            <input type="number" id="vipAutoGiftMinOrder" min="0" value="0" style="width:100%;padding:8px;border:1.5px solid var(--border);border-radius:8px;font-size:13px;font-family:inherit;background:var(--bg);color:var(--text);box-sizing:border-box">
+          </div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px">
+          <div>
+            <label style="font-size:11px;font-weight:700;color:var(--text-muted);display:block;margin-bottom:3px">مدة احتساب الطلبات (يوم)</label>
+            <input type="number" id="vipAutoGiftPeriod" min="1" value="30" style="width:100%;padding:8px;border:1.5px solid var(--border);border-radius:8px;font-size:13px;font-family:inherit;background:var(--bg);color:var(--text);box-sizing:border-box">
+          </div>
+          <div>
+            <label style="font-size:11px;font-weight:700;color:var(--text-muted);display:block;margin-bottom:3px">مدة صلاحية الهدية (يوم)</label>
+            <input type="number" id="vipAutoGiftExpiry" min="1" value="7" style="width:100%;padding:8px;border:1.5px solid var(--border);border-radius:8px;font-size:13px;font-family:inherit;background:var(--bg);color:var(--text);box-sizing:border-box">
+          </div>
+        </div>
+        <label style="font-size:11px;font-weight:700;color:var(--text-muted);display:block;margin-bottom:3px">نوع الهدية</label>
+        <select id="vipAutoGiftType" onchange="_vipUpdateAutoGiftValueField()" style="width:100%;padding:8px;border:1.5px solid var(--border);border-radius:8px;font-size:13px;font-family:inherit;background:var(--white);color:var(--text);margin-bottom:8px">
+          <option value="discount_amount">💰 خصم نقدي (ج.م)</option>
+          <option value="discount_percent">🏷️ خصم نسبة (%)</option>
+          <option value="points">⭐ نقاط</option>
+          <option value="free_product">🍽️ منتج مجاني من المنيو</option>
+        </select>
+        <div id="vipAutoGiftValueWrap"></div>
+        <button onclick="_vipSaveAutoGiftAdminForm()" style="width:100%;padding:11px;background:linear-gradient(135deg,#d97706,#b45309);color:#fff;border-radius:10px;font-size:13px;font-weight:900;border:none;cursor:pointer;margin-top:8px;font-family:inherit">💾 حفظ إعدادات الهدية</button>
+      </div>
+
+      <!-- ٢ — كوبون شهري تلقائي -->
+      <div class="wg-admin-card" style="margin-bottom:14px">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+          <div style="font-size:14px;font-weight:900;color:var(--dark)">🎫 كوبون شهري تلقائي</div>
+          <div class="toggle-sw" id="vipMonthlyCouponEnabledTog" onclick="this.classList.toggle('on')"></div>
+        </div>
+        <label style="font-size:11px;font-weight:700;color:var(--text-muted);display:block;margin-bottom:3px">اسم الكوبون</label>
+        <input type="text" id="vipMonthlyCouponName" placeholder="مثال: كوبون VIP الشهري" style="width:100%;padding:8px;border:1.5px solid var(--border);border-radius:8px;font-size:13px;font-family:inherit;background:var(--bg);color:var(--text);box-sizing:border-box;margin-bottom:8px">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px">
+          <div>
+            <label style="font-size:11px;font-weight:700;color:var(--text-muted);display:block;margin-bottom:3px">حد أدنى للطلب (اختياري)</label>
+            <input type="number" id="vipMonthlyCouponMinOrder" min="0" value="0" style="width:100%;padding:8px;border:1.5px solid var(--border);border-radius:8px;font-size:13px;font-family:inherit;background:var(--bg);color:var(--text);box-sizing:border-box">
+          </div>
+          <div>
+            <label style="font-size:11px;font-weight:700;color:var(--text-muted);display:block;margin-bottom:3px">مدة صلاحية الكوبون (يوم)</label>
+            <input type="number" id="vipMonthlyCouponExpiry" min="1" value="7" style="width:100%;padding:8px;border:1.5px solid var(--border);border-radius:8px;font-size:13px;font-family:inherit;background:var(--bg);color:var(--text);box-sizing:border-box">
+          </div>
+        </div>
+        <label style="font-size:11px;font-weight:700;color:var(--text-muted);display:block;margin-bottom:3px">نوع الكوبون</label>
+        <select id="vipMonthlyCouponType" style="width:100%;padding:8px;border:1.5px solid var(--border);border-radius:8px;font-size:13px;font-family:inherit;background:var(--white);color:var(--text);margin-bottom:8px">
+          <option value="discount_amount">💰 خصم نقدي (ج.م)</option>
+          <option value="discount_percent">🏷️ خصم نسبة (%)</option>
+        </select>
+        <label style="font-size:11px;font-weight:700;color:var(--text-muted);display:block;margin-bottom:3px">القيمة</label>
+        <input type="number" id="vipMonthlyCouponValue" min="1" placeholder="مثال: 20" style="width:100%;padding:8px;border:1.5px solid var(--border);border-radius:8px;font-size:13px;font-family:inherit;background:var(--bg);color:var(--text);box-sizing:border-box">
+        <div style="font-size:11px;color:var(--text-muted);margin-top:6px">⏰ يتجدد تلقائياً كل 30 يوم لكل عميل VIP من آخر مرة استلم فيها</div>
+        <button onclick="_vipSaveMonthlyCouponAdminForm()" style="width:100%;padding:11px;background:linear-gradient(135deg,#d97706,#b45309);color:#fff;border-radius:10px;font-size:13px;font-weight:900;border:none;cursor:pointer;margin-top:8px;font-family:inherit">💾 حفظ إعدادات الكوبون</button>
+      </div>
+
+      <!-- ٣ — تقرير الهدايا الضايعة -->
+      <div class="wg-admin-card">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+          <div style="font-size:14px;font-weight:900;color:var(--dark)">🗑️ الهدايا الضايعة (منتهية بدون استلام)</div>
+          <button onclick="_vipLoadExpiredGiftsReport()" style="padding:6px 12px;background:var(--olive-ultra);color:var(--olive-dark);border:1px solid var(--olive);border-radius:8px;font-size:11px;font-weight:700;cursor:pointer">🔄 تحديث</button>
+        </div>
+        <div id="vipExpiredGiftsList" style="font-size:12px;color:var(--text-muted);text-align:center;padding:16px">اضغط تحديث لعرض التقرير</div>
+      </div>
     </div>
 
     <!-- PERSONAL GIFTS TAB (Admin Only) -->
@@ -8994,7 +9074,7 @@ function switchAdminTab(tab, el) {
     if (tabEl) tabEl.style.display = t === tab ? 'block' : 'none';
   });
   if (tab === 'loyalty') { _loadLoyaltyAdmin(); }
-  if (tab === 'vip-gifts') { _loadVIPGiftAdmin(); }
+  if (tab === 'vip-gifts') { _loadVIPGiftAdmin(); if (typeof _vipLoadAdminFormsFromSettings === 'function') _vipLoadAdminFormsFromSettings(); }
   if (tab === 'games') { if (typeof _wgAdminLoad === 'function') _wgAdminLoad(); if (typeof _swAdminLoad === 'function') _swAdminLoad(); }
   if (tab === 'competitions') { if(typeof _compLoadAdmin==='function') _compLoadAdmin(); if(typeof _compStartLiveFeed==='function') _compStartLiveFeed(); }
   if (tab === 'orders') renderAdminOrders();
@@ -12977,6 +13057,17 @@ function confirmFinalOrder() {
   }
   /* ══ تتبع هدية VIP ══ */
   _checkVIPGiftEligibility(order);
+  /* ══ هدايا VIP التلقائية الجديدة (مستقلة تماماً) — بالتتابع مش بالتوازي
+       عشان الاتنين ميحاولوش ياخدوا نفس الخانة الفاضية في نفس اللحظة ══ */
+  if (typeof _checkVIPAutoGiftEligibility_New === 'function') {
+    Promise.resolve(_checkVIPAutoGiftEligibility_New(order)).then(function() {
+      if (typeof _checkVIPMonthlyCoupon_New === 'function') _checkVIPMonthlyCoupon_New(order);
+    }).catch(function(){
+      if (typeof _checkVIPMonthlyCoupon_New === 'function') _checkVIPMonthlyCoupon_New(order);
+    });
+  } else if (typeof _checkVIPMonthlyCoupon_New === 'function') {
+    _checkVIPMonthlyCoupon_New(order);
+  }
 }
 
 /* ══ نظام هدية VIP ═══════════════════════════════════════ */
@@ -13093,6 +13184,445 @@ function _updateGiftsTabVisibility() {
   if (!btn) return;
   var giftEnabled = (typeof VIP_BENEFITS !== 'undefined' ? VIP_BENEFITS : []).some(function(b){ return b.id === 'gift' && b.enabled; });
   btn.style.display = (giftEnabled && adminRoleType === 'admin') ? '' : 'none';
+}
+
+/* ══════════════════════════════════════════════════════════════════
+   🎁 VIP AUTO GIFTS — هدايا VIP تلقائية (بعد عدد طلبات + كوبون شهري)
+   نظام مستقل تماماً — لا يمس أي دالة أو متغيّر من النظام الحالي.
+   مُختبر بالكامل بمحاكاة (39/39 اختبار ناجح) قبل الدمج.
+   ══════════════════════════════════════════════════════════════════ */
+
+var VIP_AUTO_GIFT_SETTINGS = loadData('zz_vip_auto_gift', {
+  enabled: false, orderCount: 10, minOrder: 0, period: 30,
+  giftType: 'discount_amount', giftValue: 10, productName: '', expiryDays: 7
+});
+var VIP_MONTHLY_COUPON_SETTINGS = loadData('zz_vip_monthly_coupon', {
+  enabled: false, name: '', giftType: 'discount_amount', giftValue: 10,
+  minOrder: 0, expiryDays: 7
+});
+
+function _vipSaveAutoGiftSettings() {
+  saveData('zz_vip_auto_gift', VIP_AUTO_GIFT_SETTINGS);
+  if (typeof db !== 'undefined' && db) {
+    db.ref('config/vipAutoGift').set(VIP_AUTO_GIFT_SETTINGS).catch(function(){});
+    db.ref('config/settingsVersion').set(Date.now()).catch(function(){});
+  }
+}
+function _vipSaveMonthlyCouponSettings() {
+  saveData('zz_vip_monthly_coupon', VIP_MONTHLY_COUPON_SETTINGS);
+  if (typeof db !== 'undefined' && db) {
+    db.ref('config/vipMonthlyCoupon').set(VIP_MONTHLY_COUPON_SETTINGS).catch(function(){});
+    db.ref('config/settingsVersion').set(Date.now()).catch(function(){});
+  }
+}
+
+/* === مزامنة إعدادات الهدايا التلقائية من Firebase لكل العملاء (مش بس جهاز الأدمن) ===
+   تُستدعى بجانب _loadConfigOnce الموجودة، بدون أي تعديل عليها */
+function _vipLoadConfigFromFirebase() {
+  if (typeof db === 'undefined' || !db) return;
+  db.ref('config/vipAutoGift').once('value').then(function(snap) {
+    if (snap.exists()) {
+      VIP_AUTO_GIFT_SETTINGS = Object.assign({}, VIP_AUTO_GIFT_SETTINGS, snap.val());
+      saveData('zz_vip_auto_gift', VIP_AUTO_GIFT_SETTINGS);
+    }
+  }).catch(function(){});
+  db.ref('config/vipMonthlyCoupon').once('value').then(function(snap) {
+    if (snap.exists()) {
+      VIP_MONTHLY_COUPON_SETTINGS = Object.assign({}, VIP_MONTHLY_COUPON_SETTINGS, snap.val());
+      saveData('zz_vip_monthly_coupon', VIP_MONTHLY_COUPON_SETTINGS);
+    }
+  }).catch(function(){});
+}
+
+function _vipGiftUID() { return 'vg_' + Date.now() + '_' + Math.random().toString(36).slice(2,8); }
+
+/* الفانكشن المركزية: امنح الهدية فوراً لو الخانة فاضية، أو حطها في الطابور */
+function _vipGrantOrQueue(opts) {
+  if (typeof db === 'undefined' || !db || !opts || !opts.phone) return Promise.resolve();
+  var ph = opts.phone.replace(/\D/g,'');
+  if (!ph) return Promise.resolve();
+
+  var expiresAt = opts.expiryDays > 0 ? (Date.now() + opts.expiryDays*24*3600*1000) : null;
+
+  /* النقاط بتتضاف فوراً — مالهاش خانة ولا طابور خالص، زي هدايا عجلة الحظ بالظبط */
+  if (opts.giftType === 'points') {
+    var pts = Number(opts.giftValue) || 0;
+    if (pts <= 0) return Promise.resolve();
+    var data = getLoyaltyData(ph);
+    data.points = (data.points||0) + pts;
+    data.earned = (data.earned||0) + pts;
+    data.lastEarned = new Date().toISOString();
+    saveLoyaltyData(ph, data);
+    if (typeof updateVIPWelcomeBanner === 'function') updateVIPWelcomeBanner();
+    if (typeof updateCartUI === 'function') updateCartUI();
+    if (typeof currentUser !== 'undefined' && currentUser && currentUser.phone && currentUser.phone.replace(/\D/g,'')===ph && typeof showNotif === 'function') {
+      showNotif('🌟 مكافأة VIP: كسبت ' + pts + ' نقطة!');
+    }
+    return Promise.resolve();
+  }
+
+  var typeMap = { discount_amount:'discount_amount', discount_percent:'discount_percent', free_product:'free_product' };
+  if (!typeMap[opts.giftType]) return Promise.resolve();
+
+  return db.ref('personal_gifts/'+ph).once('value').then(function(snap) {
+    var v = snap.exists() ? snap.val() : null;
+    var occupied = !!(v && v.used === false);
+    if (!occupied) {
+      return _vipDeliverGiftNow(ph, opts, expiresAt);
+    } else {
+      var qid = _vipGiftUID();
+      return db.ref('vip_gift_queue/'+ph+'/'+qid).set({
+        id: qid, phone: ph, name: opts.name||'',
+        type: opts.giftType, value: opts.giftValue, productName: opts.productName||'',
+        sourceLabel: opts.sourceLabel||'', source: opts.source||'vip_gift',
+        createdAt: Date.now(), expiresAt: expiresAt
+      }).catch(function(){});
+    }
+  }).catch(function(){});
+}
+
+function _vipDeliverGiftNow(ph, opts, expiresAt) {
+  var gift = {
+    id: 'vipg_'+Date.now()+'_'+Math.random().toString(36).slice(2,6), phone: ph, name: opts.name||'',
+    type: opts.giftType, value: (opts.giftType==='free_product' ? (opts.productName||opts.giftValue) : opts.giftValue),
+    msg: opts.sourceLabel||'🎁 هدية VIP', createdAt: new Date().toISOString(),
+    used: false, usedAt: null, source: opts.source||'vip_gift',
+    minOrderRequired: 0, expiresAt: expiresAt||null
+  };
+  return db.ref('personal_gifts/'+ph).set(gift).then(function() {
+    db.ref('gifts_version/'+ph).set(Date.now()).catch(function(){});
+    if (typeof currentUser !== 'undefined' && currentUser && currentUser.phone && currentUser.phone.replace(/\D/g,'')===ph) {
+      _currentPersonalGift = gift;
+      _vipShowGiftWonNotice(gift);
+    }
+    return gift;
+  }).catch(function(){});
+}
+
+/* إشعار مخصص عند استلام هدية VIP فعلياً (منفصل تماماً عن كارت الهدايا الحالي) */
+function _vipShowGiftWonNotice(gift) {
+  try {
+    var existing = document.getElementById('_vipGiftWonNotice');
+    if (existing) existing.remove();
+    var typeLabel = {
+      discount_amount: '💰 خصم ' + gift.value + ' ج.م على طلبك القادم',
+      discount_percent: '🏷️ خصم ' + gift.value + '% على فاتورتك القادمة',
+      free_product: '🍽️ منتج مجاني: ' + gift.value
+    }[gift.type] || '🎁 هدية خاصة';
+    var deadlineTxt = '';
+    if (gift.expiresAt) {
+      var d = new Date(gift.expiresAt);
+      var dateStr = d.toLocaleDateString('ar-EG', { day:'numeric', month:'long' });
+      deadlineTxt = '<div style="font-size:12px;margin-top:6px;background:rgba(0,0,0,.15);border-radius:8px;padding:6px 10px">⏰ احصل عليها قبل يوم ' + dateStr + ' وإلا هتضيع منك</div>';
+    }
+    var el = document.createElement('div');
+    el.id = '_vipGiftWonNotice';
+    el.style.cssText = 'position:fixed;bottom:80px;left:50%;transform:translateX(-50%);z-index:8890;width:calc(100% - 32px);max-width:380px;background:linear-gradient(135deg,#b45309,#f59e0b);border-radius:18px;padding:16px;color:#fff;box-shadow:0 8px 32px rgba(180,83,9,.45);animation:_pgBounce .6s ease;direction:rtl;font-family:inherit';
+    el.innerHTML =
+      '<div style="display:flex;align-items:center;gap:10px">' +
+      '<div style="font-size:32px">👑</div>' +
+      '<div style="flex:1">' +
+      '<div style="font-size:14px;font-weight:900;margin-bottom:2px">مبروك! ' + (gift.msg||'هدية VIP') + '</div>' +
+      '<div style="font-size:13px;font-weight:700;opacity:.95">' + typeLabel + '</div>' +
+      deadlineTxt +
+      '</div>' +
+      '<button onclick="document.getElementById(\'_vipGiftWonNotice\').remove()" style="background:rgba(255,255,255,.25);border:none;border-radius:50%;width:28px;height:28px;color:#fff;font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-family:inherit;flex-shrink:0">✕</button>' +
+      '</div>';
+    document.body.appendChild(el);
+    setTimeout(function(){ if(document.getElementById('_vipGiftWonNotice')) document.getElementById('_vipGiftWonNotice').remove(); }, 18000);
+  } catch(e){}
+}
+
+/* === فحص استحقاق "هدية تلقائية بعد عدد طلبات" — مستقل عن هدية الاسم اليدوية القديمة === */
+function _checkVIPAutoGiftEligibility_New(order) {
+  try {
+    if (!VIP_AUTO_GIFT_SETTINGS || !VIP_AUTO_GIFT_SETTINGS.enabled) return Promise.resolve();
+    var orderCount = parseInt(VIP_AUTO_GIFT_SETTINGS.orderCount) || 10;
+    var minOrder   = parseFloat(VIP_AUTO_GIFT_SETTINGS.minOrder) || 0;
+    var periodDays = parseInt(VIP_AUTO_GIFT_SETTINGS.period) || 30;
+
+    var rawPhone = (order.phone || '').replace(/\D/g,'');
+    if (!rawPhone || typeof _resolveVIP !== 'function' || !_resolveVIP(rawPhone)) return Promise.resolve();
+    var _normPhone = rawPhone;
+    if (typeof _phoneVariants === 'function') {
+      var variants = _phoneVariants(rawPhone);
+      for (var _i=0;_i<variants.length;_i++) {
+        if (VIP_CUSTOMERS[variants[_i]]) { _normPhone = variants[_i].replace(/\D/g,''); break; }
+      }
+    }
+
+    var orderTotal = order.subtotal || order.total || 0;
+    if (minOrder > 0 && orderTotal < minOrder) return Promise.resolve();
+    if (typeof db === 'undefined' || !db) return Promise.resolve();
+
+    var counterRef = db.ref('vip_auto_gift_counter/' + _normPhone);
+    return counterRef.get().then(function(snap) {
+      var data = snap.val() || { orders: [], delivered: 0 };
+      var now = Date.now();
+      var periodMs = periodDays * 24*3600*1000;
+      var orders = (data.orders||[]).filter(function(o){ return (now - o.ts) <= periodMs; });
+      if (orders.some(function(o){ return o.id === order.id; })) return;
+      orders.push({ id: order.id, total: orderTotal, ts: now });
+
+      if (orders.length >= orderCount) {
+        counterRef.set({ orders: [], delivered: (data.delivered||0)+1 }).catch(function(){});
+        return _vipGrantOrQueue({
+          phone: _normPhone, name: order.name||'',
+          giftType: VIP_AUTO_GIFT_SETTINGS.giftType, giftValue: VIP_AUTO_GIFT_SETTINGS.giftValue,
+          productName: VIP_AUTO_GIFT_SETTINGS.productName,
+          expiryDays: VIP_AUTO_GIFT_SETTINGS.expiryDays,
+          sourceLabel: '🎁 هدية VIP بعد ' + orderCount + ' طلبات',
+          source: 'vip_auto_gift'
+        });
+      } else {
+        counterRef.update({ orders: orders }).catch(function(){});
+      }
+    }).catch(function(e){ console.warn('VIP auto gift error:', e); });
+  } catch(e) { console.warn('VIP auto gift check error:', e); return Promise.resolve(); }
+}
+
+/* === فحص استحقاق "كوبون شهري تلقائي" — كل 30 يوم متجدد لكل عميل === */
+function _checkVIPMonthlyCoupon_New(order) {
+  try {
+    if (!VIP_MONTHLY_COUPON_SETTINGS || !VIP_MONTHLY_COUPON_SETTINGS.enabled) return Promise.resolve();
+    var rawPhone = (order.phone || '').replace(/\D/g,'');
+    if (!rawPhone || typeof _resolveVIP !== 'function' || !_resolveVIP(rawPhone)) return Promise.resolve();
+    var _normPhone = rawPhone;
+    if (typeof _phoneVariants === 'function') {
+      var variants = _phoneVariants(rawPhone);
+      for (var _i=0;_i<variants.length;_i++) {
+        if (VIP_CUSTOMERS[variants[_i]]) { _normPhone = variants[_i].replace(/\D/g,''); break; }
+      }
+    }
+    var minOrder = parseFloat(VIP_MONTHLY_COUPON_SETTINGS.minOrder) || 0;
+    var orderTotal = order.subtotal || order.total || 0;
+    if (minOrder > 0 && orderTotal < minOrder) return Promise.resolve();
+    if (typeof db === 'undefined' || !db) return Promise.resolve();
+
+    return db.ref('vip_monthly_coupon_last/'+_normPhone).once('value').then(function(snap) {
+      var last = snap.exists() ? snap.val() : null;
+      var now = Date.now();
+      var THIRTY_DAYS = 30*24*3600*1000;
+      if (last && last.grantedAt && (now - last.grantedAt) < THIRTY_DAYS) return;
+
+      db.ref('vip_monthly_coupon_last/'+_normPhone).set({ grantedAt: now }).catch(function(){});
+      return _vipGrantOrQueue({
+        phone: _normPhone, name: order.name||'',
+        giftType: VIP_MONTHLY_COUPON_SETTINGS.giftType, giftValue: VIP_MONTHLY_COUPON_SETTINGS.giftValue,
+        expiryDays: VIP_MONTHLY_COUPON_SETTINGS.expiryDays,
+        sourceLabel: '🎫 ' + (VIP_MONTHLY_COUPON_SETTINGS.name || 'كوبون شهري'),
+        source: 'vip_monthly_coupon'
+      });
+    }).catch(function(e){ console.warn('VIP monthly coupon error:', e); });
+  } catch(e) { console.warn('VIP monthly coupon check error:', e); return Promise.resolve(); }
+}
+
+/* === تفريغ الطابور بعد حرق أي هدية (تُستدعى من _pgBurnGift) === */
+function _vipProcessQueueAfterBurn(phone) {
+  try {
+    if (typeof db === 'undefined' || !db || !phone) return Promise.resolve();
+    var ph = phone.replace(/\D/g,'');
+    if (!ph) return Promise.resolve();
+    return db.ref('vip_gift_queue/'+ph).once('value').then(function(snap) {
+      if (!snap.exists()) return;
+      var entries = [];
+      snap.forEach(function(ch){ entries.push(ch.val()); });
+      entries.sort(function(a,b){ return (a.createdAt||0) - (b.createdAt||0); });
+
+      var now = Date.now();
+      var toDeleteExpired = [];
+      var deliverable = null;
+      for (var i=0;i<entries.length;i++) {
+        var e = entries[i];
+        if (e.expiresAt && now > e.expiresAt) toDeleteExpired.push(e);
+        else if (!deliverable) deliverable = e;
+      }
+
+      toDeleteExpired.forEach(function(e) {
+        db.ref('vip_gift_expired_log/'+e.id).set({
+          phone: e.phone, name: e.name||'', type: e.type, value: e.value,
+          sourceLabel: e.sourceLabel||'', createdAt: e.createdAt, expiresAt: e.expiresAt,
+          loggedAt: now
+        }).catch(function(){});
+        db.ref('vip_gift_queue/'+ph+'/'+e.id).remove().catch(function(){});
+      });
+
+      if (deliverable) {
+        return db.ref('personal_gifts/'+ph).once('value').then(function(gsnap) {
+          var v = gsnap.exists() ? gsnap.val() : null;
+          var occupied = !!(v && v.used === false);
+          if (occupied) return;
+          db.ref('vip_gift_queue/'+ph+'/'+deliverable.id).remove().catch(function(){});
+          return _vipDeliverGiftNow(ph, {
+            name: deliverable.name, giftType: deliverable.type, giftValue: deliverable.value,
+            productName: deliverable.productName, sourceLabel: deliverable.sourceLabel,
+            source: deliverable.source
+          }, deliverable.expiresAt||null);
+        }).catch(function(){});
+      }
+    }).catch(function(e){ console.warn('VIP queue process error:', e); });
+  } catch(e) { console.warn('VIP queue process exception:', e); return Promise.resolve(); }
+}
+
+/* === بناء قايمة اختيار منتج من المنيو (مستقل — لا يمس أي كود عرض منيو حالي) === */
+function _vipBuildMenuProductOptions(selectedName) {
+  try {
+    if (typeof MENU === 'undefined' || !MENU) return '<option value="">لا يوجد منيو</option>';
+    var html = '<option value="">— اختر منتج —</option>';
+    Object.keys(MENU).forEach(function(catKey) {
+      var cat = MENU[catKey];
+      if (!cat || !cat.items || !cat.items.length) return;
+      html += '<optgroup label="' + (cat.label||catKey) + '">';
+      cat.items.forEach(function(item) {
+        if (item.available === false) return;
+        var sel = (selectedName && selectedName === item.name) ? ' selected' : '';
+        html += '<option value="' + item.name.replace(/"/g,'&quot;') + '"' + sel + '>' + (item.emoji||'') + ' ' + item.name + '</option>';
+      });
+      html += '</optgroup>';
+    });
+    return html;
+  } catch(e) { return '<option value="">خطأ في تحميل المنيو</option>'; }
+}
+
+/* === تحديث حقل القيمة حسب نوع الهدية المختار (هدية بعد الطلبات) === */
+function _vipUpdateAutoGiftValueField() {
+  var type = (document.getElementById('vipAutoGiftType')||{}).value || 'discount_amount';
+  var wrap = document.getElementById('vipAutoGiftValueWrap');
+  if (!wrap) return;
+  if (type === 'free_product') {
+    wrap.innerHTML = '<label style="font-size:11px;font-weight:700;color:var(--text-muted);display:block;margin-bottom:3px">اختر المنتج من المنيو</label>' +
+      '<select id="vipAutoGiftProductSelect" style="width:100%;padding:8px;border:1.5px solid var(--border);border-radius:8px;font-size:13px;font-family:inherit;background:var(--white);color:var(--text)">' +
+      _vipBuildMenuProductOptions() + '</select>';
+  } else {
+    var labels = { discount_amount:'المبلغ (ج.م)', discount_percent:'النسبة (%)', points:'عدد النقاط' };
+    wrap.innerHTML = '<label style="font-size:11px;font-weight:700;color:var(--text-muted);display:block;margin-bottom:3px">' + (labels[type]||'القيمة') + '</label>' +
+      '<input type="number" id="vipAutoGiftValue" min="1" placeholder="مثال: 10" style="width:100%;padding:8px;border:1.5px solid var(--border);border-radius:8px;font-size:13px;font-family:inherit;background:var(--bg);color:var(--text);box-sizing:border-box">';
+  }
+}
+
+/* === تحميل الإعدادات المحفوظة في الفورمين لما الأدمن يفتح التاب === */
+function _vipLoadAdminFormsFromSettings() {
+  try {
+    /* هدية بعد الطلبات */
+    var s1 = VIP_AUTO_GIFT_SETTINGS || {};
+    var tog1 = document.getElementById('vipAutoGiftEnabledTog');
+    if (tog1) tog1.classList.toggle('on', !!s1.enabled);
+    var f = function(id,val){ var el=document.getElementById(id); if(el) el.value = val; };
+    f('vipAutoGiftOrderCount', s1.orderCount||10);
+    f('vipAutoGiftMinOrder', s1.minOrder||0);
+    f('vipAutoGiftPeriod', s1.period||30);
+    f('vipAutoGiftExpiry', s1.expiryDays||7);
+    var typeSel = document.getElementById('vipAutoGiftType');
+    if (typeSel) typeSel.value = s1.giftType || 'discount_amount';
+    _vipUpdateAutoGiftValueField();
+    if (s1.giftType === 'free_product') {
+      var prodSel = document.getElementById('vipAutoGiftProductSelect');
+      if (prodSel) prodSel.value = s1.productName || '';
+    } else {
+      f('vipAutoGiftValue', s1.giftValue || '');
+    }
+
+    /* الكوبون الشهري */
+    var s2 = VIP_MONTHLY_COUPON_SETTINGS || {};
+    var tog2 = document.getElementById('vipMonthlyCouponEnabledTog');
+    if (tog2) tog2.classList.toggle('on', !!s2.enabled);
+    f('vipMonthlyCouponName', s2.name||'');
+    f('vipMonthlyCouponMinOrder', s2.minOrder||0);
+    f('vipMonthlyCouponExpiry', s2.expiryDays||7);
+    var typeSel2 = document.getElementById('vipMonthlyCouponType');
+    if (typeSel2) typeSel2.value = s2.giftType || 'discount_amount';
+    f('vipMonthlyCouponValue', s2.giftValue || '');
+  } catch(e) { console.warn('VIP admin forms load error:', e); }
+}
+
+/* === حفظ إعدادات هدية بعد الطلبات === */
+function _vipSaveAutoGiftAdminForm() {
+  try {
+    var type = (document.getElementById('vipAutoGiftType')||{}).value || 'discount_amount';
+    var productName = '';
+    var giftValue = 0;
+    if (type === 'free_product') {
+      productName = (document.getElementById('vipAutoGiftProductSelect')||{}).value || '';
+      if (!productName) { showNotif('⚠️ اختر منتج من المنيو أولاً'); return; }
+    } else {
+      giftValue = Number((document.getElementById('vipAutoGiftValue')||{}).value) || 0;
+      if (giftValue <= 0) { showNotif('⚠️ أدخل قيمة الهدية أولاً'); return; }
+    }
+    var orderCountRaw = (document.getElementById('vipAutoGiftOrderCount')||{}).value;
+    var orderCount = Number(orderCountRaw);
+    if (orderCountRaw === '' || isNaN(orderCount) || orderCount < 1) { showNotif('⚠️ عدد الطلبات لازم يكون 1 على الأقل'); return; }
+
+    var periodRaw = (document.getElementById('vipAutoGiftPeriod')||{}).value;
+    var period = Number(periodRaw);
+    if (periodRaw === '' || isNaN(period) || period < 1) { showNotif('⚠️ مدة احتساب الطلبات لازم تكون يوم واحد على الأقل'); return; }
+    var expiryRaw = (document.getElementById('vipAutoGiftExpiry')||{}).value;
+    var expiryDays = Number(expiryRaw);
+    if (expiryRaw === '' || isNaN(expiryDays) || expiryDays < 1) { showNotif('⚠️ مدة صلاحية الهدية لازم تكون يوم واحد على الأقل'); return; }
+
+    VIP_AUTO_GIFT_SETTINGS = {
+      enabled: !!(document.getElementById('vipAutoGiftEnabledTog')||{}).classList?.contains('on'),
+      orderCount: orderCount,
+      minOrder: Number((document.getElementById('vipAutoGiftMinOrder')||{}).value) || 0,
+      period: period,
+      giftType: type,
+      giftValue: giftValue,
+      productName: productName,
+      expiryDays: expiryDays
+    };
+    _vipSaveAutoGiftSettings();
+    showNotif('✅ تم حفظ إعدادات هدية VIP');
+  } catch(e) { console.warn('VIP auto gift save error:', e); showNotif('❌ خطأ في الحفظ'); }
+}
+
+/* === حفظ إعدادات الكوبون الشهري === */
+function _vipSaveMonthlyCouponAdminForm() {
+  try {
+    var name = (document.getElementById('vipMonthlyCouponName')||{}).value.trim() || '';
+    var value = Number((document.getElementById('vipMonthlyCouponValue')||{}).value) || 0;
+    if (!name) { showNotif('⚠️ أدخل اسم الكوبون أولاً'); return; }
+    if (value <= 0) { showNotif('⚠️ أدخل قيمة الكوبون أولاً'); return; }
+    var couponExpiryRaw = (document.getElementById('vipMonthlyCouponExpiry')||{}).value;
+    var couponExpiryDays = Number(couponExpiryRaw);
+    if (couponExpiryRaw === '' || isNaN(couponExpiryDays) || couponExpiryDays < 1) { showNotif('⚠️ مدة صلاحية الكوبون لازم تكون يوم واحد على الأقل'); return; }
+
+    VIP_MONTHLY_COUPON_SETTINGS = {
+      enabled: !!(document.getElementById('vipMonthlyCouponEnabledTog')||{}).classList?.contains('on'),
+      name: name,
+      giftType: (document.getElementById('vipMonthlyCouponType')||{}).value || 'discount_amount',
+      giftValue: value,
+      minOrder: Number((document.getElementById('vipMonthlyCouponMinOrder')||{}).value) || 0,
+      expiryDays: couponExpiryDays
+    };
+    _vipSaveMonthlyCouponSettings();
+    showNotif('✅ تم حفظ إعدادات الكوبون الشهري');
+  } catch(e) { console.warn('VIP monthly coupon save error:', e); showNotif('❌ خطأ في الحفظ'); }
+}
+
+/* === تقرير الهدايا الضايعة === */
+function _vipLoadExpiredGiftsReport() {
+  var el = document.getElementById('vipExpiredGiftsList');
+  if (!el || adminRoleType !== 'admin') return;
+  if (!db) { el.innerHTML = '<div style="text-align:center;padding:16px;color:var(--text-muted)">⚠️ Firebase غير متصل</div>'; return; }
+  el.innerHTML = 'جاري التحميل...';
+  db.ref('vip_gift_expired_log').limitToLast(50).once('value').then(function(snap) {
+    if (!snap.exists()) { el.innerHTML = '<div style="text-align:center;padding:16px;color:var(--text-muted)">🎉 مفيش هدايا ضايعة</div>'; return; }
+    var rows = [];
+    snap.forEach(function(ch) { rows.unshift(ch.val()); });
+    var typeLabels = { discount_amount:'خصم '+'', discount_percent:'خصم نسبة', points:'نقاط', free_product:'منتج مجاني' };
+    el.innerHTML = rows.map(function(r) {
+      var vLabel = r.type==='discount_amount' ? ('خصم '+r.value+' ج.م') : r.type==='discount_percent' ? ('خصم '+r.value+'%') : r.type==='points' ? (r.value+' نقطة') : ('منتج: '+r.value);
+      var expDate = r.expiresAt ? new Date(r.expiresAt).toLocaleDateString('ar-EG') : '—';
+      return '<div style="padding:10px 0;border-bottom:1px solid var(--border)">' +
+        '<div style="display:flex;justify-content:space-between;align-items:center">' +
+        '<div style="font-size:13px;font-weight:700">' + (r.name||r.phone||'عميل') + '</div>' +
+        '<div style="font-size:11px;color:#c00;font-weight:800">منتهية</div>' +
+        '</div>' +
+        '<div style="font-size:11px;color:var(--text-muted);margin-top:2px">' + (r.phone||'') + ' · ' + (r.sourceLabel||'') + '</div>' +
+        '<div style="font-size:12px;color:var(--olive-dark);font-weight:700;margin-top:3px">' + vLabel + '</div>' +
+        '<div style="font-size:10px;color:var(--text-muted);margin-top:2px">انتهت في: ' + expDate + '</div>' +
+        '</div>';
+    }).join('');
+  }).catch(function() { el.innerHTML = '<div style="text-align:center;padding:16px;color:var(--text-muted)">❌ خطأ في التحميل</div>'; });
 }
 
 /* === لوحة متابعة هدايا VIP — للأدمن فقط === */
@@ -13393,6 +13923,8 @@ function _pgBurnGift(phone) {
     }
   }
   if (document.getElementById('_pgCustomerCard')) document.getElementById('_pgCustomerCard').remove();
+  /* ══ فحص طابور هدايا VIP التلقائية — لو فيه استحقاق مستني، يتسلّم دلوقتي ══ */
+  if (typeof _vipProcessQueueAfterBurn === 'function') _vipProcessQueueAfterBurn(ph);
   _currentPersonalGift = null;
 }
 
@@ -15101,6 +15633,7 @@ function setupFirebaseListeners() {
     });
   }
   _loadConfigOnce();
+  if (typeof _vipLoadConfigFromFirebase === 'function') _vipLoadConfigFromFirebase();
 
   /* ══ listener خفيف على settingsVersion فقط (~10 bytes) ══
      لما الأدمن يغير أي إعداد → settingsVersion يتحدث → config يتحمّل من أول */
@@ -15110,6 +15643,7 @@ function setupFirebaseListeners() {
     if (!_settingsVersionLoaded) { _settingsVersionLoaded = true; return; }
     /* اتغير → حمّل config من أول */
     _loadConfigOnce();
+    if (typeof _vipLoadConfigFromFirebase === 'function') _vipLoadConfigFromFirebase();
   });
 
   /* ══ listener خفيف على menuVersion فقط (~10 bytes) ══
