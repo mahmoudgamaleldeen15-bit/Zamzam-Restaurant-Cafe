@@ -12932,7 +12932,7 @@ function closeOrderReview() {
   document.getElementById('orderReviewOverlay').classList.remove('open');
   _pendingOrderForReview = null;
 }
-function confirmFinalOrder() {
+async function confirmFinalOrder() {
   if (!_pendingOrderForReview) { closeOrderReview(); return; }
   /* ══ فحص إصدار المنيو قبل تأكيد الطلب ══ */
   if (window._menuUpdateAvailable) {
@@ -12959,20 +12959,24 @@ function confirmFinalOrder() {
   // الكاش فقط: يُحفظ الآن في فايربيس ويُرسل للكاشير. الإلكتروني محفوظ ومُرسل بالفعل من placeOrder
   // (منعملش حفظ تاني للإلكتروني عشان ما نمسحش أي تغيير عمله الكاشير زي بدء التجهيز)
   if (!_isElec) {
-    fbSaveOrder(order).then(function() {
+    try {
+      await fbSaveOrder(order);
       /* ✅ Firebase نجح — الطلب وصل للكاشير — ابعت الواتساب */
       var _waNum = SETTINGS.waNum || RESTAURANT.waNum;
       var _msgToSend = order._waMsg || '';
       if (_msgToSend) {
         window.open('https://wa.me/' + _waNum + '?text=' + encodeURIComponent(_msgToSend), '_blank');
       }
-    }).catch(function() {
+    } catch (e) {
       /* ❌ Firebase فشل حتى بعد الـ retry — الطلب مش عند الكاشير */
       showNotif('❌ تعذر إرسال الطلب — تأكد من اتصالك بالإنترنت وحاول مرة أخرى');
       /* إرجاع الأوردر في شاشة المراجعة عشان العميل يقدر يحاول تاني */
       _pendingOrderForReview = order;
       setTimeout(function(){ openOrderReview(order); }, 500);
-    });
+      /* توقف هنا — الطلب لم يُرسل فعلياً، الاستمرار كان سيعطي إحساساً خاطئاً بالنجاح
+         (حرق هدايا، تحديث نقاط، رسالة "تم الإرسال بنجاح" رغم فشل الحفظ الفعلي) */
+      return;
+    }
   }
   // 🎟️ الآن فقط نُسجّل أن العرض اتستخدم — بعد التأكيد النهائي
   if (order._offersToBurn && order._offersToBurn.length) {
