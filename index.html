@@ -12978,6 +12978,18 @@ async function confirmFinalOrder() {
       return;
     }
   }
+
+  /* ✅ الطلب اتحفظ بنجاح فعلياً (أو إلكتروني محفوظ بالفعل مسبقاً) — نبلّغ العميل فوراً
+     قبل أي منطق إضافي (نقاط، VIP، هدايا، مسابقات)، عشان لو أي حاجة فيهم حصلها
+     خطأ غير متوقع، العميل يفضل يشوف تأكيد طلبه الصحيح ومايتوقفش الزرار "صامت" */
+  _loyaltyDiscountApplied = 0;
+  closeOrderReview();
+  showNotif(_isElec ? '✅ تم تأكيد طلبك' : '✅ تم إرسال الطلب للكاشير بنجاح');
+
+  /* باقي المنطق (عروض، نقاط، VIP، هدايا، مسابقات) — غير حرج لتأكيد الطلب نفسه.
+     محمي بـ try/catch عشان أي خطأ فيه ميوقفش الزرار أو يمنع العميل من رؤية
+     تأكيد طلبه الصحيح اللي ظهر بالفعل فوق. */
+  try {
   // 🎟️ الآن فقط نُسجّل أن العرض اتستخدم — بعد التأكيد النهائي
   if (order._offersToBurn && order._offersToBurn.length) {
     order._offersToBurn.forEach(k => { if (k) usedOffers[k] = true; });
@@ -13049,10 +13061,6 @@ async function confirmFinalOrder() {
   if (typeof _engUpdateScoreOnOrder === 'function') {
     _engUpdateScoreOnOrder(order);
   }
-  // إعادة تعيين خصم النقاط
-  _loyaltyDiscountApplied = 0;
-  closeOrderReview();
-  showNotif(_isElec ? '✅ تم تأكيد طلبك' : '✅ تم إرسال الطلب للكاشير بنجاح');
   // إرسال إشعار Last Order إن وجد
   if (lastOrderActive && currentUser?.whatsapp) {
     const waLO = (currentUser.whatsapp || '').replace(/[^0-9]/g,'');
@@ -13071,6 +13079,11 @@ async function confirmFinalOrder() {
     });
   } else if (typeof _checkVIPMonthlyCoupon_New === 'function') {
     _checkVIPMonthlyCoupon_New(order);
+  }
+  } catch (_postSaveErr) {
+    /* أي خطأ في المنطق الإضافي (نقاط/VIP/هدايا/مسابقات) بيتسجل بس مايأثرش على
+       تأكيد الطلب للعميل — الطلب اتحفظ فعلاً والعميل شاف رسالة النجاح بالفعل فوق */
+    console.warn('confirmFinalOrder: post-save side effects error (order was saved successfully):', _postSaveErr);
   }
 }
 
@@ -14255,16 +14268,20 @@ function _engCalcScores(comp) {
   var allOrders = (typeof _getAllOrders === 'function') ? _getAllOrders() : (window.ordersData || []);
   var start = new Date(comp.startAt).getTime();
   var end = new Date(comp.endAt).getTime();
+  var minOrder = (comp.conditions && comp.conditions.minOrder) || comp.minOrder || 0;
   var filtered = allOrders.filter(function(o){
     if (o.status === 'cancelled') return false;
     var t = o.timestamp || 0;
-    return t >= start && t <= end;
+    if (t < start || t > end) return false;
+    /* ✅ فحص الحد الأدنى — نفس الفحص المستخدم في التحديث اللحظي بالظبط */
+    if (minOrder > 0 && (Number(o.total)||0) < minOrder) return false;
+    return true;
   });
   var scores = {}; /* phone → { phone, name, score } */
   filtered.forEach(function(o) {
     var ph = (o.phone||'').replace(/\D/g,'');
     if (!ph) return;
-    if (!scores[ph]) scores[ph] = { phone: ph, name: o.name || ph, score: 0, likes: 0, likedBy: {} };
+    if (!scores[ph]) scores[ph] = { phone: ph, name: o.name || ph, score: 0 };
     if (comp.type === 'most_orders') scores[ph].score += 1;
     else if (comp.type === 'top_amount') scores[ph].score += Number(o.total) || 0;
     else if (comp.type === 'most_product') {
@@ -14273,11 +14290,33 @@ function _engCalcScores(comp) {
     }
     /* most_likes: الـ score بيعتمد على اللايكات — مش الطلبات */
   });
-  /* حفظ النتائج في Firebase */
+  /* ✅ نقرأ البيانات الحالية الأول عشان نحافظ على اللايكات (likes/likedBy) — مانمسحهاش */
   if (!db) return;
-  var updates = {};
-  Object.values(scores).forEach(function(s){ updates['engagement_scores/'+comp.id+'/'+s.phone] = s; });
-  if (Object.keys(updates).length) db.ref().update(updates).catch(function(){});
+  var ref = (typeof _engScoreRef === 'function') ? _engScoreRef(comp.id) : db.ref('engagement_scores/'+comp.id);
+  if (!ref) return;
+  ref.once('value').then(function(snap) {
+    var existing = {};
+    snap.forEach(function(ch){ existing[ch.key] = ch.val() || {}; });
+    var updates = {};
+    Object.keys(scores).forEach(function(ph) {
+      var prev = existing[ph] || {};
+      updates['engagement_scores/'+comp.id+'/'+ph] = {
+        phone: ph,
+        name: scores[ph].name || prev.name || ph,
+        score: scores[ph].score,
+        likes: prev.likes || 0,
+        likedBy: prev.likedBy || {}
+      };
+    });
+    /* عميل عنده لايكات بس مفيهوش طلب مستوفي الشروط في الفترة دي — سيبه زي ما هو، ماتمسحوش */
+    Object.keys(existing).forEach(function(ph) {
+      var hasLikes = existing[ph] && (existing[ph].likes || (existing[ph].likedBy && Object.keys(existing[ph].likedBy).length));
+      if (!scores[ph] && hasLikes && !updates['engagement_scores/'+comp.id+'/'+ph]) {
+        updates['engagement_scores/'+comp.id+'/'+ph] = existing[ph];
+      }
+    });
+    if (Object.keys(updates).length) db.ref().update(updates).catch(function(){});
+  }).catch(function(){});
 }
 
 /* ══ ADMIN — تحميل وعرض مسابقات التفاعل ══ */
