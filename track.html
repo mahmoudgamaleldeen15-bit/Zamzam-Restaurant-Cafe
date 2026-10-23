@@ -8,6 +8,7 @@
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 body{font-family:Cairo,sans-serif;background:#f5f5f0;min-height:100vh;direction:rtl}
@@ -170,7 +171,23 @@ if (!orderId) {
   document.getElementById('sSub').textContent = 'يرجى استخدام الرابط الذي أرسله لك المطعم عبر واتساب';
 } else {
   document.getElementById('hSub').textContent = 'طلب رقم #' + orderId;
-  startTracking();
+  // تسجيل دخول مجهول (نفس آلية index.html بالظبط) — قواعد الأمان بترفض أي قراءة من غير تسجيل دخول
+  var _trackingStarted = false;
+  function _startTrackingOnce() {
+    if (_trackingStarted) return;
+    _trackingStarted = true;
+    startTracking();
+  }
+  if (firebase.auth) {
+    firebase.auth().signInAnonymously().catch(function(e) {
+      console.warn('Anonymous auth:', e);
+      _startTrackingOnce(); // fallback: لو الدخول فشل — حاول التتبع برضه
+    });
+    firebase.auth().onAuthStateChanged(function(user) { if (user) _startTrackingOnce(); });
+    setTimeout(_startTrackingOnce, 3000); // شبكة أمان زي الكاشير بالظبط — لا تعليق للأبد
+  } else {
+    _startTrackingOnce();
+  }
 }
 
 function startTracking() {
